@@ -11,7 +11,6 @@
 *.fmi
 *.png
 *.csv
-*.json
 *.txt
 *.speedy
 *.bincode
