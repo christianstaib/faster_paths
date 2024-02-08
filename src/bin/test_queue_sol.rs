@@ -3,7 +3,7 @@ use std::{fs::File, io::BufRead, io::BufReader};
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::{
-    ch::contractor::ContractedGraph,
+    ch::contractor::{ContractedGraph, Contractor},
     fast_graph::FastGraph,
     graph::Graph,
     hl::hub_graph::HubGraph,
@@ -21,12 +21,6 @@ struct Args {
     graph_path: String,
     /// Path of .fmi file
     #[arg(short, long)]
-    ch_path: String,
-    /// Path of .fmi file
-    #[arg(short, long)]
-    hl_path: String,
-    /// Path of .fmi file
-    #[arg(short, long)]
     queue_path: String,
     /// Path of .fmi file
     #[arg(short, long)]
@@ -36,20 +30,19 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
-    let graph = Graph::from_edges(&graph.edges);
-    let graph = FastGraph::from_graph(&graph);
+    let naive_graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
+    let graph = Graph::from_edges(&naive_graph.edges);
 
-    let dijkstra = Dijkstra::new(&graph);
-
-    let bi_dijkstra = BiDijkstra::new(&graph);
-
-    let reader = BufReader::new(File::open(args.ch_path).unwrap());
-    let ch_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
+    let ch_graph = Contractor::get_contracted_graph(&graph);
     let ch_bi_dijkstra = ChDijkstra::new(&ch_graph);
 
-    let reader = BufReader::new(File::open(args.hl_path).unwrap());
-    let hl_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
+    let fast_graph = FastGraph::from_graph(&graph);
+
+    let dijkstra = Dijkstra::new(&fast_graph);
+
+    let bi_dijkstra = BiDijkstra::new(&fast_graph);
+
+    let hl_graph = ch_bi_dijkstra.get_hl();
 
     let queue: Vec<_> = BufReader::new(File::open(args.queue_path).unwrap())
         .lines()

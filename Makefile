@@ -11,6 +11,10 @@ NY_CH := $(NY_GRAPH).ch.bincode
 NY_HL := $(NY_GRAPH).hl.bincode
 NY_TESTS := $(NY_GRAPH).tests.json
 
+STGT_GRAPH := $(FMI_DIR)/stgtregbz.fmi
+STGT_QUEUE := $(FMI_DIR)/stgtregbz.que
+STGT_SOL := $(FMI_DIR)/stgtregbz.sol
+
 NUM_TESTS := 10000
 HOP_LIMIT := 3
 
@@ -20,11 +24,9 @@ dirs:
 
 test_queue_sol:
 	cargo run --bin test_queue_sol --release --\
-		--graph-path $(NY_GRAPH)\
-		--ch-path $(NY_CH)\
-		--hl-path $(NY_HL)\
-		--queue-path ~/Downloads/Benchs/stgtregbz.que\
-		--sol-path ~/Downloads/Benchs/stgtregbz.sol
+		--graph-path $(STGT_GRAPH)\
+		--queue-path $(STGT_QUEUE)\
+		--sol-path $(STGT_SOL)
 
 test:
 	cargo run --bin test --release --\
