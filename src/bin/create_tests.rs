@@ -18,7 +18,7 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
-    fmi_path: String,
+    graph_path: String,
     /// Path of .fmi file
     #[arg(short, long)]
     tests_path: String,
@@ -30,7 +30,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_fmi_file(args.fmi_path.as_str());
+    let graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
     let graph = Graph::from_edges(&graph.edges);
     let graph = FastGraph::from_graph(&graph);
     let dijkstra = Dijkstra::new(&graph);

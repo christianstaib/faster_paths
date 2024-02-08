@@ -27,77 +27,77 @@ dirs:
 
 test_queue_sol:
 	cargo run --bin test_queue_sol --release --\
-		--fmi-path $(STGT_FMI)\
-		--fmi-ch-path $(STGT_CONTRACTED)\
-		--fmi-hl-path $(STGT_HUBS_PRUNED)\
+		--graph-path $(STGT_FMI)\
+		--ch-path $(STGT_CONTRACTED)\
+		--hl-path $(STGT_HUBS_PRUNED)\
 		--queue-path ~/Downloads/Benchs/stgtregbz.que\
 		--sol-path ~/Downloads/Benchs/stgtregbz.sol
 
 test:
 	cargo run --bin test --release --\
-		--fmi-path $(STGT_FMI)\
-		--fmi-ch-path $(STGT_CONTRACTED)\
-		--fmi-hl-path $(STGT_HUBS_PRUNED)\
+		--graph-path $(STGT_FMI)\
+		--ch-path $(STGT_CONTRACTED)\
+		--hl-path $(STGT_HUBS_PRUNED)\
 		--tests-path $(STGT_TESTS_JSON)
 
 
 create_tests_stgt:
 	cargo run --bin create_tests --release --\
-		--fmi-path $(STGT_FMI)\
+		--graph-path $(STGT_FMI)\
 		--tests-path $(STGT_TESTS_JSON)\
 		--number-of-tests $(NUM_TESTS)
 
 create_tests:
 	cargo run --bin create_tests --release --\
-		--fmi-path $(NETWORK_FMI)\
+		--graph-path $(NETWORK_FMI)\
 		--tests-path $(NETWORK_TESTS)\
 		--number-of-tests $(NUM_TESTS)
 
 
 create_ch_stgt:
 	cargo run --bin create_ch --release --\
-		--fmi-path $(STGT_FMI)\
-		--contracted-graph $(STGT_CONTRACTED)
+		--graph-path $(STGT_FMI)\
+		--ch-graph $(STGT_CONTRACTED)
 
 create_ch:
 	cargo run --bin create_ch --release --\
-		--fmi-path $(NETWORK_FMI)\
-		--contracted-graph $(NETWORK_CONTRACTED)
+		--graph-path $(NETWORK_FMI)\
+		--ch-graph $(NETWORK_CONTRACTED)
 
 
 test_ch_stgt:
 	cargo run --bin test_ch --release --\
-		--contracted-graph $(STGT_CONTRACTED)\
-		--test-path $(STGT_TESTS_JSON)
+		--ch-graph $(STGT_CONTRACTED)\
+		--tests-path $(STGT_TESTS_JSON)
 
 test_ch:
 	cargo run --bin test_ch --release --\
-		--contracted-graph $(NETWORK_CONTRACTED)\
-		--test-path $(NETWORK_TESTS)
+		--ch-graph $(NETWORK_CONTRACTED)\
+		--tests-path $(NETWORK_TESTS)
 
 
 create_hl_stgt:
 	cargo run --bin create_hl --release --\
-		--contracted-graph $(STGT_CONTRACTED)\
-		--hub-graph $(STGT_HUBS)\
+		--ch-graph $(STGT_CONTRACTED)\
+		--hl-graph $(STGT_HUBS)\
 		--hop-limit $(HOP_LIMIT)
 
 create_hl:
 	cargo run --bin create_hl --release --\
-		--contracted-graph $(NETWORK_CONTRACTED)\
-		--hub-graph $(NETWORK_HUBS)\
+		--ch-graph $(NETWORK_CONTRACTED)\
+		--hl-graph $(NETWORK_HUBS)\
 		--hop-limit $(HOP_LIMIT)
 
 
 test_hl_stgt:
 	cargo run --bin test_hl --release --\
-		--hub-graph $(STGT_HUBS)\
-		--fmi-path $(STGT_FMI)\
-		--test-path $(STGT_TESTS_JSON)
+		--hl-graph $(STGT_HUBS)\
+		--graph-path $(STGT_FMI)\
+		--tests-path $(STGT_TESTS_JSON)
 
 test_hl:
 	cargo run --bin test_hl --release --\
-		--hub-graph $(NETWORK_HUBS)\
-		--fmi-path $(NETWORK_FMI)\
-		--test-path $(NETWORK_TESTS)
+		--hl-graph $(NETWORK_HUBS)\
+		--graph-path $(NETWORK_FMI)\
+		--tests-path $(NETWORK_TESTS)
 

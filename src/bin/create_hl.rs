@@ -14,10 +14,10 @@ use osm_test::{ch::contractor::ContractedGraph, simple_algorithms::ch_bi_dijkstr
 struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
-    contracted_graph: String,
+    ch_graph: String,
     /// Path of .fmi file
     #[arg(short, long)]
-    hub_graph: String,
+    hl_graph: String,
     /// Path of .fmi file
     #[arg(short, long)]
     hop_limit: u32,
@@ -26,7 +26,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let reader = BufReader::new(File::open(args.contracted_graph).unwrap());
+    let reader = BufReader::new(File::open(args.ch_graph).unwrap());
     let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
 
     let dijkstra = ChDijkstra::new(&contracted_graph);
@@ -35,6 +35,6 @@ fn main() {
     let hub_graph = dijkstra.get_hl();
     println!("Generating hl took {:?}", start.elapsed());
 
-    let writer = BufWriter::new(File::create(args.hub_graph).unwrap());
+    let writer = BufWriter::new(File::create(args.hl_graph).unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();
 }
