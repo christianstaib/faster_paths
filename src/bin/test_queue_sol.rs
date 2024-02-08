@@ -8,7 +8,7 @@ use osm_test::{
     graph::Graph,
     hl::hub_graph::HubGraph,
     naive_graph::NaiveGraph,
-    path::{PathRequest, Routing},
+    path::{PathRequest, Pathfinding},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
 
@@ -69,7 +69,7 @@ fn main() {
         };
 
         // test dijkstra
-        let response = dijkstra.get_route(&request);
+        let response = dijkstra.get_path(&request);
         let mut cost: i32 = -1;
         if let Some(route) = response.route {
             cost = route.weight as i32;
@@ -77,7 +77,7 @@ fn main() {
         assert_eq!(true_cost, &cost, "dijkstra wrong");
 
         // test bi dijkstra
-        let response = bi_dijkstra.get_route(&request);
+        let response = bi_dijkstra.get_path(&request);
         let mut cost: i32 = -1;
         if let Some(route) = response.route {
             cost = route.weight as i32;

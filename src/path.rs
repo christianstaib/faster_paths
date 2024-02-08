@@ -18,53 +18,27 @@ pub struct Path {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RouteValidationRequest {
+pub struct PathValidationRequest {
     pub request: PathRequest,
-    pub cost: Option<u32>,
-}
-
-impl RouteValidationRequest {
-    pub fn from_str(str: &str) -> Option<RouteValidationRequest> {
-        let line: Vec<_> = str.split(',').collect();
-        let mut cost = None;
-        if let Ok(str_cost) = line[2].parse::<u32>() {
-            cost = Some(str_cost);
-        }
-        Some(RouteValidationRequest {
-            request: PathRequest {
-                source: line[0].parse().ok()?,
-                target: line[1].parse().ok()?,
-            },
-            cost,
-        })
-    }
+    pub weight: Option<u32>,
 }
 
 #[derive(Clone)]
-pub struct RouteResponse {
+pub struct PathRequestResponse {
     pub route: Option<Path>,
     pub data: Vec<DijkstraData>,
 }
 
-pub trait Routing {
-    fn get_route(&self, route_request: &PathRequest) -> RouteResponse;
+pub trait Pathfinding {
+    fn get_path(&self, route_request: &PathRequest) -> PathRequestResponse;
 }
 
-impl RouteResponse {
-    pub fn get_cost(&self) -> Option<u32> {
+impl PathRequestResponse {
+    pub fn get_weight(&self) -> Option<Weight> {
         let mut cost = None;
         if let Some(route) = &self.route {
             cost = Some(route.weight);
         }
         cost
-    }
-}
-
-impl PathRequest {
-    pub fn reversed(&self) -> PathRequest {
-        PathRequest {
-            source: self.target,
-            target: self.source,
-        }
     }
 }

@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::{
-    ch::contractor::ContractedGraph, path::RouteValidationRequest,
+    ch::contractor::ContractedGraph, path::PathValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
@@ -31,7 +31,7 @@ fn main() {
     let dijkstra = ChDijkstra::new(&contracted_graph);
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
-    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+    let tests: Vec<PathValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     let mut times = Vec::new();
     for test in tests.iter().progress() {
@@ -39,7 +39,7 @@ fn main() {
         let cost = dijkstra.get_cost(&test.request);
         times.push(before.elapsed());
 
-        assert_eq!(cost, test.cost);
+        assert_eq!(cost, test.weight);
     }
 
     println!("all correct");

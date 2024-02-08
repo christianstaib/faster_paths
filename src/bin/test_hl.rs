@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::{
-    graph::Graph, hl::hub_graph::HubGraph, naive_graph::NaiveGraph, path::RouteValidationRequest,
+    graph::Graph, hl::hub_graph::HubGraph, naive_graph::NaiveGraph, path::PathValidationRequest,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -32,7 +32,7 @@ fn main() {
     let graph = Graph::from_edges(&graph.edges);
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
-    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+    let tests: Vec<PathValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.hl_graph).unwrap());
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
@@ -50,7 +50,7 @@ fn main() {
             cost = Some(route.weight);
             graph.validate_route(&test.request, &route);
         }
-        assert_eq!(cost, test.cost);
+        assert_eq!(cost, test.weight);
     });
 
     println!("all correct");

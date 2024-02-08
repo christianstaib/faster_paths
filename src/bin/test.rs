@@ -7,7 +7,7 @@ use osm_test::{
     graph::Graph,
     hl::hub_graph::HubGraph,
     naive_graph::NaiveGraph,
-    path::{RouteValidationRequest, Routing},
+    path::{PathValidationRequest, Pathfinding},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
 
@@ -48,14 +48,14 @@ fn main() {
     let hl_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
-    let requests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+    let requests: Vec<PathValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     for request in requests.iter() {
-        let true_cost = request.cost;
+        let true_cost = request.weight;
         let request = request.request.clone();
 
         // test dijkstra
-        let response = dijkstra.get_route(&request);
+        let response = dijkstra.get_path(&request);
         let mut cost = None;
         if let Some(route) = response.route {
             cost = Some(route.weight);
@@ -63,7 +63,7 @@ fn main() {
         assert_eq!(true_cost, cost, "dijkstra wrong");
 
         // test bi dijkstra
-        let response = bi_dijkstra.get_route(&request);
+        let response = bi_dijkstra.get_path(&request);
         let mut cost = None;
         if let Some(route) = response.route {
             cost = Some(route.weight);

@@ -6,7 +6,7 @@ use osm_test::{
     fast_graph::FastGraph,
     graph::Graph,
     naive_graph::NaiveGraph,
-    path::{PathRequest, RouteValidationRequest, Routing},
+    path::{PathRequest, PathValidationRequest, Pathfinding},
     simple_algorithms::dijkstra::Dijkstra,
 };
 use rand::Rng;
@@ -45,13 +45,16 @@ fn main() {
                 target: rng.gen_range(0..graph.num_nodes()) as u32,
             };
 
-            let response = dijkstra.get_route(&request);
+            let response = dijkstra.get_path(&request);
             let mut cost = None;
             if let Some(route) = response.route {
                 cost = Some(route.weight);
             }
 
-            RouteValidationRequest { request, cost }
+            PathValidationRequest {
+                request,
+                weight: cost,
+            }
         })
         .collect();
 

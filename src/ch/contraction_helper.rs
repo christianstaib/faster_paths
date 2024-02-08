@@ -46,7 +46,7 @@ impl<'a> ContractionHelper<'a> {
                         let edge = DirectedWeightedEdge {
                             tail: uv_edge.tail,
                             head: vw_ede.head,
-                            cost: uw_cost,
+                            weight: uw_cost,
                         };
                         shortcuts.push((edge, v));
                     }
