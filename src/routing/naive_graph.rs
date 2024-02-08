@@ -3,13 +3,11 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use crate::sphere::geometry::point::Point;
-
 use super::edge::DirectedWeightedEdge;
 
 #[derive(Clone)]
 pub struct NaiveGraph {
-    pub nodes: Vec<Point>,
+    // pub nodes: Vec<Point>,
     pub edges: Vec<DirectedWeightedEdge>,
 }
 
@@ -22,7 +20,7 @@ impl NaiveGraph {
         let number_of_nodes: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
         let number_of_edges: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
 
-        let nodes: Vec<_> = lines
+        let _: Vec<_> = lines
             .by_ref()
             .take(number_of_nodes)
             .map(|node_line| {
@@ -31,10 +29,9 @@ impl NaiveGraph {
                 let mut values = node_line.split_whitespace();
                 values.next();
                 values.next();
-                let latitude: f64 = values.next().unwrap().parse().unwrap();
-                let longitude: f64 = values.next().unwrap().parse().unwrap();
                 values.next();
-                Point::from_coordinate(latitude, longitude)
+                values.next();
+                values.next();
             })
             .collect();
 
@@ -54,14 +51,12 @@ impl NaiveGraph {
             })
             .collect();
 
-        NaiveGraph { nodes, edges }
+        NaiveGraph { edges }
     }
 
     pub fn from_gr_file(filename: &str) -> NaiveGraph {
         let file = File::open(filename).unwrap();
         let reader = BufReader::new(file);
-
-        let nodes = Vec::new();
 
         let edges: Vec<_> = reader
             .lines()
@@ -80,6 +75,6 @@ impl NaiveGraph {
             })
             .collect();
 
-        NaiveGraph { nodes, edges }
+        NaiveGraph { edges }
     }
 }

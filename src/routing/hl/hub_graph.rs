@@ -2,9 +2,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rand::Rng;
-use rayon::iter::{
-    IntoParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
-};
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::routing::{
