@@ -28,7 +28,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
+    let graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
     let graph = Graph::from_edges(&graph.edges);
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
@@ -38,9 +38,6 @@ fn main() {
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
     println!("avg label size is {}", hub_graph.get_avg_label_size());
-
-    // println!("make hitting set");
-    // hub_graph.make_hit_set_par(10_000_000);
 
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {

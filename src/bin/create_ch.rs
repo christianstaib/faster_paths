@@ -25,8 +25,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let naive_graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
-    // let naive_graph = NaiveGraph::from_gr_file("tests/data/fmi/USA-road-d.NY.gr");
+    let naive_graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
     let mut graph = Graph::from_edges(&naive_graph.edges);
     removing_double_edges(&mut graph);
     remove_edge_to_self(&mut graph);
