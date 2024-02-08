@@ -2,20 +2,20 @@ DATA_DIR := tests/data
 FMI_DIR := $(DATA_DIR)/fmi
 
 NETWORK_GRAPH := $(FMI_DIR)/network.fmi
-NETWORK_CH:= $(FMI_DIR)/network_contracted.bincode
-NETWORK_HL:= $(FMI_DIR)/network_hubs.bincode
-NETWORK_TESTS := $(FMI_DIR)/network_tests.json
+NETWORK_CH := $(NETWORK_GRAPH).ch.bincode
+NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
+NETWORK_TESTS := $(NETWORK_GRAPH).tests.json
 
 NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
-NY_CH:= $(FMI_DIR)/stgtregbz_contracted.bincode
-NY_HL:= $(FMI_DIR)/stgtregbz_hubs.bincode
-NY_TESTS := $(FMI_DIR)/stgtregbz_tests.json
+NY_CH := $(NY_GRAPH).ch.bincode
+NY_HL := $(NY_GRAPH).hl.bincode
+NY_TESTS := $(NY_GRAPH).tests.json
 
 NUM_TESTS := 10000
 HOP_LIMIT := 3
 
 dirs:
-	mkdir tests/data/fmi/
+	mkdir $(FMI_DIR)
 
 
 test_queue_sol:
