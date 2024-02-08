@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::routing::{
+use osm_test::{
     ch::contractor::ContractedGraph, path::RouteValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
@@ -17,20 +17,20 @@ use osm_test::routing::{
 struct Args {
     /// Path of contracted_graph (output)
     #[arg(short, long)]
-    contracted_graph: String,
+    ch_graph: String,
     /// Path of .fmi file
     #[arg(short, long)]
-    test_path: String,
+    tests_path: String,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let reader = BufReader::new(File::open(args.contracted_graph).unwrap());
+    let reader = BufReader::new(File::open(args.ch_graph).unwrap());
     let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
     let dijkstra = ChDijkstra::new(&contracted_graph);
 
-    let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
+    let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     let mut times = Vec::new();

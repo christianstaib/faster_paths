@@ -1,7 +1,7 @@
 use std::{fs::File, io::BufReader};
 
 use clap::Parser;
-use osm_test::routing::{
+use osm_test::{
     ch::contractor::ContractedGraph,
     fast_graph::FastGraph,
     graph::Graph,
@@ -17,13 +17,13 @@ use osm_test::routing::{
 struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
-    fmi_path: String,
+    graph_path: String,
     /// Path of .fmi file
     #[arg(short, long)]
-    fmi_ch_path: String,
+    ch_path: String,
     /// Path of .fmi file
     #[arg(short, long)]
-    fmi_hl_path: String,
+    hl_path: String,
     /// Path of .fmi file
     #[arg(short, long)]
     tests_path: String,
@@ -32,7 +32,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_fmi_file(args.fmi_path.as_str());
+    let graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
     let graph = Graph::from_edges(&graph.edges);
     let graph = FastGraph::from_graph(&graph);
 
@@ -40,11 +40,11 @@ fn main() {
 
     let bi_dijkstra = BiDijkstra::new(&graph);
 
-    let reader = BufReader::new(File::open(args.fmi_ch_path).unwrap());
+    let reader = BufReader::new(File::open(args.ch_path).unwrap());
     let ch_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
     let ch_bi_dijkstra = ChDijkstra::new(&ch_graph);
 
-    let reader = BufReader::new(File::open(args.fmi_hl_path).unwrap());
+    let reader = BufReader::new(File::open(args.hl_path).unwrap());
     let hl_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());

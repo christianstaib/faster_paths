@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::routing::{
+use osm_test::{
     graph::Graph, hl::hub_graph::HubGraph, naive_graph::NaiveGraph, path::RouteValidationRequest,
 };
 
@@ -16,31 +16,28 @@ use osm_test::routing::{
 struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
-    hub_graph: String,
+    hl_graph: String,
     /// Path of .fmi file
     #[arg(short, long)]
-    fmi_path: String,
+    graph_path: String,
     /// Path of .fmi file
     #[arg(short, long)]
-    test_path: String,
+    tests_path: String,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_fmi_file(args.fmi_path.as_str());
+    let graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
     let graph = Graph::from_edges(&graph.edges);
 
-    let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
+    let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    let reader = BufReader::new(File::open(args.hub_graph).unwrap());
+    let reader = BufReader::new(File::open(args.hl_graph).unwrap());
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
     println!("avg label size is {}", hub_graph.get_avg_label_size());
-
-    // println!("make hitting set");
-    // hub_graph.make_hit_set_par(10_000_000);
 
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {

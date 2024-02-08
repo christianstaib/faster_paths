@@ -2,7 +2,7 @@ use std::{fs::File, io::BufReader};
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::routing::hl::hub_graph::HubGraph;
+use osm_test::hl::hub_graph::HubGraph;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -10,13 +10,13 @@ use osm_test::routing::hl::hub_graph::HubGraph;
 struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
-    hub_graph: String,
+    hl_graph: String,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let reader = BufReader::new(File::open(args.hub_graph).unwrap());
+    let reader = BufReader::new(File::open(args.hl_graph).unwrap());
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
     let mut used = vec![0 as u32; hub_graph.forward_labels.len()];
