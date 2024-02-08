@@ -1,4 +1,4 @@
-use crate::routing::{ch::contraction_helper::ContractionHelper, graph::Graph};
+use crate::{ch::contraction_helper::ContractionHelper, graph::Graph};
 
 use super::queue::PriorityTerm;
 

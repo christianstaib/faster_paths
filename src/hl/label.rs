@@ -5,7 +5,7 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::routing::path::Path;
+use crate::path::Path;
 
 use super::{hub_graph::HubGraph, label_entry::LabelEntry};
 

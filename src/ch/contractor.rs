@@ -4,7 +4,7 @@ use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::routing::{
+use crate::{
     edge::{DirectedEdge, DirectedWeightedEdge},
     graph::Graph,
     types::VertexId,

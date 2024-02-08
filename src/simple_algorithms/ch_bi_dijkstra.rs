@@ -4,7 +4,7 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::routing::{
+use crate::{
     ch::{contractor::ContractedGraph, shortcut_replacer::ShortcutReplacer},
     edge::DirectedEdge,
     fast_graph::FastGraph,

@@ -5,7 +5,7 @@ use rand::Rng;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::routing::{
+use crate::{
     ch::shortcut_replacer::ShortcutReplacer,
     path::{Path, PathRequest},
     types::{VertexId, Weight},

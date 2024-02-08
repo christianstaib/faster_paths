@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
-use crate::routing::graph::Graph;
+use crate::graph::Graph;
 
 use super::queue::PriorityTerm;
 

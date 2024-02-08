@@ -1,7 +1,7 @@
 use std::{fs::File, io::BufReader};
 
 use clap::Parser;
-use osm_test::routing::{
+use osm_test::{
     ch::contractor::ContractedGraph,
     fast_graph::FastGraph,
     graph::Graph,

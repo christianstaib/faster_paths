@@ -2,7 +2,7 @@ use std::{fs::File, io::BufRead, io::BufReader};
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::routing::{
+use osm_test::{
     ch::contractor::ContractedGraph,
     fast_graph::FastGraph,
     graph::Graph,

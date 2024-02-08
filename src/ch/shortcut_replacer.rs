@@ -2,7 +2,7 @@ use ahash::HashMap;
 use indicatif::ProgressIterator;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::routing::{edge::DirectedEdge, path::Path, types::VertexId};
+use crate::{edge::DirectedEdge, path::Path, types::VertexId};
 
 #[derive(Serialize, Deserialize)]
 pub struct ShortcutReplacer {

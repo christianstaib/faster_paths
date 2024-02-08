@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
-use crate::routing::types::{VertexId, Weight};
+use crate::types::{VertexId, Weight};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct LabelEntry {

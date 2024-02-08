@@ -1,7 +1,7 @@
 use std::{fs::File, io::BufWriter, time::Instant};
 
 use clap::Parser;
-use osm_test::routing::{
+use osm_test::{
     ch::{
         contractor::Contractor,
         graph_cleaner::{remove_edge_to_self, removing_double_edges},

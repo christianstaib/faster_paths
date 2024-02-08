@@ -1,4 +1,4 @@
-use crate::routing::{
+use crate::{
     dijkstra_data::DijkstraData,
     fast_graph::FastGraph,
     path::{Path, PathRequest, RouteResponse, Routing},
