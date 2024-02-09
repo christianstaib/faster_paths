@@ -57,7 +57,7 @@ fn main() {
         // test dijkstra
         let response = dijkstra.get_route(&request);
         let mut cost = None;
-        if let Some(route) = response.route {
+        if let Some(route) = response {
             cost = Some(route.weight);
         }
         assert_eq!(true_cost, cost, "dijkstra wrong");
@@ -65,7 +65,7 @@ fn main() {
         // test bi dijkstra
         let response = bi_dijkstra.get_route(&request);
         let mut cost = None;
-        if let Some(route) = response.route {
+        if let Some(route) = response {
             cost = Some(route.weight);
         }
         assert_eq!(true_cost, cost, "bi dijkstra wrong");

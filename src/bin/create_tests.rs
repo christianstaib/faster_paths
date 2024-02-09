@@ -47,7 +47,7 @@ fn main() {
 
             let response = dijkstra.get_route(&request);
             let mut cost = None;
-            if let Some(route) = response.route {
+            if let Some(route) = response {
                 cost = Some(route.weight);
             }
 

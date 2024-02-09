@@ -1,9 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use super::{
-    dijkstra_data::DijkstraData,
-    types::{VertexId, Weight},
-};
+use super::types::{VertexId, Weight};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PathRequest {
@@ -40,24 +37,8 @@ impl RouteValidationRequest {
     }
 }
 
-#[derive(Clone)]
-pub struct RouteResponse {
-    pub route: Option<Path>,
-    pub data: Vec<DijkstraData>,
-}
-
 pub trait Routing {
-    fn get_route(&self, route_request: &PathRequest) -> RouteResponse;
-}
-
-impl RouteResponse {
-    pub fn get_cost(&self) -> Option<u32> {
-        let mut cost = None;
-        if let Some(route) = &self.route {
-            cost = Some(route.weight);
-        }
-        cost
-    }
+    fn get_route(&self, route_request: &PathRequest) -> Option<Path>;
 }
 
 impl PathRequest {
