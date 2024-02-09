@@ -45,7 +45,7 @@ fn main() {
                 target: rng.gen_range(0..graph.num_nodes()) as u32,
             };
 
-            let response = dijkstra.get_route(&request);
+            let response = dijkstra.get_path(&request);
             let mut cost = None;
             if let Some(route) = response {
                 cost = Some(route.weight);

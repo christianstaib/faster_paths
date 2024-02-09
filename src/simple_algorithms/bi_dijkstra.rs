@@ -11,7 +11,7 @@ pub struct BiDijkstra<'a> {
 }
 
 impl<'a> Routing for BiDijkstra<'a> {
-    fn get_route(&self, route_request: &PathRequest) -> Option<Path> {
+    fn get_path(&self, route_request: &PathRequest) -> Option<Path> {
         self.get_data(&route_request)
     }
 }

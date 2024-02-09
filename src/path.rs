@@ -38,7 +38,7 @@ impl RouteValidationRequest {
 }
 
 pub trait Routing {
-    fn get_route(&self, route_request: &PathRequest) -> Option<Path>;
+    fn get_path(&self, route_request: &PathRequest) -> Option<Path>;
 }
 
 impl PathRequest {
