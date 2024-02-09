@@ -40,8 +40,8 @@ impl<'a> BiDijkstra<'a> {
 
         while !forward.is_empty() || !backward.is_empty() {
             if let Some(state) = forward.pop() {
-                if let Some(backward_cost) = backward.verticies[state.value as usize].cost {
-                    let forward_cost = forward.verticies[state.value as usize].cost.unwrap();
+                if let Some(backward_cost) = backward.verticies[state.value as usize].weight {
+                    let forward_cost = forward.verticies[state.value as usize].weight.unwrap();
                     let cost = forward_cost + backward_cost;
                     if cost < minimal_cost {
                         minimal_cost = cost;
@@ -56,8 +56,9 @@ impl<'a> BiDijkstra<'a> {
 
             if let Some(state) = backward.pop() {
                 if forward.verticies[state.value as usize].is_expanded {
-                    if let Some(forward_cost) = forward.verticies[state.value as usize].cost {
-                        let backward_cost = backward.verticies[state.value as usize].cost.unwrap();
+                    if let Some(forward_cost) = forward.verticies[state.value as usize].weight {
+                        let backward_cost =
+                            backward.verticies[state.value as usize].weight.unwrap();
                         let cost = forward_cost + backward_cost;
                         if cost < minimal_cost {
                             minimal_cost = cost;

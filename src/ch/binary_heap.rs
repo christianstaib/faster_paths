@@ -1,16 +1,18 @@
 use std::cmp::Ordering;
 
+use crate::types::{VertexId, Weight};
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct MinimumItem {
-    pub cost: u32,
-    pub node: u32,
+    pub weight: Weight,
+    pub vertex: VertexId,
 }
 
 impl MinimumItem {
     pub fn new(priority: u32, item: u32) -> Self {
         Self {
-            cost: priority,
-            node: item,
+            weight: priority,
+            vertex: item,
         }
     }
 }
@@ -21,9 +23,9 @@ impl Ord for MinimumItem {
         // In case of a tie we compare positions - this step is necessary
         // to make implementations of `PartialEq` and `Ord` consistent.
         other
-            .cost
-            .cmp(&self.cost)
-            .then_with(|| self.node.cmp(&other.node))
+            .weight
+            .cmp(&self.weight)
+            .then_with(|| self.vertex.cmp(&other.vertex))
     }
 }
 

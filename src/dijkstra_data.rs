@@ -1,5 +1,7 @@
 use std::usize;
 
+use crate::types::Weight;
+
 use super::{
     path::Path,
     queue::heap_queue::{HeapQueue, State},
@@ -9,7 +11,7 @@ use super::{
 #[derive(Clone)]
 pub struct DijsktraEntry {
     pub predecessor: Option<VertexId>,
-    pub cost: Option<u32>,
+    pub weight: Option<Weight>,
     pub is_expanded: bool,
 }
 
@@ -17,7 +19,7 @@ impl DijsktraEntry {
     fn new() -> DijsktraEntry {
         DijsktraEntry {
             predecessor: None,
-            cost: None,
+            weight: None,
             is_expanded: false,
         }
     }
@@ -33,7 +35,7 @@ impl DijkstraData {
     pub fn new(num_nodes: usize, source: VertexId) -> DijkstraData {
         let mut queue = HeapQueue::new();
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
-        nodes[source as usize].cost = Some(0);
+        nodes[source as usize].weight = Some(0);
         queue.insert(0, source);
         DijkstraData {
             queue,
@@ -56,12 +58,12 @@ impl DijkstraData {
         self.queue.is_empty()
     }
 
-    pub fn update(&mut self, source: VertexId, target: VertexId, edge_cost: u32) {
-        let alternative_cost = self.verticies[source as usize].cost.unwrap() + edge_cost;
-        let current_cost = self.verticies[target as usize].cost.unwrap_or(u32::MAX);
+    pub fn update(&mut self, source: VertexId, target: VertexId, edge_weight: Weight) {
+        let alternative_cost = self.verticies[source as usize].weight.unwrap() + edge_weight;
+        let current_cost = self.verticies[target as usize].weight.unwrap_or(u32::MAX);
         if alternative_cost < current_cost {
             self.verticies[target as usize].predecessor = Some(source);
-            self.verticies[target as usize].cost = Some(alternative_cost);
+            self.verticies[target as usize].weight = Some(alternative_cost);
             self.queue.insert(alternative_cost, target);
         }
     }
@@ -75,7 +77,7 @@ impl DijkstraData {
         }
         route.reverse();
         Some(Path {
-            weight: self.verticies[target as usize].cost?,
+            weight: self.verticies[target as usize].weight?,
             vertices: route,
         })
     }
@@ -84,7 +86,7 @@ impl DijkstraData {
         self.verticies
             .iter()
             .enumerate()
-            .filter(|(_, entry)| entry.cost.is_some())
+            .filter(|(_, entry)| entry.weight.is_some())
             .map(|(i, _)| i)
             .collect()
     }

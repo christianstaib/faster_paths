@@ -20,23 +20,6 @@ pub struct RouteValidationRequest {
     pub cost: Option<u32>,
 }
 
-impl RouteValidationRequest {
-    pub fn from_str(str: &str) -> Option<RouteValidationRequest> {
-        let line: Vec<_> = str.split(',').collect();
-        let mut cost = None;
-        if let Ok(str_cost) = line[2].parse::<u32>() {
-            cost = Some(str_cost);
-        }
-        Some(RouteValidationRequest {
-            request: PathRequest {
-                source: line[0].parse().ok()?,
-                target: line[1].parse().ok()?,
-            },
-            cost,
-        })
-    }
-}
-
 pub trait Routing {
     fn get_path(&self, route_request: &PathRequest) -> Option<Path>;
 }

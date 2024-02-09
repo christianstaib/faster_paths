@@ -46,7 +46,7 @@ impl<'a> ContractionHelper<'a> {
                         let edge = DirectedWeightedEdge {
                             tail: uv_edge.tail,
                             head: vw_ede.head,
-                            cost: uw_cost,
+                            weight: uw_cost,
                         };
                         shortcuts.push((edge, v));
                     }
@@ -78,13 +78,13 @@ impl<'a> ContractionHelper<'a> {
         let mut hops = HashMap::new();
 
         queue.push(MinimumItem {
-            cost: 0,
-            node: source,
+            weight: 0,
+            vertex: source,
         });
         cost.insert(source, 0);
         hops.insert(source, 0);
 
-        while let Some(MinimumItem { node, .. }) = queue.pop() {
+        while let Some(MinimumItem { vertex: node, .. }) = queue.pop() {
             for edge in &self.graph.out_edges[node as usize] {
                 let alternative_cost = cost[&node] + edge.cost;
                 let new_hops = hops[&node] + 1;
@@ -95,8 +95,8 @@ impl<'a> ContractionHelper<'a> {
                     let current_cost = *cost.get(&edge.head).unwrap_or(&u32::MAX);
                     if alternative_cost < current_cost {
                         queue.push(MinimumItem {
-                            cost: alternative_cost,
-                            node: edge.head,
+                            weight: alternative_cost,
+                            vertex: edge.head,
                         });
                         cost.insert(edge.head, alternative_cost);
                         hops.insert(edge.head, new_hops);

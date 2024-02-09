@@ -7,7 +7,6 @@ use super::edge::DirectedWeightedEdge;
 
 #[derive(Clone)]
 pub struct NaiveGraph {
-    // pub nodes: Vec<Point>,
     pub edges: Vec<DirectedWeightedEdge>,
 }
 
