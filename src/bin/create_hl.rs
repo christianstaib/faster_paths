@@ -6,7 +6,9 @@ use std::{
 
 use clap::Parser;
 
-use osm_test::{ch::contractor::ContractedGraph, simple_algorithms::ch_bi_dijkstra::ChDijkstra};
+use faster_paths::{
+    ch::contractor::ContractedGraph, simple_algorithms::ch_bi_dijkstra::ChDijkstra,
+};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

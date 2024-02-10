@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::{
+use faster_paths::{
     graph::Graph, hl::hub_graph::HubGraph, naive_graph::NaiveGraph, path::RouteValidationRequest,
 };
 

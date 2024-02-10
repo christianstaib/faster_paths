@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufReader};
 
-use osm_test::{
+use faster_paths::{
     ch::contractor::Contractor,
     fast_graph::FastGraph,
     graph::Graph,

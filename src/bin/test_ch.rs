@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::{
+use faster_paths::{
     ch::contractor::ContractedGraph, path::RouteValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
