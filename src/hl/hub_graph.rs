@@ -1,14 +1,9 @@
-use std::sync::atomic::{AtomicU32, Ordering};
-
-use indicatif::{ParallelProgressIterator, ProgressIterator};
-use rand::Rng;
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    ch::shortcut_replacer::ShortcutReplacer,
+    ch::fast_shortcut_replacer::FastShortcutReplacer,
     path::{Path, PathRequest},
-    types::{VertexId, Weight},
+    types::Weight,
 };
 
 use super::label::Label;
@@ -17,7 +12,7 @@ use super::label::Label;
 pub struct HubGraph {
     pub forward_labels: Vec<Label>,
     pub reverse_labels: Vec<Label>,
-    pub shortcut_replacer: ShortcutReplacer,
+    pub shortcut_replacer: FastShortcutReplacer,
 }
 
 impl HubGraph {

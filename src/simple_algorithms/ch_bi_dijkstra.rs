@@ -5,7 +5,7 @@ use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
-    ch::{contractor::ContractedGraph, shortcut_replacer::ShortcutReplacer},
+    ch::{contractor::ContractedGraph, fast_shortcut_replacer::FastShortcutReplacer},
     edge::DirectedEdge,
     fast_graph::FastGraph,
     hl::{hub_graph::HubGraph, label::Label, label_entry::LabelEntry},
@@ -84,7 +84,7 @@ impl ChDijkstra {
                 in_labels[*vertex as usize].prune_reverse_label(&out_labels);
             }
         }
-        let shortcut_replacer = ShortcutReplacer::new(&self.shortcuts);
+        let shortcut_replacer = FastShortcutReplacer::new(&self.shortcuts);
 
         out_labels
             .par_iter_mut()
