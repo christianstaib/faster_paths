@@ -53,7 +53,7 @@ impl Graph {
             .collect()
     }
 
-    pub fn neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
+    pub fn open_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
         let mut neighbors = HashSet::new();
         neighbors.insert(vertex);
 

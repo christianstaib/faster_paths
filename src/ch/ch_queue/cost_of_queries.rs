@@ -1,4 +1,4 @@
-use crate::graph::Graph;
+use crate::{graph::Graph, types::VertexId};
 
 use super::queue::PriorityTerm;
 
@@ -8,15 +8,17 @@ pub struct CostOfQueries {
 
 impl PriorityTerm for CostOfQueries {
     #[allow(unused_variables)]
-    fn priority(&self, v: u32, graph: &Graph) -> i32 {
-        *self.costs.get(v as usize).unwrap()
+    fn priority(&self, vertex: VertexId, graph: &Graph) -> i32 {
+        *self.costs.get(vertex as usize).unwrap()
     }
 
     #[allow(unused_variables)]
-    fn update_before_contraction(&mut self, v: u32, graph: &Graph) {
-        let v_cost = self.costs[v as usize] + 1;
-        for neighbor in graph.neighborhood(v, 1) {
-            self.costs[neighbor as usize] = std::cmp::max(self.costs[neighbor as usize], v_cost);
+    fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
+        let v_cost = self.costs[vertex as usize] + 1;
+        for neighbor in graph.open_neighborhood(vertex, 1) {
+            if v_cost > self.costs[neighbor as usize] {
+                self.costs[neighbor as usize] = v_cost;
+            }
         }
     }
 }

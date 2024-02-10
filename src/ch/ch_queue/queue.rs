@@ -13,11 +13,11 @@ use super::{
 
 pub trait PriorityTerm {
     /// Gets the priority of node v in the graph
-    fn priority(&self, v: u32, graph: &Graph) -> i32;
+    fn priority(&self, vertex: VertexId, graph: &Graph) -> i32;
 
     /// Gets called just before a v is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
-    fn update_before_contraction(&mut self, v: u32, graph: &Graph);
+    fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph);
 }
 
 pub struct CHQueue {
@@ -85,7 +85,7 @@ impl CHQueue {
             }
 
             self.update_before_contraction(state.node_id, graph);
-            neighbors.extend(graph.neighborhood(state.node_id, 2));
+            neighbors.extend(graph.open_neighborhood(state.node_id, 2));
             node_set.push(state.node_id);
         }
 

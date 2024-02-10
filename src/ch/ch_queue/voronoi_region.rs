@@ -6,7 +6,7 @@ pub struct VoronoiRegion {}
 
 impl PriorityTerm for VoronoiRegion {
     fn priority(&self, v: u32, graph: &Graph) -> i32 {
-        let neighbors = graph.neighborhood(v, 1);
+        let neighbors = graph.open_neighborhood(v, 1);
 
         let mut region_size = 0;
         neighbors.iter().for_each(|&neighbor| {
