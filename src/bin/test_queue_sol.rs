@@ -1,7 +1,6 @@
 use std::{fs::File, io::BufRead, io::BufReader};
 
 use clap::Parser;
-use indicatif::ProgressIterator;
 use faster_paths::{
     ch::contractor::{ContractedGraph, Contractor},
     fast_graph::FastGraph,
@@ -11,6 +10,7 @@ use faster_paths::{
     path::{PathRequest, Routing},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
+use indicatif::ProgressIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -93,10 +93,10 @@ fn main() {
         assert_eq!(true_cost, &cost, "ch dijkstra wrong");
 
         // test hl
-        let response = hl_graph.get_weight(&request);
+        let response = hl_graph.get_path(&request);
         let mut cost: i32 = -1;
-        if let Some(this_cost) = response {
-            cost = this_cost as i32;
+        if let Some(route) = response {
+            cost = route.weight as i32;
         }
         assert_eq!(true_cost, &cost, "hl wrong");
     }
