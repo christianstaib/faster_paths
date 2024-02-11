@@ -78,6 +78,7 @@ impl Contractor {
         let mut shortcuts = Vec::new();
 
         let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
+        bar.set_message("contracting graph");
 
         let mut level = 0;
         while let Some(v) = self.queue.pop(&self.graph) {

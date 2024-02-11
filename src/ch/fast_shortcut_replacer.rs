@@ -1,4 +1,5 @@
 use ahash::HashMap;
+use indicatif::ProgressIterator;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, path::Path, types::VertexId};
@@ -32,7 +33,7 @@ impl FastShortcutReplacer {
 
         vertices.push(vertices_with_shortcuts[0]);
 
-        for windows in vertices_with_shortcuts.windows(2) {
+        for windows in vertices_with_shortcuts.windows(2).progress() {
             let edge = DirectedEdge {
                 tail: windows[0],
                 head: windows[1],
@@ -46,7 +47,7 @@ impl FastShortcutReplacer {
         vertices
     }
 
-    pub fn get_route(&self, path_with_shortcuts: &Path) -> Path {
+    pub fn get_path(&self, path_with_shortcuts: &Path) -> Path {
         let mut path = path_with_shortcuts.clone();
         path.vertices = self.replace_shortcuts(&path.vertices);
         path

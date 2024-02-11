@@ -42,7 +42,7 @@ impl HubGraph {
         let backward_label = self.reverse_labels.get(request.target as usize)?;
         let path_with_shortcuts = Self::get_path_with_shortcuts(forward_label, backward_label)?;
 
-        Some(self.shortcut_replacer.get_route(&path_with_shortcuts))
+        Some(self.shortcut_replacer.get_path(&path_with_shortcuts))
     }
 
     // cost, route_with_shortcuts

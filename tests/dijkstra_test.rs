@@ -30,34 +30,36 @@ fn dijkstra() {
         let request = &test.request;
 
         // test dijkstra
-        let response = dijkstra.get_path(&request);
+        let path = dijkstra.get_path(&request);
         let mut cost = None;
-        if let Some(route) = response {
-            cost = Some(route.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
+            graph.validate_route(request, &path);
         }
         assert_eq!(test.cost, cost, "dijkstra wrong");
 
         // test bi dijkstra
-        let response = bi_dijkstra.get_path(&request);
+        let path = bi_dijkstra.get_path(&request);
         let mut cost = None;
-        if let Some(route) = response {
-            cost = Some(route.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
         }
         assert_eq!(test.cost, cost, "bi dijkstra wrong");
 
         // test ch dijkstra
-        let response = ch_bi_dijkstra.get_route(&request);
+        let path = ch_bi_dijkstra.get_route(&request);
         let mut cost = None;
-        if let Some(route) = response {
-            cost = Some(route.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
         }
         assert_eq!(test.cost, cost, "ch dijkstra wrong");
 
         // test hl
-        let response = hl_graph.get_path(&request);
+        let path = hl_graph.get_path(&request);
         let mut cost = None;
-        if let Some(this_cost) = response {
-            cost = Some(this_cost.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
+            graph.validate_route(request, &path);
         }
         assert_eq!(test.cost, cost, "hl wrong");
     }

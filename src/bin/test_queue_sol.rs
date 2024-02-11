@@ -32,14 +32,11 @@ fn main() {
 
     let ch_graph = Contractor::get_contracted_graph(&graph);
     let ch_bi_dijkstra = ChDijkstra::new(&ch_graph);
+    let hl_graph = ch_bi_dijkstra.get_hl();
 
     let fast_graph = FastGraph::from_graph(&graph);
-
     let dijkstra = Dijkstra::new(&fast_graph);
-
     let bi_dijkstra = BiDijkstra::new(&fast_graph);
-
-    let hl_graph = ch_bi_dijkstra.get_hl();
 
     let queue: Vec<_> = BufReader::new(File::open(args.queue_path).unwrap())
         .lines()
