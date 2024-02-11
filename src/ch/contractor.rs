@@ -10,7 +10,10 @@ use crate::graphs::{
     types::VertexId,
 };
 
-use super::{ch_queue::queue::CHQueue, contraction_helper::ContractionHelper};
+use super::{
+    ch_queue::queue::CHQueue, contraction_helper::ContractionHelper,
+    graph_cleaner::remove_edge_to_self,
+};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ContractedGraph {
@@ -44,6 +47,7 @@ impl Contractor {
     }
 
     pub fn get_graph(mut self) -> ContractedGraph {
+        remove_edge_to_self(&mut self.graph);
         let out_edges = self.graph.out_edges.clone();
         let in_edges = self.graph.in_edges.clone();
 

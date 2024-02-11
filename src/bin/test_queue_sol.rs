@@ -2,7 +2,10 @@ use std::{fs::File, io::BufRead, io::BufReader};
 
 use clap::Parser;
 use faster_paths::{
-    ch::contractor::Contractor,
+    ch::{
+        contractor::Contractor,
+        graph_cleaner::{remove_edge_to_self, removing_double_edges},
+    },
     graphs::fast_graph::FastGraph,
     graphs::graph_factory::GraphFactory,
     graphs::path::{PathRequest, Routing},
@@ -28,7 +31,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = GraphFactory::from_fmi_file(args.graph_path.as_str());
+    let mut graph = GraphFactory::from_fmi_file(args.graph_path.as_str());
+    removing_double_edges(&mut graph);
+    remove_edge_to_self(&mut graph);
 
     let ch_graph = Contractor::get_contracted_graph(&graph);
     let ch_bi_dijkstra = ChDijkstra::new(&ch_graph);

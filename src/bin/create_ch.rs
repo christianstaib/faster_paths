@@ -24,9 +24,11 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut graph = GraphFactory::from_gr_file(args.graph_path.as_str());
+    let mut graph = GraphFactory::from_fmi_file(args.graph_path.as_str());
     removing_double_edges(&mut graph);
     remove_edge_to_self(&mut graph);
+
+    println!("there are {} edges", graph.out_edges.len());
 
     let start = Instant::now();
     let contracted_graph = Contractor::get_contracted_graph(&graph);
