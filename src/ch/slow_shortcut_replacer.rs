@@ -1,7 +1,7 @@
 use ahash::HashMap;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{edge::DirectedEdge, path::Path, types::VertexId};
+use crate::graphs::{edge::DirectedEdge, path::Path, types::VertexId};
 
 #[derive(Serialize, Deserialize)]
 pub struct SlowShortcutReplacer {

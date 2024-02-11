@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::types::{VertexId, Weight};
+use crate::graphs::types::{VertexId, Weight};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct MinimumItem {

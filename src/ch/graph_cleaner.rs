@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::graph::Graph;
+use crate::graphs::graph::Graph;
 
 pub fn remove_edge_to_self(graph: &mut Graph) {
     for i in 0..graph.out_edges.len() {

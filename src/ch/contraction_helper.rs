@@ -2,7 +2,7 @@ use std::collections::{BinaryHeap, HashMap};
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::{edge::DirectedWeightedEdge, graph::Graph, types::VertexId};
+use crate::graphs::{edge::DirectedWeightedEdge, graph::Graph, types::VertexId};
 
 use super::binary_heap::MinimumItem;
 

@@ -5,7 +5,10 @@ use indicatif::ProgressIterator;
 use rand::seq::SliceRandom;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::{ch::ch_queue::deleted_neighbors::DeletedNeighbors, graph::Graph, types::VertexId};
+use crate::{
+    ch::ch_queue::deleted_neighbors::DeletedNeighbors, graphs::graph::Graph,
+    graphs::types::VertexId,
+};
 
 use super::{
     cost_of_queries::CostOfQueries, edge_difference::EdgeDifferencePriority, state::CHState,

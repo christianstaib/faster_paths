@@ -6,12 +6,14 @@ use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
     ch::{contractor::ContractedGraph, fast_shortcut_replacer::FastShortcutReplacer},
-    edge::DirectedEdge,
-    fast_graph::FastGraph,
+    graphs::{
+        edge::DirectedEdge,
+        fast_graph::FastGraph,
+        path::{Path, PathRequest},
+        types::VertexId,
+    },
     hl::{hub_graph::HubGraph, label::Label, label_entry::LabelEntry},
-    path::{Path, PathRequest},
     queue::heap_queue::State,
-    types::VertexId,
 };
 
 #[derive(Clone)]

@@ -2,7 +2,7 @@ use std::{collections::HashSet, usize};
 
 use serde_derive::{Deserialize, Serialize};
 
-use super::{
+use crate::graphs::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge},
     types::VertexId,
 };

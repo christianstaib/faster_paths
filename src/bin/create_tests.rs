@@ -2,9 +2,9 @@ use std::{fs::File, io::BufWriter, io::Write};
 
 use clap::Parser;
 use faster_paths::{
-    fast_graph::FastGraph,
-    graph_factory::GraphFactory,
-    path::{PathRequest, RouteValidationRequest, Routing},
+    graphs::fast_graph::FastGraph,
+    graphs::graph_factory::GraphFactory,
+    graphs::path::{PathRequest, RouteValidationRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ProgressIterator;

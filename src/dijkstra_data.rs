@@ -1,11 +1,11 @@
 use std::usize;
 
-use crate::types::Weight;
-
-use super::{
-    path::Path,
+use crate::{
+    graphs::{
+        path::Path,
+        types::{VertexId, Weight},
+    },
     queue::heap_queue::{HeapQueue, State},
-    types::VertexId,
 };
 
 #[derive(Clone)]

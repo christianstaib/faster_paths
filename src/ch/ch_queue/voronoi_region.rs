@@ -1,4 +1,4 @@
-use crate::graph::Graph;
+use crate::graphs::graph::Graph;
 
 use super::queue::PriorityTerm;
 

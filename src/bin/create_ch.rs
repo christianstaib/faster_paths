@@ -6,7 +6,7 @@ use faster_paths::{
         contractor::Contractor,
         graph_cleaner::{remove_edge_to_self, removing_double_edges},
     },
-    graph_factory::GraphFactory,
+    graphs::graph_factory::GraphFactory,
 };
 
 /// Starts a routing service on localhost:3030/route

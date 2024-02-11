@@ -3,9 +3,9 @@ use std::{fs::File, io::BufRead, io::BufReader};
 use clap::Parser;
 use faster_paths::{
     ch::contractor::Contractor,
-    fast_graph::FastGraph,
-    graph_factory::GraphFactory,
-    path::{PathRequest, Routing},
+    graphs::fast_graph::FastGraph,
+    graphs::graph_factory::GraphFactory,
+    graphs::path::{PathRequest, Routing},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
 use indicatif::ProgressIterator;

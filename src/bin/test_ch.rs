@@ -5,11 +5,11 @@ use std::{
 };
 
 use clap::Parser;
-use indicatif::ProgressIterator;
 use faster_paths::{
-    ch::contractor::ContractedGraph, path::RouteValidationRequest,
+    ch::contractor::ContractedGraph, graphs::path::RouteValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
+use indicatif::ProgressIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

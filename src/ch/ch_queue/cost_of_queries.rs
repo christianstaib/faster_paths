@@ -1,4 +1,4 @@
-use crate::{graph::Graph, types::VertexId};
+use crate::graphs::{graph::Graph, types::VertexId};
 
 use super::queue::PriorityTerm;
 

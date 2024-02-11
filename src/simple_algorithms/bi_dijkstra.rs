@@ -1,8 +1,10 @@
 use crate::{
     dijkstra_data::DijkstraData,
-    fast_graph::FastGraph,
-    path::{Path, PathRequest, Routing},
-    types::VertexId,
+    graphs::{
+        fast_graph::FastGraph,
+        path::{Path, PathRequest, Routing},
+        types::VertexId,
+    },
 };
 
 #[derive(Clone)]

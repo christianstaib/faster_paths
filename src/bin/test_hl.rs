@@ -6,7 +6,8 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    graph_factory::GraphFactory, hl::hub_graph::HubGraph, path::RouteValidationRequest,
+    graphs::graph_factory::GraphFactory, graphs::path::RouteValidationRequest,
+    hl::hub_graph::HubGraph,
 };
 use indicatif::ProgressIterator;
 

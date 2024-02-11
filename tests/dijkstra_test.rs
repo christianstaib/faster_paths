@@ -2,9 +2,9 @@ use std::{fs::File, io::BufReader};
 
 use faster_paths::{
     ch::contractor::Contractor,
-    fast_graph::FastGraph,
-    graph_factory::GraphFactory,
-    path::{RouteValidationRequest, Routing},
+    graphs::fast_graph::FastGraph,
+    graphs::graph_factory::GraphFactory,
+    graphs::path::{RouteValidationRequest, Routing},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
 

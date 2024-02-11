@@ -3,9 +3,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use crate::graph::Graph;
-
-use super::edge::DirectedWeightedEdge;
+use super::{edge::DirectedWeightedEdge, graph::Graph};
 
 #[derive(Clone)]
 pub struct GraphFactory {

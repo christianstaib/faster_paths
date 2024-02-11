@@ -2,8 +2,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     ch::fast_shortcut_replacer::FastShortcutReplacer,
-    path::{Path, PathRequest},
-    types::Weight,
+    graphs::path::{Path, PathRequest},
+    graphs::types::Weight,
 };
 
 use super::label::Label;
