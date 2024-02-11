@@ -3,15 +3,17 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use crate::graph::Graph;
+
 use super::edge::DirectedWeightedEdge;
 
 #[derive(Clone)]
 pub struct NaiveGraph {
-    pub edges: Vec<DirectedWeightedEdge>,
+    //    pub edges: Vec<DirectedWeightedEdge>,
 }
 
 impl NaiveGraph {
-    pub fn from_fmi_file(filename: &str) -> NaiveGraph {
+    pub fn from_fmi_file(filename: &str) -> Graph {
         let file = File::open(filename).unwrap();
         let reader = BufReader::new(file);
 
@@ -50,10 +52,10 @@ impl NaiveGraph {
             })
             .collect();
 
-        NaiveGraph { edges }
+        Graph::from_edges(&edges)
     }
 
-    pub fn from_gr_file(filename: &str) -> NaiveGraph {
+    pub fn from_gr_file(filename: &str) -> Graph {
         let file = File::open(filename).unwrap();
         let reader = BufReader::new(file);
 
@@ -74,6 +76,6 @@ impl NaiveGraph {
             })
             .collect();
 
-        NaiveGraph { edges }
+        Graph::from_edges(&edges)
     }
 }

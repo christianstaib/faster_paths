@@ -6,8 +6,7 @@ use faster_paths::{
         contractor::Contractor,
         graph_cleaner::{remove_edge_to_self, removing_double_edges},
     },
-    graph::Graph,
-    naive_graph::NaiveGraph,
+    graph_factory::NaiveGraph,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -25,8 +24,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let naive_graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
-    let mut graph = Graph::from_edges(&naive_graph.edges);
+    let mut graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
     removing_double_edges(&mut graph);
     remove_edge_to_self(&mut graph);
 

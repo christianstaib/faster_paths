@@ -5,10 +5,10 @@ use std::{
 };
 
 use clap::Parser;
-use indicatif::ProgressIterator;
 use faster_paths::{
-    graph::Graph, hl::hub_graph::HubGraph, naive_graph::NaiveGraph, path::RouteValidationRequest,
+    graph_factory::NaiveGraph, hl::hub_graph::HubGraph, path::RouteValidationRequest,
 };
+use indicatif::ProgressIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -29,7 +29,6 @@ fn main() {
     let args = Args::parse();
 
     let graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
-    let graph = Graph::from_edges(&graph.edges);
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();

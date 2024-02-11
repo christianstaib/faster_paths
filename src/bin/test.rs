@@ -4,9 +4,8 @@ use clap::Parser;
 use faster_paths::{
     ch::contractor::ContractedGraph,
     fast_graph::FastGraph,
-    graph::Graph,
+    graph_factory::NaiveGraph,
     hl::hub_graph::HubGraph,
-    naive_graph::NaiveGraph,
     path::{RouteValidationRequest, Routing},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
@@ -33,7 +32,6 @@ fn main() {
     let args = Args::parse();
 
     let graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
-    let graph = Graph::from_edges(&graph.edges);
     let graph = FastGraph::from_graph(&graph);
 
     let dijkstra = Dijkstra::new(&graph);

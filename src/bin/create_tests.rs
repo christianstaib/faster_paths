@@ -1,14 +1,13 @@
 use std::{fs::File, io::BufWriter, io::Write};
 
 use clap::Parser;
-use indicatif::ProgressIterator;
 use faster_paths::{
     fast_graph::FastGraph,
-    graph::Graph,
-    naive_graph::NaiveGraph,
+    graph_factory::NaiveGraph,
     path::{PathRequest, RouteValidationRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
 };
+use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
@@ -31,7 +30,6 @@ fn main() {
     let args = Args::parse();
 
     let graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
-    let graph = Graph::from_edges(&graph.edges);
     let graph = FastGraph::from_graph(&graph);
     let dijkstra = Dijkstra::new(&graph);
 
