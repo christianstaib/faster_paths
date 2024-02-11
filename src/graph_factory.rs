@@ -8,11 +8,11 @@ use crate::graph::Graph;
 use super::edge::DirectedWeightedEdge;
 
 #[derive(Clone)]
-pub struct NaiveGraph {
+pub struct GraphFactory {
     //    pub edges: Vec<DirectedWeightedEdge>,
 }
 
-impl NaiveGraph {
+impl GraphFactory {
     pub fn from_fmi_file(filename: &str) -> Graph {
         let file = File::open(filename).unwrap();
         let reader = BufReader::new(file);

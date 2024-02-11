@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    graph_factory::NaiveGraph, hl::hub_graph::HubGraph, path::RouteValidationRequest,
+    graph_factory::GraphFactory, hl::hub_graph::HubGraph, path::RouteValidationRequest,
 };
 use indicatif::ProgressIterator;
 
@@ -28,7 +28,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
+    let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();

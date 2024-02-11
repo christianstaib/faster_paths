@@ -3,14 +3,14 @@ use std::{fs::File, io::BufReader};
 use faster_paths::{
     ch::contractor::Contractor,
     fast_graph::FastGraph,
-    graph_factory::NaiveGraph,
+    graph_factory::GraphFactory,
     path::{RouteValidationRequest, Routing},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
 
 #[test]
 fn dijkstra() {
-    let graph = NaiveGraph::from_gr_file("tests/data/fmi/USA-road-d.NY.gr");
+    let graph = GraphFactory::from_gr_file("tests/data/fmi/USA-road-d.NY.gr");
 
     let reader = BufReader::new(File::open("tests/data/fmi/USA-road-d.NY.gr.tests.json").unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();

@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, io::Write};
 use clap::Parser;
 use faster_paths::{
     fast_graph::FastGraph,
-    graph_factory::NaiveGraph,
+    graph_factory::GraphFactory,
     path::{PathRequest, RouteValidationRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
 };
@@ -29,7 +29,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
+    let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
     let graph = FastGraph::from_graph(&graph);
     let dijkstra = Dijkstra::new(&graph);
 
