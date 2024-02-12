@@ -20,9 +20,6 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     hl_graph: String,
-    /// Path of .fmi file
-    #[arg(short, long)]
-    hop_limit: u32,
 }
 
 fn main() {

@@ -16,7 +16,6 @@ STGT_QUEUE := $(FMI_DIR)/stgtregbz.que
 STGT_SOL := $(FMI_DIR)/stgtregbz.sol
 
 NUM_TESTS := 10000
-HOP_LIMIT := 3
 
 dirs:
 	mkdir $(FMI_DIR)
@@ -75,13 +74,11 @@ create_hl_ny:
 	cargo run --bin create_hl --release --\
 		--ch-graph $(NY_CH)\
 		--hl-graph $(NY_HL)\
-		--hop-limit $(HOP_LIMIT)
 
 create_hl:
 	cargo run --bin create_hl --release --\
 		--ch-graph $(NETWORK_CH)\
 		--hl-graph $(NETWORK_HL)\
-		--hop-limit $(HOP_LIMIT)
 
 
 test_hl_ny:

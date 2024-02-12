@@ -51,15 +51,15 @@ impl CHQueue {
         while let Some(mut state) = self.queue.pop() {
             // If current priority is greater than minimum priority, then repush state with updated
             // priority.
-            let current_priority = self.get_priority(state.vertex, graph);
-            if current_priority.0 > state.priority {
-                state.priority = current_priority.0;
+            let priority_shortcuts = self.get_priority_and_shortcuts(state.vertex, graph);
+            if priority_shortcuts.0 > state.priority {
+                state.priority = priority_shortcuts.0;
                 self.queue.push(state);
                 continue;
             }
 
             self.update_before_contraction(state.vertex, graph);
-            return Some((state.vertex, current_priority.1));
+            return Some((state.vertex, priority_shortcuts.1));
         }
         None
     }
@@ -106,14 +106,18 @@ impl CHQueue {
             .for_each(|priority_term| priority_term.1.update_before_contraction(vertex, graph));
     }
 
-    pub fn get_priority(&self, vertex: VertexId, graph: &Graph) -> (i32, Vec<Shortcut>) {
+    pub fn get_priority_and_shortcuts(
+        &self,
+        vertex: VertexId,
+        graph: &Graph,
+    ) -> (i32, Vec<Shortcut>) {
         let priorities: Vec<i32> = self
             .priority_terms
             .iter()
             .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
             .collect();
 
-        let shortcut_generator = ContractionHelper::new(graph, 5);
+        let shortcut_generator = ContractionHelper::new(graph, 50);
         let shortcuts = shortcut_generator.generate_shortcuts(vertex);
 
         let number_of_edges =
@@ -132,7 +136,7 @@ impl CHQueue {
             .par_bridge()
             .map(|state| CHState {
                 vertex: state.vertex,
-                priority: self.get_priority(state.vertex, graph).0,
+                priority: self.get_priority_and_shortcuts(state.vertex, graph).0,
             })
             .collect();
     }
@@ -147,7 +151,7 @@ impl CHQueue {
             .par_bridge()
             .map(|&v| CHState {
                 vertex: v,
-                priority: self.get_priority(v, graph).0,
+                priority: self.get_priority_and_shortcuts(v, graph).0,
             })
             .collect();
     }
