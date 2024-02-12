@@ -1,5 +1,6 @@
 use std::collections::{BinaryHeap, HashMap};
 
+use ahash::HashSet;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::graphs::{edge::DirectedWeightedEdge, graph::Graph, types::VertexId};
@@ -31,6 +32,8 @@ impl<'a> ContractionHelper<'a> {
         let vw_edges = &self.graph.out_edges[vertex as usize];
         let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
+        let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
+
         uv_edges
             .iter()
             .par_bridge()
@@ -38,7 +41,7 @@ impl<'a> ContractionHelper<'a> {
                 let mut shortcuts = Vec::new();
 
                 let max_cost = uv_edge.cost + max_vw_cost;
-                let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost);
+                let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost, &w_set);
 
                 for vw_ede in vw_edges.iter() {
                     let uw_cost = uv_edge.cost + vw_ede.cost;
@@ -76,10 +79,13 @@ impl<'a> ContractionHelper<'a> {
         source: VertexId,
         without: VertexId,
         max_cost: u32,
+        w_set: &HashSet<VertexId>,
     ) -> HashMap<u32, u32> {
         let mut queue = BinaryHeap::new();
         let mut cost = HashMap::new();
         let mut hops = HashMap::new();
+
+        let mut unseen_w = w_set.clone();
 
         queue.push(MinimumItem {
             weight: 0,
@@ -89,6 +95,11 @@ impl<'a> ContractionHelper<'a> {
         hops.insert(source, 0);
 
         while let Some(MinimumItem { vertex: node, .. }) = queue.pop() {
+            unseen_w.remove(&node);
+            if unseen_w.is_empty() {
+                break;
+            }
+
             for edge in &self.graph.out_edges[node as usize] {
                 let alternative_cost = cost[&node] + edge.cost;
                 let new_hops = hops[&node] + 1;
