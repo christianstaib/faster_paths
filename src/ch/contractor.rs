@@ -11,8 +11,10 @@ use crate::graphs::{
 };
 
 use super::{
-    ch_queue::queue::CHQueue, contraction_helper::ContractionHelper,
+    ch_queue::queue::CHQueue,
+    contraction_helper::ContractionHelper,
     graph_cleaner::remove_edge_to_self,
+    shortcut::{self, Shortcut},
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -51,7 +53,7 @@ impl Contractor {
         let out_edges = self.graph.out_edges.clone();
         let in_edges = self.graph.in_edges.clone();
 
-        let shortcuts = self.contract_node_sets();
+        let shortcuts = self.contract_single_nodes();
 
         self.graph.out_edges = out_edges;
         self.graph.in_edges = in_edges;
@@ -60,7 +62,7 @@ impl Contractor {
 
         let shortcuts = shortcuts
             .iter()
-            .map(|(shortcut, middle)| (shortcut.unweighted(), *middle))
+            .map(|shortcut| (shortcut.edge.unweighted(), shortcut.skiped_vertex))
             .collect();
 
         let max_level = self.levels.iter().max().unwrap();
@@ -78,7 +80,7 @@ impl Contractor {
     }
 
     /// Generates contraction hierarchy where one node at a time is contracted.
-    pub fn contract_single_nodes(&mut self) -> Vec<(DirectedWeightedEdge, VertexId)> {
+    pub fn contract_single_nodes(&mut self) -> Vec<Shortcut> {
         let mut shortcuts = Vec::new();
 
         let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
@@ -86,8 +88,8 @@ impl Contractor {
 
         let mut level = 0;
         while let Some(v) = self.queue.pop(&self.graph) {
-            let shortcut_generator = ContractionHelper::new(&self.graph, 10);
-            let mut this_shortcuts = shortcut_generator.generate_shortcuts(v);
+            let mut this_shortcuts = v.1;
+            let v = v.0;
 
             self.add_shortcuts(&this_shortcuts);
             shortcuts.append(&mut this_shortcuts);
@@ -103,42 +105,43 @@ impl Contractor {
         shortcuts
     }
 
-    /// Generates contraction hierarchy where nodes from independent node sets are contracted
-    /// simultainously.
-    pub fn contract_node_sets(&mut self) -> Vec<(DirectedWeightedEdge, VertexId)> {
-        let mut shortcuts = Vec::new();
+    // /// Generates contraction hierarchy where nodes from independent node sets are contracted
+    // /// simultainously.
+    // pub fn contract_node_sets(&mut self) -> Vec<(DirectedWeightedEdge, VertexId)> {
+    //     let mut shortcuts = Vec::new();
 
-        let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
+    //     let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
 
-        let mut level = 0;
-        while let Some(node_set) = self.queue.pop_vec(&self.graph, 10_000) {
-            let shortcut_generator = ContractionHelper::new(&self.graph, 10);
-            let mut this_shortcuts = node_set
-                .par_iter()
-                .map(|&v| shortcut_generator.generate_shortcuts(v))
-                .flatten()
-                .collect::<Vec<_>>();
+    //     let mut level = 0;
+    //     while let Some(node_set) = self.queue.pop_vec(&self.graph, 10_000) {
+    //         let shortcut_generator = ContractionHelper::new(&self.graph, 10);
+    //         let mut this_shortcuts = node_set
+    //             .par_iter()
+    //             .map(|&v| shortcut_generator.generate_shortcuts(v))
+    //             .flatten()
+    //             .collect::<Vec<_>>();
 
-            self.add_shortcuts(&this_shortcuts);
-            shortcuts.append(&mut this_shortcuts);
+    //         self.add_shortcuts(&this_shortcuts);
+    //         shortcuts.append(&mut this_shortcuts);
 
-            for &v in node_set.iter() {
-                self.graph.remove_vertex(v);
-                self.levels[v as usize] = level;
-            }
+    //         for &v in node_set.iter() {
+    //             self.graph.remove_vertex(v);
+    //             self.levels[v as usize] = level;
+    //         }
 
-            bar.inc(node_set.len() as u64);
-            level += 1;
-        }
-        bar.finish();
+    //         bar.inc(node_set.len() as u64);
+    //         level += 1;
+    //     }
+    //     bar.finish();
 
-        shortcuts
-    }
+    //     shortcuts
+    // }
 
-    fn add_shortcuts(&mut self, shortcuts: &Vec<(DirectedWeightedEdge, VertexId)>) {
+    fn add_shortcuts(&mut self, shortcuts: &Vec<Shortcut>) {
         shortcuts
             .iter()
-            .for_each(|(edge, _)| self.graph.add_edge(&edge));
+            .cloned()
+            .for_each(|shortcut| self.graph.add_edge(&shortcut.edge));
     }
 
     fn removing_edges_violating_level_property(&mut self) {

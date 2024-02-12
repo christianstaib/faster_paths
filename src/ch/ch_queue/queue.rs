@@ -6,7 +6,11 @@ use rand::seq::SliceRandom;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::{
-    ch::ch_queue::deleted_neighbors::DeletedNeighbors, graphs::graph::Graph,
+    ch::{
+        ch_queue::deleted_neighbors::DeletedNeighbors, contraction_helper::ContractionHelper,
+        shortcut::Shortcut,
+    },
+    graphs::graph::Graph,
     graphs::types::VertexId,
 };
 
@@ -27,20 +31,22 @@ pub trait PriorityTerm {
 pub struct CHQueue {
     queue: BinaryHeap<CHState>,
     priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
+    edge_difference: EdgeDifferencePriority,
 }
 
 impl CHQueue {
     pub fn new(graph: &Graph) -> Self {
         let queue = BinaryHeap::new();
         let priority_terms = Vec::new();
+        let edge_difference = EdgeDifferencePriority::new(&graph);
         let mut queue = Self {
             queue,
             priority_terms,
+            edge_difference,
         };
-        queue.register(1, EdgeDifferencePriority::new(&graph));
         queue.register(1, VoronoiRegion::new(&graph));
         queue.register(1, DeletedNeighbors::new(&graph));
-        queue.register(25, CostOfQueries::new(&graph));
+        queue.register(1, CostOfQueries::new(&graph));
         queue.initialize(graph);
         queue
     }
@@ -50,56 +56,56 @@ impl CHQueue {
     }
 
     // Lazy poping the node with minimum priority.
-    pub fn pop(&mut self, graph: &Graph) -> Option<u32> {
+    pub fn pop(&mut self, graph: &Graph) -> Option<(VertexId, Vec<Shortcut>)> {
         while let Some(mut state) = self.queue.pop() {
             // If current priority is greater than minimum priority, then repush state with updated
             // priority.
             let current_priority = self.get_priority(state.vertex, graph);
-            if current_priority > state.priority {
-                state.priority = current_priority;
+            if current_priority.0 > state.priority {
+                state.priority = current_priority.0;
                 self.queue.push(state);
                 continue;
             }
 
             self.update_before_contraction(state.vertex, graph);
-            return Some(state.vertex);
+            return Some((state.vertex, current_priority.1));
         }
         None
     }
 
-    pub fn pop_vec(&mut self, graph: &Graph, max_size: u32) -> Option<Vec<u32>> {
-        let mut neighbors = HashSet::new();
-        let mut node_set = Vec::new();
+    // pub fn pop_vec(&mut self, graph: &Graph, max_size: u32) -> Option<Vec<VertexId>> {
+    //     let mut neighbors = HashSet::new();
+    //     let mut node_set = Vec::new();
 
-        while let Some(mut state) = self.queue.pop() {
-            // If current priority is greater than minimum priority, then repush state with updated
-            // priority and try again.
-            let current_priority = self.get_priority(state.vertex, graph);
-            if current_priority > state.priority {
-                state.priority = current_priority;
-                self.queue.push(state);
-                continue;
-            }
+    //     while let Some(mut state) = self.queue.pop() {
+    //         // If current priority is greater than minimum priority, then repush state with updated
+    //         // priority and try again.
+    //         let current_priority = self.get_priority(state.vertex, graph);
+    //         if current_priority > state.priority {
+    //             state.priority = current_priority;
+    //             self.queue.push(state);
+    //             continue;
+    //         }
 
-            // If node is in set of neighbors, then repush state with updated priority and stop the
-            // creation of the node set.
-            if neighbors.contains(&state.vertex) || node_set.len() >= max_size as usize {
-                state.priority = current_priority;
-                self.queue.push(state);
-                break;
-            }
+    //         // If node is in set of neighbors, then repush state with updated priority and stop the
+    //         // creation of the node set.
+    //         if neighbors.contains(&state.vertex) || node_set.len() >= max_size as usize {
+    //             state.priority = current_priority;
+    //             self.queue.push(state);
+    //             break;
+    //         }
 
-            self.update_before_contraction(state.vertex, graph);
-            neighbors.extend(graph.open_neighborhood(state.vertex, 2));
-            node_set.push(state.vertex);
-        }
+    //         self.update_before_contraction(state.vertex, graph);
+    //         neighbors.extend(graph.open_neighborhood(state.vertex, 2));
+    //         node_set.push(state.vertex);
+    //     }
 
-        if !node_set.is_empty() {
-            return Some(node_set);
-        }
+    //     if !node_set.is_empty() {
+    //         return Some(node_set);
+    //     }
 
-        None
-    }
+    //     None
+    // }
 
     /// Gets called just before a vertex is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
@@ -109,14 +115,22 @@ impl CHQueue {
             .for_each(|priority_term| priority_term.1.update_before_contraction(vertex, graph));
     }
 
-    pub fn get_priority(&self, v: VertexId, graph: &Graph) -> i32 {
+    pub fn get_priority(&self, vertex: VertexId, graph: &Graph) -> (i32, Vec<Shortcut>) {
         let priorities: Vec<i32> = self
             .priority_terms
             .iter()
-            .map(|priority_term| priority_term.0 * priority_term.1.priority(v, graph))
+            .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
             .collect();
 
-        priorities.iter().sum()
+        let shortcut_generator = ContractionHelper::new(graph, 10);
+        let shortcuts = shortcut_generator.generate_shortcuts(vertex);
+
+        let number_of_edges =
+            graph.in_edges[vertex as usize].len() + graph.out_edges[vertex as usize].len();
+
+        let edge_difference = shortcuts.len() as i32 - number_of_edges as i32;
+
+        (edge_difference + priorities.iter().sum::<i32>(), shortcuts)
     }
 
     fn _update_queue(&mut self, graph: &Graph) {
@@ -127,7 +141,7 @@ impl CHQueue {
             .par_bridge()
             .map(|state| CHState {
                 vertex: state.vertex,
-                priority: self.get_priority(state.vertex, graph),
+                priority: self.get_priority(state.vertex, graph).0,
             })
             .collect();
     }
@@ -142,7 +156,7 @@ impl CHQueue {
             .par_bridge()
             .map(|&v| CHState {
                 vertex: v,
-                priority: self.get_priority(v, graph),
+                priority: self.get_priority(v, graph).0,
             })
             .collect();
     }

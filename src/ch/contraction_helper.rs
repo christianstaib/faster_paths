@@ -4,7 +4,7 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::graphs::{edge::DirectedWeightedEdge, graph::Graph, types::VertexId};
 
-use super::binary_heap::MinimumItem;
+use super::{binary_heap::MinimumItem, shortcut::Shortcut};
 
 pub struct ContractionHelper<'a> {
     graph: &'a Graph,
@@ -26,59 +26,38 @@ impl<'a> ContractionHelper<'a> {
     ///
     /// Returns a vector of (Edge, Vec<Edge>) where the first entry is the shortcut and the second
     /// entry the edges the shortcut replaces.
-    pub fn generate_shortcuts(&self, v: u32) -> Vec<(DirectedWeightedEdge, VertexId)> {
-        let uv_edges = &self.graph.in_edges[v as usize];
-        let vw_edges = &self.graph.out_edges[v as usize];
+    pub fn generate_shortcuts(&self, vertex: u32) -> Vec<Shortcut> {
+        let uv_edges = &self.graph.in_edges[vertex as usize];
+        let vw_edges = &self.graph.out_edges[vertex as usize];
         let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
-        if uv_edges.len() < 100 {
-            uv_edges
-                .iter()
-                .flat_map(|uv_edge| {
-                    let mut shortcuts = Vec::new();
+        uv_edges
+            .iter()
+            .par_bridge()
+            .flat_map(|uv_edge| {
+                let mut shortcuts = Vec::new();
 
-                    let max_cost = uv_edge.cost + max_vw_cost;
-                    let witness_cost = self.witness_search(uv_edge.tail, v, max_cost);
+                let max_cost = uv_edge.cost + max_vw_cost;
+                let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost);
 
-                    for vw_ede in vw_edges.iter() {
-                        let uw_cost = uv_edge.cost + vw_ede.cost;
-                        if &uw_cost < witness_cost.get(&vw_ede.head).unwrap_or(&u32::MAX) {
-                            let edge = DirectedWeightedEdge {
-                                tail: uv_edge.tail,
-                                head: vw_ede.head,
-                                weight: uw_cost,
-                            };
-                            shortcuts.push((edge, v));
-                        }
+                for vw_ede in vw_edges.iter() {
+                    let uw_cost = uv_edge.cost + vw_ede.cost;
+                    if &uw_cost < witness_cost.get(&vw_ede.head).unwrap_or(&u32::MAX) {
+                        let edge = DirectedWeightedEdge {
+                            tail: uv_edge.tail,
+                            head: vw_ede.head,
+                            weight: uw_cost,
+                        };
+                        let shortcut = Shortcut {
+                            edge,
+                            skiped_vertex: vertex,
+                        };
+                        shortcuts.push(shortcut);
                     }
-                    shortcuts
-                })
-                .collect()
-        } else {
-            uv_edges
-                .iter()
-                .par_bridge()
-                .flat_map(|uv_edge| {
-                    let mut shortcuts = Vec::new();
-
-                    let max_cost = uv_edge.cost + max_vw_cost;
-                    let witness_cost = self.witness_search(uv_edge.tail, v, max_cost);
-
-                    for vw_ede in vw_edges.iter() {
-                        let uw_cost = uv_edge.cost + vw_ede.cost;
-                        if &uw_cost < witness_cost.get(&vw_ede.head).unwrap_or(&u32::MAX) {
-                            let edge = DirectedWeightedEdge {
-                                tail: uv_edge.tail,
-                                head: vw_ede.head,
-                                weight: uw_cost,
-                            };
-                            shortcuts.push((edge, v));
-                        }
-                    }
-                    shortcuts
-                })
-                .collect()
-        }
+                }
+                shortcuts
+            })
+            .collect()
     }
 
     /// Performs a forward search from `source` node.

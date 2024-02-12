@@ -4,4 +4,5 @@ pub mod contraction_helper;
 pub mod contractor;
 pub mod fast_shortcut_replacer;
 pub mod graph_cleaner;
+pub mod shortcut;
 pub mod slow_shortcut_replacer;
