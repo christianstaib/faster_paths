@@ -24,9 +24,9 @@ impl PriorityTerm for CostOfQueries {
 }
 
 impl CostOfQueries {
-    pub fn new(num_nodes: u32) -> Self {
+    pub fn new(graph: &Graph) -> Self {
         Self {
-            costs: vec![0; num_nodes as usize],
+            costs: vec![0; graph.number_of_vertices() as usize],
         }
     }
 }

@@ -51,7 +51,7 @@ impl Contractor {
         let out_edges = self.graph.out_edges.clone();
         let in_edges = self.graph.in_edges.clone();
 
-        let shortcuts = self.contract_single_nodes();
+        let shortcuts = self.contract_node_sets();
 
         self.graph.out_edges = out_edges;
         self.graph.in_edges = in_edges;
@@ -111,7 +111,7 @@ impl Contractor {
         let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
 
         let mut level = 0;
-        while let Some(node_set) = self.queue.pop_vec(&self.graph) {
+        while let Some(node_set) = self.queue.pop_vec(&self.graph, 10_000) {
             let shortcut_generator = ContractionHelper::new(&self.graph, 10);
             let mut this_shortcuts = node_set
                 .par_iter()

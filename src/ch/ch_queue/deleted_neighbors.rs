@@ -22,9 +22,9 @@ impl PriorityTerm for DeletedNeighbors {
 }
 
 impl DeletedNeighbors {
-    pub fn new(num_nodes: u32) -> Self {
+    pub fn new(graph: &Graph) -> Self {
         Self {
-            deleted: vec![false; num_nodes as usize],
+            deleted: vec![false; graph.number_of_vertices() as usize],
         }
     }
 }

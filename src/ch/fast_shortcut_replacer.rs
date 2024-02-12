@@ -33,7 +33,7 @@ impl FastShortcutReplacer {
 
         vertices.push(vertices_with_shortcuts[0]);
 
-        for windows in vertices_with_shortcuts.windows(2).progress() {
+        for windows in vertices_with_shortcuts.windows(2) {
             let edge = DirectedEdge {
                 tail: windows[0],
                 head: windows[1],

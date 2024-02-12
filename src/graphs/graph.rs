@@ -39,6 +39,10 @@ impl Graph {
         graph
     }
 
+    pub fn number_of_vertices(&self) -> u32 {
+        self.out_edges.len() as u32
+    }
+
     pub fn out_neighborhood(&self, vertex: VertexId) -> HashSet<VertexId> {
         self.out_edges[vertex as usize]
             .iter()

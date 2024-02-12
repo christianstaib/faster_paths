@@ -1,7 +1,7 @@
 DATA_DIR := tests/data
 FMI_DIR := $(DATA_DIR)/fmi
 
-NETWORK_GRAPH := $(FMI_DIR)/network.fmi
+NETWORK_GRAPH := $(FMI_DIR)/network.gr
 NETWORK_CH := $(NETWORK_GRAPH).ch.bincode
 NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS := $(NETWORK_GRAPH).tests.json

@@ -18,14 +18,8 @@ impl PriorityTerm for EdgeDifferencePriority {
     fn update_before_contraction(&mut self, v: u32, graph: &Graph) {}
 }
 
-impl Default for EdgeDifferencePriority {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl EdgeDifferencePriority {
-    pub fn new() -> Self {
+    pub fn new(_graph: &Graph) -> Self {
         Self {}
     }
 }

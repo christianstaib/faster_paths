@@ -12,13 +12,14 @@ use crate::{
 
 use super::{
     cost_of_queries::CostOfQueries, edge_difference::EdgeDifferencePriority, state::CHState,
+    voronoi_region::VoronoiRegion,
 };
 
 pub trait PriorityTerm {
     /// Gets the priority of node v in the graph
     fn priority(&self, vertex: VertexId, graph: &Graph) -> i32;
 
-    /// Gets called just before a v is contracted. Gives priority terms the oppernunity to updated
+    /// Gets called just BERFORE a vertex is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
     fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph);
 }
@@ -36,9 +37,10 @@ impl CHQueue {
             queue,
             priority_terms,
         };
-        queue.register(1, EdgeDifferencePriority::new());
-        queue.register(1, DeletedNeighbors::new(graph.out_edges.len() as u32));
-        queue.register(1, CostOfQueries::new(graph.out_edges.len() as u32));
+        queue.register(1, EdgeDifferencePriority::new(&graph));
+        queue.register(1, VoronoiRegion::new(&graph));
+        queue.register(1, DeletedNeighbors::new(&graph));
+        queue.register(25, CostOfQueries::new(&graph));
         queue.initialize(graph);
         queue
     }
@@ -65,7 +67,7 @@ impl CHQueue {
         None
     }
 
-    pub fn pop_vec(&mut self, graph: &Graph) -> Option<Vec<u32>> {
+    pub fn pop_vec(&mut self, graph: &Graph, max_size: u32) -> Option<Vec<u32>> {
         let mut neighbors = HashSet::new();
         let mut node_set = Vec::new();
 
@@ -81,7 +83,7 @@ impl CHQueue {
 
             // If node is in set of neighbors, then repush state with updated priority and stop the
             // creation of the node set.
-            if neighbors.contains(&state.node_id) {
+            if neighbors.contains(&state.node_id) || node_set.len() >= max_size as usize {
                 state.priority = current_priority;
                 self.queue.push(state);
                 break;

@@ -16,3 +16,5 @@
 *.bincode
 *.que
 *.sol
+*.json
+*.gr
