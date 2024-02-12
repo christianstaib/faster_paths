@@ -26,7 +26,7 @@ impl<'a> ContractionHelper<'a> {
     ///
     /// Returns a vector of (Edge, Vec<Edge>) where the first entry is the shortcut and the second
     /// entry the edges the shortcut replaces.
-    pub fn generate_shortcuts(&self, vertex: u32) -> Vec<Shortcut> {
+    pub fn generate_shortcuts(&self, vertex: VertexId) -> Vec<Shortcut> {
         let uv_edges = &self.graph.in_edges[vertex as usize];
         let vw_edges = &self.graph.out_edges[vertex as usize];
         let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);

@@ -31,22 +31,19 @@ pub trait PriorityTerm {
 pub struct CHQueue {
     queue: BinaryHeap<CHState>,
     priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
-    edge_difference: EdgeDifferencePriority,
 }
 
 impl CHQueue {
     pub fn new(graph: &Graph) -> Self {
         let queue = BinaryHeap::new();
         let priority_terms = Vec::new();
-        let edge_difference = EdgeDifferencePriority::new(&graph);
         let mut queue = Self {
             queue,
             priority_terms,
-            edge_difference,
         };
-        queue.register(1, VoronoiRegion::new(&graph));
-        queue.register(1, DeletedNeighbors::new(&graph));
-        queue.register(1, CostOfQueries::new(&graph));
+        // queue.register(1, VoronoiRegion::new(&graph));
+        // queue.register(1, DeletedNeighbors::new(&graph));
+        // queue.register(1, CostOfQueries::new(&graph));
         queue.initialize(graph);
         queue
     }

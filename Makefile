@@ -36,7 +36,7 @@ test:
 		--tests-path $(NY_TESTS)
 
 
-create_tests_stgt:
+create_tests_ny:
 	cargo run --bin create_tests --release --\
 		--graph-path $(NY_GRAPH)\
 		--tests-path $(NY_TESTS)\
@@ -49,7 +49,7 @@ create_tests:
 		--number-of-tests $(NUM_TESTS)
 
 
-create_ch_stgt:
+create_ch_ny:
 	cargo run --bin create_ch --release --\
 		--graph-path $(NY_GRAPH)\
 		--ch-graph $(NY_CH)
@@ -60,7 +60,7 @@ create_ch:
 		--ch-graph $(NETWORK_CH)
 
 
-test_ch_stgt:
+test_ch_ny:
 	cargo run --bin test_ch --release --\
 		--ch-graph $(NY_CH)\
 		--tests-path $(NY_TESTS)
@@ -71,7 +71,7 @@ test_ch:
 		--tests-path $(NETWORK_TESTS)
 
 
-create_hl_stgt:
+create_hl_ny:
 	cargo run --bin create_hl --release --\
 		--ch-graph $(NY_CH)\
 		--hl-graph $(NY_HL)\
@@ -84,7 +84,7 @@ create_hl:
 		--hop-limit $(HOP_LIMIT)
 
 
-test_hl_stgt:
+test_hl_ny:
 	cargo run --bin test_hl --release --\
 		--hl-graph $(NY_HL)\
 		--graph-path $(NY_GRAPH)\
