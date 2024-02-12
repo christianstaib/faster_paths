@@ -1,21 +1,11 @@
 use std::usize;
 
 use indicatif::ProgressBar;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::graphs::{
-    edge::{DirectedEdge, DirectedWeightedEdge},
-    graph::Graph,
-    types::VertexId,
-};
+use crate::graphs::{edge::DirectedEdge, graph::Graph, types::VertexId};
 
-use super::{
-    ch_queue::queue::CHQueue,
-    contraction_helper::ContractionHelper,
-    graph_cleaner::remove_edge_to_self,
-    shortcut::{self, Shortcut},
-};
+use super::{ch_queue::queue::CHQueue, graph_cleaner::remove_edge_to_self, shortcut::Shortcut};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ContractedGraph {
@@ -84,7 +74,6 @@ impl Contractor {
         let mut shortcuts = Vec::new();
 
         let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
-        bar.set_message("contracting graph");
 
         let mut level = 0;
         while let Some(v) = self.queue.pop(&self.graph) {

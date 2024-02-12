@@ -94,15 +94,15 @@ impl<'a> ContractionHelper<'a> {
         cost.insert(source, 0);
         hops.insert(source, 0);
 
-        while let Some(MinimumItem { vertex: node, .. }) = queue.pop() {
-            unseen_w.remove(&node);
+        while let Some(MinimumItem { vertex, .. }) = queue.pop() {
+            unseen_w.remove(&vertex);
             if unseen_w.is_empty() {
                 break;
             }
 
-            for edge in &self.graph.out_edges[node as usize] {
-                let alternative_cost = cost[&node] + edge.cost;
-                let new_hops = hops[&node] + 1;
+            for edge in &self.graph.out_edges[vertex as usize] {
+                let alternative_cost = cost[&vertex] + edge.cost;
+                let new_hops = hops[&vertex] + 1;
                 if (edge.head != without)
                     && (alternative_cost <= max_cost)
                     && (new_hops <= self.max_hops_in_witness_search)
@@ -110,8 +110,8 @@ impl<'a> ContractionHelper<'a> {
                     let current_cost = *cost.get(&edge.head).unwrap_or(&u32::MAX);
                     if alternative_cost < current_cost {
                         queue.push(MinimumItem {
-                            weight: alternative_cost,
                             vertex: edge.head,
+                            weight: alternative_cost,
                         });
                         cost.insert(edge.head, alternative_cost);
                         hops.insert(edge.head, new_hops);
