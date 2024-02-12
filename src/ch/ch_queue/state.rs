@@ -1,14 +1,19 @@
 use std::cmp::Ordering;
 
+use crate::graphs::types::VertexId;
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct CHState {
     pub priority: i32,
-    pub node_id: u32,
+    pub vertex: VertexId,
 }
 
 impl CHState {
     pub fn new(priority: i32, node_id: u32) -> Self {
-        Self { priority, node_id }
+        Self {
+            priority,
+            vertex: node_id,
+        }
     }
 }
 
@@ -23,7 +28,7 @@ impl Ord for CHState {
         other
             .priority
             .cmp(&self.priority)
-            .then_with(|| self.node_id.cmp(&other.node_id))
+            .then_with(|| self.vertex.cmp(&other.vertex))
     }
 }
 
