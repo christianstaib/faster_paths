@@ -12,12 +12,12 @@ impl PriorityTerm for CostOfQueries {
         *self.costs.get(vertex as usize).unwrap()
     }
 
-    #[allow(unused_variables)]
     fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
-        let v_cost = self.costs[vertex as usize] + 1;
+        let cost_of_vertex = self.costs[vertex as usize] + 1;
+
         for neighbor in graph.open_neighborhood(vertex, 1) {
-            if v_cost > self.costs[neighbor as usize] {
-                self.costs[neighbor as usize] = v_cost;
+            if cost_of_vertex > self.costs[neighbor as usize] {
+                self.costs[neighbor as usize] = cost_of_vertex;
             }
         }
     }

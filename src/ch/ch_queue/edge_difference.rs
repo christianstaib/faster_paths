@@ -1,25 +1,30 @@
-use crate::{ch::contraction_helper::ContractionHelper, graphs::graph::Graph};
+use crate::{
+    ch::contraction_helper::ContractionHelper,
+    graphs::{graph::Graph, types::VertexId},
+};
 
 use super::queue::PriorityTerm;
 
 pub struct EdgeDifferencePriority {}
 
 impl PriorityTerm for EdgeDifferencePriority {
-    fn priority(&self, v: u32, graph: &Graph) -> i32 {
-        let shortcut_generator = ContractionHelper::new(graph, 10);
-        let shortcuts = shortcut_generator.generate_shortcuts(v);
+    fn priority(&self, vertex: VertexId, graph: &Graph) -> i32 {
+        let shortcut_generator = ContractionHelper::new(graph, 5);
+        let shortcuts = shortcut_generator.generate_shortcuts(vertex);
 
-        let current_pairs = graph.in_edges[v as usize].len() + graph.out_edges[v as usize].len();
+        let number_of_edges =
+            graph.in_edges[vertex as usize].len() + graph.out_edges[vertex as usize].len();
 
-        shortcuts.len() as i32 - current_pairs as i32
+        shortcuts.len() as i32 - number_of_edges as i32
     }
 
     #[allow(unused_variables)]
     fn update_before_contraction(&mut self, v: u32, graph: &Graph) {}
 }
 
+#[allow(unused_variables)]
 impl EdgeDifferencePriority {
-    pub fn new(_graph: &Graph) -> Self {
+    pub fn new(graph: &Graph) -> Self {
         Self {}
     }
 }

@@ -4,16 +4,13 @@ use crate::graphs::types::VertexId;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct CHState {
-    pub priority: i32,
     pub vertex: VertexId,
+    pub priority: i32,
 }
 
 impl CHState {
-    pub fn new(priority: i32, node_id: u32) -> Self {
-        Self {
-            priority,
-            vertex: node_id,
-        }
+    pub fn new(priority: i32, vertex: VertexId) -> Self {
+        Self { vertex, priority }
     }
 }
 

@@ -9,6 +9,7 @@ pub struct DeletedNeighbors {
 impl PriorityTerm for DeletedNeighbors {
     fn priority(&self, vertex: VertexId, graph: &Graph) -> i32 {
         let neighbors = graph.open_neighborhood(vertex, 1);
+
         neighbors
             .iter()
             .filter(|&&neighbor| self.deleted[neighbor as usize])
