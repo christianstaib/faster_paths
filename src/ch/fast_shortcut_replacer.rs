@@ -1,5 +1,4 @@
 use ahash::HashMap;
-use indicatif::ProgressIterator;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, path::Path, types::VertexId};
