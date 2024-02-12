@@ -6,18 +6,12 @@ use rand::seq::SliceRandom;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::{
-    ch::{
-        ch_queue::deleted_neighbors::DeletedNeighbors, contraction_helper::ContractionHelper,
-        shortcut::Shortcut,
-    },
+    ch::{contraction_helper::ContractionHelper, shortcut::Shortcut},
     graphs::graph::Graph,
     graphs::types::VertexId,
 };
 
-use super::{
-    cost_of_queries::CostOfQueries, edge_difference::EdgeDifferencePriority, state::CHState,
-    voronoi_region::VoronoiRegion,
-};
+use super::state::CHState;
 
 pub trait PriorityTerm {
     /// Gets the priority of node v in the graph
@@ -48,9 +42,9 @@ impl CHQueue {
         queue
     }
 
-    fn register(&mut self, weight: i32, term: impl PriorityTerm + 'static + Sync) {
-        self.priority_terms.push((weight, Box::new(term)));
-    }
+    // fn register(&mut self, weight: i32, term: impl PriorityTerm + 'static + Sync) {
+    //     self.priority_terms.push((weight, Box::new(term)));
+    // }
 
     // Lazy poping the node with minimum priority.
     pub fn pop(&mut self, graph: &Graph) -> Option<(VertexId, Vec<Shortcut>)> {
@@ -119,7 +113,7 @@ impl CHQueue {
             .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
             .collect();
 
-        let shortcut_generator = ContractionHelper::new(graph, 10);
+        let shortcut_generator = ContractionHelper::new(graph, 5);
         let shortcuts = shortcut_generator.generate_shortcuts(vertex);
 
         let number_of_edges =
