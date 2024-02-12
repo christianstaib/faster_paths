@@ -117,7 +117,7 @@ impl CHQueue {
             .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
             .collect();
 
-        let shortcut_generator = ContractionHelper::new(graph, 50);
+        let shortcut_generator = ContractionHelper::new(graph, 10);
         let shortcuts = shortcut_generator.generate_shortcuts(vertex);
 
         let number_of_edges =
