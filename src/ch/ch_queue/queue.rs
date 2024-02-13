@@ -58,6 +58,7 @@ impl CHQueue {
             // priority.
             let priority_shortcuts = self.get_priority_and_shortcuts_mut(state.vertex, graph);
             if priority_shortcuts.0 > state.priority {
+                // println!("store");
                 self.vertex_shortcut
                     .insert(state.vertex, priority_shortcuts.1);
                 state.priority = priority_shortcuts.0;
@@ -65,7 +66,7 @@ impl CHQueue {
                 continue;
             }
 
-            for neighbor in graph.open_neighborhood(state.vertex, 1) {
+            for neighbor in graph.open_neighborhood(state.vertex, 2) {
                 self.vertex_shortcut.remove(&neighbor);
             }
             self.update_before_contraction(state.vertex, graph);
@@ -139,7 +140,7 @@ impl CHQueue {
 
     fn get_shortcuts(&mut self, vertex: u32, graph: &Graph) -> Vec<Shortcut> {
         if let Some(this_shortcuts) = self.vertex_shortcut.remove(&vertex) {
-            // println!("reuse!");
+            // println!("reuse");
             return this_shortcuts;
         } else {
             let shortcut_generator = ContractionHelper::new(graph, 10);
@@ -189,7 +190,8 @@ impl CHQueue {
 
         let vertex_and_priority_and_shortcuts: Vec<_> = order
             .par_iter()
-            .map(|&v| (v, self.get_priority_and_shortcuts_init(v, graph)))
+            .progress()
+            .map(|&vertex| (vertex, self.get_priority_and_shortcuts_init(vertex, graph)))
             .collect();
 
         self.queue = vertex_and_priority_and_shortcuts
