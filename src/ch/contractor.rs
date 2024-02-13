@@ -1,5 +1,6 @@
 use std::usize;
 
+use ahash::{HashMap, HashMapExt, HashSet};
 use indicatif::ProgressBar;
 use serde_derive::{Deserialize, Serialize};
 
@@ -18,6 +19,8 @@ pub struct Contractor {
     graph: Graph,
     queue: CHQueue,
     levels: Vec<u32>,
+    vertex_shortcut: HashMap<VertexId, Vec<Shortcut>>,
+    neighbors: HashMap<VertexId, Vec<VertexId>>,
 }
 
 impl Contractor {
@@ -25,11 +28,15 @@ impl Contractor {
         let levels = vec![0; graph.in_edges.len()];
         let graph = graph.clone();
         let queue = CHQueue::new(&graph);
+        let vertex_shortcut = HashMap::new();
+        let neighbors = HashMap::new();
 
         Contractor {
             graph,
             queue,
             levels,
+            vertex_shortcut,
+            neighbors,
         }
     }
 
