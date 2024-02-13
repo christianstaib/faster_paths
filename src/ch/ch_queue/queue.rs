@@ -13,7 +13,10 @@ use crate::{
     graphs::types::VertexId,
 };
 
-use super::state::CHState;
+use super::{
+    cost_of_contraction::CostOfContraction, cost_of_queries::CostOfQueries,
+    deleted_neighbors::DeletedNeighbors, state::CHState,
+};
 
 pub trait PriorityTerm {
     /// Gets the priority of node v in the graph
@@ -41,15 +44,16 @@ impl CHQueue {
             vertex_shortcut,
         };
         // queue.register(1, VoronoiRegion::new(&graph));
-        // queue.register(1, DeletedNeighbors::new(&graph));
+        queue.register(1, CostOfContraction::new(&graph));
+        queue.register(120, DeletedNeighbors::new(&graph));
         // queue.register(1, CostOfQueries::new(&graph));
         queue.initialize(graph);
         queue
     }
 
-    // fn register(&mut self, weight: i32, term: impl PriorityTerm + 'static + Sync) {
-    //     self.priority_terms.push((weight, Box::new(term)));
-    // }
+    fn register(&mut self, weight: i32, term: impl PriorityTerm + 'static + Sync) {
+        self.priority_terms.push((weight, Box::new(term)));
+    }
 
     // Lazy poping the node with minimum priority.
     pub fn pop(&mut self, graph: &Graph) -> Option<(VertexId, Vec<Shortcut>)> {
@@ -66,7 +70,7 @@ impl CHQueue {
                 continue;
             }
 
-            for neighbor in graph.open_neighborhood(state.vertex, 2) {
+            for neighbor in graph.closed_neighborhood(state.vertex, 1) {
                 self.vertex_shortcut.remove(&neighbor);
             }
             self.update_before_contraction(state.vertex, graph);
@@ -135,7 +139,10 @@ impl CHQueue {
 
         let edge_difference = shortcuts.len() as i32 - number_of_edges as i32;
 
-        (edge_difference + priorities.iter().sum::<i32>(), shortcuts)
+        (
+            190 * edge_difference + priorities.iter().sum::<i32>(),
+            shortcuts,
+        )
     }
 
     fn get_shortcuts(&mut self, vertex: u32, graph: &Graph) -> Vec<Shortcut> {

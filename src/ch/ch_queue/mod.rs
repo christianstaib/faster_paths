@@ -1,3 +1,4 @@
+pub mod cost_of_contraction;
 pub mod cost_of_queries;
 pub mod deleted_neighbors;
 pub mod edge_difference;

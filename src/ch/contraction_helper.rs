@@ -63,6 +63,32 @@ impl<'a> ContractionHelper<'a> {
             .collect()
     }
 
+    /// Generates shortcuts for a node v.
+    ///
+    /// A shortcut (u, w) is generated if ((u, v), (v, w)) is the only shortest path between u and
+    /// w.
+    ///
+    /// Returns a vector of (Edge, Vec<Edge>) where the first entry is the shortcut and the second
+    /// entry the edges the shortcut replaces.
+    pub fn wittness_search_space(&self, vertex: VertexId) -> i32 {
+        let uv_edges = &self.graph.in_edges[vertex as usize];
+        let vw_edges = &self.graph.out_edges[vertex as usize];
+        let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
+
+        let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
+
+        uv_edges
+            .iter()
+            .par_bridge()
+            .map(|uv_edge| {
+                let max_cost = uv_edge.cost + max_vw_cost;
+                let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost, &w_set);
+
+                witness_cost.len() as i32
+            })
+            .sum()
+    }
+
     /// Performs a forward search from `source` node.
     ///
     /// Returns a `HashMap` where each entry consists of a node identifier (u32) and the associated cost (u32) to reach that node from the `source`.

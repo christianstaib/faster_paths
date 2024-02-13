@@ -43,6 +43,13 @@ impl DijkstraData {
         }
     }
 
+    pub fn search_space_size(&self) -> u32 {
+        self.verticies
+            .iter()
+            .filter(|entry| entry.is_expanded)
+            .count() as u32
+    }
+
     pub fn pop(&mut self) -> Option<State> {
         while let Some(state) = self.queue.pop() {
             if !self.verticies[state.value as usize].is_expanded {

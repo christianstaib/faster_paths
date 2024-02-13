@@ -57,6 +57,22 @@ impl Graph {
             .collect()
     }
 
+    pub fn closed_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
+        let mut neighbors = HashSet::new();
+        neighbors.insert(vertex);
+
+        for _ in 0..hops {
+            let mut new_neighbors = HashSet::new();
+            for &neighbor in neighbors.iter() {
+                new_neighbors.extend(self.out_neighborhood(neighbor));
+                new_neighbors.extend(self.in_neighborhood(neighbor));
+            }
+            neighbors.extend(new_neighbors);
+        }
+
+        neighbors
+    }
+
     pub fn open_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
         let mut neighbors = HashSet::new();
         neighbors.insert(vertex);
