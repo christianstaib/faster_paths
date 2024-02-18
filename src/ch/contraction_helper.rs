@@ -1,15 +1,27 @@
-use std::collections::{BinaryHeap, HashMap};
+use std::{
+    collections::{BinaryHeap, HashMap},
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 use ahash::HashSet;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::graphs::{edge::DirectedWeightedEdge, graph::Graph, types::VertexId};
+use crate::graphs::{
+    edge::DirectedWeightedEdge,
+    graph::Graph,
+    types::{VertexId, Weight},
+};
 
 use super::{binary_heap::MinimumItem, shortcut::Shortcut};
 
 pub struct ContractionHelper<'a> {
     graph: &'a Graph,
     max_hops_in_witness_search: u32,
+}
+
+pub struct ShortcutSearchResult {
+    pub shortcuts: Vec<Shortcut>,
+    pub search_space_size: u32,
 }
 
 impl<'a> ContractionHelper<'a> {
@@ -27,14 +39,15 @@ impl<'a> ContractionHelper<'a> {
     ///
     /// Returns a vector of (Edge, Vec<Edge>) where the first entry is the shortcut and the second
     /// entry the edges the shortcut replaces.
-    pub fn generate_shortcuts(&self, vertex: VertexId) -> Vec<Shortcut> {
+    pub fn get_shortcuts(&self, vertex: VertexId) -> ShortcutSearchResult {
         let uv_edges = &self.graph.in_edges[vertex as usize];
         let vw_edges = &self.graph.out_edges[vertex as usize];
         let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
         let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
+        let search_space_size = AtomicU32::new(0);
 
-        uv_edges
+        let shortcuts = uv_edges
             .iter()
             .par_bridge()
             .flat_map(|uv_edge| {
@@ -42,6 +55,7 @@ impl<'a> ContractionHelper<'a> {
 
                 let max_cost = uv_edge.cost + max_vw_cost;
                 let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost, &w_set);
+                search_space_size.fetch_add(witness_cost.len() as u32, Ordering::Relaxed);
 
                 for vw_ede in vw_edges.iter() {
                     let uw_cost = uv_edge.cost + vw_ede.cost;
@@ -60,7 +74,12 @@ impl<'a> ContractionHelper<'a> {
                 }
                 shortcuts
             })
-            .collect()
+            .collect();
+
+        ShortcutSearchResult {
+            shortcuts,
+            search_space_size: search_space_size.into_inner(),
+        }
     }
 
     /// Generates shortcuts for a node v.
@@ -106,7 +125,7 @@ impl<'a> ContractionHelper<'a> {
         without: VertexId,
         max_cost: u32,
         w_set: &HashSet<VertexId>,
-    ) -> HashMap<u32, u32> {
+    ) -> HashMap<VertexId, Weight> {
         let mut queue = BinaryHeap::new();
         let mut cost = HashMap::new();
         let mut hops = HashMap::new();
