@@ -20,7 +20,7 @@ fn main() {
 
     let mut graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
-    println!("there are {} edges", graph.all_out_edges().len());
+    println!("there are {} vertices", graph.number_of_vertices());
 
     let start = Instant::now();
     let contracted_graph = Contractor::get_contracted_graph(&graph);

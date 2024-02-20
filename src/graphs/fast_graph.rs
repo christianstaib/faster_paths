@@ -14,9 +14,15 @@ pub struct FastGraph {
 
 impl FastGraph {
     pub fn from_graph(graph: &Graph) -> FastGraph {
-        let num_nodes = graph.all_in_edges().len() as u32;
-        let out_edges = FastOutEdgeAccess::new(graph.all_out_edges());
-        let in_edges = FastInEdgeAccess::new(graph.all_in_edges());
+        let num_nodes = graph.number_of_vertices();
+        let out_edges: Vec<_> = (0..num_nodes)
+            .map(|tail| graph.out_edges(tail).clone())
+            .collect();
+        let in_edges: Vec<_> = (0..num_nodes)
+            .map(|tail| graph.in_edges(tail).clone())
+            .collect();
+        let out_edges = FastOutEdgeAccess::new(&out_edges);
+        let in_edges = FastInEdgeAccess::new(&in_edges);
 
         FastGraph {
             num_nodes,

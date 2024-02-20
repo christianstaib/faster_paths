@@ -25,7 +25,7 @@ pub struct Contractor {
 
 impl Contractor {
     pub fn new(graph: &Graph) -> Self {
-        let levels = vec![0; graph.all_in_edges().len()];
+        let levels = vec![0; graph.number_of_vertices() as usize];
         let graph = graph.clone();
         let queue = CHQueue::new(&graph);
         let vertex_shortcut = HashMap::new();
@@ -77,7 +77,7 @@ impl Contractor {
     pub fn contract_single_nodes(&mut self) -> Vec<Shortcut> {
         let mut shortcuts = Vec::new();
 
-        let bar = ProgressBar::new(self.graph.all_in_edges().len() as u64);
+        let bar = ProgressBar::new(self.graph.number_of_vertices() as u64);
 
         let mut level = 0;
         while let Some(v) = self.queue.pop(&self.graph) {
@@ -138,12 +138,18 @@ impl Contractor {
     }
 
     fn removing_edges_violating_level_property(&mut self) {
-        let mut out_edges = self.graph.all_out_edges().clone();
+        let num_nodes = self.graph.number_of_vertices();
+        let mut out_edges: Vec<_> = (0..num_nodes)
+            .map(|tail| self.graph.out_edges(tail).clone())
+            .collect();
+        let mut in_edges: Vec<_> = (0..num_nodes)
+            .map(|tail| self.graph.in_edges(tail).clone())
+            .collect();
+
         out_edges.iter_mut().enumerate().for_each(|(tail, edges)| {
             edges.retain(|edge| self.levels[edge.head as usize] >= self.levels[tail as usize]);
         });
 
-        let mut in_edges = self.graph.all_in_edges().clone();
         in_edges.iter_mut().enumerate().for_each(|(head, edges)| {
             edges.retain(|edge| self.levels[head as usize] <= self.levels[edge.tail as usize]);
         });
