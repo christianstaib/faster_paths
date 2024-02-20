@@ -14,7 +14,8 @@ impl<'a> SlowDijkstra<'a> {
         let mut data = DijkstraData::new(self.graph.number_of_vertices() as usize, source);
 
         while let Some(state) = data.pop() {
-            self.graph.all_out_edges()[state.value as usize]
+            self.graph
+                .out_edges(state.value)
                 .iter()
                 .for_each(|edge| data.update(state.value, edge.head, edge.cost));
         }

@@ -41,8 +41,8 @@ impl<'a> ContractionHelper<'a> {
     /// Returns a vector of (Edge, Vec<Edge>) where the first entry is the shortcut and the second
     /// entry the edges the shortcut replaces.
     pub fn get_shortcuts(&self, vertex: VertexId) -> ShortcutSearchResult {
-        let uv_edges = &self.graph.all_in_edges()[vertex as usize];
-        let vw_edges = &self.graph.all_out_edges()[vertex as usize];
+        let uv_edges = &self.graph.in_edges(vertex);
+        let vw_edges = &self.graph.out_edges(vertex);
         let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
         let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
@@ -94,8 +94,8 @@ impl<'a> ContractionHelper<'a> {
     /// Returns a vector of (Edge, Vec<Edge>) where the first entry is the shortcut and the second
     /// entry the edges the shortcut replaces.
     pub fn wittness_search_space(&self, vertex: VertexId) -> i32 {
-        let uv_edges = &self.graph.all_in_edges()[vertex as usize];
-        let vw_edges = &self.graph.all_out_edges()[vertex as usize];
+        let uv_edges = &self.graph.in_edges(vertex);
+        let vw_edges = &self.graph.out_edges(vertex);
         let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
         let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
@@ -149,7 +149,7 @@ impl<'a> ContractionHelper<'a> {
                 break;
             }
 
-            for edge in &self.graph.all_out_edges()[vertex as usize] {
+            for edge in self.graph.out_edges(vertex).iter() {
                 let alternative_cost = cost[&vertex] + edge.cost;
                 let new_hops = hops[&vertex] + 1;
                 if (edge.head != without)
