@@ -6,7 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, graph::Graph, types::VertexId};
 
-use super::{ch_queue::queue::CHQueue, graph_cleaner::remove_edge_to_self, shortcut::Shortcut};
+use super::{ch_queue::queue::CHQueue, shortcut::Shortcut};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ContractedGraph {
@@ -25,7 +25,7 @@ pub struct Contractor {
 
 impl Contractor {
     pub fn new(graph: &Graph) -> Self {
-        let levels = vec![0; graph.in_edges.len()];
+        let levels = vec![0; graph.in_edges().len()];
         let graph = graph.clone();
         let queue = CHQueue::new(&graph);
         let vertex_shortcut = HashMap::new();
@@ -46,14 +46,11 @@ impl Contractor {
     }
 
     pub fn get_graph(mut self) -> ContractedGraph {
-        remove_edge_to_self(&mut self.graph);
-        let out_edges = self.graph.out_edges.clone();
-        let in_edges = self.graph.in_edges.clone();
+        let old_graph = self.graph.clone();
 
         let shortcuts = self.contract_single_nodes();
 
-        self.graph.out_edges = out_edges;
-        self.graph.in_edges = in_edges;
+        self.graph = old_graph;
         self.add_shortcuts(&shortcuts);
         self.removing_edges_violating_level_property();
 
@@ -80,7 +77,7 @@ impl Contractor {
     pub fn contract_single_nodes(&mut self) -> Vec<Shortcut> {
         let mut shortcuts = Vec::new();
 
-        let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
+        let bar = ProgressBar::new(self.graph.in_edges().len() as u64);
 
         let mut level = 0;
         while let Some(v) = self.queue.pop(&self.graph) {
@@ -141,20 +138,16 @@ impl Contractor {
     }
 
     fn removing_edges_violating_level_property(&mut self) {
-        self.graph
-            .out_edges
-            .iter_mut()
-            .enumerate()
-            .for_each(|(tail, edges)| {
-                edges.retain(|edge| self.levels[edge.head as usize] >= self.levels[tail as usize]);
-            });
+        let mut out_edges = self.graph.out_edges().clone();
+        out_edges.iter_mut().enumerate().for_each(|(tail, edges)| {
+            edges.retain(|edge| self.levels[edge.head as usize] >= self.levels[tail as usize]);
+        });
 
-        self.graph
-            .in_edges
-            .iter_mut()
-            .enumerate()
-            .for_each(|(head, edges)| {
-                edges.retain(|edge| self.levels[head as usize] <= self.levels[edge.tail as usize]);
-            });
+        let mut in_edges = self.graph.in_edges().clone();
+        in_edges.iter_mut().enumerate().for_each(|(head, edges)| {
+            edges.retain(|edge| self.levels[head as usize] <= self.levels[edge.tail as usize]);
+        });
+
+        self.graph = Graph::from_out_in_edges(out_edges, in_edges);
     }
 }

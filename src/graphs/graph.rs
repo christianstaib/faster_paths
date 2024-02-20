@@ -13,8 +13,8 @@ use super::{
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Graph {
-    pub out_edges: Vec<Vec<DirectedTaillessWeightedEdge>>,
-    pub in_edges: Vec<Vec<DirectedHeadlessWeightedEdge>>,
+    out_edges: Vec<Vec<DirectedTaillessWeightedEdge>>,
+    in_edges: Vec<Vec<DirectedHeadlessWeightedEdge>>,
 }
 
 impl Default for Graph {
@@ -31,7 +31,7 @@ impl Graph {
         }
     }
 
-    fn from_out_in_edges(
+    pub fn from_out_in_edges(
         out_edges: Vec<Vec<DirectedTaillessWeightedEdge>>,
         in_edges: Vec<Vec<DirectedHeadlessWeightedEdge>>,
     ) -> Self {
@@ -39,6 +39,14 @@ impl Graph {
             out_edges,
             in_edges,
         }
+    }
+
+    pub fn out_edges(&self) -> &Vec<Vec<DirectedTaillessWeightedEdge>> {
+        &self.out_edges
+    }
+
+    pub fn in_edges(&self) -> &Vec<Vec<DirectedHeadlessWeightedEdge>> {
+        &self.in_edges
     }
 
     pub fn from_edges(edges: &[DirectedWeightedEdge]) -> Graph {
