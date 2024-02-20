@@ -14,7 +14,7 @@ impl PriorityTerm for VoronoiRegion {
         let mut region_size = 0;
         in_neighborhood.iter().for_each(|&neighbor| {
             if let Some(nearest) = graph
-                .out_edges()
+                .all_out_edges()
                 .get(neighbor as usize)
                 .unwrap()
                 .iter()
@@ -38,7 +38,7 @@ impl PriorityTerm for VoronoiRegion {
 impl VoronoiRegion {
     pub fn new(graph: &Graph) -> VoronoiRegion {
         VoronoiRegion {
-            contracted: vec![false; graph.out_edges().len() as usize],
+            contracted: vec![false; graph.all_out_edges().len() as usize],
         }
     }
 }

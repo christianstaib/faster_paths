@@ -169,7 +169,7 @@ impl CHQueue {
     // }
 
     fn initialize(&mut self, graph: &Graph) {
-        let mut order: Vec<u32> = (0..graph.out_edges().len()).map(|x| x as u32).collect();
+        let mut order: Vec<u32> = (0..graph.all_out_edges().len()).map(|x| x as u32).collect();
         order.shuffle(&mut rand::thread_rng());
 
         let vertex_and_priority_and_shortcuts: Vec<_> = order

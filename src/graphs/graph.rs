@@ -41,12 +41,20 @@ impl Graph {
         }
     }
 
-    pub fn out_edges(&self) -> &Vec<Vec<DirectedTaillessWeightedEdge>> {
+    pub fn all_out_edges(&self) -> &Vec<Vec<DirectedTaillessWeightedEdge>> {
         &self.out_edges
     }
 
-    pub fn in_edges(&self) -> &Vec<Vec<DirectedHeadlessWeightedEdge>> {
+    pub fn out_edges(&self, vertex: VertexId) -> &Vec<DirectedTaillessWeightedEdge> {
+        &self.out_edges[vertex as usize]
+    }
+
+    pub fn all_in_edges(&self) -> &Vec<Vec<DirectedHeadlessWeightedEdge>> {
         &self.in_edges
+    }
+
+    pub fn in_edges(&self, vertex: VertexId) -> &Vec<DirectedHeadlessWeightedEdge> {
+        &self.in_edges[vertex as usize]
     }
 
     pub fn from_edges(edges: &[DirectedWeightedEdge]) -> Graph {
