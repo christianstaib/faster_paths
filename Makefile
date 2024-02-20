@@ -6,7 +6,8 @@ NETWORK_CH := $(NETWORK_GRAPH).ch.bincode
 NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS := $(NETWORK_GRAPH).tests.json
 
-NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
+# NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
+NY_GRAPH := $(FMI_DIR)/USA-road-d.CAL.gr
 NY_CH := $(NY_GRAPH).ch.bincode
 NY_HL := $(NY_GRAPH).hl.bincode
 NY_TESTS := $(NY_GRAPH).tests.json

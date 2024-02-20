@@ -21,7 +21,8 @@ pub struct ContractionHelper<'a> {
 
 pub struct ShortcutSearchResult {
     pub shortcuts: Vec<Shortcut>,
-    pub search_space_size: u32,
+    pub search_space_size: i32,
+    pub edge_difference: i32,
 }
 
 impl<'a> ContractionHelper<'a> {
@@ -47,11 +48,12 @@ impl<'a> ContractionHelper<'a> {
         let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
         let search_space_size = AtomicU32::new(0);
 
-        let shortcuts = uv_edges
+        let shortcuts: Vec<_> = uv_edges
             .iter()
             .par_bridge()
             .flat_map(|uv_edge| {
                 let mut shortcuts = Vec::new();
+                // print!("{}", uv_edge.tail);
 
                 let max_cost = uv_edge.cost + max_vw_cost;
                 let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost, &w_set);
@@ -76,9 +78,11 @@ impl<'a> ContractionHelper<'a> {
             })
             .collect();
 
+        let edge_difference = (shortcuts.len() - uv_edges.len() - vw_edges.len()) as i32;
         ShortcutSearchResult {
             shortcuts,
-            search_space_size: search_space_size.into_inner(),
+            search_space_size: search_space_size.into_inner() as i32,
+            edge_difference,
         }
     }
 

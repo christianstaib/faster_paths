@@ -31,6 +31,16 @@ impl Graph {
         }
     }
 
+    fn from_out_in_edges(
+        out_edges: Vec<Vec<DirectedTaillessWeightedEdge>>,
+        in_edges: Vec<Vec<DirectedHeadlessWeightedEdge>>,
+    ) -> Self {
+        Graph {
+            out_edges,
+            in_edges,
+        }
+    }
+
     pub fn from_edges(edges: &[DirectedWeightedEdge]) -> Graph {
         let mut graph = Graph::new();
         edges.iter().for_each(|edge| {
@@ -91,40 +101,75 @@ impl Graph {
         neighbors
     }
 
-    /// Adds an edge to the graph.
-    pub fn add_edge(&mut self, edge: &DirectedWeightedEdge) {
+    pub fn add_out_edge(&mut self, edge: &DirectedWeightedEdge) {
         if (self.out_edges.len() as u32) <= edge.tail {
             self.out_edges.resize((edge.tail + 1) as usize, Vec::new());
         }
-        self.out_edges[edge.tail as usize].push(edge.tailless());
 
+        match self.out_edges[edge.tail as usize]
+            .binary_search_by_key(&edge.head, |out_edge| out_edge.head)
+        {
+            Ok(idx) => {
+                if self.out_edges[edge.tail as usize][idx].cost > edge.weight {
+                    self.out_edges[edge.tail as usize][idx].cost = edge.weight;
+                }
+            }
+            Err(idx) => self.out_edges[edge.tail as usize].insert(idx, edge.tailless()),
+        }
+    }
+
+    pub fn add_in_edge(&mut self, edge: &DirectedWeightedEdge) {
         if (self.in_edges.len() as u32) <= edge.head {
             self.in_edges.resize((edge.head + 1) as usize, Vec::new());
         }
-        self.in_edges[edge.head as usize].push(edge.headless());
+
+        match self.in_edges[edge.head as usize]
+            .binary_search_by_key(&edge.tail, |out_edge| out_edge.tail)
+        {
+            Ok(idx) => {
+                if self.in_edges[edge.head as usize][idx].cost > edge.weight {
+                    self.in_edges[edge.head as usize][idx].cost = edge.weight;
+                }
+            }
+            Err(idx) => self.in_edges[edge.head as usize].insert(idx, edge.headless()),
+        }
     }
 
-    /// Removes an edge from the graph.
-    pub fn remove_edge(&mut self, edge: &DirectedEdge) {
-        if let Some(out_edges) = self.out_edges.get_mut(edge.tail as usize) {
-            out_edges.retain(|out_edge| out_edge.head != edge.head);
-        }
-
-        if let Some(in_edges) = self.in_edges.get_mut(edge.head as usize) {
-            in_edges.retain(|in_edge| in_edge.tail != edge.tail);
-        }
+    /// Adds an edge to the graph.
+    pub fn add_edge(&mut self, edge: &DirectedWeightedEdge) {
+        self.add_out_edge(edge);
+        self.add_in_edge(edge);
     }
+
+    // /// Removes an edge from the graph.
+    // pub fn remove_edge(&mut self, edge: &DirectedEdge) {
+    //     if let Some(out_edges) = self.out_edges.get_mut(edge.tail as usize) {
+    //         out_edges.retain(|out_edge| out_edge.head != edge.head);
+    //     }
+
+    //     if let Some(in_edges) = self.in_edges.get_mut(edge.head as usize) {
+    //         in_edges.retain(|in_edge| in_edge.tail != edge.tail);
+    //     }
+    // }
 
     /// Removes the node from the graph.
     pub fn remove_vertex(&mut self, vertex: VertexId) {
         let out_edges = std::mem::take(&mut self.out_edges[vertex as usize]);
         out_edges.iter().for_each(|out_edge| {
-            self.in_edges[out_edge.head as usize].retain(|in_edge| in_edge.tail != vertex)
+            if let Ok(idx) = self.in_edges[out_edge.head as usize]
+                .binary_search_by_key(&vertex, |in_edge| in_edge.tail)
+            {
+                self.in_edges[out_edge.head as usize].remove(idx);
+            }
         });
 
         let in_edges = std::mem::take(&mut self.in_edges[vertex as usize]);
         in_edges.iter().for_each(|in_edge| {
-            self.out_edges[in_edge.tail as usize].retain(|out_edge| out_edge.head != vertex);
+            if let Ok(idx) = self.out_edges[in_edge.tail as usize]
+                .binary_search_by_key(&vertex, |in_edge| in_edge.head)
+            {
+                self.out_edges[in_edge.tail as usize].remove(idx);
+            }
         });
     }
 

@@ -47,8 +47,7 @@ impl CHQueue {
             vertex_shortcut,
         };
         // queue.register(1, VoronoiRegion::new(&graph));
-        // queue.register(1, CostOfContraction::new(&graph));
-        // queue.register(120, DeletedNeighbors::new(&graph));
+        // queue.register(1, DeletedNeighbors::new(&graph));
         // queue.register(1, CostOfQueries::new(&graph));
         queue.initialize(graph);
         queue
@@ -73,7 +72,7 @@ impl CHQueue {
                 continue;
             }
 
-            for neighbor in graph.closed_neighborhood(state.vertex, 1) {
+            for neighbor in graph.closed_neighborhood(state.vertex, 2) {
                 self.vertex_shortcut.remove(&neighbor);
             }
             self.update_before_contraction(state.vertex, graph);
@@ -129,25 +128,9 @@ impl CHQueue {
         vertex: VertexId,
         graph: &Graph,
     ) -> (i32, ShortcutSearchResult) {
-        let priorities: Vec<i32> = self
-            .priority_terms
-            .iter()
-            .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
-            .collect();
-
         let shortcuts_results = self.get_shortcuts(vertex, graph);
-        let search_space_size = shortcuts_results.search_space_size as i32;
-        // let shortcuts = shortcuts_results.shortcuts;
 
-        let number_of_edges =
-            graph.in_edges[vertex as usize].len() + graph.out_edges[vertex as usize].len();
-
-        let edge_difference = shortcuts_results.shortcuts.len() as i32 - number_of_edges as i32;
-
-        (
-            190 * edge_difference + search_space_size + priorities.iter().sum::<i32>(),
-            shortcuts_results,
-        )
+        self.get_priority(graph, shortcuts_results, vertex)
     }
 
     fn get_shortcuts(&mut self, vertex: u32, graph: &Graph) -> ShortcutSearchResult {
@@ -166,27 +149,10 @@ impl CHQueue {
         vertex: VertexId,
         graph: &Graph,
     ) -> (i32, ShortcutSearchResult) {
-        let priorities: Vec<i32> = self
-            .priority_terms
-            .iter()
-            .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
-            .collect();
-
         let shortcut_generator = ContractionHelper::new(graph, 10);
         let shortcuts_results = shortcut_generator.get_shortcuts(vertex);
 
-        let search_space_size = shortcuts_results.search_space_size as i32;
-        // let shortcuts = shortcuts_results.shortcuts;
-
-        let number_of_edges =
-            graph.in_edges[vertex as usize].len() + graph.out_edges[vertex as usize].len();
-
-        let edge_difference = shortcuts_results.shortcuts.len() as i32 - number_of_edges as i32;
-
-        (
-            190 * edge_difference + search_space_size + priorities.iter().sum::<i32>(),
-            shortcuts_results,
-        )
+        self.get_priority(graph, shortcuts_results, vertex)
     }
 
     // fn _update_queue(&mut self, graph: &Graph) {
@@ -219,5 +185,26 @@ impl CHQueue {
                 CHState { vertex, priority }
             })
             .collect();
+    }
+
+    fn get_priority(
+        &self,
+        graph: &Graph,
+        shortcuts_results: ShortcutSearchResult,
+        vertex: u32,
+    ) -> (i32, ShortcutSearchResult) {
+        let search_space_size = 0 * shortcuts_results.search_space_size;
+        let edge_difference = 1 * shortcuts_results.edge_difference;
+
+        let priorities: Vec<i32> = self
+            .priority_terms
+            .iter()
+            .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
+            .collect();
+
+        (
+            edge_difference + search_space_size + priorities.iter().sum::<i32>(),
+            shortcuts_results,
+        )
     }
 }

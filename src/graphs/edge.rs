@@ -44,13 +44,13 @@ impl DirectedWeightedEdge {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DirectedTaillessWeightedEdge {
     pub head: VertexId,
     pub cost: u32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DirectedHeadlessWeightedEdge {
     pub tail: VertexId,
     pub cost: u32,
