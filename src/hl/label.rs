@@ -5,11 +5,11 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::graphs::path::Path;
+use crate::graphs::{path::Path, types::VertexId};
 
 use super::{hub_graph::HubGraph, label_entry::LabelEntry};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Label {
     pub entries: Vec<LabelEntry>,
 }
@@ -73,6 +73,49 @@ impl Label {
             if let Some(predecessor) = entry.predecessor {
                 entry.predecessor = Some(*vertex_to_index.get(&predecessor).unwrap());
             }
+        }
+    }
+
+    pub fn merge(mut labels: Vec<Label>, vertex: VertexId) -> Label {
+        let mut label_entries = Vec::new();
+
+        labels.push(Label {
+            entries: vec![LabelEntry {
+                vertex,
+                predecessor: None,
+                weight: 0,
+            }],
+        });
+
+        while !labels.is_empty() {
+            let min_vertex = labels
+                .iter()
+                .map(|label| label.entries.first().unwrap().vertex)
+                .min()
+                .unwrap();
+            let entries: Vec<_> = labels
+                .iter_mut()
+                .filter_map(|label| {
+                    if label.entries.first().unwrap().vertex == min_vertex {
+                        return Some(label.entries.remove(0));
+                    }
+                    None
+                })
+                .collect();
+            labels.retain(|label| !label.entries.is_empty());
+            let min_entry = entries
+                .into_iter()
+                .min_by_key(|entry| entry.weight)
+                .unwrap();
+            label_entries.push(min_entry);
+        }
+
+        label_entries
+            .windows(2)
+            .for_each(|windows| assert!(windows[0].vertex < windows[1].vertex));
+
+        Label {
+            entries: label_entries,
         }
     }
 

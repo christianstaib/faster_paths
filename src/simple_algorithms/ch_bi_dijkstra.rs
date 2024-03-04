@@ -53,6 +53,7 @@ impl ChDijkstra {
 
         for level_list in self.levels.iter().rev().progress() {
             for vertex in level_list {
+                let mut labels = Vec::new();
                 for out_edge in self.graph.out_edges(*vertex) {
                     let mut head_label_entries = out_labels[out_edge.head as usize].entries.clone();
                     head_label_entries.iter_mut().for_each(|entry| {
@@ -61,12 +62,18 @@ impl ChDijkstra {
                         }
                         entry.weight += out_edge.weight
                     });
+                    let label = Label {
+                        entries: head_label_entries.clone(),
+                    };
+                    labels.push(label);
 
                     out_labels[*vertex as usize]
                         .entries
                         .extend(head_label_entries);
                 }
+                let new_label = Label::merge(labels, *vertex);
                 out_labels[*vertex as usize].clean();
+                assert_eq!(new_label, out_labels[*vertex as usize]);
                 out_labels[*vertex as usize].prune_forward_label(&in_labels);
 
                 for in_edge in self.graph.in_edges(*vertex) {
