@@ -60,6 +60,15 @@ create_ch:
 		--ch-graph $(NETWORK_CH)
 
 
+test_fast_paths_ny:
+	cargo run --bin create_ch_fast_paths --release --\
+		--graph-path $(NY_GRAPH)\
+
+test_fast_paths:
+	cargo run --bin create_ch_fast_paths --release --\
+		--graph-path $(NETWORK_GRAPH)\
+
+
 test_ch_ny:
 	cargo run --bin test_ch --release --\
 		--ch-graph $(NY_CH)\

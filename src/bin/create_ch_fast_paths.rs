@@ -17,12 +17,13 @@ fn main() {
     let args = Args::parse();
 
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
-
-    let start = Instant::now();
     let mut input_graph = InputGraph::new();
     for edge in graph.all_edges() {
         input_graph.add_edge(edge.tail as usize, edge.head as usize, edge.weight as usize);
     }
+
+    let start = Instant::now();
+    input_graph.freeze();
     let _ = fast_paths::prepare(&input_graph);
     println!("Generating ch took {:?}", start.elapsed());
 }
