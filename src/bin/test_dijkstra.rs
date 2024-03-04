@@ -16,7 +16,7 @@ struct Args {
     /// Path of graph (.fmi file).
     #[arg(short, long)]
     graph_path: String,
-    /// Path of file with source, target pairs (.queue file).
+    /// Path of file with source, target pairs (.que file).
     #[arg(short, long)]
     queue_path: String,
     /// Path of file with known distances. (.fmi file).
@@ -64,4 +64,6 @@ fn main() {
         }
         assert_eq!(true_cost, &cost, "dijkstra wrong");
     }
+
+    println!("dijkstra correct");
 }
