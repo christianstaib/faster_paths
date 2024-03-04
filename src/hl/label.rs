@@ -77,6 +77,7 @@ impl Label {
     }
 
     pub fn merge(mut labels: Vec<Label>, vertex: VertexId) -> Label {
+        labels.iter_mut().for_each(|label| label.entries.reverse());
         let mut label_entries = Vec::new();
 
         labels.push(Label {
@@ -90,14 +91,14 @@ impl Label {
         while !labels.is_empty() {
             let min_vertex = labels
                 .iter()
-                .map(|label| label.entries.first().unwrap().vertex)
+                .map(|label| label.entries.last().unwrap().vertex)
                 .min()
                 .unwrap();
             let entries: Vec<_> = labels
                 .iter_mut()
                 .filter_map(|label| {
-                    if label.entries.first().unwrap().vertex == min_vertex {
-                        return Some(label.entries.remove(0));
+                    if label.entries.last().unwrap().vertex == min_vertex {
+                        return label.entries.pop();
                     }
                     None
                 })
@@ -109,10 +110,6 @@ impl Label {
                 .unwrap();
             label_entries.push(min_entry);
         }
-
-        label_entries
-            .windows(2)
-            .for_each(|windows| assert!(windows[0].vertex < windows[1].vertex));
 
         Label {
             entries: label_entries,
