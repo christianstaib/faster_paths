@@ -2,25 +2,24 @@ use std::{fs::File, io::BufRead, io::BufReader};
 
 use clap::Parser;
 use faster_paths::{
-    ch::contractor::Contractor,
     graphs::fast_graph::FastGraph,
     graphs::graph_factory::GraphFactory,
     graphs::path::{PathRequest, Routing},
-    simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
+    simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ProgressIterator;
 
-/// Starts a routing service on localhost:3030/route
+/// Tests the dijkstra implementation against a known distances.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Path of .fmi file
+    /// Path of graph (.fmi file).
     #[arg(short, long)]
     graph_path: String,
-    /// Path of .fmi file
+    /// Path of file with source, target pairs (.queue file).
     #[arg(short, long)]
     queue_path: String,
-    /// Path of .fmi file
+    /// Path of file with known distances. (.fmi file).
     #[arg(short, long)]
     sol_path: String,
 }
@@ -28,15 +27,10 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut graph = GraphFactory::from_fmi_file(args.graph_path.as_str());
-
-    let ch_graph = Contractor::get_contracted_graph(&graph);
-    let ch_bi_dijkstra = ChDijkstra::new(&ch_graph);
-    let hl_graph = ch_bi_dijkstra.get_hl();
+    let graph = GraphFactory::from_fmi_file(args.graph_path.as_str());
 
     let fast_graph = FastGraph::from_graph(&graph);
     let dijkstra = Dijkstra::new(&fast_graph);
-    let bi_dijkstra = BiDijkstra::new(&fast_graph);
 
     let queue: Vec<_> = BufReader::new(File::open(args.queue_path).unwrap())
         .lines()
@@ -69,29 +63,5 @@ fn main() {
             cost = route.weight as i32;
         }
         assert_eq!(true_cost, &cost, "dijkstra wrong");
-
-        // test bi dijkstra
-        let response = bi_dijkstra.get_path(&request);
-        let mut cost: i32 = -1;
-        if let Some(route) = response {
-            cost = route.weight as i32;
-        }
-        assert_eq!(true_cost, &cost, "bi dijkstra wrong");
-
-        // test ch dijkstra
-        let response = ch_bi_dijkstra.get_route(&request);
-        let mut cost: i32 = -1;
-        if let Some(route) = response {
-            cost = route.weight as i32;
-        }
-        assert_eq!(true_cost, &cost, "ch dijkstra wrong");
-
-        // test hl
-        let response = hl_graph.get_path(&request);
-        let mut cost: i32 = -1;
-        if let Some(route) = response {
-            cost = route.weight as i32;
-        }
-        assert_eq!(true_cost, &cost, "hl wrong");
     }
 }

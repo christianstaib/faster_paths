@@ -47,9 +47,9 @@ impl CHQueue {
             all: 0,
             no_hits: 0,
         };
+        // queue.register(1, CostOfQueries::new(&graph));
         // queue.register(1, VoronoiRegion::new(&graph));
-        queue.register(1, CostOfQueries::new(&graph));
-        // queue.register(120, DeletedNeighbors::new(&graph));
+        // queue.register(120, DeletedNeighbors::new(&gph));
         queue.initialize(graph);
         queue
     }
@@ -84,40 +84,6 @@ impl CHQueue {
         }
         None
     }
-
-    // pub fn pop_vec(&mut self, graph: &Graph, max_size: u32) -> Option<Vec<VertexId>> {
-    //     let mut neighbors = HashSet::new();
-    //     let mut node_set = Vec::new();
-
-    //     while let Some(mut state) = self.queue.pop() {
-    //         // If current priority is greater than minimum priority, then repush state with updated
-    //         // priority and try again.
-    //         let current_priority = self.get_priority(state.vertex, graph);
-    //         if current_priority > state.priority {
-    //             state.priority = current_priority;
-    //             self.queue.push(state);
-    //             continue;
-    //         }
-
-    //         // If node is in set of neighbors, then repush state with updated priority and stop the
-    //         // creation of the node set.
-    //         if neighbors.contains(&state.vertex) || node_set.len() >= max_size as usize {
-    //             state.priority = current_priority;
-    //             self.queue.push(state);
-    //             break;
-    //         }
-
-    //         self.update_before_contraction(state.vertex, graph);
-    //         neighbors.extend(graph.open_neighborhood(state.vertex, 2));
-    //         node_set.push(state.vertex);
-    //     }
-
-    //     if !node_set.is_empty() {
-    //         return Some(node_set);
-    //     }
-
-    //     None
-    // }
 
     /// Gets called just before a vertex is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
@@ -190,7 +156,7 @@ impl CHQueue {
         vertex: u32,
     ) -> (i32, ShortcutSearchResult) {
         let search_space_size = 0 * shortcuts_results.search_space_size;
-        let edge_difference = 0 * shortcuts_results.edge_difference;
+        let edge_difference = 1 * shortcuts_results.edge_difference;
 
         let priorities: Vec<i32> = self
             .priority_terms
