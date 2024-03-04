@@ -3,10 +3,7 @@ use std::{collections::HashSet, usize};
 use serde_derive::{Deserialize, Serialize};
 
 use super::{
-    edge::{
-        DirectedEdge, DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge,
-        DirectedWeightedEdge,
-    },
+    edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},
     path::{Path, PathRequest},
     types::VertexId,
 };
@@ -41,9 +38,19 @@ impl Graph {
         }
     }
 
-    // pub fn all_out_edges(&self) -> &Vec<Vec<DirectedTaillessWeightedEdge>> {
-    //     &self.out_edges
-    // }
+    pub fn all_edges(&self) -> Vec<DirectedWeightedEdge> {
+        self.out_edges
+            .iter()
+            .enumerate()
+            .map(|(tail, out_edges)| {
+                out_edges
+                    .iter()
+                    .map(|out_edge| out_edge.set_tail(tail as VertexId))
+                    .collect::<Vec<_>>()
+            })
+            .flatten()
+            .collect()
+    }
 
     pub fn out_edges(&self, vertex: VertexId) -> &Vec<DirectedTaillessWeightedEdge> {
         &self.out_edges[vertex as usize]
@@ -126,8 +133,8 @@ impl Graph {
             .binary_search_by_key(&edge.head, |out_edge| out_edge.head)
         {
             Ok(idx) => {
-                if self.out_edges[edge.tail as usize][idx].cost > edge.weight {
-                    self.out_edges[edge.tail as usize][idx].cost = edge.weight;
+                if self.out_edges[edge.tail as usize][idx].weight > edge.weight {
+                    self.out_edges[edge.tail as usize][idx].weight = edge.weight;
                 }
             }
             Err(idx) => self.out_edges[edge.tail as usize].insert(idx, edge.tailless()),
@@ -143,8 +150,8 @@ impl Graph {
             .binary_search_by_key(&edge.tail, |out_edge| out_edge.tail)
         {
             Ok(idx) => {
-                if self.in_edges[edge.head as usize][idx].cost > edge.weight {
-                    self.in_edges[edge.head as usize][idx].cost = edge.weight;
+                if self.in_edges[edge.head as usize][idx].weight > edge.weight {
+                    self.in_edges[edge.head as usize][idx].weight = edge.weight;
                 }
             }
             Err(idx) => self.in_edges[edge.head as usize].insert(idx, edge.headless()),
@@ -202,7 +209,7 @@ impl Graph {
                 let min_edge = self.out_edges[*from as usize]
                     .iter()
                     .filter(|edge| edge.head == *to)
-                    .min_by_key(|edge| edge.cost)
+                    .min_by_key(|edge| edge.weight)
                     .expect(format!("no edge between {} and {} found", from, to).as_str());
                 edges.push(min_edge);
             } else {
@@ -211,7 +218,7 @@ impl Graph {
         }
 
         // check if cost of route is correct
-        let true_cost = edges.iter().map(|edge| edge.cost).sum::<u32>();
+        let true_cost = edges.iter().map(|edge| edge.weight).sum::<u32>();
         assert_eq!(
             route.weight, true_cost,
             "path weight should be {}, but was {}",

@@ -53,7 +53,7 @@ impl<'a> BiDijkstra<'a> {
                 self.graph
                     .out_edges(state.value)
                     .iter()
-                    .for_each(|edge| forward.update(state.value, edge.head, edge.cost));
+                    .for_each(|edge| forward.update(state.value, edge.head, edge.weight));
             }
 
             if let Some(state) = backward.pop() {
@@ -69,7 +69,7 @@ impl<'a> BiDijkstra<'a> {
                     }
                 }
                 self.graph.in_edges(state.value).iter().for_each(|edge| {
-                    backward.update(state.value, edge.tail, edge.cost);
+                    backward.update(state.value, edge.tail, edge.weight);
                 });
             }
         }

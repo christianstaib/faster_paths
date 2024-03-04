@@ -33,22 +33,23 @@ pub trait PriorityTerm {
 pub struct CHQueue {
     queue: BinaryHeap<CHState>,
     priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
-    vertex_shortcut: HashMap<VertexId, ShortcutSearchResult>,
+    all: u32,
+    no_hits: u32,
 }
 
 impl CHQueue {
     pub fn new(graph: &Graph) -> Self {
         let queue = BinaryHeap::new();
         let priority_terms = Vec::new();
-        let vertex_shortcut = HashMap::new();
         let mut queue = Self {
             queue,
             priority_terms,
-            vertex_shortcut,
+            all: 0,
+            no_hits: 0,
         };
         // queue.register(1, VoronoiRegion::new(&graph));
-        // queue.register(1, DeletedNeighbors::new(&graph));
-        // queue.register(1, CostOfQueries::new(&graph));
+        queue.register(1, CostOfQueries::new(&graph));
+        // queue.register(120, DeletedNeighbors::new(&graph));
         queue.initialize(graph);
         queue
     }
@@ -60,21 +61,24 @@ impl CHQueue {
     // Lazy poping the node with minimum priority.
     pub fn pop(&mut self, graph: &Graph) -> Option<(VertexId, Vec<Shortcut>)> {
         while let Some(mut state) = self.queue.pop() {
+            self.all += 1;
             // If current priority is greater than minimum priority, then repush state with updated
             // priority.
             let priority_shortcuts = self.get_priority_and_shortcuts_mut(state.vertex, graph);
             if priority_shortcuts.0 > state.priority {
                 // println!("store");
-                self.vertex_shortcut
-                    .insert(state.vertex, priority_shortcuts.1);
                 state.priority = priority_shortcuts.0;
                 self.queue.push(state);
+                self.no_hits += 1;
                 continue;
             }
+            // if self.all % 10_000 == 0 {
+            //     println!(
+            //         "no_hit rate: {:>2.2}",
+            //         self.no_hits as f32 / self.all as f32 * 100.0
+            //     );
+            // }
 
-            for neighbor in graph.closed_neighborhood(state.vertex, 2) {
-                self.vertex_shortcut.remove(&neighbor);
-            }
             self.update_before_contraction(state.vertex, graph);
             return Some((state.vertex, priority_shortcuts.1.shortcuts));
         }
@@ -134,14 +138,9 @@ impl CHQueue {
     }
 
     fn get_shortcuts(&mut self, vertex: u32, graph: &Graph) -> ShortcutSearchResult {
-        if let Some(this_shortcuts) = self.vertex_shortcut.remove(&vertex) {
-            // println!("reuse");
-            return this_shortcuts;
-        } else {
-            let shortcut_generator = ContractionHelper::new(graph, 10);
-            let shortcuts = shortcut_generator.get_shortcuts(vertex);
-            shortcuts
-        }
+        let shortcut_generator = ContractionHelper::new(graph, 100);
+        let shortcuts = shortcut_generator.get_shortcuts(vertex);
+        shortcuts
     }
 
     pub fn get_priority_and_shortcuts_init(
@@ -149,7 +148,7 @@ impl CHQueue {
         vertex: VertexId,
         graph: &Graph,
     ) -> (i32, ShortcutSearchResult) {
-        let shortcut_generator = ContractionHelper::new(graph, 10);
+        let shortcut_generator = ContractionHelper::new(graph, 100);
         let shortcuts_results = shortcut_generator.get_shortcuts(vertex);
 
         self.get_priority(graph, shortcuts_results, vertex)
@@ -180,10 +179,7 @@ impl CHQueue {
 
         self.queue = vertex_and_priority_and_shortcuts
             .into_iter()
-            .map(|(vertex, (priority, shortcuts))| {
-                self.vertex_shortcut.insert(vertex, shortcuts);
-                CHState { vertex, priority }
-            })
+            .map(|(vertex, (priority, shortcuts))| CHState { vertex, priority })
             .collect();
     }
 
@@ -194,7 +190,7 @@ impl CHQueue {
         vertex: u32,
     ) -> (i32, ShortcutSearchResult) {
         let search_space_size = 0 * shortcuts_results.search_space_size;
-        let edge_difference = 1 * shortcuts_results.edge_difference;
+        let edge_difference = 0 * shortcuts_results.edge_difference;
 
         let priorities: Vec<i32> = self
             .priority_terms

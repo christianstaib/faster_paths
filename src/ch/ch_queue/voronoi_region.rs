@@ -17,7 +17,7 @@ impl PriorityTerm for VoronoiRegion {
                 .out_edges(neighbor)
                 .iter()
                 .filter(|edge| !self.contracted[edge.head as usize])
-                .min_by_key(|edge| edge.cost)
+                .min_by_key(|edge| edge.weight)
             {
                 if nearest.head == vertex {
                     region_size += 1;

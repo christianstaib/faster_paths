@@ -59,7 +59,7 @@ impl ChDijkstra {
                         if entry.vertex == out_edge.head {
                             entry.predecessor = Some(*vertex);
                         }
-                        entry.weight += out_edge.cost
+                        entry.weight += out_edge.weight
                     });
 
                     out_labels[*vertex as usize]
@@ -75,7 +75,7 @@ impl ChDijkstra {
                         if entry.vertex == in_edge.tail {
                             entry.predecessor = Some(*vertex);
                         }
-                        entry.weight += in_edge.cost
+                        entry.weight += in_edge.weight
                     });
 
                     in_labels[*vertex as usize]
@@ -145,7 +145,7 @@ impl ChDijkstra {
                         .iter()
                         .for_each(|edge| {
                             let alternative_cost =
-                                forward_costs.get(&current_node).unwrap() + edge.cost;
+                                forward_costs.get(&current_node).unwrap() + edge.weight;
                             let current_cost = *forward_costs.get(&edge.head).unwrap_or(&u32::MAX);
                             if alternative_cost < current_cost {
                                 forward_costs.insert(edge.head, alternative_cost);
@@ -176,7 +176,7 @@ impl ChDijkstra {
                         .iter()
                         .for_each(|edge| {
                             let alternative_cost =
-                                backward_costs.get(&current_node).unwrap() + edge.cost;
+                                backward_costs.get(&current_node).unwrap() + edge.weight;
                             let current_cost = *backward_costs.get(&edge.tail).unwrap_or(&u32::MAX);
                             if alternative_cost < current_cost {
                                 backward_costs.insert(edge.tail, alternative_cost);
@@ -245,7 +245,7 @@ impl ChDijkstra {
                         .iter()
                         .for_each(|edge| {
                             let alternative_cost =
-                                forward_costs.get(&current_node).unwrap() + edge.cost;
+                                forward_costs.get(&current_node).unwrap() + edge.weight;
                             let current_cost = *forward_costs.get(&edge.head).unwrap_or(&u32::MAX);
                             if alternative_cost < current_cost {
                                 forward_costs.insert(edge.head, alternative_cost);
@@ -278,7 +278,7 @@ impl ChDijkstra {
                         .iter()
                         .for_each(|edge| {
                             let alternative_cost =
-                                backward_costs.get(&current_node).unwrap() + edge.cost;
+                                backward_costs.get(&current_node).unwrap() + edge.weight;
                             let current_cost = *backward_costs.get(&edge.tail).unwrap_or(&u32::MAX);
                             if alternative_cost < current_cost {
                                 backward_costs.insert(edge.tail, alternative_cost);

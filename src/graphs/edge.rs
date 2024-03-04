@@ -4,8 +4,8 @@ use super::types::{VertexId, Weight};
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord, Debug)]
 pub struct DirectedWeightedEdge {
-    pub head: VertexId,
     pub tail: VertexId,
+    pub head: VertexId,
     pub weight: Weight,
 }
 
@@ -32,14 +32,14 @@ impl DirectedWeightedEdge {
     pub fn tailless(&self) -> DirectedTaillessWeightedEdge {
         DirectedTaillessWeightedEdge {
             head: self.head,
-            cost: self.weight,
+            weight: self.weight,
         }
     }
 
     pub fn headless(&self) -> DirectedHeadlessWeightedEdge {
         DirectedHeadlessWeightedEdge {
             tail: self.tail,
-            cost: self.weight,
+            weight: self.weight,
         }
     }
 }
@@ -47,13 +47,23 @@ impl DirectedWeightedEdge {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DirectedTaillessWeightedEdge {
     pub head: VertexId,
-    pub cost: u32,
+    pub weight: u32,
+}
+
+impl DirectedTaillessWeightedEdge {
+    pub fn set_tail(&self, tail: VertexId) -> DirectedWeightedEdge {
+        DirectedWeightedEdge {
+            tail,
+            head: self.head,
+            weight: self.weight,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DirectedHeadlessWeightedEdge {
     pub tail: VertexId,
-    pub cost: u32,
+    pub weight: Weight,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]

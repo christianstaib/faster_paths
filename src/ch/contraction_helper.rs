@@ -43,7 +43,7 @@ impl<'a> ContractionHelper<'a> {
     pub fn get_shortcuts(&self, vertex: VertexId) -> ShortcutSearchResult {
         let uv_edges = &self.graph.in_edges(vertex);
         let vw_edges = &self.graph.out_edges(vertex);
-        let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
+        let max_vw_cost = vw_edges.iter().map(|edge| edge.weight).max().unwrap_or(0);
 
         let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
         let search_space_size = AtomicU32::new(0);
@@ -55,12 +55,12 @@ impl<'a> ContractionHelper<'a> {
                 let mut shortcuts = Vec::new();
                 // print!("{}", uv_edge.tail);
 
-                let max_cost = uv_edge.cost + max_vw_cost;
+                let max_cost = uv_edge.weight + max_vw_cost;
                 let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost, &w_set);
                 search_space_size.fetch_add(witness_cost.len() as u32, Ordering::Relaxed);
 
                 for vw_ede in vw_edges.iter() {
-                    let uw_cost = uv_edge.cost + vw_ede.cost;
+                    let uw_cost = uv_edge.weight + vw_ede.weight;
                     if &uw_cost < witness_cost.get(&vw_ede.head).unwrap_or(&u32::MAX) {
                         let edge = DirectedWeightedEdge {
                             tail: uv_edge.tail,
@@ -96,7 +96,7 @@ impl<'a> ContractionHelper<'a> {
     pub fn wittness_search_space(&self, vertex: VertexId) -> i32 {
         let uv_edges = &self.graph.in_edges(vertex);
         let vw_edges = &self.graph.out_edges(vertex);
-        let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
+        let max_vw_cost = vw_edges.iter().map(|edge| edge.weight).max().unwrap_or(0);
 
         let w_set: HashSet<VertexId> = vw_edges.iter().map(|edge| edge.head).collect();
 
@@ -104,7 +104,7 @@ impl<'a> ContractionHelper<'a> {
             .iter()
             .par_bridge()
             .map(|uv_edge| {
-                let max_cost = uv_edge.cost + max_vw_cost;
+                let max_cost = uv_edge.weight + max_vw_cost;
                 let witness_cost = self.witness_search(uv_edge.tail, vertex, max_cost, &w_set);
 
                 witness_cost.len() as i32
@@ -150,7 +150,7 @@ impl<'a> ContractionHelper<'a> {
             }
 
             for edge in self.graph.out_edges(vertex).iter() {
-                let alternative_cost = cost[&vertex] + edge.cost;
+                let alternative_cost = cost[&vertex] + edge.weight;
                 let new_hops = hops[&vertex] + 1;
                 if (edge.head != without)
                     && (alternative_cost <= max_cost)

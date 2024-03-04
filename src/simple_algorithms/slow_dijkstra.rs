@@ -17,7 +17,7 @@ impl<'a> SlowDijkstra<'a> {
             self.graph
                 .out_edges(state.value)
                 .iter()
-                .for_each(|edge| data.update(state.value, edge.head, edge.cost));
+                .for_each(|edge| data.update(state.value, edge.head, edge.weight));
         }
 
         data

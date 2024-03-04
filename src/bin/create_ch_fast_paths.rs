@@ -1,7 +1,8 @@
-use std::{fs::File, io::BufWriter, time::Instant};
+use std::time::Instant;
 
 use clap::Parser;
-use faster_paths::{ch::contractor::Contractor, graphs::graph_factory::GraphFactory};
+use fast_paths::InputGraph;
+use faster_paths::graphs::graph_factory::GraphFactory;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -10,9 +11,6 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     graph_path: String,
-    /// Path of contracted_graph (output)
-    #[arg(short, long)]
-    ch_graph: String,
 }
 
 fn main() {
@@ -21,9 +19,10 @@ fn main() {
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
     let start = Instant::now();
-    let contracted_graph = Contractor::get_contracted_graph(&graph);
+    let mut input_graph = InputGraph::new();
+    for edge in graph.all_edges() {
+        input_graph.add_edge(edge.tail as usize, edge.head as usize, edge.weight as usize);
+    }
+    let _ = fast_paths::prepare(&input_graph);
     println!("Generating ch took {:?}", start.elapsed());
-
-    let writer = BufWriter::new(File::create(args.ch_graph).unwrap());
-    bincode::serialize_into(writer, &contracted_graph).unwrap();
 }
