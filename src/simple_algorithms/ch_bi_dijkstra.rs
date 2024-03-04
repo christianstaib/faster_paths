@@ -66,16 +66,11 @@ impl ChDijkstra {
                         entries: head_label_entries.clone(),
                     };
                     labels.push(label);
-
-                    out_labels[*vertex as usize]
-                        .entries
-                        .extend(head_label_entries);
                 }
-                let new_label = Label::merge(labels, *vertex);
-                out_labels[*vertex as usize].clean();
-                assert_eq!(new_label, out_labels[*vertex as usize]);
+                out_labels[*vertex as usize] = Label::merge(labels, *vertex);
                 out_labels[*vertex as usize].prune_forward_label(&in_labels);
 
+                let mut labels = Vec::new();
                 for in_edge in self.graph.in_edges(*vertex) {
                     let mut tail_label_entries = in_labels[in_edge.tail as usize].entries.clone();
                     tail_label_entries.iter_mut().for_each(|entry| {
@@ -84,12 +79,12 @@ impl ChDijkstra {
                         }
                         entry.weight += in_edge.weight
                     });
-
-                    in_labels[*vertex as usize]
-                        .entries
-                        .extend(tail_label_entries);
+                    let label = Label {
+                        entries: tail_label_entries.clone(),
+                    };
+                    labels.push(label);
                 }
-                in_labels[*vertex as usize].clean();
+                in_labels[*vertex as usize] = Label::merge(labels, *vertex);
                 in_labels[*vertex as usize].prune_reverse_label(&out_labels);
             }
         }
