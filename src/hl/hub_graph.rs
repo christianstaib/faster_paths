@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     ch::fast_shortcut_replacer::FastShortcutReplacer,
-    graphs::path::{Path, ShortestPathRequest},
+    graphs::path::{Path, Routing, ShortestPathRequest},
     graphs::types::Weight,
 };
 
@@ -15,19 +15,11 @@ pub struct HubGraph {
     pub shortcut_replacer: FastShortcutReplacer,
 }
 
-impl HubGraph {
-    pub fn get_weight(&self, request: &ShortestPathRequest) -> Option<Weight> {
-        let forward_label = self.forward_labels.get(request.source as usize)?;
-        let backward_label = self.reverse_labels.get(request.target as usize)?;
-        let (weight, _, _) = Self::overlap(forward_label, backward_label)?;
-
-        Some(weight)
-    }
-
-    pub fn get_path(&self, request: &ShortestPathRequest) -> Option<Path> {
+impl Routing for HubGraph {
+    fn get_shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
         // wanted: source -> target
-        let forward_label = self.forward_labels.get(request.source as usize)?;
-        let backward_label = self.reverse_labels.get(request.target as usize)?;
+        let forward_label = self.forward_labels.get(path_request.source as usize)?;
+        let backward_label = self.reverse_labels.get(path_request.target as usize)?;
 
         let (_, forward_index, reverse_index) = Self::overlap(forward_label, backward_label)?;
         let mut forward_path = forward_label.get_path(forward_index)?;
@@ -43,6 +35,16 @@ impl HubGraph {
         let path = self.shortcut_replacer.get_path(&forward_path);
 
         Some(path)
+    }
+}
+
+impl HubGraph {
+    pub fn get_weight(&self, request: &ShortestPathRequest) -> Option<Weight> {
+        let forward_label = self.forward_labels.get(request.source as usize)?;
+        let backward_label = self.reverse_labels.get(request.target as usize)?;
+        let (weight, _, _) = Self::overlap(forward_label, backward_label)?;
+
+        Some(weight)
     }
 
     /// Calculates the minimal overlap between a forward and reverse label.

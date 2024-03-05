@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     graphs::graph_factory::GraphFactory,
-    graphs::path::ShortestPathValidation,
+    graphs::path::{Routing, ShortestPathValidation},
     hl::{hub_graph::HubGraph, hub_graph_investigator::HubGraphInvestigator},
 };
 use indicatif::ProgressIterator;
@@ -46,7 +46,7 @@ fn main() {
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {
         let start = Instant::now();
-        let path = hub_graph.get_path(&test.request);
+        let path = hub_graph.get_shortest_path(&test.request);
         time_hl.push(start.elapsed());
 
         let mut cost = None;
