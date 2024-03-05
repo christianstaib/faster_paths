@@ -1,18 +1,15 @@
 use std::collections::BinaryHeap;
 
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
-use indicatif::{ParallelProgressIterator, ProgressIterator};
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
-    ch::{contractor::ContractedGraph, fast_shortcut_replacer::FastShortcutReplacer},
+    ch::contractor::ContractedGraph,
     graphs::{
         edge::DirectedEdge,
         fast_graph::FastGraph,
         path::{Path, ShortestPathRequest},
         types::VertexId,
     },
-    hl::{hub_graph::HubGraph, label::Label, label_entry::LabelEntry},
     queue::heap_queue::State,
 };
 

@@ -47,7 +47,7 @@ impl DirectedWeightedEdge {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DirectedTaillessWeightedEdge {
     pub head: VertexId,
-    pub weight: u32,
+    pub weight: Weight,
 }
 
 impl DirectedTaillessWeightedEdge {
