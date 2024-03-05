@@ -53,7 +53,7 @@ pub trait Routing {
     ///
     /// This method is designed to calculate and return the total weight of the shortest path between the source
     /// and target vertices defined in the `ShortestPathRequest`. It is particularly useful for applications where
-    /// the weight or cost of the path is the primary concern, rather than the path itself. It
+    /// the weight of the path is the primary concern, rather than the path itself. It
     /// might be faster than `get_shortest_path` as no path needs to be constructed.
     ///
     /// # Arguments
@@ -65,8 +65,5 @@ pub trait Routing {
     ///                      indicating the total weight of that path. Returns `None` if no path exists or if the path
     ///                      cannot be calculated. This could be due to various reasons such as disconnected vertices
     ///                      or an overflow in calculating the weight.
-    ///
-    /// This method complements `get_shortest_path` by focusing solely on the weight aspect of the shortest path,
-    /// offering a lightweight alternative when the path's route is not needed.
     fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight>;
 }

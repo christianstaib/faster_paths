@@ -20,8 +20,8 @@ impl Routing for HubGraph {
         // wanted: source -> target
         let forward_label = self.forward_labels.get(path_request.source as usize)?;
         let backward_label = self.reverse_labels.get(path_request.target as usize)?;
-
         let (_, forward_index, reverse_index) = Self::overlap(forward_label, backward_label)?;
+
         let mut forward_path = forward_label.get_path(forward_index)?;
         let reverse_path = backward_label.get_path(reverse_index)?;
 
