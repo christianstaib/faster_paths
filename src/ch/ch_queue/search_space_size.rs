@@ -2,16 +2,16 @@ use crate::graphs::graph::Graph;
 
 use super::priority_term::PriorityTerm;
 
-pub struct EdgeDifference {}
+pub struct SearchSpaceSize {}
 
-impl EdgeDifference {
+impl SearchSpaceSize {
     #[allow(unused_variables)]
     pub fn new(graph: &Graph) -> Self {
         Self {}
     }
 }
 
-impl PriorityTerm for EdgeDifference {
+impl PriorityTerm for SearchSpaceSize {
     #[allow(unused_variables)]
     fn priority(
         &self,

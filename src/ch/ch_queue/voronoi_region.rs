@@ -3,7 +3,7 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::queue::PriorityTerm;
+use super::priority_term::PriorityTerm;
 
 pub struct VoronoiRegion {
     contracted: Vec<bool>,
