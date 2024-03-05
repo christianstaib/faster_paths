@@ -19,14 +19,33 @@ impl HubGraph {
     pub fn get_weight(&self, request: &PathRequest) -> Option<Weight> {
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.reverse_labels.get(request.target as usize)?;
+        let weight = Self::minimal_overlap(forward_label, backward_label)?.0;
 
-        Self::get_weight_labels(forward_label, backward_label)
+        Some(weight)
     }
 
     pub fn get_path(&self, request: &PathRequest) -> Option<Path> {
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.reverse_labels.get(request.target as usize)?;
-        let path_with_shortcuts = Self::get_path_with_shortcuts(forward_label, backward_label)?;
+        let path_with_shortcuts = {
+            let (_, forward_index, reverse_index) =
+                Self::minimal_overlap(forward_label, backward_label)?;
+            let mut forward_path = forward_label.get_path(forward_index)?;
+            let reverse_path = backward_label.get_path(reverse_index)?;
+
+            // wanted: u -> w
+            // got: forward v -> u, reverse v -> w
+
+            forward_path.vertices.reverse();
+            if forward_path.vertices.last() == reverse_path.vertices.first() {
+                forward_path.vertices.pop();
+            }
+
+            forward_path.vertices.extend(reverse_path.vertices);
+            forward_path.weight += reverse_path.weight;
+
+            Some(forward_path)
+        }?;
         let path = self.shortcut_replacer.get_path(&path_with_shortcuts);
 
         Some(path)
@@ -34,32 +53,32 @@ impl HubGraph {
 
     // cost, route_with_shortcuts
     pub fn get_path_with_shortcuts(forward: &Label, reverse: &Label) -> Option<Path> {
-        let (_, forward_idx, reverse_idx) = Self::get_overlap(forward, reverse)?;
-        let mut forward_path = forward.get_path(forward_idx)?;
-        let reverse_path = reverse.get_path(reverse_idx)?;
+        let (_, forward_index, reverse_index) = Self::minimal_overlap(forward, reverse)?;
+        let mut forward_path = forward.get_path(forward_index)?;
+        let reverse_path = reverse.get_path(reverse_index)?;
 
         // wanted: u -> w
         // got: forward v -> u, reverse v -> w
-        if forward_path.vertices.first() == reverse_path.vertices.first() {
-            forward_path.vertices.remove(0);
-        }
 
         forward_path.vertices.reverse();
+        if forward_path.vertices.last() == reverse_path.vertices.first() {
+            forward_path.vertices.pop();
+        }
+
         forward_path.vertices.extend(reverse_path.vertices);
+        forward_path.weight += reverse_path.weight;
 
-        Some(Path {
-            vertices: forward_path.vertices,
-            weight: forward_path.weight + reverse_path.weight,
-        })
+        Some(forward_path)
     }
 
-    pub fn get_weight_labels(forward: &Label, reverse: &Label) -> Option<Weight> {
-        let (weight, _, _) = Self::get_overlap(forward, reverse)?;
-        Some(weight)
-    }
-
-    /// cost, i_self, i_other
-    fn get_overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
+    /// Calculates the minimal overlap between a forward and reverse label.
+    ///
+    /// If there exists an overlap, `Some(weight, index_forward, index_reverse)` is returned, where
+    /// `weight` is the weight of the shortest path from the source vertex represented by the forward label to the target
+    /// vertex represented by the reverse label. `index_forward` is the index of the entry that
+    /// represents the shortest path from the source to the meeting vertex, and `index_reverse` is the index of the
+    /// entry that represents the shortest path from the meeting vertex to the target.
+    pub fn minimal_overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
         let mut index_forward = 0;
         let mut index_reverse = 0;
 
