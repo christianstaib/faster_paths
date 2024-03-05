@@ -69,12 +69,12 @@ impl<'a> HubGraphFactory<'a> {
             });
             labels.push(label);
         }
-        let mut label = Self::merge(labels, vertex);
-        Self::prune(&mut label, direction2_labels);
-        label
+        let mut direction1_label = Self::merge(labels, vertex);
+        Self::prune(&mut direction1_label, direction2_labels);
+        direction1_label
     }
 
-    pub fn set_predecessor(label: &mut Label) {
+    fn set_predecessor(label: &mut Label) {
         // maps vertex -> index
         let mut vertex_to_index = HashMap::new();
         for idx in 0..label.entries.len() {
@@ -89,10 +89,11 @@ impl<'a> HubGraphFactory<'a> {
         }
     }
 
-    pub fn merge(mut labels: Vec<Label>, vertex: VertexId) -> Label {
+    fn merge(mut labels: Vec<Label>, vertex: VertexId) -> Label {
+        // poping from end of vec is faster as poping from beginning
         labels.iter_mut().for_each(|label| label.entries.reverse());
-        let mut label_entries = Vec::new();
 
+        let mut label_entries = Vec::new();
         labels.push(Label::new(vertex));
 
         while !labels.is_empty() {
@@ -123,13 +124,14 @@ impl<'a> HubGraphFactory<'a> {
         }
     }
 
-    pub fn prune(label: &mut Label, reverse_labels: &[Label]) {
-        label.entries = label
+    fn prune(direction1_label: &mut Label, direction2_labels_labels: &[Label]) {
+        direction1_label.entries = direction1_label
             .entries
             .par_iter()
             .filter(|entry| {
-                let reverse_label = &reverse_labels[entry.vertex as usize];
-                let true_cost = HubGraph::get_weight_labels(label, reverse_label).unwrap();
+                let reverse_label = &direction2_labels_labels[entry.vertex as usize];
+                let true_cost =
+                    HubGraph::get_weight_labels(direction1_label, reverse_label).unwrap();
                 entry.weight == true_cost
             })
             .cloned()

@@ -6,8 +6,9 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    graphs::graph_factory::GraphFactory, graphs::path::RouteValidationRequest,
-    hl::hub_graph::HubGraph,
+    graphs::graph_factory::GraphFactory,
+    graphs::path::RouteValidationRequest,
+    hl::{hub_graph::HubGraph, hub_graph_investigator::HubGraphInvestigator},
 };
 use indicatif::ProgressIterator;
 
@@ -37,7 +38,10 @@ fn main() {
     let reader = BufReader::new(File::open(args.hl_graph).unwrap());
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
-    println!("avg label size is {}", hub_graph.get_avg_label_size());
+    println!(
+        "avg label size is {}",
+        HubGraphInvestigator::get_avg_label_size(&hub_graph)
+    );
 
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {

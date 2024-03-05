@@ -1,7 +1,5 @@
-use core::panic;
 use std::usize;
 
-use ahash::{HashSet, HashSetExt};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{path::Path, types::VertexId};
@@ -20,30 +18,29 @@ impl Label {
         }
     }
 
-    pub fn get_path(&self, edge_id: u32) -> Path {
+    pub fn get_path(&self, entry_index: u32) -> Option<Path> {
         let mut path = Path {
             vertices: Vec::new(),
-            weight: self.entries[edge_id as usize].weight,
+            weight: self.entries.get(entry_index as usize)?.weight,
         };
-        let mut current_idx = edge_id;
-        let mut visited = HashSet::new();
+        let mut current_index = entry_index;
 
-        while let Some(entry) = self.entries.get(current_idx as usize) {
-            // cycle detection
-            if !visited.insert(current_idx) {
-                panic!("wrong formated label");
-            }
-
+        while let Some(entry) = self.entries.get(current_index as usize) {
             path.vertices.push(entry.vertex);
 
-            if let Some(this_idx) = entry.predecessor {
-                current_idx = this_idx;
+            // cycle detection
+            if path.vertices.len() > self.entries.len() {
+                return None;
+            }
+
+            // exit the loop if there's no predecessor
+            if let Some(predecessor_index) = entry.predecessor {
+                current_index = predecessor_index;
             } else {
-                // exit the loop if there's no predecessor
                 break;
             }
         }
 
-        path
+        Some(path)
     }
 }

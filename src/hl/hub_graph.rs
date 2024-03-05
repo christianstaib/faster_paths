@@ -16,21 +16,7 @@ pub struct HubGraph {
 }
 
 impl HubGraph {
-    pub fn get_avg_label_size(&self) -> f32 {
-        let summed_label_size: u64 = self
-            .forward_labels
-            .iter()
-            .map(|label| label.entries.len() as u64)
-            .sum::<u64>()
-            + self
-                .reverse_labels
-                .iter()
-                .map(|label| label.entries.len() as u64)
-                .sum::<u64>();
-        summed_label_size as f32 / (2 * self.forward_labels.len()) as f32
-    }
-
-    pub fn get_weight(&self, request: &PathRequest) -> Option<u32> {
+    pub fn get_weight(&self, request: &PathRequest) -> Option<Weight> {
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.reverse_labels.get(request.target as usize)?;
 
@@ -41,15 +27,16 @@ impl HubGraph {
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.reverse_labels.get(request.target as usize)?;
         let path_with_shortcuts = Self::get_path_with_shortcuts(forward_label, backward_label)?;
+        let path = self.shortcut_replacer.get_path(&path_with_shortcuts);
 
-        Some(self.shortcut_replacer.get_path(&path_with_shortcuts))
+        Some(path)
     }
 
     // cost, route_with_shortcuts
     pub fn get_path_with_shortcuts(forward: &Label, reverse: &Label) -> Option<Path> {
         let (_, forward_idx, reverse_idx) = Self::get_overlap(forward, reverse)?;
-        let mut forward_path = forward.get_path(forward_idx);
-        let reverse_path = reverse.get_path(reverse_idx);
+        let mut forward_path = forward.get_path(forward_idx)?;
+        let reverse_path = reverse.get_path(reverse_idx)?;
 
         // wanted: u -> w
         // got: forward v -> u, reverse v -> w
@@ -72,46 +59,34 @@ impl HubGraph {
     }
 
     /// cost, i_self, i_other
-    pub fn get_overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
-        let mut i_forward = 0;
-        let mut i_reverse = 0;
+    fn get_overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
+        let mut index_forward = 0;
+        let mut index_reverse = 0;
 
-        let mut overlap_weight = None;
-        let mut overlap_i_forward = 0;
-        let mut overlap_i_reverse = 0;
+        let mut overlap = None;
 
-        while i_forward < forward.entries.len() && i_reverse < reverse.entries.len() {
-            let forward_entry = &forward.entries[i_forward];
-            let reverse_entry = &reverse.entries[i_reverse];
+        while index_forward < forward.entries.len() && index_reverse < reverse.entries.len() {
+            let forward_entry = &forward.entries.get(index_forward)?;
+            let reverse_entry = &reverse.entries.get(index_reverse)?;
 
             match forward_entry.vertex.cmp(&reverse_entry.vertex) {
-                std::cmp::Ordering::Less => i_forward += 1,
+                std::cmp::Ordering::Less => index_forward += 1,
                 std::cmp::Ordering::Equal => {
-                    let alternative_weight = forward_entry
-                        .weight
-                        .checked_add(reverse_entry.weight)
-                        .unwrap();
-                    if alternative_weight < overlap_weight.unwrap_or(u32::MAX) {
-                        overlap_weight = Some(alternative_weight);
-                        overlap_i_forward = i_forward;
-                        overlap_i_reverse = i_reverse;
-                    }
+                    let combined_weight = forward_entry.weight.checked_add(reverse_entry.weight)?;
+                    overlap = overlap
+                        .take()
+                        .filter(|&(current_weight, _, _)| current_weight <= combined_weight)
+                        .or_else(|| {
+                            Some((combined_weight, index_forward as u32, index_reverse as u32))
+                        });
 
-                    i_forward += 1;
-                    i_reverse += 1;
+                    index_forward += 1;
+                    index_reverse += 1;
                 }
-                std::cmp::Ordering::Greater => i_reverse += 1,
+                std::cmp::Ordering::Greater => index_reverse += 1,
             }
         }
 
-        if let Some(min_weight) = overlap_weight {
-            return Some((
-                min_weight,
-                overlap_i_forward as u32,
-                overlap_i_reverse as u32,
-            ));
-        }
-
-        None
+        overlap
     }
 }
