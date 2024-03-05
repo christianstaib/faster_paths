@@ -3,6 +3,7 @@ use crate::{
     graphs::{
         fast_graph::FastGraph,
         path::{Path, Routing, ShortestPathRequest},
+        types::Weight,
     },
 };
 
@@ -15,6 +16,11 @@ impl<'a> Routing for Dijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let data = self.get_data(route_request.source);
         data.get_route(route_request.target)
+    }
+
+    fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
+        let data = self.get_shortest_path(path_request)?;
+        Some(data.weight)
     }
 }
 

@@ -36,17 +36,17 @@ impl Routing for HubGraph {
 
         Some(path)
     }
-}
 
-impl HubGraph {
-    pub fn get_weight(&self, request: &ShortestPathRequest) -> Option<Weight> {
-        let forward_label = self.forward_labels.get(request.source as usize)?;
-        let backward_label = self.reverse_labels.get(request.target as usize)?;
+    fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
+        let forward_label = self.forward_labels.get(path_request.source as usize)?;
+        let backward_label = self.reverse_labels.get(path_request.target as usize)?;
         let (weight, _, _) = Self::overlap(forward_label, backward_label)?;
 
         Some(weight)
     }
+}
 
+impl HubGraph {
     /// Calculates the minimal overlap between a forward and reverse label.
     ///
     /// If there exists an overlap, `Some(weight, index_forward, index_reverse)` is returned, where

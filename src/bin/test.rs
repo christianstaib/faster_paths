@@ -77,7 +77,7 @@ fn main() {
         assert_eq!(true_cost, cost, "ch dijkstra wrong");
 
         // test hl
-        let response = hl_graph.get_weight(&request);
+        let response = hl_graph.get_shortest_path_weight(&request);
         let cost = response;
         assert_eq!(true_cost, cost, "bi dijkstra wrong");
     }

@@ -3,7 +3,7 @@ use crate::{
     graphs::{
         fast_graph::FastGraph,
         path::{Path, Routing, ShortestPathRequest},
-        types::VertexId,
+        types::{VertexId, Weight},
     },
 };
 
@@ -15,6 +15,11 @@ pub struct BiDijkstra<'a> {
 impl<'a> Routing for BiDijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         self.get_data(&route_request)
+    }
+
+    fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
+        let data = self.get_shortest_path(path_request)?;
+        Some(data.weight)
     }
 }
 
