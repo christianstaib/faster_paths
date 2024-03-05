@@ -34,32 +34,11 @@ impl Label {
             .collect();
     }
 
-    pub fn set_predecessor(&mut self) {
-        // maps vertex -> index
-        let mut vertex_to_index = HashMap::new();
-        for idx in 0..self.entries.len() {
-            vertex_to_index.insert(self.entries[idx].vertex, idx as u32);
-        }
-
-        // replace predecessor VertexId with index of predecessor
-        for entry in self.entries.iter_mut() {
-            if let Some(predecessor) = entry.predecessor {
-                entry.predecessor = Some(*vertex_to_index.get(&predecessor).unwrap());
-            }
-        }
-    }
-
     pub fn merge(mut labels: Vec<Label>, vertex: VertexId) -> Label {
         labels.iter_mut().for_each(|label| label.entries.reverse());
         let mut label_entries = Vec::new();
 
-        labels.push(Label {
-            entries: vec![LabelEntry {
-                vertex,
-                predecessor: None,
-                weight: 0,
-            }],
-        });
+        labels.push(Label::new(vertex));
 
         while !labels.is_empty() {
             let min_vertex = labels

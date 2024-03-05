@@ -1,3 +1,4 @@
+use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressIterator;
 
 use crate::{
@@ -39,7 +40,7 @@ impl<'a> HubGraphFactory<'a> {
         forward_labels
             .iter_mut()
             .chain(reverse_labels.iter_mut())
-            .for_each(|label| label.set_predecessor());
+            .for_each(|label| Self::set_predecessor(label));
 
         HubGraph {
             forward_labels,
@@ -70,5 +71,20 @@ impl<'a> HubGraphFactory<'a> {
         let mut label = Label::merge(labels, vertex);
         label.prune(direction2_labels);
         label
+    }
+
+    pub fn set_predecessor(label: &mut Label) {
+        // maps vertex -> index
+        let mut vertex_to_index = HashMap::new();
+        for idx in 0..label.entries.len() {
+            vertex_to_index.insert(label.entries[idx].vertex, idx as u32);
+        }
+
+        // replace predecessor VertexId with index of predecessor
+        for entry in label.entries.iter_mut() {
+            if let Some(predecessor) = entry.predecessor {
+                entry.predecessor = Some(*vertex_to_index.get(&predecessor).unwrap());
+            }
+        }
     }
 }
