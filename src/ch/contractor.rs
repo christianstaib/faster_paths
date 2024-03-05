@@ -48,7 +48,7 @@ impl Contractor {
     pub fn get_graph(mut self) -> ContractedGraph {
         let old_graph = self.graph.clone();
 
-        let shortcuts = self.contract_single_nodes();
+        let shortcuts = self.contract_single_vertex();
 
         self.graph = old_graph;
         self.add_shortcuts(&shortcuts);
@@ -73,8 +73,8 @@ impl Contractor {
         }
     }
 
-    /// Generates contraction hierarchy where one node at a time is contracted.
-    pub fn contract_single_nodes(&mut self) -> Vec<Shortcut> {
+    /// Generates contraction hierarchy where one vertex at a time is contracted.
+    pub fn contract_single_vertex(&mut self) -> Vec<Shortcut> {
         let mut shortcuts = Vec::new();
 
         let bar = ProgressBar::new(self.graph.number_of_vertices() as u64);
@@ -97,38 +97,6 @@ impl Contractor {
 
         shortcuts
     }
-
-    // /// Generates contraction hierarchy where nodes from independent node sets are contracted
-    // /// simultainously.
-    // pub fn contract_node_sets(&mut self) -> Vec<(DirectedWeightedEdge, VertexId)> {
-    //     let mut shortcuts = Vec::new();
-
-    //     let bar = ProgressBar::new(self.graph.in_edges.len() as u64);
-
-    //     let mut level = 0;
-    //     while let Some(node_set) = self.queue.pop_vec(&self.graph, 10_000) {
-    //         let shortcut_generator = ContractionHelper::new(&self.graph, 10);
-    //         let mut this_shortcuts = node_set
-    //             .par_iter()
-    //             .map(|&v| shortcut_generator.generate_shortcuts(v))
-    //             .flatten()
-    //             .collect::<Vec<_>>();
-
-    //         self.add_shortcuts(&this_shortcuts);
-    //         shortcuts.append(&mut this_shortcuts);
-
-    //         for &v in node_set.iter() {
-    //             self.graph.remove_vertex(v);
-    //             self.levels[v as usize] = level;
-    //         }
-
-    //         bar.inc(node_set.len() as u64);
-    //         level += 1;
-    //     }
-    //     bar.finish();
-
-    //     shortcuts
-    // }
 
     fn add_shortcuts(&mut self, shortcuts: &Vec<Shortcut>) {
         shortcuts

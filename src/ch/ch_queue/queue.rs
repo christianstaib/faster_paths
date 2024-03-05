@@ -1,11 +1,8 @@
 use std::collections::BinaryHeap;
 
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
-use indicatif::{ParallelProgressIterator, ProgressIterator};
+use indicatif::ParallelProgressIterator;
 use rand::seq::SliceRandom;
-use rayon::iter::{
-    IntoParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
-};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
     ch::{
@@ -16,10 +13,7 @@ use crate::{
     graphs::types::VertexId,
 };
 
-use super::{
-    cost_of_contraction::CostOfContraction, cost_of_queries::CostOfQueries,
-    deleted_neighbors::DeletedNeighbors, state::CHState,
-};
+use super::{deleted_neighbors::DeletedNeighbors, state::CHState};
 
 pub trait PriorityTerm {
     /// Gets the priority of node v in the graph
@@ -33,8 +27,6 @@ pub trait PriorityTerm {
 pub struct CHQueue {
     queue: BinaryHeap<CHState>,
     priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
-    all: u32,
-    no_hits: u32,
 }
 
 impl CHQueue {
@@ -44,12 +36,8 @@ impl CHQueue {
         let mut queue = Self {
             queue,
             priority_terms,
-            all: 0,
-            no_hits: 0,
         };
-        // queue.register(1, CostOfQueries::new(&graph));
-        // queue.register(1, VoronoiRegion::new(&graph));
-        // queue.register(120, DeletedNeighbors::new(&gph));
+        queue.register(120, DeletedNeighbors::new(&graph));
         queue.initialize(graph);
         queue
     }
@@ -58,26 +46,17 @@ impl CHQueue {
         self.priority_terms.push((weight, Box::new(term)));
     }
 
-    // Lazy poping the node with minimum priority.
+    // Lazy poping the vertex with minimum priority.
     pub fn pop(&mut self, graph: &Graph) -> Option<(VertexId, Vec<Shortcut>)> {
         while let Some(mut state) = self.queue.pop() {
-            self.all += 1;
             // If current priority is greater than minimum priority, then repush state with updated
             // priority.
             let priority_shortcuts = self.get_priority_and_shortcuts_mut(state.vertex, graph);
             if priority_shortcuts.0 > state.priority {
-                // println!("store");
                 state.priority = priority_shortcuts.0;
                 self.queue.push(state);
-                self.no_hits += 1;
                 continue;
             }
-            // if self.all % 10_000 == 0 {
-            //     println!(
-            //         "no_hit rate: {:>2.2}",
-            //         self.no_hits as f32 / self.all as f32 * 100.0
-            //     );
-            // }
 
             self.update_before_contraction(state.vertex, graph);
             return Some((state.vertex, priority_shortcuts.1.shortcuts));
@@ -120,19 +99,6 @@ impl CHQueue {
         self.get_priority(graph, shortcuts_results, vertex)
     }
 
-    // fn _update_queue(&mut self, graph: &Graph) {
-    //     self.queue = self
-    //         .queue
-    //         .iter()
-    //         .progress()
-    //         .par_bridge()
-    //         .map(|state| CHState {
-    //             vertex: state.vertex,
-    //             priority: self.get_priority_and_shortcuts(state.vertex, graph).0,
-    //         })
-    //         .collect();
-    // }
-
     fn initialize(&mut self, graph: &Graph) {
         let mut order: Vec<u32> = (0..graph.number_of_vertices()).map(|x| x as u32).collect();
         order.shuffle(&mut rand::thread_rng());
@@ -145,7 +111,7 @@ impl CHQueue {
 
         self.queue = vertex_and_priority_and_shortcuts
             .into_iter()
-            .map(|(vertex, (priority, shortcuts))| CHState { vertex, priority })
+            .map(|(vertex, (priority, _))| CHState { vertex, priority })
             .collect();
     }
 
@@ -156,7 +122,7 @@ impl CHQueue {
         vertex: u32,
     ) -> (i32, ShortcutSearchResult) {
         let search_space_size = 0 * shortcuts_results.search_space_size;
-        let edge_difference = 1 * shortcuts_results.edge_difference;
+        let edge_difference = 190 * shortcuts_results.edge_difference;
 
         let priorities: Vec<i32> = self
             .priority_terms
