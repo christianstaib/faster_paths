@@ -4,7 +4,7 @@ use clap::Parser;
 use faster_paths::{
     graphs::fast_graph::FastGraph,
     graphs::graph_factory::GraphFactory,
-    graphs::path::{PathRequest, Routing},
+    graphs::path::{Routing, ShortestPathRequest},
     simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ProgressIterator;
@@ -51,13 +51,13 @@ fn main() {
         .collect();
 
     for (source_target, true_cost) in queue.iter().zip(sol.iter()).progress() {
-        let request = PathRequest {
+        let request = ShortestPathRequest {
             source: source_target[0],
             target: source_target[1],
         };
 
         // test dijkstra
-        let response = dijkstra.get_path(&request);
+        let response = dijkstra.get_shortest_path(&request);
         let mut cost: i32 = -1;
         if let Some(route) = response {
             cost = route.weight as i32;

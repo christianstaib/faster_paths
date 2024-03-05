@@ -130,7 +130,7 @@ impl<'a> HubGraphFactory<'a> {
             .par_iter()
             .filter(|entry| {
                 let reverse_label = &direction2_labels_labels[entry.vertex as usize];
-                let true_weight = HubGraph::minimal_overlap(direction1_label, reverse_label)
+                let true_weight = HubGraph::overlap(direction1_label, reverse_label)
                     .unwrap()
                     .0;
                 entry.weight == true_weight

@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     graphs::graph_factory::GraphFactory,
-    graphs::path::RouteValidationRequest,
+    graphs::path::ShortestPathValidation,
     hl::{hub_graph::HubGraph, hub_graph_investigator::HubGraphInvestigator},
 };
 use indicatif::ProgressIterator;
@@ -33,7 +33,7 @@ fn main() {
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
-    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+    let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.hl_graph).unwrap());
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
@@ -54,7 +54,7 @@ fn main() {
             cost = Some(route.weight);
             graph.validate_route(&test.request, &route);
         }
-        assert_eq!(cost, test.cost);
+        assert_eq!(cost, test.weight);
     });
 
     println!("all correct");

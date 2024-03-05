@@ -4,7 +4,7 @@ use clap::Parser;
 use faster_paths::{
     graphs::fast_graph::FastGraph,
     graphs::graph_factory::GraphFactory,
-    graphs::path::{PathRequest, RouteValidationRequest, Routing},
+    graphs::path::{Routing, ShortestPathRequest, ShortestPathValidation},
     simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ProgressIterator;
@@ -38,18 +38,21 @@ fn main() {
         .par_bridge()
         .map(|_| {
             let mut rng = rand::thread_rng();
-            let request = PathRequest {
+            let request = ShortestPathRequest {
                 source: rng.gen_range(0..graph.num_nodes()) as u32,
                 target: rng.gen_range(0..graph.num_nodes()) as u32,
             };
 
-            let response = dijkstra.get_path(&request);
+            let response = dijkstra.get_shortest_path(&request);
             let mut cost = None;
             if let Some(route) = response {
                 cost = Some(route.weight);
             }
 
-            RouteValidationRequest { request, cost }
+            ShortestPathValidation {
+                request,
+                weight: cost,
+            }
         })
         .collect();
 

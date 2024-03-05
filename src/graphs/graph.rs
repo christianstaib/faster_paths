@@ -4,7 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},
-    path::{Path, PathRequest},
+    path::{Path, ShortestPathRequest},
     types::VertexId,
 };
 
@@ -197,7 +197,7 @@ impl Graph {
     }
 
     /// Check if a route is correct for a given request. Panics if not.
-    pub fn validate_route(&self, request: &PathRequest, route: &Path) {
+    pub fn validate_route(&self, request: &ShortestPathRequest, route: &Path) {
         // check if route start and end is correct
         assert_eq!(route.vertices.first().unwrap(), &request.source);
         assert_eq!(route.vertices.last().unwrap(), &request.target);

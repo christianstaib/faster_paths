@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     ch::fast_shortcut_replacer::FastShortcutReplacer,
-    graphs::path::{Path, PathRequest},
+    graphs::path::{Path, ShortestPathRequest},
     graphs::types::Weight,
 };
 
@@ -16,59 +16,33 @@ pub struct HubGraph {
 }
 
 impl HubGraph {
-    pub fn get_weight(&self, request: &PathRequest) -> Option<Weight> {
+    pub fn get_weight(&self, request: &ShortestPathRequest) -> Option<Weight> {
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.reverse_labels.get(request.target as usize)?;
-        let weight = Self::minimal_overlap(forward_label, backward_label)?.0;
+        let (weight, _, _) = Self::overlap(forward_label, backward_label)?;
 
         Some(weight)
     }
 
-    pub fn get_path(&self, request: &PathRequest) -> Option<Path> {
+    pub fn get_path(&self, request: &ShortestPathRequest) -> Option<Path> {
+        // wanted: source -> target
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.reverse_labels.get(request.target as usize)?;
-        let path_with_shortcuts = {
-            let (_, forward_index, reverse_index) =
-                Self::minimal_overlap(forward_label, backward_label)?;
-            let mut forward_path = forward_label.get_path(forward_index)?;
-            let reverse_path = backward_label.get_path(reverse_index)?;
 
-            // wanted: u -> w
-            // got: forward v -> u, reverse v -> w
+        let (_, forward_index, reverse_index) = Self::overlap(forward_label, backward_label)?;
+        let mut forward_path = forward_label.get_path(forward_index)?;
+        let reverse_path = backward_label.get_path(reverse_index)?;
 
-            forward_path.vertices.reverse();
-            if forward_path.vertices.last() == reverse_path.vertices.first() {
-                forward_path.vertices.pop();
-            }
-
-            forward_path.vertices.extend(reverse_path.vertices);
-            forward_path.weight += reverse_path.weight;
-
-            Some(forward_path)
-        }?;
-        let path = self.shortcut_replacer.get_path(&path_with_shortcuts);
-
-        Some(path)
-    }
-
-    // cost, route_with_shortcuts
-    pub fn get_path_with_shortcuts(forward: &Label, reverse: &Label) -> Option<Path> {
-        let (_, forward_index, reverse_index) = Self::minimal_overlap(forward, reverse)?;
-        let mut forward_path = forward.get_path(forward_index)?;
-        let reverse_path = reverse.get_path(reverse_index)?;
-
-        // wanted: u -> w
-        // got: forward v -> u, reverse v -> w
-
+        // now got: forward(meeting -> source) and reverse (meeting -> target)
         forward_path.vertices.reverse();
-        if forward_path.vertices.last() == reverse_path.vertices.first() {
-            forward_path.vertices.pop();
-        }
+        forward_path.vertices.pop();
 
         forward_path.vertices.extend(reverse_path.vertices);
         forward_path.weight += reverse_path.weight;
 
-        Some(forward_path)
+        let path = self.shortcut_replacer.get_path(&forward_path);
+
+        Some(path)
     }
 
     /// Calculates the minimal overlap between a forward and reverse label.
@@ -78,7 +52,7 @@ impl HubGraph {
     /// vertex represented by the reverse label. `index_forward` is the index of the entry that
     /// represents the shortest path from the source to the meeting vertex, and `index_reverse` is the index of the
     /// entry that represents the shortest path from the meeting vertex to the target.
-    pub fn minimal_overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
+    pub fn overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
         let mut index_forward = 0;
         let mut index_reverse = 0;
 
