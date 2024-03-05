@@ -1,4 +1,7 @@
-use crate::graphs::{graph::Graph, types::VertexId};
+use crate::{
+    ch::contraction_helper::ShortcutSearchResult,
+    graphs::{graph::Graph, types::VertexId},
+};
 
 use super::queue::PriorityTerm;
 
@@ -8,7 +11,12 @@ pub struct CostOfQueries {
 
 impl PriorityTerm for CostOfQueries {
     #[allow(unused_variables)]
-    fn priority(&self, vertex: VertexId, graph: &Graph) -> i32 {
+    fn priority(
+        &self,
+        vertex: VertexId,
+        graph: &Graph,
+        shortcuts_results: &ShortcutSearchResult,
+    ) -> i32 {
         *self.costs.get(vertex as usize).unwrap()
     }
 

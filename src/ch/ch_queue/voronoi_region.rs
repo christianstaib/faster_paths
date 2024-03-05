@@ -1,4 +1,7 @@
-use crate::graphs::{graph::Graph, types::VertexId};
+use crate::{
+    ch::contraction_helper::ShortcutSearchResult,
+    graphs::{graph::Graph, types::VertexId},
+};
 
 use super::queue::PriorityTerm;
 
@@ -7,7 +10,12 @@ pub struct VoronoiRegion {
 }
 
 impl PriorityTerm for VoronoiRegion {
-    fn priority(&self, vertex: VertexId, graph: &Graph) -> i32 {
+    fn priority(
+        &self,
+        vertex: VertexId,
+        graph: &Graph,
+        shortcuts_results: &ShortcutSearchResult,
+    ) -> i32 {
         let mut in_neighborhood = graph.in_neighborhood(vertex);
         in_neighborhood.retain(|&neighbor| self.contracted[neighbor as usize]);
 

@@ -13,11 +13,16 @@ use crate::{
     graphs::types::VertexId,
 };
 
-use super::{deleted_neighbors::DeletedNeighbors, state::CHState};
+use super::{deleted_neighbors::DeletedNeighbors, edge_difference::EdgeDifference, state::CHState};
 
 pub trait PriorityTerm {
     /// Gets the priority of node v in the graph
-    fn priority(&self, vertex: VertexId, graph: &Graph) -> i32;
+    fn priority(
+        &self,
+        vertex: VertexId,
+        graph: &Graph,
+        shortcuts_results: &ShortcutSearchResult,
+    ) -> i32;
 
     /// Gets called just BERFORE a vertex is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
@@ -37,6 +42,7 @@ impl CHQueue {
             queue,
             priority_terms,
         };
+        queue.register(190, EdgeDifference::new(&graph));
         queue.register(120, DeletedNeighbors::new(&graph));
         queue.initialize(graph);
         queue
@@ -121,18 +127,14 @@ impl CHQueue {
         shortcuts_results: ShortcutSearchResult,
         vertex: u32,
     ) -> (i32, ShortcutSearchResult) {
-        let search_space_size = 0 * shortcuts_results.search_space_size;
-        let edge_difference = 190 * shortcuts_results.edge_difference;
-
         let priorities: Vec<i32> = self
             .priority_terms
             .iter()
-            .map(|priority_term| priority_term.0 * priority_term.1.priority(vertex, graph))
+            .map(|priority_term| {
+                priority_term.0 * priority_term.1.priority(vertex, graph, &shortcuts_results)
+            })
             .collect();
 
-        (
-            edge_difference + search_space_size + priorities.iter().sum::<i32>(),
-            shortcuts_results,
-        )
+        (priorities.iter().sum::<i32>(), shortcuts_results)
     }
 }
