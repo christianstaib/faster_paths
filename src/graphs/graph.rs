@@ -56,10 +56,6 @@ impl Graph {
         &self.out_edges[vertex as usize]
     }
 
-    // pub fn all_in_edges(&self) -> &Vec<Vec<DirectedHeadlessWeightedEdge>> {
-    //     &self.in_edges
-    // }
-
     pub fn in_edges(&self, vertex: VertexId) -> &Vec<DirectedHeadlessWeightedEdge> {
         &self.in_edges[vertex as usize]
     }
@@ -124,7 +120,7 @@ impl Graph {
         neighbors
     }
 
-    pub fn add_out_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn add_out_edge(&mut self, edge: &DirectedWeightedEdge) {
         if (self.out_edges.len() as u32) <= edge.tail {
             self.out_edges.resize((edge.tail + 1) as usize, Vec::new());
         }
@@ -141,7 +137,7 @@ impl Graph {
         }
     }
 
-    pub fn add_in_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn add_in_edge(&mut self, edge: &DirectedWeightedEdge) {
         if (self.in_edges.len() as u32) <= edge.head {
             self.in_edges.resize((edge.head + 1) as usize, Vec::new());
         }
@@ -163,17 +159,6 @@ impl Graph {
         self.add_out_edge(edge);
         self.add_in_edge(edge);
     }
-
-    // /// Removes an edge from the graph.
-    // pub fn remove_edge(&mut self, edge: &DirectedEdge) {
-    //     if let Some(out_edges) = self.out_edges.get_mut(edge.tail as usize) {
-    //         out_edges.retain(|out_edge| out_edge.head != edge.head);
-    //     }
-
-    //     if let Some(in_edges) = self.in_edges.get_mut(edge.head as usize) {
-    //         in_edges.retain(|in_edge| in_edge.tail != edge.tail);
-    //     }
-    // }
 
     /// Removes the node from the graph.
     pub fn remove_vertex(&mut self, vertex: VertexId) {
@@ -197,32 +182,51 @@ impl Graph {
     }
 
     /// Check if a route is correct for a given request. Panics if not.
-    pub fn validate_route(&self, request: &ShortestPathRequest, route: &Path) {
-        // check if route start and end is correct
-        assert_eq!(route.vertices.first().unwrap(), &request.source);
-        assert_eq!(route.vertices.last().unwrap(), &request.target);
-
-        // check if there is an edge between consecutive route nodes
-        let mut edges = Vec::new();
-        for node_pair in route.vertices.windows(2) {
-            if let [from, to] = node_pair {
-                let min_edge = self.out_edges[*from as usize]
-                    .iter()
-                    .filter(|edge| edge.head == *to)
-                    .min_by_key(|edge| edge.weight)
-                    .expect(format!("no edge between {} and {} found", from, to).as_str());
-                edges.push(min_edge);
-            } else {
-                panic!("Can't unpack node_pair: {:?}", node_pair);
+    pub fn validate_path(&self, request: &ShortestPathRequest, path: &Path) -> Result<(), String> {
+        // Ensure that path is not empty when it should not be.
+        if path.vertices.is_empty() {
+            if request.source() != request.target() {
+                return Err("path is empty".to_string());
             }
         }
 
-        // check if cost of route is correct
+        // Ensure fist and last vertex of path are source and target of request.
+        if let Some(first_vertex) = path.vertices.first() {
+            if first_vertex != &request.source() {
+                return Err("first vertex of path is not source of request".to_string());
+            }
+        }
+        if let Some(last_vertex) = path.vertices.last() {
+            if last_vertex != &request.target() {
+                return Err("last vertex of path is not target of request".to_string());
+            }
+        }
+
+        // check if there is an edge between consecutive path vertices.
+        let mut edges = Vec::new();
+        for index in 0..(path.vertices.len() - 1) {
+            let tail = path.vertices[index];
+            let head = path.vertices[index + 1];
+            if let Some(min_edge) = self.out_edges[tail as usize]
+                .iter()
+                .filter(|edge| edge.head == head)
+                .next()
+            {
+                edges.push(min_edge);
+            } else {
+                return Err(format!("no edge between {} and {} found", tail, head));
+            }
+        }
+
+        // check if total weight of path is correct.
         let true_cost = edges.iter().map(|edge| edge.weight).sum::<u32>();
-        assert_eq!(
-            route.weight, true_cost,
-            "path weight should be {}, but was {}",
-            true_cost, route.weight
-        );
+        if path.weight != true_cost {
+            return Err(format!(
+                "path weight should be {}, but was {}",
+                true_cost, path.weight
+            ));
+        }
+
+        Ok(())
     }
 }

@@ -52,7 +52,7 @@ fn main() {
         let mut cost = None;
         if let Some(route) = path {
             cost = Some(route.weight);
-            graph.validate_route(&test.request, &route);
+            graph.validate_path(&test.request, &route).expect("err");
         }
         assert_eq!(cost, test.weight);
     });

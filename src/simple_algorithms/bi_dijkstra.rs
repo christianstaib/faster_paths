@@ -29,8 +29,9 @@ impl<'a> BiDijkstra<'a> {
     }
 
     pub fn get_data(&self, request: &ShortestPathRequest) -> Option<Path> {
-        let mut forward_data = DijkstraData::new(self.graph.num_nodes() as usize, request.source);
-        let mut backward_data = DijkstraData::new(self.graph.num_nodes() as usize, request.target);
+        let mut forward_data = DijkstraData::new(self.graph.num_nodes() as usize, request.source());
+        let mut backward_data =
+            DijkstraData::new(self.graph.num_nodes() as usize, request.target());
 
         let route = self.get_route_data(&mut forward_data, &mut backward_data);
 

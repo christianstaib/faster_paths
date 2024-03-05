@@ -6,9 +6,7 @@ use std::{
 use super::{edge::DirectedWeightedEdge, graph::Graph};
 
 #[derive(Clone)]
-pub struct GraphFactory {
-    //    pub edges: Vec<DirectedWeightedEdge>,
-}
+pub struct GraphFactory {}
 
 impl GraphFactory {
     pub fn from_fmi_file(filename: &str) -> Graph {

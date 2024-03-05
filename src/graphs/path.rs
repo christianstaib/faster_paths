@@ -8,8 +8,26 @@ use super::types::{VertexId, Weight};
 /// from a source vertex to a target vertex in a graph.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ShortestPathRequest {
-    pub source: VertexId,
-    pub target: VertexId,
+    source: VertexId,
+    target: VertexId,
+}
+
+impl ShortestPathRequest {
+    pub fn new(source: VertexId, target: VertexId) -> Option<ShortestPathRequest> {
+        if source == target {
+            return None;
+        }
+
+        Some(ShortestPathRequest { source, target })
+    }
+
+    pub fn source(&self) -> VertexId {
+        self.source
+    }
+
+    pub fn target(&self) -> VertexId {
+        self.target
+    }
 }
 
 /// Represents a path in a graph.

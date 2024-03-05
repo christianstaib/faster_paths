@@ -36,24 +36,30 @@ fn main() {
     let routes: Vec<_> = (0..args.number_of_tests)
         .progress()
         .par_bridge()
-        .map(|_| {
-            let mut rng = rand::thread_rng();
-            let request = ShortestPathRequest {
-                source: rng.gen_range(0..graph.num_nodes()) as u32,
-                target: rng.gen_range(0..graph.num_nodes()) as u32,
-            };
+        .map_init(
+            || rand::thread_rng(), // get the thread-local RNG
+            |rng, _| {
+                // guarantee that source != tatget.
+                let source = rng.gen_range(0..graph.num_nodes()) as u32;
+                let mut target = rng.gen_range(0..(graph.num_nodes()) - 1) as u32;
+                if target >= source {
+                    target += 1;
+                }
 
-            let response = dijkstra.get_shortest_path(&request);
-            let mut cost = None;
-            if let Some(route) = response {
-                cost = Some(route.weight);
-            }
+                let request = ShortestPathRequest::new(source, target).unwrap();
 
-            ShortestPathValidation {
-                request,
-                weight: cost,
-            }
-        })
+                let response = dijkstra.get_shortest_path(&request);
+                let mut cost = None;
+                if let Some(route) = response {
+                    cost = Some(route.weight);
+                }
+
+                ShortestPathValidation {
+                    request,
+                    weight: cost,
+                }
+            },
+        )
         .collect();
 
     let mut writer = BufWriter::new(File::create(args.tests_path.as_str()).unwrap());

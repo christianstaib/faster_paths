@@ -47,15 +47,15 @@ impl ChDijkstra {
 
         forward_open.push(State {
             key: 0,
-            value: request.source,
+            value: request.source(),
         });
-        forward_costs.insert(request.source, 0);
+        forward_costs.insert(request.source(), 0);
 
         backward_open.push(State {
             key: 0,
-            value: request.target,
+            value: request.target(),
         });
-        backward_costs.insert(request.target, 0);
+        backward_costs.insert(request.target(), 0);
 
         let mut minimal_cost = u32::MAX;
 
@@ -145,15 +145,15 @@ impl ChDijkstra {
 
         forward_open.push(State {
             key: 0,
-            value: request.source,
+            value: request.source(),
         });
-        forward_costs.insert(request.source, 0);
+        forward_costs.insert(request.source(), 0);
 
         backward_open.push(State {
             key: 0,
-            value: request.target,
+            value: request.target(),
         });
-        backward_costs.insert(request.target, 0);
+        backward_costs.insert(request.target(), 0);
 
         let mut minimal_cost = u32::MAX;
         let mut meeting_node = u32::MAX;

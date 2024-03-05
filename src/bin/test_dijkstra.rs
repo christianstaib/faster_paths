@@ -51,10 +51,7 @@ fn main() {
         .collect();
 
     for (source_target, true_cost) in queue.iter().zip(sol.iter()).progress() {
-        let request = ShortestPathRequest {
-            source: source_target[0],
-            target: source_target[1],
-        };
+        let request = ShortestPathRequest::new(source_target[0], source_target[1]).unwrap();
 
         // test dijkstra
         let response = dijkstra.get_shortest_path(&request);
