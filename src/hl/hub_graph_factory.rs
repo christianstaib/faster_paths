@@ -1,5 +1,6 @@
 use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressIterator;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
     ch::fast_shortcut_replacer::FastShortcutReplacer, graphs::types::VertexId,
@@ -69,7 +70,7 @@ impl<'a> HubGraphFactory<'a> {
             labels.push(label);
         }
         let mut label = Self::merge(labels, vertex);
-        label.prune(direction2_labels);
+        Self::prune(&mut label, direction2_labels);
         label
     }
 
@@ -120,5 +121,18 @@ impl<'a> HubGraphFactory<'a> {
         Label {
             entries: label_entries,
         }
+    }
+
+    pub fn prune(label: &mut Label, reverse_labels: &[Label]) {
+        label.entries = label
+            .entries
+            .par_iter()
+            .filter(|entry| {
+                let reverse_label = &reverse_labels[entry.vertex as usize];
+                let true_cost = HubGraph::get_weight_labels(label, reverse_label).unwrap();
+                entry.weight == true_cost
+            })
+            .cloned()
+            .collect();
     }
 }

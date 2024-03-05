@@ -1,13 +1,12 @@
 use core::panic;
 use std::usize;
 
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use ahash::{HashSet, HashSetExt};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{path::Path, types::VertexId};
 
-use super::{hub_graph::HubGraph, label_entry::LabelEntry};
+use super::label_entry::LabelEntry;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Label {
@@ -19,19 +18,6 @@ impl Label {
         Label {
             entries: vec![LabelEntry::new(vertex)],
         }
-    }
-
-    pub fn prune(&mut self, reverse_labels: &[Label]) {
-        self.entries = self
-            .entries
-            .par_iter()
-            .filter(|entry| {
-                let reverse_label = &reverse_labels[entry.vertex as usize];
-                let true_cost = HubGraph::get_weight_labels(self, reverse_label).unwrap();
-                entry.weight == true_cost
-            })
-            .cloned()
-            .collect();
     }
 
     pub fn get_path(&self, edge_id: u32) -> Path {
