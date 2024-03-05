@@ -34,6 +34,13 @@ impl<'a> HubGraphFactory<'a> {
         }
         let shortcut_replacer = FastShortcutReplacer::new(&self.ch_dijkstra.shortcuts);
 
+        // Needs to be called after all labels are creates as replacing the predecessor VertexId
+        // with the index of predecessor in label makes merging impossible.
+        forward_labels
+            .iter_mut()
+            .chain(reverse_labels.iter_mut())
+            .for_each(|label| label.set_predecessor());
+
         HubGraph {
             forward_labels,
             reverse_labels,
@@ -58,7 +65,6 @@ impl<'a> HubGraphFactory<'a> {
         }
         let mut label = Label::merge(labels, *vertex);
         label.prune_reverse_label(reverse_labels);
-        label.set_predecessor();
         label
     }
 
@@ -79,7 +85,6 @@ impl<'a> HubGraphFactory<'a> {
         }
         let mut label = Label::merge(labels, *vertex);
         label.prune_forward_label(reverse_labels);
-        label.set_predecessor();
         label
     }
 }
