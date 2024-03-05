@@ -1,8 +1,8 @@
-use indicatif::{ParallelProgressIterator, ProgressIterator};
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+use indicatif::ProgressIterator;
 
 use crate::{
-    ch::fast_shortcut_replacer::FastShortcutReplacer, simple_algorithms::ch_bi_dijkstra::ChDijkstra,
+    ch::fast_shortcut_replacer::FastShortcutReplacer, graphs::types::VertexId,
+    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 use super::{hub_graph::HubGraph, label::Label};
@@ -25,8 +25,8 @@ impl<'a> HubGraphFactory<'a> {
 
         for level_list in self.ch_dijkstra.levels.iter().rev().progress() {
             for vertex in level_list {
-                let forward_label = self.forward_label(vertex, &forward_labels, &reverse_labels);
-                let reverse_label = self.reverse_label(vertex, &reverse_labels, &forward_labels);
+                let forward_label = self.create_label(*vertex, &forward_labels, &reverse_labels);
+                let reverse_label = self.create_label(*vertex, &reverse_labels, &forward_labels);
 
                 forward_labels[*vertex as usize] = forward_label;
                 reverse_labels[*vertex as usize] = reverse_label;
@@ -48,43 +48,27 @@ impl<'a> HubGraphFactory<'a> {
         }
     }
 
-    fn reverse_label(
+    /// Creates the forward or reverse label for `vertex`.
+    ///
+    /// If direction1 == forward and direction2 == reverse, the forward label is created. If the
+    /// directions are switched, the reverse label is created.
+    fn create_label(
         &self,
-        vertex: &u32,
-        forward_labels: &Vec<Label>,
-        reverse_labels: &Vec<Label>,
+        vertex: VertexId,
+        direction1_labels: &Vec<Label>,
+        direction2_labels: &Vec<Label>,
     ) -> Label {
         let mut labels = Vec::new();
-        for in_edge in self.ch_dijkstra.graph.in_edges(*vertex) {
-            let mut label = forward_labels[in_edge.tail as usize].clone();
+        for out_edge in self.ch_dijkstra.graph.out_edges(vertex) {
+            let mut label = direction1_labels[out_edge.head as usize].clone();
             label.entries.iter_mut().for_each(|entry| {
-                entry.predecessor.get_or_insert(*vertex);
-                entry.weight += in_edge.weight
-            });
-            labels.push(label);
-        }
-        let mut label = Label::merge(labels, *vertex);
-        label.prune_reverse_label(reverse_labels);
-        label
-    }
-
-    fn forward_label(
-        &self,
-        vertex: &u32,
-        forward_labels: &Vec<Label>,
-        reverse_labels: &Vec<Label>,
-    ) -> Label {
-        let mut labels = Vec::new();
-        for out_edge in self.ch_dijkstra.graph.out_edges(*vertex) {
-            let mut label = forward_labels[out_edge.head as usize].clone();
-            label.entries.iter_mut().for_each(|entry| {
-                entry.predecessor.get_or_insert(*vertex);
+                entry.predecessor.get_or_insert(vertex);
                 entry.weight += out_edge.weight
             });
             labels.push(label);
         }
-        let mut label = Label::merge(labels, *vertex);
-        label.prune_forward_label(reverse_labels);
+        let mut label = Label::merge(labels, vertex);
+        label.prune(direction2_labels);
         label
     }
 }

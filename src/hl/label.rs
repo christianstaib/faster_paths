@@ -21,46 +21,13 @@ impl Label {
         }
     }
 
-    pub fn clean(&mut self) {
-        let old_entries = std::mem::take(&mut self.entries);
-
-        old_entries.into_iter().for_each(|old_entry| {
-            let search_result = self
-                .entries
-                .binary_search_by_key(&old_entry.vertex, |self_entry| self_entry.vertex);
-
-            match search_result {
-                Ok(idx) => {
-                    if old_entry.weight < self.entries[idx as usize].weight {
-                        self.entries[idx as usize].weight = old_entry.weight;
-                        self.entries[idx as usize].predecessor = old_entry.predecessor;
-                    }
-                }
-                Err(idx) => self.entries.insert(idx, old_entry),
-            }
-        });
-    }
-
-    pub fn prune_forward_label(&mut self, reverse_labels: &[Label]) {
+    pub fn prune(&mut self, reverse_labels: &[Label]) {
         self.entries = self
             .entries
             .par_iter()
             .filter(|entry| {
                 let reverse_label = &reverse_labels[entry.vertex as usize];
                 let true_cost = HubGraph::get_weight_labels(self, reverse_label).unwrap();
-                entry.weight == true_cost
-            })
-            .cloned()
-            .collect();
-    }
-
-    pub fn prune_reverse_label(&mut self, forward_labels: &[Label]) {
-        self.entries = self
-            .entries
-            .par_iter()
-            .filter(|entry| {
-                let forward_label = &forward_labels[entry.vertex as usize];
-                let true_cost = HubGraph::get_weight_labels(forward_label, self).unwrap();
                 entry.weight == true_cost
             })
             .cloned()
