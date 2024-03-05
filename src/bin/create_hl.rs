@@ -7,7 +7,8 @@ use std::{
 use clap::Parser;
 
 use faster_paths::{
-    ch::contractor::ContractedGraph, simple_algorithms::ch_bi_dijkstra::ChDijkstra,
+    ch::contractor::ContractedGraph, hl::hub_graph_factory::HubGraphFactory,
+    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -31,7 +32,8 @@ fn main() {
     let dijkstra = ChDijkstra::new(&contracted_graph);
 
     let start = Instant::now();
-    let hub_graph = dijkstra.get_hl();
+    let hub_graph_factory = HubGraphFactory::new(&dijkstra);
+    let hub_graph = hub_graph_factory.get_hl();
     println!("Generating hl took {:?}", start.elapsed());
 
     let writer = BufWriter::new(File::create(args.hl_graph).unwrap());

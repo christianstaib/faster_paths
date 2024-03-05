@@ -15,6 +15,12 @@ pub struct Label {
 }
 
 impl Label {
+    pub fn new(vertex: VertexId) -> Label {
+        Label {
+            entries: vec![LabelEntry::new(vertex)],
+        }
+    }
+
     pub fn clean(&mut self) {
         let old_entries = std::mem::take(&mut self.entries);
 
