@@ -2,7 +2,7 @@ use std::collections::BinaryHeap;
 
 use indicatif::ParallelProgressIterator;
 use rand::seq::SliceRandom;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
     ch::{
@@ -37,8 +37,8 @@ impl CHQueue {
         queue
     }
 
-    fn register(&mut self, weight: i32, term: impl PriorityTerm + 'static + Sync) {
-        self.priority_terms.push((weight, Box::new(term)));
+    fn register(&mut self, coefficent: i32, term: impl PriorityTerm + 'static + Sync) {
+        self.priority_terms.push((coefficent, Box::new(term)));
     }
 
     // Lazy poping the vertex with minimum priority.
@@ -46,15 +46,15 @@ impl CHQueue {
         while let Some(mut state) = self.queue.pop() {
             // If current priority is greater than minimum priority, then repush state with updated
             // priority.
-            let priority_shortcuts = self.get_priority_and_shortcuts_mut(state.vertex, graph);
-            if priority_shortcuts.0 > state.priority {
-                state.priority = priority_shortcuts.0;
+            let (priority, shortcuts) = self.get_priority_and_shortcuts(state.vertex, graph);
+            if priority > state.priority {
+                state.priority = priority;
                 self.queue.push(state);
                 continue;
             }
 
             self.update_before_contraction(state.vertex, graph);
-            return Some((state.vertex, priority_shortcuts.1.shortcuts));
+            return Some((state.vertex, shortcuts));
         }
         None
     }
@@ -64,66 +64,49 @@ impl CHQueue {
     fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
         self.priority_terms
             .iter_mut()
-            .for_each(|priority_term| priority_term.1.update_before_contraction(vertex, graph));
+            .for_each(|(_, priority_term)| priority_term.update_before_contraction(vertex, graph));
     }
 
-    pub fn get_priority_and_shortcuts_mut(
-        &mut self,
-        vertex: VertexId,
-        graph: &Graph,
-    ) -> (i32, ShortcutSearchResult) {
-        let shortcuts_results = self.get_shortcuts(vertex, graph);
-
-        self.get_priority(graph, shortcuts_results, vertex)
-    }
-
-    fn get_shortcuts(&mut self, vertex: u32, graph: &Graph) -> ShortcutSearchResult {
-        let shortcut_generator = ContractionHelper::new(graph, 100);
-        let shortcuts = shortcut_generator.get_shortcuts(vertex);
-        shortcuts
-    }
-
-    pub fn get_priority_and_shortcuts_init(
+    pub fn get_priority_and_shortcuts(
         &self,
         vertex: VertexId,
         graph: &Graph,
-    ) -> (i32, ShortcutSearchResult) {
-        let shortcut_generator = ContractionHelper::new(graph, 100);
+    ) -> (i32, Vec<Shortcut>) {
+        let shortcut_generator = ContractionHelper::new(graph, 100, u32::MAX);
         let shortcuts_results = shortcut_generator.get_shortcuts(vertex);
+        let priority = self.get_priority(graph, &shortcuts_results, vertex);
 
-        self.get_priority(graph, shortcuts_results, vertex)
+        (priority, shortcuts_results.shortcuts)
     }
 
     fn initialize(&mut self, graph: &Graph) {
         let mut order: Vec<u32> = (0..graph.number_of_vertices()).map(|x| x as u32).collect();
         order.shuffle(&mut rand::thread_rng());
 
-        let vertex_and_priority_and_shortcuts: Vec<_> = order
-            .par_iter()
+        self.queue = order
+            .into_par_iter()
             .progress()
-            .map(|&vertex| (vertex, self.get_priority_and_shortcuts_init(vertex, graph)))
-            .collect();
-
-        self.queue = vertex_and_priority_and_shortcuts
-            .into_iter()
-            .map(|(vertex, (priority, _))| CHState { vertex, priority })
+            .map(|vertex| {
+                let (priority, _) = self.get_priority_and_shortcuts(vertex, graph);
+                CHState { vertex, priority }
+            })
             .collect();
     }
 
     fn get_priority(
         &self,
         graph: &Graph,
-        shortcuts_results: ShortcutSearchResult,
+        shortcuts_results: &ShortcutSearchResult,
         vertex: u32,
-    ) -> (i32, ShortcutSearchResult) {
+    ) -> i32 {
         let priorities: Vec<i32> = self
             .priority_terms
             .iter()
-            .map(|priority_term| {
-                priority_term.0 * priority_term.1.priority(vertex, graph, &shortcuts_results)
+            .map(|(coefficent, priority_term)| {
+                coefficent * priority_term.priority(vertex, graph, shortcuts_results)
             })
             .collect();
 
-        (priorities.iter().sum::<i32>(), shortcuts_results)
+        priorities.iter().sum::<i32>()
     }
 }

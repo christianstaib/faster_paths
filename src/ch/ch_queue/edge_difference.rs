@@ -1,4 +1,7 @@
-use crate::graphs::graph::Graph;
+use crate::{
+    ch::contraction_helper::ShortcutSearchResult,
+    graphs::{graph::Graph, types::VertexId},
+};
 
 use super::priority_term::PriorityTerm;
 
@@ -15,18 +18,13 @@ impl PriorityTerm for EdgeDifference {
     #[allow(unused_variables)]
     fn priority(
         &self,
-        vertex: crate::graphs::types::VertexId,
-        graph: &crate::graphs::graph::Graph,
-        shortcuts_results: &crate::ch::contraction_helper::ShortcutSearchResult,
+        vertex: VertexId,
+        graph: &Graph,
+        shortcuts_results: &ShortcutSearchResult,
     ) -> i32 {
         shortcuts_results.edge_difference
     }
 
     #[allow(unused_variables)]
-    fn update_before_contraction(
-        &mut self,
-        vertex: crate::graphs::types::VertexId,
-        graph: &crate::graphs::graph::Graph,
-    ) {
-    }
+    fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {}
 }
