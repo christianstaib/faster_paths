@@ -2,7 +2,7 @@ use std::collections::BinaryHeap;
 
 use indicatif::ParallelProgressIterator;
 use rand::seq::SliceRandom;
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
     ch::{
@@ -24,15 +24,20 @@ pub struct CHQueue {
 }
 
 impl CHQueue {
-    pub fn new(graph: &Graph) -> Self {
+    pub fn new(graph: &Graph, priority_functions: &str) -> Self {
         let queue = BinaryHeap::new();
         let priority_terms = Vec::new();
         let mut queue = Self {
             queue,
             priority_terms,
         };
-        queue.register(190, EdgeDifference::new(&graph));
-        queue.register(120, DeletedNeighbors::new(&graph));
+        for letter in priority_functions.chars() {
+            match letter {
+                'E' => queue.register(19, EdgeDifference::new(&graph)),
+                'D' => queue.register(12, DeletedNeighbors::new(&graph)),
+                _ => panic!("letter not recognized"),
+            }
+        }
         queue.initialize(graph);
         queue
     }

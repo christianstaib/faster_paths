@@ -24,10 +24,10 @@ pub struct Contractor {
 }
 
 impl Contractor {
-    pub fn new(graph: &Graph) -> Self {
+    pub fn new(graph: &Graph, priority_functions: &str) -> Self {
         let levels = vec![0; graph.number_of_vertices() as usize];
         let graph = graph.clone();
-        let queue = CHQueue::new(&graph);
+        let queue = CHQueue::new(&graph, priority_functions);
         let vertex_shortcut = HashMap::new();
         let neighbors = HashMap::new();
 
@@ -40,8 +40,8 @@ impl Contractor {
         }
     }
 
-    pub fn get_contracted_graph(graph: &Graph) -> ContractedGraph {
-        let contractor = Contractor::new(graph);
+    pub fn get_contracted_graph(graph: &Graph, priority_functions: &str) -> ContractedGraph {
+        let contractor = Contractor::new(graph, priority_functions);
         contractor.get_graph()
     }
 
