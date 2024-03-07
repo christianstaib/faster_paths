@@ -141,7 +141,7 @@ impl<'a> ContractionHelper<'a> {
                 {
                     let current_cost = *weight.get(&edge.head).unwrap_or(&u32::MAX);
                     if alternative_weight < current_cost {
-                        queue.push(MinimumItem::new(alternative_weight, vertex));
+                        queue.push(MinimumItem::new(alternative_weight, edge.head));
                         weight.insert(edge.head, alternative_weight);
                         hops.insert(edge.head, new_hops);
                     }
