@@ -3,7 +3,7 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_term::PriorityTerm;
+use super::priority_term::PriorityFunction;
 
 pub struct EdgeDifference {}
 
@@ -14,7 +14,7 @@ impl EdgeDifference {
     }
 }
 
-impl PriorityTerm for EdgeDifference {
+impl PriorityFunction for EdgeDifference {
     #[allow(unused_variables)]
     fn priority(
         &self,
@@ -26,5 +26,5 @@ impl PriorityTerm for EdgeDifference {
     }
 
     #[allow(unused_variables)]
-    fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {}
+    fn update(&mut self, vertex: VertexId, graph: &Graph) {}
 }

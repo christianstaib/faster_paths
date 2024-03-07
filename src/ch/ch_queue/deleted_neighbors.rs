@@ -3,13 +3,13 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_term::PriorityTerm;
+use super::priority_term::PriorityFunction;
 
 pub struct DeletedNeighbors {
     deleted_neighbors: Vec<u32>,
 }
 
-impl PriorityTerm for DeletedNeighbors {
+impl PriorityFunction for DeletedNeighbors {
     #[allow(unused_variables)]
     fn priority(
         &self,
@@ -21,7 +21,7 @@ impl PriorityTerm for DeletedNeighbors {
     }
 
     #[allow(unused_variables)]
-    fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
+    fn update(&mut self, vertex: VertexId, graph: &Graph) {
         graph
             .open_neighborhood(vertex, 1)
             .iter()

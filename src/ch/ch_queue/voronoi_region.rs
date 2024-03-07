@@ -3,13 +3,13 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_term::PriorityTerm;
+use super::priority_term::PriorityFunction;
 
 pub struct VoronoiRegion {
     contracted: Vec<bool>,
 }
 
-impl PriorityTerm for VoronoiRegion {
+impl PriorityFunction for VoronoiRegion {
     fn priority(
         &self,
         vertex: VertexId,
@@ -36,7 +36,7 @@ impl PriorityTerm for VoronoiRegion {
     }
 
     #[allow(unused_variables)]
-    fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
+    fn update(&mut self, vertex: VertexId, graph: &Graph) {
         self.contracted[vertex as usize] = true;
     }
 }

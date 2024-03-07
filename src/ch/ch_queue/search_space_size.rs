@@ -1,6 +1,6 @@
 use crate::graphs::graph::Graph;
 
-use super::priority_term::PriorityTerm;
+use super::priority_term::PriorityFunction;
 
 pub struct SearchSpaceSize {}
 
@@ -11,7 +11,7 @@ impl SearchSpaceSize {
     }
 }
 
-impl PriorityTerm for SearchSpaceSize {
+impl PriorityFunction for SearchSpaceSize {
     #[allow(unused_variables)]
     fn priority(
         &self,
@@ -23,7 +23,7 @@ impl PriorityTerm for SearchSpaceSize {
     }
 
     #[allow(unused_variables)]
-    fn update_before_contraction(
+    fn update(
         &mut self,
         vertex: crate::graphs::types::VertexId,
         graph: &crate::graphs::graph::Graph,

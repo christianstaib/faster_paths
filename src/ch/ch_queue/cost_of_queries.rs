@@ -3,13 +3,13 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_term::PriorityTerm;
+use super::priority_term::PriorityFunction;
 
 pub struct CostOfQueries {
     costs: Vec<i32>,
 }
 
-impl PriorityTerm for CostOfQueries {
+impl PriorityFunction for CostOfQueries {
     #[allow(unused_variables)]
     fn priority(
         &self,
@@ -20,7 +20,7 @@ impl PriorityTerm for CostOfQueries {
         *self.costs.get(vertex as usize).unwrap()
     }
 
-    fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
+    fn update(&mut self, vertex: VertexId, graph: &Graph) {
         let cost_of_vertex = self.costs[vertex as usize] + 1;
 
         for neighbor in graph.open_neighborhood(vertex, 1) {

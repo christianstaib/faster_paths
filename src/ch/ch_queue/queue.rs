@@ -15,12 +15,12 @@ use crate::{
 
 use super::{
     deleted_neighbors::DeletedNeighbors, edge_difference::EdgeDifference,
-    priority_term::PriorityTerm, state::CHState,
+    priority_term::PriorityFunction, state::CHState,
 };
 
 pub struct CHQueue {
     queue: BinaryHeap<CHState>,
-    priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
+    priority_terms: Vec<(i32, Box<dyn PriorityFunction + Sync>)>,
 }
 
 impl CHQueue {
@@ -42,7 +42,7 @@ impl CHQueue {
         queue
     }
 
-    fn register(&mut self, coefficent: i32, term: impl PriorityTerm + 'static + Sync) {
+    fn register(&mut self, coefficent: i32, term: impl PriorityFunction + 'static + Sync) {
         self.priority_terms.push((coefficent, Box::new(term)));
     }
 
@@ -69,7 +69,7 @@ impl CHQueue {
     fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
         self.priority_terms
             .iter_mut()
-            .for_each(|(_, priority_term)| priority_term.update_before_contraction(vertex, graph));
+            .for_each(|(_, priority_term)| priority_term.update(vertex, graph));
     }
 
     pub fn get_priority_and_shortcuts(
