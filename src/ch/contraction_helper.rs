@@ -107,43 +107,48 @@ impl<'a> ContractionHelper<'a> {
         &self,
         source: VertexId,
         without: VertexId,
-        max_weight: Weight,
-        targets: &HashSet<VertexId>,
+        max_cost: u32,
+        w_set: &HashSet<VertexId>,
     ) -> HashMap<VertexId, Weight> {
         let mut queue = BinaryHeap::new();
-        let mut weight = HashMap::new();
+        let mut cost = HashMap::new();
         let mut hops = HashMap::new();
 
-        let mut targets = targets.clone();
+        let mut unseen_w = w_set.clone();
 
-        queue.push(MinimumItem::new(0, source));
-        weight.insert(source, 0);
+        queue.push(MinimumItem {
+            priority: 0,
+            vertex: source,
+        });
+        cost.insert(source, 0);
         hops.insert(source, 0);
 
         while let Some(MinimumItem { vertex, .. }) = queue.pop() {
-            if targets.remove(&vertex) {
-                if targets.is_empty() {
-                    break;
-                }
+            unseen_w.remove(&vertex);
+            if unseen_w.is_empty() {
+                break;
             }
 
             for edge in self.graph.out_edges(vertex).iter() {
-                let alternative_weight = weight[&vertex] + edge.weight;
+                let alternative_cost = cost[&vertex] + edge.weight;
                 let new_hops = hops[&vertex] + 1;
                 if (edge.head != without)
-                    && (alternative_weight <= max_weight)
+                    && (alternative_cost <= max_cost)
                     && (new_hops <= self.max_hops_in_witness_search)
                 {
-                    let current_cost = *weight.get(&edge.head).unwrap_or(&u32::MAX);
-                    if alternative_weight < current_cost {
-                        queue.push(MinimumItem::new(alternative_weight, vertex));
-                        weight.insert(edge.head, alternative_weight);
+                    let current_cost = *cost.get(&edge.head).unwrap_or(&u32::MAX);
+                    if alternative_cost < current_cost {
+                        queue.push(MinimumItem {
+                            vertex: edge.head,
+                            priority: alternative_cost,
+                        });
+                        cost.insert(edge.head, alternative_cost);
                         hops.insert(edge.head, new_hops);
                     }
                 }
             }
         }
 
-        weight
+        cost
     }
 }
