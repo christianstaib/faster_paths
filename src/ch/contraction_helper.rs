@@ -12,7 +12,7 @@ use crate::graphs::{
     types::{VertexId, Weight},
 };
 
-use super::{binary_heap::MinimumItem, ch_queue::search_space_size, shortcut::Shortcut};
+use super::{binary_heap::MinimumItem, shortcut::Shortcut};
 
 pub struct ContractionHelper<'a> {
     graph: &'a Graph,
