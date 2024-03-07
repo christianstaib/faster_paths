@@ -86,6 +86,7 @@ impl Graph {
             .collect()
     }
 
+    /// Does include vertex
     pub fn closed_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
         let mut neighbors = HashSet::new();
         neighbors.insert(vertex);
@@ -102,6 +103,7 @@ impl Graph {
         neighbors
     }
 
+    /// Does not include vertex
     pub fn open_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
         let mut neighbors = HashSet::new();
         neighbors.insert(vertex);
