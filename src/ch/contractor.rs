@@ -19,8 +19,6 @@ pub struct Contractor {
     graph: Graph,
     queue: CHQueue,
     levels: Vec<u32>,
-    vertex_shortcut: HashMap<VertexId, Vec<Shortcut>>,
-    neighbors: HashMap<VertexId, Vec<VertexId>>,
 }
 
 impl Contractor {
@@ -28,15 +26,11 @@ impl Contractor {
         let levels = vec![0; graph.number_of_vertices() as usize];
         let graph = graph.clone();
         let queue = CHQueue::new(&graph, priority_functions);
-        let vertex_shortcut = HashMap::new();
-        let neighbors = HashMap::new();
 
         Contractor {
             graph,
             queue,
             levels,
-            vertex_shortcut,
-            neighbors,
         }
     }
 
