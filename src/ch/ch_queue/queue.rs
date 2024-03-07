@@ -24,14 +24,14 @@ pub struct CHQueue {
 }
 
 impl CHQueue {
-    pub fn new(graph: &Graph, priority_functions: &str) -> Self {
+    pub fn new(graph: &Graph, priority_functions_letters: &str) -> Self {
         let queue = BinaryHeap::new();
-        let priority_terms = Vec::new();
+        let priority_functions = Vec::new();
         let mut queue = Self {
             queue,
-            priority_terms,
+            priority_terms: priority_functions,
         };
-        for letter in priority_functions.chars() {
+        for letter in priority_functions_letters.chars() {
             match letter {
                 'E' => queue.register(190, EdgeDifference::new(&graph)),
                 'D' => queue.register(120, DeletedNeighbors::new(&graph)),
@@ -42,8 +42,13 @@ impl CHQueue {
         queue
     }
 
-    fn register(&mut self, coefficent: i32, term: impl PriorityFunction + 'static + Sync) {
-        self.priority_terms.push((coefficent, Box::new(term)));
+    fn register(
+        &mut self,
+        coefficent: i32,
+        priority_function: impl PriorityFunction + 'static + Sync,
+    ) {
+        self.priority_terms
+            .push((coefficent, Box::new(priority_function)));
     }
 
     // Lazy poping the vertex with minimum priority.
@@ -69,7 +74,7 @@ impl CHQueue {
     fn update_before_contraction(&mut self, vertex: VertexId, graph: &Graph) {
         self.priority_terms
             .iter_mut()
-            .for_each(|(_, priority_term)| priority_term.update(vertex, graph));
+            .for_each(|(_, priority_function)| priority_function.update(vertex, graph));
     }
 
     pub fn get_priority_and_shortcuts(
@@ -107,8 +112,8 @@ impl CHQueue {
         let priorities: Vec<i32> = self
             .priority_terms
             .iter()
-            .map(|(coefficent, priority_term)| {
-                coefficent * priority_term.priority(vertex, graph, shortcuts_results)
+            .map(|(coefficent, priority_function)| {
+                coefficent * priority_function.priority(vertex, graph, shortcuts_results)
             })
             .collect();
 
