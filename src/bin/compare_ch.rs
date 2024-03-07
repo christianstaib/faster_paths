@@ -36,7 +36,8 @@ fn main() {
     let letters = vec!["ED", "E"];
     for letters in letters {
         let start = Instant::now();
-        let contracted_graph = Contractor::get_contracted_graph(&graph, "ED");
+        let contractor = Contractor::new(&graph, letters);
+        let contracted_graph = contractor.get_graph();
         let ch_time = start.elapsed();
 
         let dijkstra = ChDijkstra::new(&contracted_graph);

@@ -21,7 +21,8 @@ fn main() {
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
     let start = Instant::now();
-    let contracted_graph = Contractor::get_contracted_graph(&graph, "E");
+    let contractor = Contractor::new(&graph, "ED");
+    let contracted_graph = contractor.get_graph();
     println!("Generating ch took {:?}", start.elapsed());
 
     let writer = BufWriter::new(File::create(args.ch_graph).unwrap());

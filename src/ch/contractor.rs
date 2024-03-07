@@ -34,11 +34,6 @@ impl Contractor {
         }
     }
 
-    pub fn get_contracted_graph(graph: &Graph, priority_functions: &str) -> ContractedGraph {
-        let contractor = Contractor::new(graph, priority_functions);
-        contractor.get_graph()
-    }
-
     pub fn get_graph(mut self) -> ContractedGraph {
         let old_graph = self.graph.clone();
 
