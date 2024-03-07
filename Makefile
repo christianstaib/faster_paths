@@ -7,7 +7,7 @@ NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS := $(NETWORK_GRAPH).tests.json
 
 # NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
-NY_GRAPH := $(FMI_DIR)/USA-road-d.CAL.gr
+NY_GRAPH := $(FMI_DIR)/USA-road-d.NE.gr
 NY_CH := $(NY_GRAPH).ch.bincode
 NY_HL := $(NY_GRAPH).hl.bincode
 NY_TESTS := $(NY_GRAPH).tests.json
@@ -16,7 +16,7 @@ STGT_GRAPH := $(FMI_DIR)/stgtregbz.fmi
 STGT_QUEUE := $(FMI_DIR)/stgtregbz.que
 STGT_SOL := $(FMI_DIR)/stgtregbz.sol
 
-NUM_TESTS := 10000
+NUM_TESTS := 100000
 
 dirs:
 	mkdir $(FMI_DIR)
@@ -58,6 +58,19 @@ create_ch:
 	cargo run --bin create_ch --release --\
 		--graph-path $(NETWORK_GRAPH)\
 		--ch-graph $(NETWORK_CH)
+
+
+compare_ch_ny:
+	cargo run --bin compare_ch --release --\
+		--graph-path $(NY_GRAPH)\
+		--ch-graph $(NY_CH)\
+		--tests-path $(NY_TESTS)
+
+compare_ch:
+	cargo run --bin compare_ch --release --\
+		--graph-path $(NETWORK_GRAPH)\
+		--ch-graph $(NETWORK_CH)\
+		--tests-path $(NY_TESTS)
 
 
 test_fast_paths_ny:
