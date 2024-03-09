@@ -1,4 +1,7 @@
-use std::{collections::HashSet, usize};
+use std::{
+    collections::{BTreeSet, HashSet},
+    usize,
+};
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -154,6 +157,21 @@ impl Graph {
             }
             Err(idx) => self.in_edges[edge.head as usize].insert(idx, edge.headless()),
         }
+    }
+
+    pub fn independent_size(&self, vertices: &BTreeSet<VertexId>, degree: u32) -> Vec<VertexId> {
+        let mut ids = Vec::new();
+
+        let mut remaining: BTreeSet<_> = vertices.clone();
+
+        while let Some(node) = remaining.pop_first() {
+            ids.push(node);
+            for neighbor in self.open_neighborhood(node, degree) {
+                remaining.remove(&neighbor);
+            }
+        }
+
+        ids
     }
 
     /// Adds an edge to the graph.

@@ -79,7 +79,9 @@ impl<'a> ContractionHelper<'a> {
             })
             .collect();
 
-        let edge_difference = (shortcuts.len() - uv_edges.len() - vw_edges.len()) as i32;
+        // let edge_difference = (shortcuts.len() - uv_edges.len() - vw_edges.len()) as i32;
+        let edge_difference =
+            (shortcuts.len() / std::cmp::max(1, uv_edges.len() + vw_edges.len())) as i32;
         let search_space_size = search_space_size.into_inner() as i32;
         ShortcutSearchResult {
             shortcuts,
