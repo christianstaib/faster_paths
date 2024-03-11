@@ -19,8 +19,11 @@ impl FastShortcutReplacer {
                 let vertices_with_shortcuts = vec![edge.tail, *skiped_vertex, edge.head];
                 let mut vertices =
                     slow_shortcut_replacer.replace_shortcuts(&vertices_with_shortcuts);
+
+                // tail and head of the shortcut need to be removed
                 vertices.remove(0);
                 vertices.pop();
+
                 (edge.clone(), vertices)
             })
             .collect();

@@ -1,9 +1,11 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
+use crate::graphs::types::{VertexId, Weight};
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct State {
-    pub key: u32,
-    pub value: u32,
+    pub weight: Weight,
+    pub vertex: VertexId,
 }
 
 // The priority queue depends on `Ord`.
@@ -15,9 +17,9 @@ impl Ord for State {
         // In case of a tie we compare positions - this step is necessary
         // to make implementations of `PartialEq` and `Ord` consistent.
         other
-            .key
-            .cmp(&self.key)
-            .then_with(|| self.value.cmp(&other.value))
+            .weight
+            .cmp(&self.weight)
+            .then_with(|| self.vertex.cmp(&other.vertex))
     }
 }
 
@@ -47,7 +49,10 @@ impl HeapQueue {
     }
 
     pub fn insert(&mut self, key: u32, value: u32) {
-        self.queue.push(State { key, value })
+        self.queue.push(State {
+            weight: key,
+            vertex: value,
+        })
     }
 
     pub fn pop(&mut self) -> Option<State> {

@@ -40,8 +40,8 @@ fn main() {
             || rand::thread_rng(), // get the thread-local RNG
             |rng, _| {
                 // guarantee that source != tatget.
-                let source = rng.gen_range(0..graph.num_nodes()) as u32;
-                let mut target = rng.gen_range(0..(graph.num_nodes()) - 1) as u32;
+                let source = rng.gen_range(0..graph.number_of_vertices()) as u32;
+                let mut target = rng.gen_range(0..(graph.number_of_vertices()) - 1) as u32;
                 if target >= source {
                     target += 1;
                 }

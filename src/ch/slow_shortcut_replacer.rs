@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, path::Path, types::VertexId};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SlowShortcutReplacer {
     shortcuts: HashMap<DirectedEdge, VertexId>,
 }

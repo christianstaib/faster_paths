@@ -1,99 +1,93 @@
-use ahash::HashMap;
+use std::usize;
 
 use crate::{
-    ch::preprocessor::ContractedGraph,
+    ch::{preprocessor::ContractedGraph, slow_shortcut_replacer::SlowShortcutReplacer},
     dijkstra_data::DijkstraData,
     graphs::{
-        edge::DirectedEdge,
         fast_graph::FastGraph,
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
+    queue::heap_queue::State,
 };
 
-use super::bidirectional_helpers::construct_route;
+use super::bidirectional_helpers::path_from_bidirectional_search;
 
 #[derive(Clone)]
 pub struct ChDijkstra {
     graph: FastGraph,
-    shortcuts: HashMap<DirectedEdge, u32>,
-    levels: Vec<Vec<VertexId>>,
+    shortcut_replacer: SlowShortcutReplacer,
 }
 
 impl PathFinding for ChDijkstra {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        self.get_data(&route_request)
+        let (meeting_vertex, _, forward, backward) = self.get_data(&route_request)?;
+        let path = path_from_bidirectional_search(meeting_vertex, &forward, &backward)?;
+        let path = self.shortcut_replacer.get_route(&path);
+        Some(path)
     }
 
     fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        let data = self.get_shortest_path(path_request)?;
-        Some(data.weight)
+        let (_, weight, _, _) = self.get_data(path_request)?;
+        Some(weight)
     }
 }
 
 impl ChDijkstra {
-    pub fn new(contracted_grap: &ContractedGraph) -> ChDijkstra {
-        let shortcuts = contracted_grap.shortcuts_map.iter().cloned().collect();
-        let graph = FastGraph::from_graph(&contracted_grap.graph);
+    pub fn new(contracted_graph: &ContractedGraph) -> ChDijkstra {
+        let graph = FastGraph::from_graph(&contracted_graph.graph);
+        let shortcut_map = contracted_graph.shortcuts_map.iter().cloned().collect();
+        let shortcut_replacer = SlowShortcutReplacer::new(&shortcut_map);
         ChDijkstra {
             graph,
-            shortcuts,
-            levels: contracted_grap.levels.clone(),
+            shortcut_replacer,
         }
     }
 
-    pub fn get_data(&self, request: &ShortestPathRequest) -> Option<Path> {
-        let mut forward_data = DijkstraData::new(self.graph.num_nodes() as usize, request.source());
-        let mut backward_data =
-            DijkstraData::new(self.graph.num_nodes() as usize, request.target());
-
-        let route = self.get_route_data(&mut forward_data, &mut backward_data);
-
-        route
-    }
-
-    pub fn get_route_data(
+    pub fn get_data(
         &self,
-        forward: &mut DijkstraData,
-        backward: &mut DijkstraData,
-    ) -> Option<Path> {
-        let mut minimal_cost = u32::MAX;
-        let mut minimal_cost_vertex = u32::MAX;
+        request: &ShortestPathRequest,
+    ) -> Option<(VertexId, Weight, DijkstraData, DijkstraData)> {
+        let number_of_vertices = self.graph.number_of_vertices() as usize;
+        let mut forward = DijkstraData::new(number_of_vertices, request.source());
+        let mut backward = DijkstraData::new(number_of_vertices, request.target());
+
+        let mut meeting_weight = u32::MAX;
+        let mut meeting_vertex = u32::MAX;
 
         while !forward.is_empty() || !backward.is_empty() {
-            if let Some(state) = forward.pop() {
-                if let Some(backward_cost) = backward.verticies[state.value as usize].weight {
-                    let forward_cost = forward.verticies[state.value as usize].weight.unwrap();
-                    let cost = forward_cost + backward_cost;
-                    if cost < minimal_cost {
-                        minimal_cost = cost;
-                        minimal_cost_vertex = state.value;
+            if let Some(State { vertex, .. }) = forward.pop() {
+                if let Some(backward_weight) = backward.verticies[vertex as usize].weight {
+                    let forward_weight = forward.verticies[vertex as usize].weight.unwrap();
+                    let weight = forward_weight + backward_weight;
+                    if weight < meeting_weight {
+                        meeting_weight = weight;
+                        meeting_vertex = vertex;
                     }
                 }
                 self.graph
-                    .out_edges(state.value)
+                    .out_edges(vertex)
                     .iter()
-                    .for_each(|edge| forward.update(state.value, edge.head, edge.weight));
+                    .for_each(|edge| forward.update(vertex, edge.head, edge.weight));
             }
 
-            if let Some(state) = backward.pop() {
-                if forward.verticies[state.value as usize].is_expanded {
-                    if let Some(forward_cost) = forward.verticies[state.value as usize].weight {
-                        let backward_cost =
-                            backward.verticies[state.value as usize].weight.unwrap();
-                        let cost = forward_cost + backward_cost;
-                        if cost < minimal_cost {
-                            minimal_cost = cost;
-                            minimal_cost_vertex = state.value;
+            if let Some(State { vertex, .. }) = backward.pop() {
+                if forward.verticies[vertex as usize].is_expanded {
+                    if let Some(forward_weight) = forward.verticies[vertex as usize].weight {
+                        let backward_weight = backward.verticies[vertex as usize].weight.unwrap();
+                        let weight = forward_weight + backward_weight;
+                        if weight < meeting_weight {
+                            meeting_weight = weight;
+                            meeting_vertex = vertex;
                         }
                     }
                 }
-                self.graph.in_edges(state.value).iter().for_each(|edge| {
-                    backward.update(state.value, edge.tail, edge.weight);
+                self.graph.in_edges(vertex).iter().for_each(|edge| {
+                    backward.update(vertex, edge.tail, edge.weight);
                 });
             }
         }
 
-        construct_route(minimal_cost_vertex, forward, backward)
+        Some((meeting_vertex, meeting_weight, forward, backward))
     }
 }

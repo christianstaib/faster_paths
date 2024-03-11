@@ -5,7 +5,6 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use crate::{
     ch::{fast_shortcut_replacer::FastShortcutReplacer, preprocessor::ContractedGraph},
     graphs::types::VertexId,
-    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 use super::{hub_graph::HubGraph, label::Label};
@@ -28,7 +27,7 @@ impl<'a> HubGraphFactory<'a> {
 
         for level_list in self.contracted_graph.levels.iter().rev().progress() {
             let labels: Vec<_> = level_list
-                .iter()
+                .par_iter()
                 .map(|&vertex| {
                     let forward_label = self.create_label(vertex, &forward_labels, &reverse_labels);
                     let reverse_label = self.create_label(vertex, &reverse_labels, &forward_labels);
@@ -41,14 +40,14 @@ impl<'a> HubGraphFactory<'a> {
                 reverse_labels[vertex as usize] = reverse_label;
             }
         }
-        let shortcut_replacer = FastShortcutReplacer::new(
-            &self
-                .contracted_graph
-                .shortcuts_map
-                .iter()
-                .cloned()
-                .collect(),
-        );
+
+        let shortcut_map = self
+            .contracted_graph
+            .shortcuts_map
+            .iter()
+            .cloned()
+            .collect();
+        let shortcut_replacer = FastShortcutReplacer::new(&shortcut_map);
 
         // Needs to be called after all labels are creates as replacing the predecessor VertexId
         // with the index of predecessor in label makes merging impossible.

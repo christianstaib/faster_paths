@@ -49,12 +49,7 @@ fn main() {
         let path = hub_graph.get_shortest_path(&test.request);
         time_hl.push(start.elapsed());
 
-        let mut cost = None;
-        if let Some(route) = path {
-            cost = Some(route.weight);
-            graph.validate_path(&test.request, &route).expect("err");
-        }
-        assert_eq!(cost, test.weight);
+        assert!(graph.validate_path(&test, &path).is_ok());
     });
 
     println!("all correct");

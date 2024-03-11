@@ -15,9 +15,9 @@ impl<'a> SlowDijkstra<'a> {
 
         while let Some(state) = data.pop() {
             self.graph
-                .out_edges(state.value)
+                .out_edges(state.vertex)
                 .iter()
-                .for_each(|edge| data.update(state.value, edge.head, edge.weight));
+                .for_each(|edge| data.update(state.vertex, edge.head, edge.weight));
         }
 
         data

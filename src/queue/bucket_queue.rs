@@ -21,7 +21,10 @@ impl BucketQueue {
     }
 
     pub fn insert(&mut self, key: u32, value: u32) {
-        let state = State { key, value };
+        let state = State {
+            weight: key,
+            vertex: value,
+        };
         let key_index = key as usize % self.buckets.len();
         self.buckets[key_index].push(state)
     }

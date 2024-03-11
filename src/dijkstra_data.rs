@@ -52,8 +52,8 @@ impl DijkstraData {
 
     pub fn pop(&mut self) -> Option<State> {
         while let Some(state) = self.queue.pop() {
-            if !self.verticies[state.value as usize].is_expanded {
-                self.verticies[state.value as usize].is_expanded = true;
+            if !self.verticies[state.vertex as usize].is_expanded {
+                self.verticies[state.vertex as usize].is_expanded = true;
                 return Some(state);
             }
         }
@@ -75,10 +75,10 @@ impl DijkstraData {
         }
     }
 
-    pub fn get_route(&self, target: VertexId) -> Option<Path> {
+    pub fn get_path(&self, target: VertexId) -> Option<Path> {
         let mut route = vec![target];
         let mut current = target;
-        while let Some(predecessor) = self.verticies[current as usize].predecessor {
+        while let Some(predecessor) = self.verticies.get(current as usize)?.predecessor {
             current = predecessor;
             route.push(current);
         }

@@ -7,7 +7,7 @@ use super::{
 
 #[derive(Clone)]
 pub struct FastGraph {
-    num_nodes: u32,
+    number_of_vertices: u32,
     out_edges: FastOutEdgeAccess,
     in_edges: FastInEdgeAccess,
 }
@@ -25,14 +25,14 @@ impl FastGraph {
         let in_edges = FastInEdgeAccess::new(&in_edges);
 
         FastGraph {
-            num_nodes,
+            number_of_vertices: num_nodes,
             out_edges,
             in_edges,
         }
     }
 
-    pub fn num_nodes(&self) -> u32 {
-        self.num_nodes
+    pub fn number_of_vertices(&self) -> u32 {
+        self.number_of_vertices
     }
 
     pub fn out_edges(&self, source: VertexId) -> &[DirectedTaillessWeightedEdge] {

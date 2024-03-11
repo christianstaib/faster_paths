@@ -7,7 +7,10 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     ch::preprocessor::ContractedGraph,
-    graphs::path::{PathFinding, ShortestPathValidation},
+    graphs::{
+        graph_factory::GraphFactory,
+        path::{PathFinding, ShortestPathValidation},
+    },
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 use indicatif::ProgressIterator;
@@ -16,6 +19,8 @@ use indicatif::ProgressIterator;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    #[arg(short, long)]
+    graph: String,
     /// Path of contracted_graph (output)
     #[arg(short, long)]
     ch_graph: String,
@@ -26,6 +31,8 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+
+    let graph = GraphFactory::from_gr_file(args.graph.as_str());
 
     let reader = BufReader::new(File::open(args.ch_graph).unwrap());
     let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
@@ -38,13 +45,9 @@ fn main() {
     for test in tests.iter().progress() {
         let before = Instant::now();
         let path = dijkstra.get_shortest_path(&test.request);
-        let mut cost = None;
-        if let Some(path) = path {
-            cost = Some(path.weight);
-        }
         times.push(before.elapsed());
 
-        assert_eq!(cost, test.weight);
+        assert!(graph.validate_path(&test, &path).is_ok());
     }
 
     println!("all correct");
