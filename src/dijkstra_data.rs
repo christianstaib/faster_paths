@@ -65,13 +65,13 @@ impl DijkstraData {
         self.queue.is_empty()
     }
 
-    pub fn update(&mut self, source: VertexId, target: VertexId, edge_weight: Weight) {
-        let alternative_cost = self.verticies[source as usize].weight.unwrap() + edge_weight;
-        let current_cost = self.verticies[target as usize].weight.unwrap_or(u32::MAX);
+    pub fn update(&mut self, tail: VertexId, head: VertexId, edge_weight: Weight) {
+        let alternative_cost = self.verticies[tail as usize].weight.unwrap() + edge_weight;
+        let current_cost = self.verticies[head as usize].weight.unwrap_or(u32::MAX);
         if alternative_cost < current_cost {
-            self.verticies[target as usize].predecessor = Some(source);
-            self.verticies[target as usize].weight = Some(alternative_cost);
-            self.queue.insert(alternative_cost, target);
+            self.verticies[head as usize].predecessor = Some(tail);
+            self.verticies[head as usize].weight = Some(alternative_cost);
+            self.queue.insert(alternative_cost, head);
         }
     }
 
