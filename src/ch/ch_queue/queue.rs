@@ -16,6 +16,7 @@ use crate::{
 use super::{
     cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
     edge_difference::EdgeDifference, priority_function::PriorityFunction, state::CHState,
+    voronoi_region::VoronoiRegion,
 };
 
 pub struct CHQueue {
@@ -36,6 +37,7 @@ impl CHQueue {
                 'E' => queue.register(1, EdgeDifference::new(&graph)),
                 'D' => queue.register(1, DeletedNeighbors::new(&graph)),
                 'C' => queue.register(1, CostOfQueries::new(&graph)),
+                'V' => queue.register(100, VoronoiRegion::new(&graph)),
                 _ => panic!("letter not recognized"),
             }
         }

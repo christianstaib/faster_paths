@@ -6,7 +6,8 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::preprocessor::ContractedGraph, graphs::path::ShortestPathValidation,
+    ch::preprocessor::ContractedGraph,
+    graphs::path::{PathFinding, ShortestPathValidation},
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 use indicatif::ProgressIterator;
@@ -36,7 +37,11 @@ fn main() {
     let mut times = Vec::new();
     for test in tests.iter().progress() {
         let before = Instant::now();
-        let cost = dijkstra.get_cost(&test.request);
+        let path = dijkstra.get_shortest_path(&test.request);
+        let mut cost = None;
+        if let Some(path) = path {
+            cost = Some(path.weight);
+        }
         times.push(before.elapsed());
 
         assert_eq!(cost, test.weight);

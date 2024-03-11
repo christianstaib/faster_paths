@@ -4,7 +4,7 @@ use clap::Parser;
 use faster_paths::{
     graphs::fast_graph::FastGraph,
     graphs::graph_factory::GraphFactory,
-    graphs::path::{Routing, ShortestPathRequest, ShortestPathValidation},
+    graphs::path::{PathFinding, ShortestPathRequest, ShortestPathValidation},
     simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ProgressIterator;

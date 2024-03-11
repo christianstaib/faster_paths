@@ -2,7 +2,7 @@ use crate::{
     dijkstra_data::DijkstraData,
     graphs::{
         fast_graph::FastGraph,
-        path::{Path, Routing, ShortestPathRequest},
+        path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
 };
@@ -12,7 +12,7 @@ pub struct BiDijkstra<'a> {
     pub graph: &'a FastGraph,
 }
 
-impl<'a> Routing for BiDijkstra<'a> {
+impl<'a> PathFinding for BiDijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         self.get_data(&route_request)
     }

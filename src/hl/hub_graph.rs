@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     ch::fast_shortcut_replacer::FastShortcutReplacer,
-    graphs::path::{Path, Routing, ShortestPathRequest},
+    graphs::path::{Path, PathFinding, ShortestPathRequest},
     graphs::types::Weight,
 };
 
@@ -15,7 +15,7 @@ pub struct HubGraph {
     pub shortcut_replacer: FastShortcutReplacer,
 }
 
-impl Routing for HubGraph {
+impl PathFinding for HubGraph {
     fn get_shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
         // wanted: source -> target
         let forward_label = self.forward_labels.get(path_request.source() as usize)?;

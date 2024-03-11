@@ -2,7 +2,7 @@ use crate::{
     dijkstra_data::DijkstraData,
     graphs::{
         fast_graph::FastGraph,
-        path::{Path, Routing, ShortestPathRequest},
+        path::{Path, PathFinding, ShortestPathRequest},
         types::Weight,
     },
 };
@@ -12,7 +12,7 @@ pub struct Dijkstra<'a> {
     graph: &'a FastGraph,
 }
 
-impl<'a> Routing for Dijkstra<'a> {
+impl<'a> PathFinding for Dijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let data = self.get_data(route_request.source());
         data.get_route(route_request.target())

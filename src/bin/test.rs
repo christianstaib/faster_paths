@@ -6,7 +6,7 @@ use faster_paths::{
     graphs::{
         fast_graph::FastGraph,
         graph_factory::GraphFactory,
-        path::{Routing, ShortestPathValidation},
+        path::{PathFinding, ShortestPathValidation},
     },
     hl::hub_graph::HubGraph,
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},

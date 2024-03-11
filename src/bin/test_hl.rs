@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     graphs::graph_factory::GraphFactory,
-    graphs::path::{Routing, ShortestPathValidation},
+    graphs::path::{PathFinding, ShortestPathValidation},
     hl::{hub_graph::HubGraph, hub_graph_investigator::HubGraphInvestigator},
 };
 use indicatif::ProgressIterator;

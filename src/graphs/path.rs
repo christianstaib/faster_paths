@@ -54,7 +54,7 @@ pub struct ShortestPathValidation {
 ///
 /// This trait defines a method `get_path` that must be implemented by any struct that
 /// performs routing in a graph, allowing for the retrieval of paths based on given shortest path requests.
-pub trait Routing {
+pub trait PathFinding {
     /// Retrieves the shortest path between two vertices in a graph as specified by a path request.
     ///
     /// # Arguments
