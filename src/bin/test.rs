@@ -48,14 +48,14 @@ fn main() {
 
     let dijkstra = Dijkstra::new(&graph);
 
-    let bi_dijkstra = BiDijkstra::new(&graph);
+    // let bi_dijkstra = BiDijkstra::new(&graph);
 
-    let reader = BufReader::new(File::open(args.ch_path).unwrap());
-    let ch_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
-    let ch = ChDijkstra::new(&ch_graph);
+    // let reader = BufReader::new(File::open(args.ch_path).unwrap());
+    // let ch_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
+    // let ch = ChDijkstra::new(&ch_graph);
 
-    let reader = BufReader::new(File::open(args.hl_path).unwrap());
-    let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
+    // let reader = BufReader::new(File::open(args.hl_path).unwrap());
+    // let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
     let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
@@ -63,9 +63,9 @@ fn main() {
     let mut path_finder: Vec<(&str, Box<dyn PathFinding>, Vec<Duration>)> = Vec::new();
     path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
     path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
-    path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
-    path_finder.push(("ch", Box::new(ch), Vec::new()));
-    path_finder.push(("hl", Box::new(hl), Vec::new()));
+    // path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
+    // path_finder.push(("ch", Box::new(ch), Vec::new()));
+    // path_finder.push(("hl", Box::new(hl), Vec::new()));
 
     for validation in validations.iter().take(100).progress() {
         for (name, path_finder, times) in path_finder.iter_mut() {
@@ -81,6 +81,6 @@ fn main() {
 
     for (name, _, times) in path_finder.iter() {
         let average = times.iter().sum::<Duration>() / times.len() as u32;
-        println!("{:<10} {:?}", name, average);
+        println!("{:<15} {:?}", name, average);
     }
 }

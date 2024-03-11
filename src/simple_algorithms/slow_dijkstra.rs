@@ -3,8 +3,9 @@ use crate::{
     graphs::{
         graph::Graph,
         path::{Path, PathFinding, ShortestPathRequest},
-        types::Weight,
+        types::{VertexId, Weight},
     },
+    queue::heap_queue::State,
 };
 
 #[derive(Clone)]
@@ -14,7 +15,7 @@ pub struct SlowDijkstra<'a> {
 
 impl<'a> PathFinding for SlowDijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        let data = self.get_data(route_request.source());
+        let data = self.get_data(route_request.source(), route_request.target());
         data.get_path(route_request.target())
     }
 
@@ -29,14 +30,17 @@ impl<'a> SlowDijkstra<'a> {
         SlowDijkstra { graph }
     }
 
-    pub fn get_data(&self, source: u32) -> DijkstraData {
+    pub fn get_data(&self, source: VertexId, target: VertexId) -> DijkstraData {
         let mut data = DijkstraData::new(self.graph.number_of_vertices() as usize, source);
 
-        while let Some(state) = data.pop() {
+        while let Some(State { vertex, .. }) = data.pop() {
+            if vertex == target {
+                return data;
+            }
             self.graph
-                .out_edges(state.vertex)
+                .out_edges(vertex)
                 .iter()
-                .for_each(|edge| data.update(state.vertex, edge.head, edge.weight));
+                .for_each(|edge| data.update(vertex, edge.head, edge.weight));
         }
 
         data
