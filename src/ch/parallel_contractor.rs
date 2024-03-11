@@ -1,61 +1,21 @@
-use std::{collections::BTreeSet, time::Instant, usize};
+use std::{collections::BTreeSet, usize};
 
 use indicatif::ProgressBar;
-use rayon::{prelude::*, result};
-use serde_derive::{Deserialize, Serialize};
+use rayon::prelude::*;
 
-use crate::graphs::{edge::DirectedEdge, graph::Graph, types::VertexId};
+use crate::graphs::{graph::Graph, types::VertexId};
 
-use super::{
-    ch_queue::queue::CHQueue, contraction_helper::ContractionHelper, preprocessor::ContractedGraph,
-    shortcut::Shortcut,
-};
+use super::{contraction_helper::ContractionHelper, shortcut::Shortcut};
 
-pub struct SerialContractor {
+pub struct ParallelContractor {
     graph: Graph,
-    queue: CHQueue,
-    levels: Vec<u32>,
 }
 
-impl SerialContractor {
-    pub fn new(graph: &Graph, priority_functions: &str) -> Self {
-        let levels = vec![0; graph.number_of_vertices() as usize];
+impl ParallelContractor {
+    pub fn new(graph: &Graph) -> Self {
         let graph = graph.clone();
-        let queue = CHQueue::new(&graph, priority_functions);
 
-        SerialContractor {
-            graph,
-            queue,
-            levels,
-        }
-    }
-
-    pub fn get_graph(mut self) -> ContractedGraph {
-        let old_graph = self.graph.clone();
-
-        let shortcuts = self.contract_ids();
-
-        self.graph = old_graph;
-        self.add_shortcuts_to_graph(&shortcuts);
-        self.removing_edges_violating_level_property();
-
-        let shortcuts = shortcuts
-            .iter()
-            .map(|shortcut| (shortcut.edge.unweighted(), shortcut.skiped_vertex))
-            .collect();
-
-        let max_level = self.levels.iter().max().unwrap();
-        let mut levels = vec![Vec::new(); *max_level as usize + 1];
-
-        for (vertex, level) in self.levels.iter().enumerate() {
-            levels[*level as usize].push(vertex as u32);
-        }
-
-        ContractedGraph {
-            graph: self.graph,
-            shortcuts_map: shortcuts,
-            levels,
-        }
+        ParallelContractor { graph }
     }
 
     pub fn create_independen_set(
@@ -112,7 +72,7 @@ impl SerialContractor {
         ids
     }
 
-    pub fn contract_ids(&mut self) -> Vec<Shortcut> {
+    pub fn contract_ids(mut self) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
         let mut shortcuts = Vec::new();
         let bar = ProgressBar::new(self.graph.number_of_vertices() as u64);
         let mut remaining: BTreeSet<VertexId> = (0..self.graph.number_of_vertices()).collect();
@@ -125,6 +85,7 @@ impl SerialContractor {
 
         self.update_vertices(&remaining, &mut priority, &mut shortcuts_cache);
 
+        let mut levels = Vec::new();
         while !remaining.is_empty() {
             let ids = self.get_independen_set(&mut remaining, &priority, 1);
 
@@ -141,19 +102,21 @@ impl SerialContractor {
                 });
 
             // Move I to their Level
+            let mut this_level = Vec::new();
             for (v, mut this_shortcuts) in ids.into_iter() {
                 self.graph.remove_vertex(v);
-                self.levels[v as usize] = level;
+                this_level.push(v);
                 self.add_shortcuts_to_graph(&this_shortcuts);
                 shortcuts.append(&mut this_shortcuts);
                 bar.inc(1);
             }
+            levels.push(this_level);
 
             level += 1;
         }
         bar.finish();
 
-        shortcuts
+        (shortcuts, levels)
     }
 
     fn update_vertices(
@@ -181,25 +144,5 @@ impl SerialContractor {
             .iter()
             .cloned()
             .for_each(|shortcut| self.graph.add_edge(&shortcut.edge));
-    }
-
-    fn removing_edges_violating_level_property(&mut self) {
-        let num_nodes = self.graph.number_of_vertices();
-        let mut out_edges: Vec<_> = (0..num_nodes)
-            .map(|tail| self.graph.out_edges(tail).clone())
-            .collect();
-        let mut in_edges: Vec<_> = (0..num_nodes)
-            .map(|tail| self.graph.in_edges(tail).clone())
-            .collect();
-
-        out_edges.iter_mut().enumerate().for_each(|(tail, edges)| {
-            edges.retain(|edge| self.levels[edge.head as usize] >= self.levels[tail as usize]);
-        });
-
-        in_edges.iter_mut().enumerate().for_each(|(head, edges)| {
-            edges.retain(|edge| self.levels[head as usize] <= self.levels[edge.tail as usize]);
-        });
-
-        self.graph = Graph::from_out_in_edges(out_edges, in_edges);
     }
 }
