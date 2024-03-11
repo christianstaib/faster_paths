@@ -71,7 +71,7 @@ fn main() {
         assert_eq!(true_cost, cost, "bi dijkstra wrong");
 
         // test ch dijkstra
-        let response = ch_bi_dijkstra.get_route(&request);
+        let response = ch_bi_dijkstra.get_shortest_path(&request);
         let mut cost = None;
         if let Some(route) = response {
             cost = Some(route.weight);

@@ -29,10 +29,8 @@ fn main() {
     let reader = BufReader::new(File::open(args.ch_graph).unwrap());
     let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
 
-    let dijkstra = ChDijkstra::new(&contracted_graph);
-
     let start = Instant::now();
-    let hub_graph_factory = HubGraphFactory::new(&dijkstra);
+    let hub_graph_factory = HubGraphFactory::new(&contracted_graph);
     let hub_graph = hub_graph_factory.get_hl();
     println!("Generating hl took {:?}", start.elapsed());
 

@@ -3,29 +3,30 @@ use indicatif::ProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    ch::fast_shortcut_replacer::FastShortcutReplacer, graphs::types::VertexId,
+    ch::{fast_shortcut_replacer::FastShortcutReplacer, preprocessor::ContractedGraph},
+    graphs::types::VertexId,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 use super::{hub_graph::HubGraph, label::Label};
 
 pub struct HubGraphFactory<'a> {
-    pub ch_dijkstra: &'a ChDijkstra,
+    pub contracted_graph: &'a ContractedGraph,
 }
 
 impl<'a> HubGraphFactory<'a> {
-    pub fn new(ch_dijkstra: &'a ChDijkstra) -> HubGraphFactory {
-        HubGraphFactory { ch_dijkstra }
+    pub fn new(contracted_graph: &'a ContractedGraph) -> HubGraphFactory {
+        HubGraphFactory { contracted_graph }
     }
 
     pub fn get_hl(&self) -> HubGraph {
-        let mut forward_labels: Vec<_> = (0..self.ch_dijkstra.graph.num_nodes())
+        let mut forward_labels: Vec<_> = (0..self.contracted_graph.graph.number_of_vertices())
             .map(|vertex| Label::new(vertex))
             .collect();
 
         let mut reverse_labels = forward_labels.clone();
 
-        for level_list in self.ch_dijkstra.levels.iter().rev().progress() {
+        for level_list in self.contracted_graph.levels.iter().rev().progress() {
             let labels: Vec<_> = level_list
                 .iter()
                 .map(|&vertex| {
@@ -40,7 +41,14 @@ impl<'a> HubGraphFactory<'a> {
                 reverse_labels[vertex as usize] = reverse_label;
             }
         }
-        let shortcut_replacer = FastShortcutReplacer::new(&self.ch_dijkstra.shortcuts);
+        let shortcut_replacer = FastShortcutReplacer::new(
+            &self
+                .contracted_graph
+                .shortcuts_map
+                .iter()
+                .cloned()
+                .collect(),
+        );
 
         // Needs to be called after all labels are creates as replacing the predecessor VertexId
         // with the index of predecessor in label makes merging impossible.
@@ -67,7 +75,7 @@ impl<'a> HubGraphFactory<'a> {
         direction2_labels: &Vec<Label>,
     ) -> Label {
         let mut labels = Vec::new();
-        for out_edge in self.ch_dijkstra.graph.out_edges(vertex) {
+        for out_edge in self.contracted_graph.graph.out_edges(vertex) {
             let mut label = direction1_labels[out_edge.head as usize].clone();
             label.entries.iter_mut().for_each(|entry| {
                 entry.predecessor.get_or_insert(vertex);

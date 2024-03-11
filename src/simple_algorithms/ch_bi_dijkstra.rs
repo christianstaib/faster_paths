@@ -1,6 +1,4 @@
-use std::collections::BinaryHeap;
-
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+use ahash::HashMap;
 
 use crate::{
     ch::preprocessor::ContractedGraph,
@@ -11,14 +9,15 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::heap_queue::State,
 };
+
+use super::bidirectional_helpers::construct_route;
 
 #[derive(Clone)]
 pub struct ChDijkstra {
-    pub graph: FastGraph,
-    pub shortcuts: HashMap<DirectedEdge, u32>,
-    pub levels: Vec<Vec<VertexId>>,
+    graph: FastGraph,
+    shortcuts: HashMap<DirectedEdge, u32>,
+    levels: Vec<Vec<VertexId>>,
 }
 
 impl PathFinding for ChDijkstra {
@@ -97,19 +96,4 @@ impl ChDijkstra {
 
         construct_route(minimal_cost_vertex, forward, backward)
     }
-}
-
-fn construct_route(
-    contact_node: VertexId,
-    forward_data: &DijkstraData,
-    backward_data: &DijkstraData,
-) -> Option<Path> {
-    let mut forward_route = forward_data.get_route(contact_node)?;
-    let mut backward_route = backward_data.get_route(contact_node)?;
-    backward_route.vertices.pop();
-    backward_route.vertices.reverse();
-    forward_route.vertices.extend(backward_route.vertices);
-    forward_route.weight += backward_route.weight;
-
-    Some(forward_route)
 }
