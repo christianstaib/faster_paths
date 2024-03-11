@@ -1,11 +1,12 @@
 use ahash::HashMap;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, path::Path, types::VertexId};
 
 use super::slow_shortcut_replacer::SlowShortcutReplacer;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FastShortcutReplacer {
     shortcuts: HashMap<DirectedEdge, Vec<VertexId>>,
 }
@@ -14,7 +15,7 @@ impl FastShortcutReplacer {
     pub fn new(shortcuts: &HashMap<DirectedEdge, VertexId>) -> Self {
         let slow_shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
         let shortcuts = shortcuts
-            .iter()
+            .par_iter()
             .map(|(edge, skiped_vertex)| {
                 let vertices_with_shortcuts = vec![edge.tail, *skiped_vertex, edge.head];
                 let mut vertices =

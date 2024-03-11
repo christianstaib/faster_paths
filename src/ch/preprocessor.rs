@@ -26,7 +26,7 @@ impl Preprocessor {
 
         let shortcuts_map = shortcuts
             .iter()
-            .map(|shortcut| (shortcut.edge.unweighted(), shortcut.skiped_vertex))
+            .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
             .collect();
 
         ContractedGraph {

@@ -3,7 +3,10 @@ use indicatif::ProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    ch::{fast_shortcut_replacer::FastShortcutReplacer, preprocessor::ContractedGraph},
+    ch::{
+        preprocessor::ContractedGraph,
+        shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer,
+    },
     graphs::types::VertexId,
 };
 

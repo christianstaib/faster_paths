@@ -38,7 +38,7 @@ impl SlowShortcutReplacer {
         vertices
     }
 
-    pub fn get_route(&self, path_with_shortcuts: &Path) -> Path {
+    pub fn get_path(&self, path_with_shortcuts: &Path) -> Path {
         let mut path = path_with_shortcuts.clone();
         path.vertices = self.replace_shortcuts(&path.vertices);
         path

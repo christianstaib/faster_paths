@@ -30,6 +30,12 @@ impl PartialOrd for State {
     }
 }
 
+impl State {
+    pub fn new(weight: Weight, vertex: VertexId) -> State {
+        State { weight, vertex }
+    }
+}
+
 #[derive(Clone)]
 pub struct HeapQueue {
     queue: BinaryHeap<State>,

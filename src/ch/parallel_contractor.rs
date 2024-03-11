@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use crate::graphs::{graph::Graph, types::VertexId};
 
-use super::{contraction_helper::ContractionHelper, shortcut::Shortcut};
+use super::{contraction_helper::get_shortcuts, shortcut::Shortcut};
 
 pub struct ParallelContractor {
     graph: Graph,
@@ -72,10 +72,9 @@ impl ParallelContractor {
             vertices.remove(vertex);
         }
 
-        let shortcut_generator = ContractionHelper::new(&self.graph, 100);
         let vertex_shortcuts: Vec<_> = ids
             .par_iter()
-            .map(|&vertex| (vertex, shortcut_generator.get_shortcuts(vertex)))
+            .map(|&vertex| (vertex, get_shortcuts(&self.graph, vertex, 100)))
             .collect();
 
         vertex_shortcuts

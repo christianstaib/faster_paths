@@ -6,11 +6,10 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
     ch::{
-        contraction_helper::{ContractionHelper, ShortcutSearchResult},
+        contraction_helper::{get_shortcuts, ShortcutSearchResult},
         shortcut::Shortcut,
     },
-    graphs::graph::Graph,
-    graphs::types::VertexId,
+    graphs::{graph::Graph, types::VertexId},
 };
 
 use super::{
@@ -37,7 +36,7 @@ impl CHQueue {
                 'E' => queue.register(1, EdgeDifference::new(&graph)),
                 'D' => queue.register(1, DeletedNeighbors::new(&graph)),
                 'C' => queue.register(1, CostOfQueries::new(&graph)),
-                'V' => queue.register(100, VoronoiRegion::new(&graph)),
+                'V' => queue.register(1, VoronoiRegion::new(&graph)),
                 _ => panic!("letter not recognized"),
             }
         }
@@ -81,8 +80,7 @@ impl CHQueue {
     }
 
     pub fn priority_and_shortcuts(&self, vertex: VertexId, graph: &Graph) -> (i32, Vec<Shortcut>) {
-        let shortcut_generator = ContractionHelper::new(graph, 100);
-        let shortcuts_results = shortcut_generator.get_shortcuts(vertex);
+        let shortcuts_results = get_shortcuts(&graph, vertex, 100);
         let priority = self.priority(graph, &shortcuts_results, vertex);
 
         (priority, shortcuts_results.shortcuts)
