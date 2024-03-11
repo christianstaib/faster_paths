@@ -3,13 +3,14 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_term::PriorityFunction;
+use super::priority_function::PriorityFunction;
 
 pub struct VoronoiRegion {
     contracted: Vec<bool>,
 }
 
 impl PriorityFunction for VoronoiRegion {
+    #[allow(unused_variables)]
     fn priority(
         &self,
         vertex: VertexId,

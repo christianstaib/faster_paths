@@ -1,6 +1,6 @@
 use crate::graphs::graph::Graph;
 
-use super::priority_term::PriorityFunction;
+use super::priority_function::PriorityFunction;
 
 pub struct SearchSpaceSize {}
 

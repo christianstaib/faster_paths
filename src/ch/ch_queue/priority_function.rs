@@ -12,7 +12,7 @@ pub trait PriorityFunction {
         shortcuts_results: &ShortcutSearchResult,
     ) -> i32;
 
-    /// Gets called just BERFORE a vertex is contracted. Gives priority terms the oppernunity to updated
+    /// Gets called just ERFORE a vertex is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
     fn update(&mut self, vertex: VertexId, graph: &Graph);
 }

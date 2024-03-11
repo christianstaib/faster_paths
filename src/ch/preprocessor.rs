@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, graph::Graph, types::VertexId};
 
-use super::serial_contractor::SerialContractor;
+use super::{parallel_contractor::ParallelContractor, serial_contractor::SerialContractor};
 
 pub struct Preprocessor {}
 
@@ -15,7 +15,8 @@ pub struct ContractedGraph {
 
 impl Preprocessor {
     pub fn preprocess(graph: &Graph) -> ContractedGraph {
-        let contractor = SerialContractor::new(graph, "E");
+        let contractor = SerialContractor::new(graph, "EC");
+        // let contractor = ParallelContractor::new(graph);
         let (shortcuts, levels) = contractor.contract();
 
         let mut graph = graph.clone();

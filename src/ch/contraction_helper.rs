@@ -17,7 +17,6 @@ use super::{binary_heap::MinimumItem, shortcut::Shortcut};
 pub struct ContractionHelper<'a> {
     graph: &'a Graph,
     max_hops: u32,
-    max_search_space_size: u32,
 }
 
 pub struct ShortcutSearchResult {
@@ -27,12 +26,8 @@ pub struct ShortcutSearchResult {
 }
 
 impl<'a> ContractionHelper<'a> {
-    pub fn new(graph: &'a Graph, max_hops: u32, max_search_space_size: u32) -> Self {
-        Self {
-            graph,
-            max_hops,
-            max_search_space_size,
-        }
+    pub fn new(graph: &'a Graph, max_hops: u32) -> Self {
+        Self { graph, max_hops }
     }
 
     /// Generates shortcuts for a node v.
@@ -136,9 +131,8 @@ impl<'a> ContractionHelper<'a> {
                 let new_hops = hops[&vertex] + 1;
                 if (edge.head != without)
                     && (alternative_weight <= max_weight)
-                    && (new_hops <= self.max_hops) // limit hops
-                    && (weight.len() <= self.max_search_space_size as usize)
-                // limit serach space
+                    && (new_hops <= self.max_hops)
+                // limit hops
                 {
                     let current_cost = *weight.get(&edge.head).unwrap_or(&u32::MAX);
                     if alternative_weight < current_cost {

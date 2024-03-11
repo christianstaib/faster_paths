@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    deleted_neighbors::DeletedNeighbors, edge_difference::EdgeDifference,
-    priority_term::PriorityFunction, state::CHState,
+    cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
+    edge_difference::EdgeDifference, priority_function::PriorityFunction, state::CHState,
 };
 
 pub struct CHQueue {
@@ -35,6 +35,7 @@ impl CHQueue {
             match letter {
                 'E' => queue.register(1, EdgeDifference::new(&graph)),
                 'D' => queue.register(1, DeletedNeighbors::new(&graph)),
+                'C' => queue.register(1, CostOfQueries::new(&graph)),
                 _ => panic!("letter not recognized"),
             }
         }
@@ -56,7 +57,7 @@ impl CHQueue {
         while let Some(mut state) = self.queue.pop() {
             // If current priority is greater than minimum priority, then repush state with updated
             // priority.
-            let (priority, shortcuts) = self.get_priority_and_shortcuts(state.vertex, graph);
+            let (priority, shortcuts) = self.priority_and_shortcuts(state.vertex, graph);
             if priority > state.priority {
                 state.priority = priority;
                 self.queue.push(state);
@@ -77,33 +78,29 @@ impl CHQueue {
             .for_each(|(_, priority_function)| priority_function.update(vertex, graph));
     }
 
-    pub fn get_priority_and_shortcuts(
-        &self,
-        vertex: VertexId,
-        graph: &Graph,
-    ) -> (i32, Vec<Shortcut>) {
-        let shortcut_generator = ContractionHelper::new(graph, 100, u32::MAX);
+    pub fn priority_and_shortcuts(&self, vertex: VertexId, graph: &Graph) -> (i32, Vec<Shortcut>) {
+        let shortcut_generator = ContractionHelper::new(graph, 100);
         let shortcuts_results = shortcut_generator.get_shortcuts(vertex);
-        let priority = self.get_priority(graph, &shortcuts_results, vertex);
+        let priority = self.priority(graph, &shortcuts_results, vertex);
 
         (priority, shortcuts_results.shortcuts)
     }
 
     fn initialize(&mut self, graph: &Graph) {
-        let mut order: Vec<u32> = (0..graph.number_of_vertices()).map(|x| x as u32).collect();
-        order.shuffle(&mut rand::thread_rng());
+        let mut vertices: Vec<u32> = (0..graph.number_of_vertices()).map(|x| x as u32).collect();
+        vertices.shuffle(&mut rand::thread_rng());
 
-        self.queue = order
+        self.queue = vertices
             .into_par_iter()
             .progress()
             .map(|vertex| {
-                let (priority, _) = self.get_priority_and_shortcuts(vertex, graph);
+                let (priority, _) = self.priority_and_shortcuts(vertex, graph);
                 CHState { vertex, priority }
             })
             .collect();
     }
 
-    fn get_priority(
+    fn priority(
         &self,
         graph: &Graph,
         shortcuts_results: &ShortcutSearchResult,

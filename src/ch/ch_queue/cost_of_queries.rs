@@ -3,7 +3,7 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_term::PriorityFunction;
+use super::priority_function::PriorityFunction;
 
 pub struct CostOfQueries {
     costs: Vec<i32>,
@@ -21,11 +21,11 @@ impl PriorityFunction for CostOfQueries {
     }
 
     fn update(&mut self, vertex: VertexId, graph: &Graph) {
-        let cost_of_vertex = self.costs[vertex as usize] + 1;
+        self.costs[vertex as usize] += 1;
 
         for neighbor in graph.open_neighborhood(vertex, 1) {
-            if cost_of_vertex > self.costs[neighbor as usize] {
-                self.costs[neighbor as usize] = cost_of_vertex;
+            if self.costs[vertex as usize] > self.costs[neighbor as usize] {
+                self.costs[neighbor as usize] = self.costs[vertex as usize];
             }
         }
     }

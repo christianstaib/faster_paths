@@ -3,7 +3,7 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_term::PriorityFunction;
+use super::priority_function::PriorityFunction;
 
 pub struct EdgeDifference {}
 

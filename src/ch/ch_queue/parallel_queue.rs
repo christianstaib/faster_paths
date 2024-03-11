@@ -13,10 +13,7 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::{
-    edge_difference::EdgeDifference,
-    priority_term::{self, PriorityFunction},
-};
+use super::{edge_difference::EdgeDifference, priority_function::PriorityFunction};
 
 pub struct ParallelQueue {
     k: u32,
@@ -128,7 +125,7 @@ impl ParallelQueue {
         vertex: VertexId,
         graph: &Graph,
     ) -> (i32, Vec<Shortcut>) {
-        let shortcut_generator = ContractionHelper::new(graph, 100, u32::MAX);
+        let shortcut_generator = ContractionHelper::new(graph, 100);
         let shortcuts_results = shortcut_generator.get_shortcuts(vertex);
         let priority = self
             .priority_terms
