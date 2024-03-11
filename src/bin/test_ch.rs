@@ -1,4 +1,6 @@
+use core::panic;
 use std::{
+    fmt::format,
     fs::File,
     io::BufReader,
     time::{Duration, Instant},
@@ -47,7 +49,9 @@ fn main() {
         let path = dijkstra.get_shortest_path(&test.request);
         times.push(before.elapsed());
 
-        assert!(graph.validate_path(&test, &path).is_ok());
+        if let Err(err) = graph.validate_path(&test, &path) {
+            panic!("{}", err);
+        }
     }
 
     println!("all correct");

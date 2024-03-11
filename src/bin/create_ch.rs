@@ -1,10 +1,7 @@
 use std::{fs::File, io::BufWriter, time::Instant};
 
 use clap::Parser;
-use faster_paths::{
-    ch::{preprocessor::Preprocessor, serial_contractor::SerialContractor},
-    graphs::graph_factory::GraphFactory,
-};
+use faster_paths::{ch::preprocessor::Preprocessor, graphs::graph_factory::GraphFactory};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

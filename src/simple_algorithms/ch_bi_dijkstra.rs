@@ -4,6 +4,7 @@ use crate::{
     ch::{preprocessor::ContractedGraph, slow_shortcut_replacer::SlowShortcutReplacer},
     dijkstra_data::DijkstraData,
     graphs::{
+        edge,
         fast_graph::FastGraph,
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
@@ -57,34 +58,64 @@ impl ChDijkstra {
 
         while !forward.is_empty() || !backward.is_empty() {
             if let Some(State { vertex, .. }) = forward.pop() {
-                if let Some(backward_weight) = backward.verticies[vertex as usize].weight {
-                    let forward_weight = forward.verticies[vertex as usize].weight.unwrap();
-                    let weight = forward_weight + backward_weight;
-                    if weight < meeting_weight {
-                        meeting_weight = weight;
-                        meeting_vertex = vertex;
+                let forward_weight = forward.verticies[vertex as usize].weight.unwrap();
+
+                let mut stall = false;
+                for in_edge in self.graph.in_edges(vertex).iter() {
+                    if let Some(predecessor_weight) =
+                        forward.verticies[in_edge.tail as usize].weight
+                    {
+                        if predecessor_weight + in_edge.weight < forward_weight {
+                            stall = true;
+                            break;
+                        }
                     }
                 }
-                self.graph
-                    .out_edges(vertex)
-                    .iter()
-                    .for_each(|edge| forward.update(vertex, edge.head, edge.weight));
-            }
 
-            if let Some(State { vertex, .. }) = backward.pop() {
-                if forward.verticies[vertex as usize].is_expanded {
-                    if let Some(forward_weight) = forward.verticies[vertex as usize].weight {
-                        let backward_weight = backward.verticies[vertex as usize].weight.unwrap();
+                if !stall {
+                    if let Some(backward_weight) = backward.verticies[vertex as usize].weight {
                         let weight = forward_weight + backward_weight;
                         if weight < meeting_weight {
                             meeting_weight = weight;
                             meeting_vertex = vertex;
                         }
                     }
+                    self.graph
+                        .out_edges(vertex)
+                        .iter()
+                        .for_each(|edge| forward.update(vertex, edge.head, edge.weight));
                 }
-                self.graph.in_edges(vertex).iter().for_each(|edge| {
-                    backward.update(vertex, edge.tail, edge.weight);
-                });
+            }
+
+            if let Some(State { vertex, .. }) = backward.pop() {
+                let backward_weight = backward.verticies[vertex as usize].weight.unwrap();
+
+                let mut stall = false;
+                for out_edge in self.graph.out_edges(vertex).iter() {
+                    if let Some(predecessor_weight) =
+                        backward.verticies[out_edge.head as usize].weight
+                    {
+                        if predecessor_weight + out_edge.weight < backward_weight {
+                            stall = true;
+                            break;
+                        }
+                    }
+                }
+
+                if !stall {
+                    if forward.verticies[vertex as usize].is_expanded {
+                        if let Some(forward_weight) = forward.verticies[vertex as usize].weight {
+                            let weight = forward_weight + backward_weight;
+                            if weight < meeting_weight {
+                                meeting_weight = weight;
+                                meeting_vertex = vertex;
+                            }
+                        }
+                    }
+                    self.graph.in_edges(vertex).iter().for_each(|edge| {
+                        backward.update(vertex, edge.tail, edge.weight);
+                    });
+                }
             }
         }
 
