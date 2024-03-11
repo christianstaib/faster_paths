@@ -14,7 +14,10 @@ use faster_paths::{
     },
     hl::hub_graph::HubGraph,
     simple_algorithms::{
-        bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra,
+        bi_dijkstra::BiDijkstra,
+        ch_bi_dijkstra::ChDijkstra,
+        dijkstra::Dijkstra,
+        fast_dijkstra::{self, FastDijkstra},
         slow_dijkstra::SlowDijkstra,
     },
 };
@@ -47,6 +50,7 @@ fn main() {
     let slow_dijkstra = SlowDijkstra::new(&slow_graph);
 
     let dijkstra = Dijkstra::new(&graph);
+    let fast_dijkstra = FastDijkstra::new(&graph);
 
     // let bi_dijkstra = BiDijkstra::new(&graph);
 
@@ -61,8 +65,9 @@ fn main() {
     let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
     let mut path_finder: Vec<(&str, Box<dyn PathFinding>, Vec<Duration>)> = Vec::new();
-    path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
-    path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
+    // path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
+    // path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
+    path_finder.push(("fast dijkstra", Box::new(fast_dijkstra), Vec::new()));
     // path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
     // path_finder.push(("ch", Box::new(ch), Vec::new()));
     // path_finder.push(("hl", Box::new(hl), Vec::new()));

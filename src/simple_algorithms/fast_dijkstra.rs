@@ -6,7 +6,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::heap_queue::State,
+    queue::{heap_queue::State, BucketQueue},
 };
 
 #[derive(Clone)]
@@ -18,10 +18,17 @@ impl<'a> PathFinding for FastDijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let (weight, predecessor) = self.get_data(route_request.source(), route_request.target());
 
+        if *weight.get(route_request.target() as usize)? == u32::MAX {
+            return None;
+        }
+
         let mut vertices = vec![route_request.target()];
         let mut current = route_request.target();
-        while let Some(predecessor) = predecessor.get(current as usize)? {
-            current = *predecessor;
+        while let Some(&predecessor) = predecessor.get(current as usize) {
+            if predecessor == u32::MAX {
+                break;
+            }
+            current = predecessor;
             vertices.push(current);
         }
         vertices.reverse();
@@ -42,14 +49,11 @@ impl<'a> FastDijkstra<'a> {
         FastDijkstra { graph }
     }
 
-    pub fn get_data(
-        &self,
-        source: VertexId,
-        target: VertexId,
-    ) -> (Vec<u32>, Vec<Option<VertexId>>) {
+    pub fn get_data(&self, source: VertexId, target: VertexId) -> (Vec<u32>, Vec<VertexId>) {
         let mut queue = BinaryHeap::new();
         let mut weight = vec![u32::MAX; self.graph.number_of_vertices() as usize];
-        let mut predcessor = vec![None; self.graph.number_of_vertices() as usize];
+        let mut predcessor = vec![u32::MAX; self.graph.number_of_vertices() as usize];
+        let mut expanded = vec![false; self.graph.number_of_vertices() as usize];
 
         queue.push(State::new(0, source));
         weight[source as usize] = 0;
@@ -58,6 +62,10 @@ impl<'a> FastDijkstra<'a> {
             if vertex == target {
                 break;
             }
+            if expanded[vertex as usize] {
+                continue;
+            }
+            expanded[vertex as usize] = true;
 
             for edge in self.graph.out_edges(vertex).iter() {
                 let alternative_weight = weight[vertex as usize] + edge.weight;
@@ -65,7 +73,7 @@ impl<'a> FastDijkstra<'a> {
                 if alternative_weight < current_weight {
                     queue.push(State::new(alternative_weight, edge.head));
                     weight[edge.head as usize] = alternative_weight;
-                    predcessor[edge.head as usize] = Some(vertex);
+                    predcessor[edge.head as usize] = vertex;
                 }
             }
         }

@@ -12,7 +12,7 @@ use crate::{
         graph::Graph,
         types::{VertexId, Weight},
     },
-    queue::heap_queue::State,
+    queue::{heap_queue::State, BucketQueue},
 };
 
 use super::shortcut::Shortcut;
@@ -69,7 +69,7 @@ pub fn get_shortcuts(graph: &Graph, vertex: VertexId, max_hops: u32) -> Shortcut
     let search_space_size = search_space_size.into_inner() as i32;
     ShortcutSearchResult {
         shortcuts,
-          search_space_size,
+        search_space_size,
         edge_difference,
     }
 }
