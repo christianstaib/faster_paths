@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::contractor::ContractedGraph, graphs::path::ShortestPathValidation,
+    ch::preprocessor::ContractedGraph, graphs::path::ShortestPathValidation,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 use indicatif::ProgressIterator;

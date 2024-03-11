@@ -3,7 +3,7 @@ use std::collections::BinaryHeap;
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
 use crate::{
-    ch::contractor::ContractedGraph,
+    ch::preprocessor::ContractedGraph,
     graphs::{
         edge::DirectedEdge,
         fast_graph::FastGraph,

@@ -6,7 +6,6 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::contractor::Contractor,
     graphs::{graph_factory::GraphFactory, path::ShortestPathValidation},
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };

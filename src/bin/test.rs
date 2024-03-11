@@ -2,10 +2,12 @@ use std::{fs::File, io::BufReader};
 
 use clap::Parser;
 use faster_paths::{
-    ch::contractor::ContractedGraph,
-    graphs::fast_graph::FastGraph,
-    graphs::graph_factory::GraphFactory,
-    graphs::path::{Routing, ShortestPathValidation},
+    ch::preprocessor::ContractedGraph,
+    graphs::{
+        fast_graph::FastGraph,
+        graph_factory::GraphFactory,
+        path::{Routing, ShortestPathValidation},
+    },
     hl::hub_graph::HubGraph,
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };

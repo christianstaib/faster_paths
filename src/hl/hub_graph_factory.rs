@@ -27,7 +27,7 @@ impl<'a> HubGraphFactory<'a> {
 
         for level_list in self.ch_dijkstra.levels.iter().rev().progress() {
             let labels: Vec<_> = level_list
-                .par_iter()
+                .iter()
                 .map(|&vertex| {
                     let forward_label = self.create_label(vertex, &forward_labels, &reverse_labels);
                     let reverse_label = self.create_label(vertex, &reverse_labels, &forward_labels);

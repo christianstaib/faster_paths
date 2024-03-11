@@ -80,8 +80,7 @@ impl<'a> ContractionHelper<'a> {
             .collect();
 
         // let edge_difference = (shortcuts.len() - uv_edges.len() - vw_edges.len()) as i32;
-        let edge_difference =
-            (shortcuts.len() / std::cmp::max(1, uv_edges.len() + vw_edges.len())) as i32;
+        let edge_difference = (shortcuts.len() - uv_edges.len() - vw_edges.len()) as i32;
         let search_space_size = search_space_size.into_inner() as i32;
         ShortcutSearchResult {
             shortcuts,
@@ -152,30 +151,5 @@ impl<'a> ContractionHelper<'a> {
         }
 
         weight
-    }
-
-    pub fn open_neighborhood(&self, source: VertexId, max_hops: u32) -> HashSet<VertexId> {
-        let mut queue = BinaryHeap::new();
-        let mut hops = HashMap::new();
-        let mut neighborhood = HashSet::new();
-
-        queue.push(MinimumItem::new(0, source));
-        hops.insert(source, 0);
-
-        while let Some(MinimumItem { vertex, .. }) = queue.pop() {
-            for edge in self.graph.out_edges(vertex).iter() {
-                let alternative_weight = hops[&vertex] + 1;
-                if alternative_weight <= max_hops {
-                    let current_cost = *hops.get(&edge.head).unwrap_or(&u32::MAX);
-                    if alternative_weight < current_cost {
-                        queue.push(MinimumItem::new(alternative_weight, edge.head));
-                        hops.insert(edge.head, alternative_weight);
-                        neighborhood.insert(vertex);
-                    }
-                }
-            }
-        }
-
-        neighborhood
     }
 }
