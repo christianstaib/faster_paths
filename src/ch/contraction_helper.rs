@@ -3,7 +3,7 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use ahash::HashSet;
+use ahash::{HashSet, HashSetExt};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::graphs::{
@@ -152,5 +152,30 @@ impl<'a> ContractionHelper<'a> {
         }
 
         weight
+    }
+
+    pub fn open_neighborhood(&self, source: VertexId, max_hops: u32) -> HashSet<VertexId> {
+        let mut queue = BinaryHeap::new();
+        let mut hops = HashMap::new();
+        let mut neighborhood = HashSet::new();
+
+        queue.push(MinimumItem::new(0, source));
+        hops.insert(source, 0);
+
+        while let Some(MinimumItem { vertex, .. }) = queue.pop() {
+            for edge in self.graph.out_edges(vertex).iter() {
+                let alternative_weight = hops[&vertex] + 1;
+                if alternative_weight <= max_hops {
+                    let current_cost = *hops.get(&edge.head).unwrap_or(&u32::MAX);
+                    if alternative_weight < current_cost {
+                        queue.push(MinimumItem::new(alternative_weight, edge.head));
+                        hops.insert(edge.head, alternative_weight);
+                        neighborhood.insert(vertex);
+                    }
+                }
+            }
+        }
+
+        neighborhood
     }
 }

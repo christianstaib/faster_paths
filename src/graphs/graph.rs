@@ -1,9 +1,12 @@
 use std::{
-    collections::{BTreeSet, HashSet},
+    collections::{BTreeSet, BinaryHeap, HashSet},
     usize,
 };
 
+use ahash::{HashMap, HashMapExt};
 use serde_derive::{Deserialize, Serialize};
+
+use crate::ch::binary_heap::MinimumItem;
 
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},
@@ -107,19 +110,36 @@ impl Graph {
     }
 
     /// Does not include vertex
-    pub fn open_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
-        let mut neighbors = HashSet::new();
-        neighbors.insert(vertex);
+    pub fn open_neighborhood_dijkstra(&self, source: VertexId, max_hops: u32) -> HashSet<VertexId> {
+        let mut queue = BinaryHeap::new();
+        let mut hops = HashMap::new();
 
-        for _ in 0..hops {
-            let mut new_neighbors = HashSet::new();
+        queue.push(MinimumItem::new(0, source));
+        hops.insert(source, 0);
+
+        while let Some(MinimumItem { vertex, .. }) = queue.pop() {
+            let mut neighbors = self.out_neighborhood(vertex);
+            neighbors.extend(self.in_neighborhood(vertex));
             for &neighbor in neighbors.iter() {
-                new_neighbors.extend(self.out_neighborhood(neighbor));
-                new_neighbors.extend(self.in_neighborhood(neighbor));
+                let alternative_hops = hops[&vertex] + 1;
+                if alternative_hops <= max_hops {
+                    let current_cost = *hops.get(&neighbor).unwrap_or(&u32::MAX);
+                    if alternative_hops < current_cost {
+                        queue.push(MinimumItem::new(alternative_hops, neighbor));
+                        hops.insert(neighbor, alternative_hops);
+                    }
+                }
             }
-            neighbors.extend(new_neighbors);
         }
 
+        hops.remove(&source);
+
+        hops.into_keys().collect()
+    }
+
+    /// Does not include vertex
+    pub fn open_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
+        let mut neighbors = self.closed_neighborhood(vertex, hops);
         neighbors.remove(&vertex);
 
         neighbors
@@ -134,7 +154,7 @@ impl Graph {
             .binary_search_by_key(&edge.head, |out_edge| out_edge.head)
         {
             Ok(idx) => {
-                if self.out_edges[edge.tail as usize][idx].weight > edge.weight {
+                if edge.weight < self.out_edges[edge.tail as usize][idx].weight {
                     self.out_edges[edge.tail as usize][idx].weight = edge.weight;
                 }
             }
@@ -151,7 +171,7 @@ impl Graph {
             .binary_search_by_key(&edge.tail, |out_edge| out_edge.tail)
         {
             Ok(idx) => {
-                if self.in_edges[edge.head as usize][idx].weight > edge.weight {
+                if edge.weight < self.in_edges[edge.head as usize][idx].weight {
                     self.in_edges[edge.head as usize][idx].weight = edge.weight;
                 }
             }

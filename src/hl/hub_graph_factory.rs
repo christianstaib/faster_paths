@@ -26,12 +26,18 @@ impl<'a> HubGraphFactory<'a> {
         let mut reverse_labels = forward_labels.clone();
 
         for level_list in self.ch_dijkstra.levels.iter().rev().progress() {
-            for vertex in level_list {
-                let forward_label = self.create_label(*vertex, &forward_labels, &reverse_labels);
-                let reverse_label = self.create_label(*vertex, &reverse_labels, &forward_labels);
+            let labels: Vec<_> = level_list
+                .par_iter()
+                .map(|&vertex| {
+                    let forward_label = self.create_label(vertex, &forward_labels, &reverse_labels);
+                    let reverse_label = self.create_label(vertex, &reverse_labels, &forward_labels);
 
-                forward_labels[*vertex as usize] = forward_label;
-                reverse_labels[*vertex as usize] = reverse_label;
+                    (vertex, forward_label, reverse_label)
+                })
+                .collect();
+            for (vertex, forward_label, reverse_label) in labels {
+                forward_labels[vertex as usize] = forward_label;
+                reverse_labels[vertex as usize] = reverse_label;
             }
         }
         let shortcut_replacer = FastShortcutReplacer::new(&self.ch_dijkstra.shortcuts);

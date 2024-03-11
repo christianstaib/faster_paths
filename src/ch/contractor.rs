@@ -1,6 +1,6 @@
 use core::panic;
 use rand::seq::SliceRandom;
-use std::{cmp::Ordering, collections::BTreeSet, usize};
+use std::{cmp::Ordering, collections::BTreeSet, time::Instant, usize};
 
 use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -39,7 +39,7 @@ impl Contractor {
     pub fn get_graph(mut self) -> ContractedGraph {
         let old_graph = self.graph.clone();
 
-        let shortcuts = self.contract_ids();
+        let shortcuts = self.contract_single_vertex();
 
         self.graph = old_graph;
         self.add_shortcuts_to_graph(&shortcuts);
@@ -98,17 +98,20 @@ impl Contractor {
         let ids: Vec<_> = vertices
             .par_iter()
             .filter(|&&vertex| {
-                let neighbors = self.graph.open_neighborhood(vertex, k);
-                let neighbors_with_lower_priority: Vec<_> = neighbors
-                    .iter()
-                    .filter(|&&neighbor| {
-                        priority[neighbor as usize]
-                            .cmp(&priority[vertex as usize])
-                            .then_with(|| neighbor.cmp(&vertex))
-                            == Ordering::Less
-                    })
-                    .collect();
-                neighbors_with_lower_priority.is_empty()
+                // let neighbors = self.graph.open_neighborhood(vertex, k);
+                let neighbors = self.graph.open_neighborhood_dijkstra(vertex, k);
+                // assert_eq!(neighbors.len(), n2.len());
+                for &neighbor in neighbors.iter() {
+                    // break if there is a neighbor who is less important
+                    if priority[neighbor as usize]
+                        .cmp(&priority[vertex as usize])
+                        .then_with(|| neighbor.cmp(&vertex))
+                        == Ordering::Less
+                    {
+                        return false;
+                    }
+                }
+                true
             })
             .cloned()
             .collect();
@@ -155,32 +158,50 @@ impl Contractor {
         self.update_vertices(&remaining, &mut priority, &mut shortcuts_cache);
 
         while !remaining.is_empty() {
+            println!("");
+            let start = Instant::now();
             //  I <- Independent Node Set
-            let ids = self.get_independen_set(&mut remaining, &priority, 1);
+            let ids = self.get_independen_set(&mut remaining, &priority, 2);
+            println!("getting ids took {:?}", start.elapsed());
             // needs to be done before as afterwards neighbor art not known anymore
+            let start = Instant::now();
             let ids_neighbors: BTreeSet<_> = ids
                 .par_iter()
-                .map(|&vertex| self.graph.open_neighborhood(vertex, 1))
+                .map(|&vertex| {
+                    let n1 = self.graph.open_neighborhood_dijkstra(vertex, 1);
+                    // let n2 = self.graph.open_neighborhood_dijkstra(vertex, 1);
+                    // assert!(n1.len() == n2.len());
+                    n1
+                })
                 .flatten()
                 .collect();
+            println!("getting neighbors took {:?}", start.elapsed());
 
+            assert!(!ids.is_empty());
+
+            let start = Instant::now();
             // E <- Necessary Shortcuts
             let mut ids_shortcuts = self.get_necessary_shortcuts(&ids, &mut shortcuts_cache);
+            println!("getting shortcuts took {:?}", start.elapsed());
 
+            let start = Instant::now();
             // Move I to their Level
             for &v in ids.iter() {
                 self.graph.remove_vertex(v);
                 self.levels[v as usize] = level;
-                bar.inc(1);
             }
 
             // Insert E into Remaining graph
             self.add_shortcuts_to_graph(&ids_shortcuts);
             shortcuts.append(&mut ids_shortcuts);
+            println!("graph stuff took {:?}", start.elapsed());
 
+            let start = Instant::now();
             // Update Priority of Neighbors of I with Simulated Contractions
             self.update_vertices(&ids_neighbors, &mut priority, &mut shortcuts_cache);
+            println!("updating neighbors took {:?}", start.elapsed());
 
+            bar.inc(ids.len() as u64);
             level += 1;
         }
         bar.finish();
