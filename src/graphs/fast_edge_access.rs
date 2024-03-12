@@ -6,28 +6,28 @@ use super::{
 #[derive(Clone)]
 pub struct FastOutEdgeAccess {
     pub edges: Vec<DirectedTaillessWeightedEdge>,
-    pub tail_start_at: Vec<u32>,
+    pub tail_start_index: Vec<u32>,
 }
 
 impl FastOutEdgeAccess {
     pub fn new(edges: &[Vec<DirectedTaillessWeightedEdge>]) -> FastOutEdgeAccess {
-        let mut edges_start_at = vec![0];
+        let mut tail_start_index = vec![0];
 
         for edges in edges.iter() {
-            edges_start_at.push(edges_start_at.last().unwrap() + edges.len() as u32);
+            tail_start_index.push(tail_start_index.last().unwrap() + edges.len() as u32);
         }
 
         let edges = edges.iter().flatten().cloned().collect();
 
         FastOutEdgeAccess {
             edges,
-            tail_start_at: edges_start_at,
+            tail_start_index,
         }
     }
 
-    pub fn edges(&self, source: VertexId) -> &[DirectedTaillessWeightedEdge] {
-        let start = self.tail_start_at[source as usize] as usize;
-        let end = self.tail_start_at[source as usize + 1] as usize;
+    pub fn edges(&self, tail: VertexId) -> &[DirectedTaillessWeightedEdge] {
+        let start = self.tail_start_index[tail as usize] as usize;
+        let end = self.tail_start_index[tail as usize + 1] as usize;
 
         &self.edges[start..end]
     }
@@ -36,28 +36,28 @@ impl FastOutEdgeAccess {
 #[derive(Clone)]
 pub struct FastInEdgeAccess {
     pub edges: Vec<DirectedHeadlessWeightedEdge>,
-    pub head_start_at: Vec<u32>,
+    pub head_start_index: Vec<u32>,
 }
 
 impl FastInEdgeAccess {
     pub fn new(edges: &[Vec<DirectedHeadlessWeightedEdge>]) -> FastInEdgeAccess {
-        let mut edges_start_at = vec![0];
+        let mut head_start_index = vec![0];
 
         for edges in edges.iter() {
-            edges_start_at.push(edges_start_at.last().unwrap() + edges.len() as u32);
+            head_start_index.push(head_start_index.last().unwrap() + edges.len() as u32);
         }
 
         let edges = edges.iter().flatten().cloned().collect();
 
         FastInEdgeAccess {
             edges,
-            head_start_at: edges_start_at,
+            head_start_index,
         }
     }
 
-    pub fn edges(&self, source: VertexId) -> &[DirectedHeadlessWeightedEdge] {
-        let start = self.head_start_at[source as usize] as usize;
-        let end = self.head_start_at[source as usize + 1] as usize;
+    pub fn edges(&self, head: VertexId) -> &[DirectedHeadlessWeightedEdge] {
+        let start = self.head_start_index[head as usize] as usize;
+        let end = self.head_start_index[head as usize + 1] as usize;
 
         &self.edges[start..end]
     }
