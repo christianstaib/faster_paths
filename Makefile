@@ -28,12 +28,19 @@ test_queue_sol:
 		--queue-path $(STGT_QUEUE)\
 		--sol-path $(STGT_SOL)
 
-test:
+test_ny:
 	cargo run --bin test --release --\
 		--graph-path $(NY_GRAPH)\
 		--ch-path $(NY_CH)\
 		--hl-path $(NY_HL)\
 		--tests-path $(NY_TESTS)
+
+test:
+	cargo run --bin test --release --\
+		--graph-path $(NETWORK_GRAPH)\
+		--ch-path $(NETWORK_CH)\
+		--hl-path $(NETWORK_HL)\
+		--tests-path $(NETWORK_TESTS)
 
 
 create_tests_ny:
@@ -84,11 +91,13 @@ test_fast_paths:
 
 test_ch_ny:
 	cargo run --bin test_ch --release --\
+		--graph $(NY_GRAPH)\
 		--ch-graph $(NY_CH)\
 		--tests-path $(NY_TESTS)
 
 test_ch:
 	cargo run --bin test_ch --release --\
+		--graph $(NETWORK_GRAPH)\
 		--ch-graph $(NETWORK_CH)\
 		--tests-path $(NETWORK_TESTS)
 
