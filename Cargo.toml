@@ -22,3 +22,4 @@ serde = "1.0.192"
 clap = { version = "4.4.8", features = ["derive"] }
 ahash = "0.8.6"
 bincode = "1.3.3"
+radix-heap = "0.4.2"
