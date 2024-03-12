@@ -6,11 +6,11 @@ use std::{
 use ahash::{HashMap, HashMapExt};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::queue::heap_queue::State;
+use crate::queue::State;
 
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},
-    path::{Path, ShortestPathRequest, ShortestPathValidation},
+    path::{Path, ShortestPathValidation},
     types::VertexId,
 };
 

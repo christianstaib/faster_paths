@@ -13,7 +13,7 @@ use crate::{
         graph::Graph,
         types::{VertexId, Weight},
     },
-    queue::heap_queue::State,
+    queue::State,
 };
 
 use super::Shortcut;

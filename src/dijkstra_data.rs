@@ -3,7 +3,7 @@ use crate::{
         path::Path,
         types::{VertexId, Weight},
     },
-    queue::heap_queue::{HeapQueue, State},
+    queue::{heap_queue::HeapQueue, State},
 };
 
 #[derive(Clone)]

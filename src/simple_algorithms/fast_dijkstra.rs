@@ -4,7 +4,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::{heap_queue::State, BucketQueue},
+    queue::{bucket_queue::BucketQueue, radix_queue::RadixQueue, State},
 };
 
 #[derive(Clone)]
@@ -51,7 +51,7 @@ impl<'a> FastDijkstra<'a> {
     }
 
     pub fn get_data(&self, source: VertexId, target: VertexId) -> (Vec<u32>, Vec<VertexId>) {
-        let mut queue = BucketQueue::new(self.max_edge_weight);
+        let mut queue = RadixQueue::new(); //BucketQueue::new(self.max_edge_weight);
         let mut weights = vec![u32::MAX; self.graph.number_of_vertices() as usize];
         let mut predcessors = vec![u32::MAX; self.graph.number_of_vertices() as usize];
         let mut expanded = vec![false; self.graph.number_of_vertices() as usize];

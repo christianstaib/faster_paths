@@ -11,7 +11,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::heap_queue::State,
+    queue::State,
 };
 
 use super::bidirectional_helpers::path_from_bidirectional_search;
