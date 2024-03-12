@@ -3,9 +3,19 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, path::Path, types::VertexId};
 
+use super::ShortcutReplacer;
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SlowShortcutReplacer {
     shortcuts: HashMap<DirectedEdge, VertexId>,
+}
+
+impl ShortcutReplacer for SlowShortcutReplacer {
+    fn get_path(&self, path_with_shortcuts: &Path) -> Path {
+        let mut path = path_with_shortcuts.clone();
+        path.vertices = self.replace_shortcuts(&path.vertices);
+        path
+    }
 }
 
 impl SlowShortcutReplacer {
@@ -36,11 +46,5 @@ impl SlowShortcutReplacer {
         vertices.reverse();
 
         vertices
-    }
-
-    pub fn get_path(&self, path_with_shortcuts: &Path) -> Path {
-        let mut path = path_with_shortcuts.clone();
-        path.vertices = self.replace_shortcuts(&path.vertices);
-        path
     }
 }

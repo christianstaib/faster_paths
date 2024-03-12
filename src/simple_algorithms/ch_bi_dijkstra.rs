@@ -3,7 +3,7 @@ use std::usize;
 use crate::{
     ch::{
         preprocessor::ContractedGraph,
-        shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
+        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
     },
     dijkstra_data::DijkstraData,
     graphs::{

@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    ch::shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer,
+    ch::shortcut_replacer::{fast_shortcut_replacer::FastShortcutReplacer, ShortcutReplacer},
     graphs::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::Weight,
