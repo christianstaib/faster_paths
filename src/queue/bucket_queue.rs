@@ -1,3 +1,5 @@
+use crate::graphs::types::Weight;
+
 use super::heap_queue::State;
 
 pub struct BucketQueue {
@@ -5,15 +7,9 @@ pub struct BucketQueue {
     buckets: Vec<Vec<State>>,
 }
 
-impl Default for BucketQueue {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl BucketQueue {
-    pub fn new() -> BucketQueue {
-        let buckets = vec![Vec::new(); 30_001];
+    pub fn new(max_edge_weight: Weight) -> BucketQueue {
+        let buckets = vec![Vec::new(); max_edge_weight as usize + 1];
         BucketQueue {
             current_index: 0,
             buckets,

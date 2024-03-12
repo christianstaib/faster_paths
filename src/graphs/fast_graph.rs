@@ -42,4 +42,17 @@ impl FastGraph {
     pub fn in_edges(&self, target: VertexId) -> &[DirectedHeadlessWeightedEdge] {
         self.in_edges.edges(target)
     }
+
+    pub fn max_edge_weight(&self) -> Option<u32> {
+        let max_out_weight = self.out_edges.max_edge_weight();
+        let max_in_weight = self.in_edges.max_edge_weight();
+        match (max_out_weight, max_in_weight) {
+            (None, None) => None,
+            (None, Some(max_in_weight)) => Some(max_in_weight),
+            (Some(max_out_weight), None) => Some(max_out_weight),
+            (Some(max_out_weight), Some(max_in_weight)) => {
+                Some(std::cmp::max(max_out_weight, max_in_weight))
+            }
+        }
+    }
 }

@@ -1,6 +1,6 @@
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge},
-    types::VertexId,
+    types::{VertexId, Weight},
 };
 
 #[derive(Clone)]
@@ -31,6 +31,10 @@ impl FastOutEdgeAccess {
 
         &self.edges[start..end]
     }
+
+    pub fn max_edge_weight(&self) -> Option<Weight> {
+        self.edges.iter().map(|edge| edge.weight).max()
+    }
 }
 
 #[derive(Clone)]
@@ -60,5 +64,9 @@ impl FastInEdgeAccess {
         let end = self.head_start_index[head as usize + 1] as usize;
 
         &self.edges[start..end]
+    }
+
+    pub fn max_edge_weight(&self) -> Option<Weight> {
+        self.edges.iter().map(|edge| edge.weight).max()
     }
 }
