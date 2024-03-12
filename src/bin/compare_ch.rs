@@ -6,6 +6,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
+    ch::contractor::{serial_contractor::SerialContractor, Contractor},
     graphs::{graph_factory::GraphFactory, path::ShortestPathValidation},
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
@@ -35,7 +36,7 @@ fn main() {
     let letters = vec!["ED", "E"];
     for letters in letters {
         let start = Instant::now();
-        let contractor = Contractor::new(&graph, letters);
+        let contractor = SerialContractor::new(&graph, letters);
         let contracted_graph = contractor.get_graph();
         let ch_time = start.elapsed();
 

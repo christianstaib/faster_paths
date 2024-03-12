@@ -6,7 +6,6 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::preprocessor::ContractedGraph,
     graphs::{
         fast_graph::FastGraph,
         graph_factory::GraphFactory,

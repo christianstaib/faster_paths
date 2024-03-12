@@ -1,6 +1,5 @@
 use core::panic;
 use std::{
-    fmt::format,
     fs::File,
     io::BufReader,
     time::{Duration, Instant},
@@ -8,7 +7,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::preprocessor::ContractedGraph,
+    ch::ContractedGraph,
     graphs::{
         graph_factory::GraphFactory,
         path::{PathFinding, ShortestPathValidation},

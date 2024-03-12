@@ -1,17 +1,11 @@
-use serde::{Deserialize, Serialize};
+use crate::graphs::graph::Graph;
 
-use crate::graphs::{edge::DirectedEdge, graph::Graph, types::VertexId};
-
-use super::contractor::{serial_contractor::SerialContractor, Contractor};
+use super::{
+    contractor::{serial_contractor::SerialContractor, Contractor},
+    ContractedGraph,
+};
 
 pub struct Preprocessor {}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct ContractedGraph {
-    pub graph: Graph,
-    pub shortcuts_map: Vec<(DirectedEdge, VertexId)>,
-    pub levels: Vec<Vec<u32>>,
-}
 
 impl Preprocessor {
     pub fn preprocess(graph: &Graph) -> ContractedGraph {
@@ -24,14 +18,14 @@ impl Preprocessor {
         }
         graph = Self::removing_edges_violating_level_property(&graph, &levels);
 
-        let shortcuts_map = shortcuts
+        let shortcuts = shortcuts
             .iter()
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
             .collect();
 
         ContractedGraph {
             graph,
-            shortcuts_map,
+            shortcuts,
             levels,
         }
     }

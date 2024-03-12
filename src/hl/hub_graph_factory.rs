@@ -3,10 +3,7 @@ use indicatif::ProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    ch::{
-        preprocessor::ContractedGraph,
-        shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer,
-    },
+    ch::{shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer, ContractedGraph},
     graphs::types::VertexId,
 };
 
@@ -44,12 +41,7 @@ impl<'a> HubGraphFactory<'a> {
             }
         }
 
-        let shortcut_map = self
-            .contracted_graph
-            .shortcuts_map
-            .iter()
-            .cloned()
-            .collect();
+        let shortcut_map = self.contracted_graph.shortcuts.iter().cloned().collect();
         let shortcut_replacer = FastShortcutReplacer::new(&shortcut_map);
 
         // Needs to be called after all labels are creates as replacing the predecessor VertexId

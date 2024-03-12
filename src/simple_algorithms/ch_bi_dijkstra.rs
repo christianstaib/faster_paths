@@ -2,8 +2,8 @@ use std::usize;
 
 use crate::{
     ch::{
-        preprocessor::ContractedGraph,
         shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+        ContractedGraph,
     },
     dijkstra_data::DijkstraData,
     graphs::{
@@ -39,7 +39,7 @@ impl PathFinding for ChDijkstra {
 impl ChDijkstra {
     pub fn new(contracted_graph: &ContractedGraph) -> ChDijkstra {
         let graph = FastGraph::from_graph(&contracted_graph.graph);
-        let shortcut_map = contracted_graph.shortcuts_map.iter().cloned().collect();
+        let shortcut_map = contracted_graph.shortcuts.iter().cloned().collect();
         let shortcut_replacer = SlowShortcutReplacer::new(&shortcut_map);
         ChDijkstra {
             graph,

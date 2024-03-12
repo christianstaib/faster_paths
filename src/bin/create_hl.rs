@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 
 use faster_paths::{
-    ch::preprocessor::ContractedGraph, hl::hub_graph_factory::HubGraphFactory,
+    ch::ContractedGraph, hl::hub_graph_factory::HubGraphFactory,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
