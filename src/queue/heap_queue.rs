@@ -54,11 +54,8 @@ impl HeapQueue {
         }
     }
 
-    pub fn insert(&mut self, key: u32, value: u32) {
-        self.queue.push(State {
-            weight: key,
-            vertex: value,
-        })
+    pub fn push(&mut self, state: State) {
+        self.queue.push(state)
     }
 
     pub fn pop(&mut self) -> Option<State> {

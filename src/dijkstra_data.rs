@@ -1,5 +1,3 @@
-use std::usize;
-
 use crate::{
     graphs::{
         path::Path,
@@ -36,7 +34,7 @@ impl DijkstraData {
         let mut queue = HeapQueue::new();
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
         nodes[source as usize].weight = Some(0);
-        queue.insert(0, source);
+        queue.push(State::new(0, source));
         DijkstraData {
             queue,
             verticies: nodes,
@@ -71,7 +69,7 @@ impl DijkstraData {
         if alternative_cost < current_cost {
             self.verticies[head as usize].predecessor = Some(tail);
             self.verticies[head as usize].weight = Some(alternative_cost);
-            self.queue.insert(alternative_cost, head);
+            self.queue.push(State::new(alternative_cost, head));
         }
     }
 

@@ -5,8 +5,8 @@ use super::{
 
 #[derive(Clone)]
 pub struct FastOutEdgeAccess {
-    pub edges: Vec<DirectedTaillessWeightedEdge>,
-    pub tail_start_index: Vec<u32>,
+    edges: Vec<DirectedTaillessWeightedEdge>,
+    tail_start_index: Vec<u32>,
 }
 
 impl FastOutEdgeAccess {
@@ -35,8 +35,8 @@ impl FastOutEdgeAccess {
 
 #[derive(Clone)]
 pub struct FastInEdgeAccess {
-    pub edges: Vec<DirectedHeadlessWeightedEdge>,
-    pub head_start_index: Vec<u32>,
+    edges: Vec<DirectedHeadlessWeightedEdge>,
+    head_start_index: Vec<u32>,
 }
 
 impl FastInEdgeAccess {

@@ -6,7 +6,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::{heap_queue::State, BucketQueue},
+    queue::heap_queue::State,
 };
 
 #[derive(Clone)]
