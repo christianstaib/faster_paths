@@ -3,10 +3,11 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use ahash::{HashSet, HashSetExt};
+use ahash::HashSet;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::{
+    ch::ShortcutSearchResult,
     graphs::{
         edge::DirectedWeightedEdge,
         graph::Graph,
@@ -16,12 +17,6 @@ use crate::{
 };
 
 use super::Shortcut;
-
-pub struct ShortcutSearchResult {
-    pub shortcuts: Vec<Shortcut>,
-    pub search_space_size: i32,
-    pub edge_difference: i32,
-}
 
 /// Generates shortcuts for a node v.
 ///

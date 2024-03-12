@@ -1,5 +1,5 @@
 use crate::{
-    ch::contraction_helper::ShortcutSearchResult,
+    ch::ShortcutSearchResult,
     graphs::{graph::Graph, types::VertexId},
 };
 

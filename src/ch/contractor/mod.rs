@@ -2,6 +2,7 @@ use crate::graphs::types::VertexId;
 
 use super::Shortcut;
 
+pub mod contraction_helper;
 pub mod parallel_contractor;
 pub mod serial_contractor;
 

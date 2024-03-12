@@ -1,4 +1,4 @@
-use crate::graphs::graph::Graph;
+use crate::{ch::ShortcutSearchResult, graphs::graph::Graph};
 
 use super::priority_function::PriorityFunction;
 
@@ -17,7 +17,7 @@ impl PriorityFunction for SearchSpaceSize {
         &self,
         vertex: crate::graphs::types::VertexId,
         graph: &crate::graphs::graph::Graph,
-        shortcuts_results: &crate::ch::contraction_helper::ShortcutSearchResult,
+        shortcuts_results: &ShortcutSearchResult,
     ) -> i32 {
         shortcuts_results.edge_difference
     }

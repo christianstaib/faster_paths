@@ -5,10 +5,7 @@ use rand::seq::SliceRandom;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
-    ch::{
-        contraction_helper::{get_shortcuts, ShortcutSearchResult},
-        Shortcut,
-    },
+    ch::{contractor::contraction_helper::get_shortcuts, Shortcut, ShortcutSearchResult},
     graphs::{graph::Graph, types::VertexId},
 };
 

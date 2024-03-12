@@ -4,11 +4,11 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 
 use crate::{
-    ch::{contraction_helper::get_shortcuts, Shortcut},
+    ch::Shortcut,
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::Contractor;
+use super::{contraction_helper::get_shortcuts, Contractor};
 
 pub struct ParallelContractor {
     graph: Graph,
