@@ -7,7 +7,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use crate::{
     ch::{
         contraction_helper::{get_shortcuts, ShortcutSearchResult},
-        shortcut::Shortcut,
+        Shortcut,
     },
     graphs::{graph::Graph, types::VertexId},
 };

@@ -12,10 +12,10 @@ use crate::{
         graph::Graph,
         types::{VertexId, Weight},
     },
-    queue::{heap_queue::State, BucketQueue},
+    queue::heap_queue::State,
 };
 
-use super::shortcut::Shortcut;
+use super::Shortcut;
 
 pub struct ShortcutSearchResult {
     pub shortcuts: Vec<Shortcut>,

@@ -1,7 +1,7 @@
 use indicatif::ProgressBar;
 
 use crate::{
-    ch::{ch_queue::queue::CHQueue, shortcut::Shortcut},
+    ch::{ch_queue::queue::CHQueue, Shortcut},
     graphs::{graph::Graph, types::VertexId},
 };
 

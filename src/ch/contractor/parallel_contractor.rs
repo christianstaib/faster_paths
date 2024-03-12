@@ -4,7 +4,7 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 
 use crate::{
-    ch::{contraction_helper::get_shortcuts, shortcut::Shortcut},
+    ch::{contraction_helper::get_shortcuts, Shortcut},
     graphs::{graph::Graph, types::VertexId},
 };
 

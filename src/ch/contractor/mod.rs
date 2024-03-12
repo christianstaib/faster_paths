@@ -1,6 +1,6 @@
 use crate::graphs::types::VertexId;
 
-use super::shortcut::Shortcut;
+use super::Shortcut;
 
 pub mod parallel_contractor;
 pub mod serial_contractor;
