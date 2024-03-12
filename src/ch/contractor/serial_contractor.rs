@@ -1,27 +1,20 @@
 use indicatif::ProgressBar;
 
-use crate::graphs::{graph::Graph, types::VertexId};
+use crate::{
+    ch::{ch_queue::queue::CHQueue, shortcut::Shortcut},
+    graphs::{graph::Graph, types::VertexId},
+};
 
-use super::{ch_queue::queue::CHQueue, shortcut::Shortcut};
+use super::Contractor;
 
 pub struct SerialContractor {
     graph: Graph,
     priority_functions: String,
 }
 
-impl SerialContractor {
-    pub fn new(graph: &Graph, priority_functions: &str) -> Self {
-        let graph = graph.clone();
-        let priority_functions = priority_functions.into();
-
-        SerialContractor {
-            graph,
-            priority_functions,
-        }
-    }
-
+impl Contractor for SerialContractor {
     /// Generates contraction hierarchy where one vertex at a time is contracted.
-    pub fn contract(mut self) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
+    fn contract(mut self) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
         let mut shortcuts = Vec::new();
         let mut levels = Vec::new();
         let mut queue = CHQueue::new(&self.graph, self.priority_functions.as_str());
@@ -41,5 +34,17 @@ impl SerialContractor {
         bar.finish();
 
         (shortcuts, levels)
+    }
+}
+
+impl SerialContractor {
+    pub fn new(graph: &Graph, priority_functions: &str) -> Self {
+        let graph = graph.clone();
+        let priority_functions = priority_functions.into();
+
+        SerialContractor {
+            graph,
+            priority_functions,
+        }
     }
 }

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedEdge, graph::Graph, types::VertexId};
 
-use super::serial_contractor::SerialContractor;
+use super::contractor::{serial_contractor::SerialContractor, Contractor};
 
 pub struct Preprocessor {}
 

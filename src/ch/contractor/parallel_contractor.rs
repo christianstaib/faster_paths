@@ -3,22 +3,19 @@ use std::collections::BTreeSet;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 
-use crate::graphs::{graph::Graph, types::VertexId};
+use crate::{
+    ch::{contraction_helper::get_shortcuts, shortcut::Shortcut},
+    graphs::{graph::Graph, types::VertexId},
+};
 
-use super::{contraction_helper::get_shortcuts, shortcut::Shortcut};
+use super::Contractor;
 
 pub struct ParallelContractor {
     graph: Graph,
 }
 
-impl ParallelContractor {
-    pub fn new(graph: &Graph) -> Self {
-        let graph = graph.clone();
-
-        ParallelContractor { graph }
-    }
-
-    pub fn contract(mut self) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
+impl Contractor for ParallelContractor {
+    fn contract(mut self) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
         let mut shortcuts = Vec::new();
         let bar = ProgressBar::new(self.graph.number_of_vertices() as u64);
         let mut remaining: BTreeSet<VertexId> = (0..self.graph.number_of_vertices()).collect();
@@ -42,6 +39,14 @@ impl ParallelContractor {
         bar.finish();
 
         (shortcuts, levels)
+    }
+}
+
+impl ParallelContractor {
+    pub fn new(graph: &Graph) -> Self {
+        let graph = graph.clone();
+
+        ParallelContractor { graph }
     }
 
     pub fn get_independen_set(
