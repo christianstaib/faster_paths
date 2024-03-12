@@ -13,7 +13,7 @@ use crate::{
         graph::Graph,
         types::{VertexId, Weight},
     },
-    queue::State,
+    queue::{radix_queue::RadixQueue, State},
 };
 
 use super::Shortcut;
@@ -95,7 +95,7 @@ pub fn witness_search(
     max_hops: u32,
     targets: &HashSet<VertexId>,
 ) -> HashMap<VertexId, Weight> {
-    let mut queue = BinaryHeap::new();
+    let mut queue = RadixQueue::new();
     let mut weight = HashMap::new();
     let mut hops = HashMap::new();
 
