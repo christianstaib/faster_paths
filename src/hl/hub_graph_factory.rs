@@ -7,22 +7,22 @@ use crate::{ch::ContractedGraphInformation, graphs::types::VertexId};
 use super::{hub_graph::HubGraph, label::Label};
 
 pub struct HubGraphFactory<'a> {
-    pub contracted_graph: &'a ContractedGraphInformation,
+    pub ch_information: &'a ContractedGraphInformation,
 }
 
 impl<'a> HubGraphFactory<'a> {
-    pub fn new(contracted_graph: &'a ContractedGraphInformation) -> HubGraphFactory {
-        HubGraphFactory { contracted_graph }
+    pub fn new(ch_information: &'a ContractedGraphInformation) -> HubGraphFactory {
+        HubGraphFactory { ch_information }
     }
 
     pub fn get_hl(&self) -> HubGraph {
-        let mut forward_labels: Vec<_> = (0..self.contracted_graph.graph.number_of_vertices())
+        let mut forward_labels: Vec<_> = (0..self.ch_information.ch_graph.number_of_vertices())
             .map(|vertex| Label::new(vertex))
             .collect();
 
         let mut reverse_labels = forward_labels.clone();
 
-        for level_list in self.contracted_graph.levels.iter().rev().progress() {
+        for level_list in self.ch_information.levels.iter().rev().progress() {
             let labels: Vec<_> = level_list
                 .par_iter()
                 .map(|&vertex| {
@@ -62,7 +62,7 @@ impl<'a> HubGraphFactory<'a> {
         direction2_labels: &Vec<Label>,
     ) -> Label {
         let mut labels = Vec::new();
-        for out_edge in self.contracted_graph.graph.out_edges(vertex) {
+        for out_edge in self.ch_information.ch_graph.out_edges(vertex) {
             let mut label = direction1_labels[out_edge.head as usize].clone();
             label.entries.iter_mut().for_each(|entry| {
                 entry.predecessor.get_or_insert(vertex);

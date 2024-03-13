@@ -8,7 +8,10 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     ch::{
-        shortcut_replacer::{self, slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+        shortcut_replacer::{
+            fast_shortcut_replacer::FastShortcutReplacer,
+            slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer,
+        },
         ContractedGraphInformation,
     },
     graphs::{
@@ -42,10 +45,9 @@ fn main() {
     let reader = BufReader::new(File::open(args.ch_graph).unwrap());
     let contracted_graph: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
 
-    let ch_graph = FastGraph::from_graph(&contracted_graph.graph);
     let shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
-    let dijkstra = ChDijkstra::new(&ch_graph, &shortcut_replacer);
+        Box::new(FastShortcutReplacer::new(&contracted_graph.shortcuts));
+    let dijkstra = ChDijkstra::new(&contracted_graph.ch_graph, &shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();

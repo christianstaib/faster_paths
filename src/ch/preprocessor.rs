@@ -1,4 +1,4 @@
-use crate::graphs::graph::Graph;
+use crate::graphs::{fast_graph::FastGraph, graph::Graph};
 
 use super::{
     contractor::{serial_contractor::SerialContractor, Contractor},
@@ -17,6 +17,7 @@ impl Preprocessor {
             graph.add_edge(&shortcut.edge);
         }
         graph = Self::removing_edges_violating_level_property(&graph, &levels);
+        let ch_graph = FastGraph::from_graph(&graph);
 
         let shortcuts = shortcuts
             .iter()
@@ -24,7 +25,7 @@ impl Preprocessor {
             .collect();
 
         ContractedGraphInformation {
-            graph,
+            ch_graph,
             shortcuts,
             levels,
         }

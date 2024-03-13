@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge},
     types::{VertexId, Weight},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FastOutEdgeAccess {
     edges: Vec<DirectedTaillessWeightedEdge>,
     tail_start_index: Vec<u32>,
@@ -37,7 +39,7 @@ impl FastOutEdgeAccess {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FastInEdgeAccess {
     edges: Vec<DirectedHeadlessWeightedEdge>,
     head_start_index: Vec<u32>,

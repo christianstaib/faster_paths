@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::graphs::{
     edge::{DirectedEdge, DirectedWeightedEdge},
+    fast_graph::FastGraph,
     graph::Graph,
     types::VertexId,
 };
@@ -25,7 +26,7 @@ pub struct ShortcutSearchResult {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ContractedGraphInformation {
-    pub graph: Graph,
+    pub ch_graph: FastGraph,
     pub shortcuts: Vec<(DirectedEdge, VertexId)>,
     pub levels: Vec<Vec<u32>>,
 }

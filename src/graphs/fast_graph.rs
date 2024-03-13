@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge},
     fast_edge_access::{FastInEdgeAccess, FastOutEdgeAccess},
@@ -5,7 +7,7 @@ use super::{
     types::VertexId,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FastGraph {
     number_of_vertices: u32,
     out_edges: FastOutEdgeAccess,
