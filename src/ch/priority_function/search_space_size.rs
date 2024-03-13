@@ -1,6 +1,6 @@
 use crate::{ch::ShortcutSearchResult, graphs::graph::Graph};
 
-use super::priority_function::PriorityFunction;
+use super::PriorityFunction;
 
 pub struct SearchSpaceSize {}
 

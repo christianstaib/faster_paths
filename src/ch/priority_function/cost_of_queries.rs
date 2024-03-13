@@ -3,7 +3,7 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_function::PriorityFunction;
+use super::PriorityFunction;
 
 pub struct CostOfQueries {
     costs: Vec<i32>,

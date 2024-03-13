@@ -9,10 +9,10 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::{
+use super::priority_function::{
     cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
-    edge_difference::EdgeDifference, priority_function::PriorityFunction, state::CHState,
-    voronoi_region::VoronoiRegion,
+    edge_difference::EdgeDifference, state::CHState, voronoi_region::VoronoiRegion,
+    PriorityFunction,
 };
 
 pub struct CHQueue {

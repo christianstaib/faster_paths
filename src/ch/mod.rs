@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 use crate::graphs::{
     edge::{DirectedEdge, DirectedWeightedEdge},
     fast_graph::FastGraph,
-    graph::Graph,
     types::VertexId,
 };
 
-pub mod ch_queue;
 pub mod contractor;
 pub mod preprocessor;
+pub mod priority_function;
+pub mod queue;
 pub mod shortcut_replacer;
 
 #[derive(Clone)]
