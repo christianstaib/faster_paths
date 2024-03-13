@@ -1,11 +1,8 @@
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{
-    ch::shortcut_replacer::{fast_shortcut_replacer::FastShortcutReplacer, ShortcutReplacer},
-    graphs::{
-        path::{Path, PathFinding, ShortestPathRequest},
-        types::Weight,
-    },
+use crate::graphs::{
+    path::{Path, PathFinding, ShortestPathRequest},
+    types::Weight,
 };
 
 use super::label::Label;
@@ -14,7 +11,6 @@ use super::label::Label;
 pub struct HubGraph {
     pub forward_labels: Vec<Label>,
     pub reverse_labels: Vec<Label>,
-    pub shortcut_replacer: FastShortcutReplacer,
 }
 
 impl PathFinding for HubGraph {
@@ -34,9 +30,7 @@ impl PathFinding for HubGraph {
         forward_path.vertices.extend(reverse_path.vertices);
         forward_path.weight += reverse_path.weight;
 
-        let path = self.shortcut_replacer.get_path(&forward_path);
-
-        Some(path)
+        Some(forward_path)
     }
 
     fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {

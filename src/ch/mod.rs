@@ -24,7 +24,7 @@ pub struct ShortcutSearchResult {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct ContractedGraph {
+pub struct ContractedGraphInformation {
     pub graph: Graph,
     pub shortcuts: Vec<(DirectedEdge, VertexId)>,
     pub levels: Vec<Vec<u32>>,

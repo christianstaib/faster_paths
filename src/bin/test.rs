@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::ContractedGraph,
+    ch::ContractedGraphInformation,
     graphs::{
         fast_graph::FastGraph,
         graph_factory::GraphFactory,
@@ -55,7 +55,7 @@ fn main() {
     // let bi_dijkstra = BiDijkstra::new(&graph);
 
     let reader = BufReader::new(File::open(args.ch_path).unwrap());
-    let ch_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
+    let ch_graph: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
     let ch = ChDijkstra::new(&ch_graph);
 
     // let reader = BufReader::new(File::open(args.hl_path).unwrap());

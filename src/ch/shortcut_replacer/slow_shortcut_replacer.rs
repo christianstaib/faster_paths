@@ -11,7 +11,7 @@ pub struct SlowShortcutReplacer {
 }
 
 impl ShortcutReplacer for SlowShortcutReplacer {
-    fn get_path(&self, path_with_shortcuts: &Path) -> Path {
+    fn replace_shortcuts(&self, path_with_shortcuts: &Path) -> Path {
         let mut path = path_with_shortcuts.clone();
         path.vertices = self.replace_shortcuts(&path.vertices);
         path
@@ -19,8 +19,8 @@ impl ShortcutReplacer for SlowShortcutReplacer {
 }
 
 impl SlowShortcutReplacer {
-    pub fn new(shortcuts: &HashMap<DirectedEdge, VertexId>) -> Self {
-        let shortcuts = shortcuts.clone();
+    pub fn new(shortcuts: &Vec<(DirectedEdge, VertexId)>) -> Self {
+        let shortcuts = shortcuts.iter().cloned().collect();
 
         SlowShortcutReplacer { shortcuts }
     }

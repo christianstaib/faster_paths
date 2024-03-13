@@ -2,13 +2,13 @@ use crate::graphs::graph::Graph;
 
 use super::{
     contractor::{serial_contractor::SerialContractor, Contractor},
-    ContractedGraph,
+    ContractedGraphInformation,
 };
 
 pub struct Preprocessor {}
 
 impl Preprocessor {
-    pub fn preprocess(graph: &Graph) -> ContractedGraph {
+    pub fn preprocess(graph: &Graph) -> ContractedGraphInformation {
         let contractor = SerialContractor::new(graph, "ECV");
         let (shortcuts, levels) = contractor.contract();
 
@@ -23,7 +23,7 @@ impl Preprocessor {
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
             .collect();
 
-        ContractedGraph {
+        ContractedGraphInformation {
             graph,
             shortcuts,
             levels,

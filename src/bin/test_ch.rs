@@ -7,8 +7,12 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::ContractedGraph,
+    ch::{
+        shortcut_replacer::{self, slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+        ContractedGraphInformation,
+    },
     graphs::{
+        fast_graph::FastGraph,
         graph_factory::GraphFactory,
         path::{PathFinding, ShortestPathValidation},
     },
@@ -36,14 +40,18 @@ fn main() {
     let graph = GraphFactory::from_gr_file(args.graph.as_str());
 
     let reader = BufReader::new(File::open(args.ch_graph).unwrap());
-    let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
-    let dijkstra = ChDijkstra::new(&contracted_graph);
+    let contracted_graph: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
+
+    let ch_graph = FastGraph::from_graph(&contracted_graph.graph);
+    let shortcut_replacer: Box<dyn ShortcutReplacer> =
+        Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
+    let dijkstra = ChDijkstra::new(&ch_graph, &shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
     let mut times = Vec::new();
-    for test in tests.iter().progress() {
+    for test in tests.iter().take(1000).progress() {
         let before = Instant::now();
         let path = dijkstra.get_shortest_path(&test.request);
         times.push(before.elapsed());

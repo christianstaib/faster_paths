@@ -1,10 +1,7 @@
 use std::usize;
 
 use crate::{
-    ch::{
-        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
-        ContractedGraph,
-    },
+    ch::{shortcut_replacer::ShortcutReplacer, ContractedGraphInformation},
     dijkstra_data::DijkstraData,
     graphs::{
         fast_graph::FastGraph,
@@ -16,17 +13,16 @@ use crate::{
 
 use super::bidirectional_helpers::path_from_bidirectional_search;
 
-#[derive(Clone)]
-pub struct ChDijkstra {
-    graph: FastGraph,
-    shortcut_replacer: SlowShortcutReplacer,
+pub struct ChDijkstra<'a> {
+    ch_graph: &'a FastGraph,
+    shortuct_replacer: &'a Box<dyn ShortcutReplacer>,
 }
 
-impl PathFinding for ChDijkstra {
+impl<'a> PathFinding for ChDijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let (meeting_vertex, _, forward, backward) = self.get_data(&route_request)?;
         let path = path_from_bidirectional_search(meeting_vertex, &forward, &backward)?;
-        let path = self.shortcut_replacer.get_path(&path);
+        let path = self.shortuct_replacer.replace_shortcuts(&path);
         Some(path)
     }
 
@@ -36,14 +32,14 @@ impl PathFinding for ChDijkstra {
     }
 }
 
-impl ChDijkstra {
-    pub fn new(contracted_graph: &ContractedGraph) -> ChDijkstra {
-        let graph = FastGraph::from_graph(&contracted_graph.graph);
-        let shortcut_map = contracted_graph.shortcuts.iter().cloned().collect();
-        let shortcut_replacer = SlowShortcutReplacer::new(&shortcut_map);
+impl<'a> ChDijkstra<'a> {
+    pub fn new(
+        ch_graph: &'a FastGraph,
+        shortuct_replacer: &'a Box<dyn ShortcutReplacer>,
+    ) -> ChDijkstra<'a> {
         ChDijkstra {
-            graph,
-            shortcut_replacer,
+            ch_graph,
+            shortuct_replacer,
         }
     }
 
@@ -51,7 +47,7 @@ impl ChDijkstra {
         &self,
         request: &ShortestPathRequest,
     ) -> Option<(VertexId, Weight, DijkstraData, DijkstraData)> {
-        let number_of_vertices = self.graph.number_of_vertices() as usize;
+        let number_of_vertices = self.ch_graph.number_of_vertices() as usize;
         let mut forward_data = DijkstraData::new(number_of_vertices, request.source());
         let mut backward_data = DijkstraData::new(number_of_vertices, request.target());
 
@@ -63,7 +59,7 @@ impl ChDijkstra {
                 let forward_weight = forward_data.verticies[vertex as usize].weight.unwrap();
 
                 let mut stall = false;
-                for in_edge in self.graph.in_edges(vertex).iter() {
+                for in_edge in self.ch_graph.in_edges(vertex).iter() {
                     if let Some(predecessor_weight) =
                         forward_data.verticies[in_edge.tail as usize].weight
                     {
@@ -82,7 +78,7 @@ impl ChDijkstra {
                             meeting_vertex = vertex;
                         }
                     }
-                    self.graph
+                    self.ch_graph
                         .out_edges(vertex)
                         .iter()
                         .for_each(|edge| forward_data.update(vertex, edge.head, edge.weight));
@@ -93,7 +89,7 @@ impl ChDijkstra {
                 let backward_weight = backward_data.verticies[vertex as usize].weight.unwrap();
 
                 let mut stall = false;
-                for out_edge in self.graph.out_edges(vertex).iter() {
+                for out_edge in self.ch_graph.out_edges(vertex).iter() {
                     if let Some(predecessor_weight) =
                         backward_data.verticies[out_edge.head as usize].weight
                     {
@@ -115,7 +111,7 @@ impl ChDijkstra {
                             }
                         }
                     }
-                    self.graph.in_edges(vertex).iter().for_each(|edge| {
+                    self.ch_graph.in_edges(vertex).iter().for_each(|edge| {
                         backward_data.update(vertex, edge.tail, edge.weight);
                     });
                 }

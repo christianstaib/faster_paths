@@ -12,7 +12,7 @@ pub struct FastShortcutReplacer {
 }
 
 impl ShortcutReplacer for FastShortcutReplacer {
-    fn get_path(&self, path_with_shortcuts: &Path) -> Path {
+    fn replace_shortcuts(&self, path_with_shortcuts: &Path) -> Path {
         let mut path = path_with_shortcuts.clone();
         path.vertices = self.replace_shortcuts(&path.vertices);
         path
@@ -20,7 +20,7 @@ impl ShortcutReplacer for FastShortcutReplacer {
 }
 
 impl FastShortcutReplacer {
-    pub fn new(shortcuts: &HashMap<DirectedEdge, VertexId>) -> Self {
+    pub fn new(shortcuts: &Vec<(DirectedEdge, VertexId)>) -> Self {
         let slow_shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
         let shortcuts = shortcuts
             .par_iter()

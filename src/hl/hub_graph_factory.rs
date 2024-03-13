@@ -2,19 +2,16 @@ use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::{
-    ch::{shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer, ContractedGraph},
-    graphs::types::VertexId,
-};
+use crate::{ch::ContractedGraphInformation, graphs::types::VertexId};
 
 use super::{hub_graph::HubGraph, label::Label};
 
 pub struct HubGraphFactory<'a> {
-    pub contracted_graph: &'a ContractedGraph,
+    pub contracted_graph: &'a ContractedGraphInformation,
 }
 
 impl<'a> HubGraphFactory<'a> {
-    pub fn new(contracted_graph: &'a ContractedGraph) -> HubGraphFactory {
+    pub fn new(contracted_graph: &'a ContractedGraphInformation) -> HubGraphFactory {
         HubGraphFactory { contracted_graph }
     }
 
@@ -41,9 +38,6 @@ impl<'a> HubGraphFactory<'a> {
             }
         }
 
-        let shortcut_map = self.contracted_graph.shortcuts.iter().cloned().collect();
-        let shortcut_replacer = FastShortcutReplacer::new(&shortcut_map);
-
         // Needs to be called after all labels are creates as replacing the predecessor VertexId
         // with the index of predecessor in label makes merging impossible.
         forward_labels
@@ -54,7 +48,6 @@ impl<'a> HubGraphFactory<'a> {
         HubGraph {
             forward_labels,
             reverse_labels,
-            shortcut_replacer,
         }
     }
 

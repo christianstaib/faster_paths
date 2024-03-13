@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 
 use faster_paths::{
-    ch::ContractedGraph, hl::hub_graph_factory::HubGraphFactory,
+    ch::ContractedGraphInformation, hl::hub_graph_factory::HubGraphFactory,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
@@ -27,7 +27,7 @@ fn main() {
     let args = Args::parse();
 
     let reader = BufReader::new(File::open(args.ch_graph).unwrap());
-    let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
+    let contracted_graph: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
 
     let start = Instant::now();
     let hub_graph_factory = HubGraphFactory::new(&contracted_graph);
