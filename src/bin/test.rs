@@ -15,7 +15,7 @@ use faster_paths::{
         graph_factory::GraphFactory,
         path::{PathFinding, ShortestPathValidation},
     },
-    hl::hub_graph::HubGraph,
+    hl::{hub_graph::HubGraph, hub_graph_path_finder::HubGraphPathFinder},
     simple_algorithms::{
         bi_dijkstra::BiDijkstra,
         ch_bi_dijkstra::ChDijkstra,
@@ -65,8 +65,9 @@ fn main() {
     let ch_graph = &ch_information.ch_graph;
     let ch = ChDijkstra::new(&ch_graph, &shortcut_replacer);
 
-    // let reader = BufReader::new(File::open(args.hl_path).unwrap());
-    // let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
+    let reader = BufReader::new(File::open(args.hl_path).unwrap());
+    let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
+    let hl_path_finder = HubGraphPathFinder::new(&hl, &shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
     let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
@@ -77,7 +78,7 @@ fn main() {
     path_finder.push(("fast dijkstra", Box::new(fast_dijkstra), Vec::new()));
     // path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
     path_finder.push(("ch", Box::new(ch), Vec::new()));
-    // path_finder.push(("hl", Box::new(hl), Vec::new()));
+    path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
 
     for validation in validations.iter().take(10).progress() {
         for (name, path_finder, times) in path_finder.iter_mut() {
