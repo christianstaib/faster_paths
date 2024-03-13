@@ -1,6 +1,6 @@
 use std::collections::BinaryHeap;
 
-use super::State;
+use super::{DijkstaQueue, State};
 
 #[derive(Clone)]
 pub struct HeapQueue {
@@ -13,16 +13,18 @@ impl HeapQueue {
             queue: BinaryHeap::new(),
         }
     }
+}
 
-    pub fn push(&mut self, state: State) {
+impl DijkstaQueue for HeapQueue {
+    fn push(&mut self, state: State) {
         self.queue.push(state)
     }
 
-    pub fn pop(&mut self) -> Option<State> {
+    fn pop(&mut self) -> Option<State> {
         self.queue.pop()
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
 }

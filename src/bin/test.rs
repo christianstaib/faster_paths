@@ -6,7 +6,10 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::ContractedGraphInformation,
+    ch::{
+        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+        ContractedGraphInformation,
+    },
     graphs::{
         fast_graph::FastGraph,
         graph_factory::GraphFactory,
@@ -55,8 +58,12 @@ fn main() {
     // let bi_dijkstra = BiDijkstra::new(&graph);
 
     let reader = BufReader::new(File::open(args.ch_path).unwrap());
-    let ch_graph: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
-    let ch = ChDijkstra::new(&ch_graph);
+    let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
+    let shortcut_replacer: Box<dyn ShortcutReplacer> =
+        Box::new(SlowShortcutReplacer::new(&ch_information.shortcuts));
+
+    let ch_graph = &ch_information.ch_graph;
+    let ch = ChDijkstra::new(&ch_graph, &shortcut_replacer);
 
     // let reader = BufReader::new(File::open(args.hl_path).unwrap());
     // let hl: HubGraph = bincode::deserialize_from(reader).unwrap();

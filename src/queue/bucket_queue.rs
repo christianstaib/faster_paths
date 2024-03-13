@@ -1,6 +1,6 @@
 use crate::graphs::types::Weight;
 
-use super::State;
+use super::{DijkstaQueue, State};
 
 pub struct BucketQueue {
     current_index: usize,
@@ -17,14 +17,15 @@ impl BucketQueue {
             buckets,
         }
     }
-
-    pub fn push(&mut self, state: State) {
+}
+impl DijkstaQueue for BucketQueue {
+    fn push(&mut self, state: State) {
         let key_index = state.weight as usize % self.buckets.len();
         self.buckets[key_index].push(state);
         self.num_elements += 1;
     }
 
-    pub fn pop(&mut self) -> Option<State> {
+    fn pop(&mut self) -> Option<State> {
         for bucket_index in 0..self.buckets.len() {
             let key_index = (self.current_index + bucket_index) % self.buckets.len();
             if let Some(value) = self.buckets[key_index].pop() {
@@ -36,7 +37,7 @@ impl BucketQueue {
         None
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.num_elements == 0
     }
 }

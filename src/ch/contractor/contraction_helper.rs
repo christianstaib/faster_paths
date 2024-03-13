@@ -13,7 +13,7 @@ use crate::{
         graph::Graph,
         types::{VertexId, Weight},
     },
-    queue::{radix_queue::RadixQueue, State},
+    queue::{radix_queue::RadixQueue, DijkstaQueue, State},
 };
 
 use super::Shortcut;

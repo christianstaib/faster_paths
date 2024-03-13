@@ -4,7 +4,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::{bucket_queue::BucketQueue, radix_queue::RadixQueue, State},
+    queue::{bucket_queue::BucketQueue, radix_queue::RadixQueue, DijkstaQueue, State},
 };
 
 #[derive(Clone)]

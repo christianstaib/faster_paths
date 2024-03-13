@@ -39,3 +39,9 @@ impl State {
         State { weight, vertex }
     }
 }
+
+pub trait DijkstaQueue {
+    fn push(&mut self, state: State);
+    fn pop(&mut self) -> Option<State>;
+    fn is_empty(&self) -> bool;
+}

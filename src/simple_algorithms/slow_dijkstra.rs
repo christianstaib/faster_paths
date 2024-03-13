@@ -8,6 +8,7 @@ use crate::{
     queue::State,
 };
 
+/// Works with slower Graph struct, not faster FastGrap
 #[derive(Clone)]
 pub struct SlowDijkstra<'a> {
     graph: &'a Graph,

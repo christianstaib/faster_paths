@@ -3,7 +3,7 @@ use crate::{
         path::Path,
         types::{VertexId, Weight},
     },
-    queue::{heap_queue::HeapQueue, State},
+    queue::{radix_queue::RadixQueue, DijkstaQueue, State},
 };
 
 #[derive(Clone)]
@@ -23,15 +23,14 @@ impl DijsktraEntry {
     }
 }
 
-#[derive(Clone)]
 pub struct DijkstraData {
-    pub queue: HeapQueue,
+    pub queue: Box<dyn DijkstaQueue>,
     pub verticies: Vec<DijsktraEntry>,
 }
 
 impl DijkstraData {
     pub fn new(num_nodes: usize, source: VertexId) -> DijkstraData {
-        let mut queue = HeapQueue::new();
+        let mut queue = Box::new(RadixQueue::new());
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
         nodes[source as usize].weight = Some(0);
         queue.push(State::new(0, source));
