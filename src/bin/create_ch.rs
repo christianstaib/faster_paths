@@ -21,7 +21,8 @@ fn main() {
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
     let start = Instant::now();
-    let contracted_graph = Preprocessor::preprocess(&graph);
+    let preprocessor = Preprocessor::new();
+    let contracted_graph = preprocessor.get_ch(&graph);
     println!("Generating ch took {:?}", start.elapsed());
 
     let writer = BufWriter::new(File::create(args.ch_graph).unwrap());
