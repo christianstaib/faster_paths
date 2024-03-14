@@ -7,6 +7,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     ch::{
+        ch_path_finder::ChPathFinder,
         contractor::serial_contractor::SerialContractor,
         preprocessor::Preprocessor,
         shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
@@ -15,7 +16,6 @@ use faster_paths::{
         graph_factory::GraphFactory,
         path::{PathFinding, ShortestPathValidation},
     },
-    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -53,7 +53,7 @@ fn main() {
         let shortcut_replacer: Box<dyn ShortcutReplacer> =
             Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
 
-        let dijkstra = ChDijkstra::new(&contracted_graph.ch_graph, &shortcut_replacer);
+        let dijkstra = ChPathFinder::new(&contracted_graph.ch_graph, &shortcut_replacer);
         let mut times = Vec::new();
         for test in tests.iter() {
             let before = Instant::now();

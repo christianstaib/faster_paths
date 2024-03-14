@@ -7,6 +7,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     ch::{
+        ch_path_finder::ChPathFinder,
         shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
         ContractedGraphInformation,
     },
@@ -17,8 +18,8 @@ use faster_paths::{
     },
     hl::{hub_graph::HubGraph, hub_graph_path_finder::HubGraphPathFinder},
     simple_algorithms::{
-        bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra,
-        fast_dijkstra::FastDijkstra, slow_dijkstra::SlowDijkstra,
+        bi_dijkstra::BiDijkstra, dijkstra::Dijkstra, fast_dijkstra::FastDijkstra,
+        slow_dijkstra::SlowDijkstra,
     },
 };
 use indicatif::ProgressIterator;
@@ -60,7 +61,7 @@ fn main() {
         Box::new(SlowShortcutReplacer::new(&ch_information.shortcuts));
 
     let ch_graph = &ch_information.ch_graph;
-    let ch = ChDijkstra::new(&ch_graph, &shortcut_replacer);
+    let ch = ChPathFinder::new(&ch_graph, &shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.hl_path).unwrap());
     let hl: HubGraph = bincode::deserialize_from(reader).unwrap();

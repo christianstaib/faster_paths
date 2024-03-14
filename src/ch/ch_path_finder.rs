@@ -6,19 +6,18 @@ use crate::{
     graphs::{
         fast_graph::FastGraph,
         path::{Path, PathFinding, ShortestPathRequest},
-        {VertexId, Weight},
+        VertexId, Weight,
     },
     queue::DijkstraQueueElement,
+    simple_algorithms::bidirectional_helpers::path_from_bidirectional_search,
 };
 
-use super::bidirectional_helpers::path_from_bidirectional_search;
-
-pub struct ChDijkstra<'a> {
+pub struct ChPathFinder<'a> {
     ch_graph: &'a FastGraph,
     shortuct_replacer: &'a Box<dyn ShortcutReplacer>,
 }
 
-impl<'a> PathFinding for ChDijkstra<'a> {
+impl<'a> PathFinding for ChPathFinder<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let (meeting_vertex, _, forward, backward) = self.get_data(&route_request)?;
         let path = path_from_bidirectional_search(meeting_vertex, &forward, &backward)?;
@@ -32,12 +31,12 @@ impl<'a> PathFinding for ChDijkstra<'a> {
     }
 }
 
-impl<'a> ChDijkstra<'a> {
+impl<'a> ChPathFinder<'a> {
     pub fn new(
         ch_graph: &'a FastGraph,
         shortuct_replacer: &'a Box<dyn ShortcutReplacer>,
-    ) -> ChDijkstra<'a> {
-        ChDijkstra {
+    ) -> ChPathFinder<'a> {
+        ChPathFinder {
             ch_graph,
             shortuct_replacer,
         }

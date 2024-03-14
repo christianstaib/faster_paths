@@ -6,6 +6,7 @@ use crate::graphs::{
     VertexId,
 };
 
+pub mod ch_path_finder;
 pub mod ch_priority_element;
 pub mod contractor;
 pub mod preprocessor;
