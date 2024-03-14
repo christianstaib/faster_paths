@@ -6,14 +6,15 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
     ch::{contractor::contraction_helper::get_shortcuts, Shortcut, ShortcutSearchResult},
-    graphs::{graph::Graph, types::VertexId},
+    graphs::{graph::Graph, VertexId},
 };
 
 use super::{
     ch_priority_element::ChPriorityElement,
     priority_function::{
         cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
-        edge_difference::EdgeDifference, voronoi_region::VoronoiRegion, PriorityFunction,
+        edge_difference::EdgeDifference, search_space_size::SearchSpaceSize,
+        voronoi_region::VoronoiRegion, PriorityFunction,
     },
 };
 
@@ -32,9 +33,10 @@ impl CHQueue {
         };
         for letter in priority_functions_letters.chars() {
             match letter {
-                'E' => queue.register(1, EdgeDifference::new(&graph)),
+                'E' => queue.register(200, EdgeDifference::new(&graph)),
                 'D' => queue.register(1, DeletedNeighbors::new(&graph)),
                 'C' => queue.register(1, CostOfQueries::new(&graph)),
+                'S' => queue.register(1, SearchSpaceSize::new(&graph)),
                 'V' => queue.register(1, VoronoiRegion::new(&graph)),
                 _ => panic!("letter not recognized"),
             }
@@ -80,7 +82,13 @@ impl CHQueue {
 
     pub fn priority_and_shortcuts(&self, vertex: VertexId, graph: &Graph) -> (i32, Vec<Shortcut>) {
         let shortcuts_results = get_shortcuts(&graph, vertex, 100);
-        let priority = self.priority(graph, &shortcuts_results, vertex);
+        let priority = self
+            .priority_terms
+            .iter()
+            .map(|(coefficent, priority_function)| {
+                coefficent * priority_function.priority(vertex, graph, &shortcuts_results)
+            })
+            .sum();
 
         (priority, shortcuts_results.shortcuts)
     }
@@ -97,22 +105,5 @@ impl CHQueue {
                 ChPriorityElement { vertex, priority }
             })
             .collect();
-    }
-
-    fn priority(
-        &self,
-        graph: &Graph,
-        shortcuts_results: &ShortcutSearchResult,
-        vertex: u32,
-    ) -> i32 {
-        let priorities: Vec<i32> = self
-            .priority_terms
-            .iter()
-            .map(|(coefficent, priority_function)| {
-                coefficent * priority_function.priority(vertex, graph, shortcuts_results)
-            })
-            .collect();
-
-        priorities.iter().sum::<i32>()
     }
 }

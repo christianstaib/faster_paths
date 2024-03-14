@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use super::types::{VertexId, Weight};
+use super::{VertexId, Weight};
 
 /// Represents a request for finding a shortest path in a graph.
 ///

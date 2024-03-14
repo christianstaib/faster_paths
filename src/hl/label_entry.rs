@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use crate::graphs::types::{VertexId, Weight};
+use crate::graphs::{VertexId, Weight};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct LabelEntry {

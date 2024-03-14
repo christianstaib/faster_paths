@@ -1,5 +1,5 @@
 use std::{
-    collections::{BinaryHeap, HashMap},
+    collections::HashMap,
     sync::atomic::{AtomicU32, Ordering},
 };
 
@@ -11,7 +11,7 @@ use crate::{
     graphs::{
         edge::DirectedWeightedEdge,
         graph::Graph,
-        types::{VertexId, Weight},
+        {VertexId, Weight},
     },
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };

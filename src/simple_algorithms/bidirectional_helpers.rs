@@ -1,6 +1,6 @@
 use crate::{
     dijkstra_data::DijkstraData,
-    graphs::{path::Path, types::VertexId},
+    graphs::{path::Path, VertexId},
 };
 
 pub fn path_from_bidirectional_search(

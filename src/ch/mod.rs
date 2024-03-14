@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::graphs::{
     edge::{DirectedEdge, DirectedWeightedEdge},
     fast_graph::FastGraph,
-    types::VertexId,
+    VertexId,
 };
 
 pub mod ch_priority_element;

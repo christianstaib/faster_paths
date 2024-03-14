@@ -11,7 +11,7 @@ use crate::queue::DijkstraQueueElement;
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},
     path::{Path, ShortestPathValidation},
-    types::VertexId,
+    VertexId,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -110,34 +110,6 @@ impl Graph {
     }
 
     /// Does not include vertex
-    pub fn open_neighborhood_dijkstra(&self, source: VertexId, max_hops: u32) -> HashSet<VertexId> {
-        let mut queue = BinaryHeap::new();
-        let mut hops = HashMap::new();
-
-        queue.push(DijkstraQueueElement::new(0, source));
-        hops.insert(source, 0);
-
-        while let Some(DijkstraQueueElement { vertex, .. }) = queue.pop() {
-            let mut neighbors = self.out_neighborhood(vertex);
-            neighbors.extend(self.in_neighborhood(vertex));
-            for &neighbor in neighbors.iter() {
-                let alternative_hops = hops[&vertex] + 1;
-                if alternative_hops <= max_hops {
-                    let current_cost = *hops.get(&neighbor).unwrap_or(&u32::MAX);
-                    if alternative_hops < current_cost {
-                        queue.push(DijkstraQueueElement::new(alternative_hops, neighbor));
-                        hops.insert(neighbor, alternative_hops);
-                    }
-                }
-            }
-        }
-
-        hops.remove(&source);
-
-        hops.into_keys().collect()
-    }
-
-    /// Does not include vertex
     pub fn open_neighborhood(&self, vertex: VertexId, hops: u32) -> HashSet<VertexId> {
         let mut neighbors = self.closed_neighborhood(vertex, hops);
         neighbors.remove(&vertex);
@@ -179,7 +151,7 @@ impl Graph {
         }
     }
 
-    pub fn independent_size(&self, vertices: &BTreeSet<VertexId>, degree: u32) -> Vec<VertexId> {
+    pub fn independent_set(&self, vertices: &BTreeSet<VertexId>, degree: u32) -> Vec<VertexId> {
         let mut ids = Vec::new();
 
         let mut remaining: BTreeSet<_> = vertices.clone();

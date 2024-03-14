@@ -1,4 +1,7 @@
-use crate::{ch::ShortcutSearchResult, graphs::graph::Graph};
+use crate::{
+    ch::ShortcutSearchResult,
+    graphs::{graph::Graph, VertexId},
+};
 
 use super::PriorityFunction;
 
@@ -15,18 +18,13 @@ impl PriorityFunction for SearchSpaceSize {
     #[allow(unused_variables)]
     fn priority(
         &self,
-        vertex: crate::graphs::types::VertexId,
-        graph: &crate::graphs::graph::Graph,
+        vertex: VertexId,
+        graph: &Graph,
         shortcuts_results: &ShortcutSearchResult,
     ) -> i32 {
-        shortcuts_results.edge_difference
+        shortcuts_results.search_space_size
     }
 
     #[allow(unused_variables)]
-    fn update(
-        &mut self,
-        vertex: crate::graphs::types::VertexId,
-        graph: &crate::graphs::graph::Graph,
-    ) {
-    }
+    fn update(&mut self, vertex: VertexId, graph: &Graph) {}
 }

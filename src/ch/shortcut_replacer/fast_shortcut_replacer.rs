@@ -2,7 +2,7 @@ use ahash::HashMap;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::graphs::{edge::DirectedEdge, path::Path, types::VertexId};
+use crate::graphs::{edge::DirectedEdge, path::Path, VertexId};
 
 use super::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer};
 

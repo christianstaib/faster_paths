@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::graphs::{
     path::{Path, PathFinding, ShortestPathRequest},
-    types::Weight,
+    Weight,
 };
 
 use super::label::Label;

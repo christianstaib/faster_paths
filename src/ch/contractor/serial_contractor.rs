@@ -2,7 +2,7 @@ use indicatif::ProgressBar;
 
 use crate::{
     ch::{queue::CHQueue, Shortcut},
-    graphs::{graph::Graph, types::VertexId},
+    graphs::{graph::Graph, VertexId},
 };
 
 use super::Contractor;

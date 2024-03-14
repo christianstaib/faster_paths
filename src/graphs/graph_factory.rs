@@ -14,12 +14,12 @@ impl GraphFactory {
         let reader = BufReader::new(file);
 
         let mut lines = reader.lines();
-        let number_of_nodes: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
+        let number_of_vertices: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
         let number_of_edges: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
 
         let _: Vec<_> = lines
             .by_ref()
-            .take(number_of_nodes)
+            .take(number_of_vertices)
             .map(|node_line| {
                 // nodeID nodeID2 latitude longitude elevation
                 let node_line = node_line.unwrap();

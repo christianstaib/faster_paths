@@ -2,7 +2,7 @@ use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::{ch::ContractedGraphInformation, graphs::types::VertexId};
+use crate::{ch::ContractedGraphInformation, graphs::VertexId};
 
 use super::{hub_graph::HubGraph, label::Label};
 

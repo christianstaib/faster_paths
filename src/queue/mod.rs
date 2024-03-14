@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::graphs::types::{VertexId, Weight};
+use crate::graphs::{VertexId, Weight};
 
 pub mod bucket_queue;
 pub mod heap_queue;

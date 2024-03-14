@@ -6,7 +6,7 @@ use crate::{
     graphs::{
         fast_graph::FastGraph,
         path::{Path, PathFinding, ShortestPathRequest},
-        types::{VertexId, Weight},
+        {VertexId, Weight},
     },
     queue::DijkstraQueueElement,
 };

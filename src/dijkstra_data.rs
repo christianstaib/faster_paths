@@ -1,7 +1,7 @@
 use crate::{
     graphs::{
         path::Path,
-        types::{VertexId, Weight},
+        {VertexId, Weight},
     },
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };

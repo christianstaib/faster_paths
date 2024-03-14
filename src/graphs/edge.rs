@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use super::types::{VertexId, Weight};
+use super::{VertexId, Weight};
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord, Debug)]
 pub struct DirectedWeightedEdge {

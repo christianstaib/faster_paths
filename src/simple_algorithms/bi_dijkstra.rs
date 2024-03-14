@@ -3,7 +3,7 @@ use crate::{
     graphs::{
         fast_graph::FastGraph,
         path::{Path, PathFinding, ShortestPathRequest},
-        types::Weight,
+        Weight,
     },
     queue::DijkstraQueueElement,
 };

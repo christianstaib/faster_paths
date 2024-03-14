@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::graphs::types::VertexId;
+use crate::graphs::VertexId;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct ChPriorityElement {

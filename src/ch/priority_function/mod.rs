@@ -1,4 +1,4 @@
-use crate::graphs::{graph::Graph, types::VertexId};
+use crate::graphs::{graph::Graph, VertexId};
 
 use super::ShortcutSearchResult;
 

@@ -4,7 +4,7 @@ use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge},
     fast_edge_access::{FastInEdgeAccess, FastOutEdgeAccess},
     graph::Graph,
-    types::VertexId,
+    VertexId,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -16,18 +16,18 @@ pub struct FastGraph {
 
 impl FastGraph {
     pub fn from_graph(graph: &Graph) -> FastGraph {
-        let num_nodes = graph.number_of_vertices();
-        let out_edges: Vec<_> = (0..num_nodes)
+        let number_of_vertices = graph.number_of_vertices();
+        let out_edges: Vec<_> = (0..number_of_vertices)
             .map(|tail| graph.out_edges(tail).clone())
             .collect();
-        let in_edges: Vec<_> = (0..num_nodes)
+        let in_edges: Vec<_> = (0..number_of_vertices)
             .map(|tail| graph.in_edges(tail).clone())
             .collect();
         let out_edges = FastOutEdgeAccess::new(&out_edges);
         let in_edges = FastInEdgeAccess::new(&in_edges);
 
         FastGraph {
-            number_of_vertices: num_nodes,
+            number_of_vertices,
             out_edges,
             in_edges,
         }

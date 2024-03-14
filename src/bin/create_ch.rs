@@ -1,7 +1,13 @@
 use std::{fs::File, io::BufWriter, time::Instant};
 
 use clap::Parser;
-use faster_paths::{ch::preprocessor::Preprocessor, graphs::graph_factory::GraphFactory};
+use faster_paths::{
+    ch::{
+        contractor::{self, serial_contractor::SerialContractor},
+        preprocessor::Preprocessor,
+    },
+    graphs::graph_factory::GraphFactory,
+};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -21,7 +27,8 @@ fn main() {
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
     let start = Instant::now();
-    let preprocessor = Preprocessor::new();
+    let contractor = Box::new(SerialContractor::new("ES"));
+    let preprocessor = Preprocessor::with_contractor(contractor);
     let contracted_graph = preprocessor.get_ch(&graph);
     println!("Generating ch took {:?}", start.elapsed());
 

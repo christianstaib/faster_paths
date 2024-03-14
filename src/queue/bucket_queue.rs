@@ -1,4 +1,4 @@
-use crate::graphs::types::Weight;
+use crate::graphs::Weight;
 
 use super::{DijkstaQueue, DijkstraQueueElement};
 

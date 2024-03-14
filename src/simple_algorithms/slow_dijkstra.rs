@@ -3,7 +3,7 @@ use crate::{
     graphs::{
         graph::Graph,
         path::{Path, PathFinding, ShortestPathRequest},
-        types::{VertexId, Weight},
+        {VertexId, Weight},
     },
     queue::DijkstraQueueElement,
 };

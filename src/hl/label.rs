@@ -2,7 +2,7 @@ use std::usize;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::graphs::{path::Path, types::VertexId};
+use crate::graphs::{path::Path, VertexId};
 
 use super::label_entry::LabelEntry;
 

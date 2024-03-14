@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use crate::{
     ch::Shortcut,
-    graphs::{graph::Graph, types::VertexId},
+    graphs::{graph::Graph, VertexId},
 };
 
 use super::{contraction_helper::get_shortcuts, Contractor};

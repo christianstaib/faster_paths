@@ -1,6 +1,6 @@
 use crate::{
     ch::ShortcutSearchResult,
-    graphs::{graph::Graph, types::VertexId},
+    graphs::{graph::Graph, VertexId},
 };
 
 use super::PriorityFunction;

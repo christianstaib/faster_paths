@@ -2,7 +2,7 @@ use crate::{
     ch::shortcut_replacer::{self, ShortcutReplacer},
     graphs::{
         path::{Path, PathFinding, ShortestPathRequest},
-        types::Weight,
+        Weight,
     },
 };
 
