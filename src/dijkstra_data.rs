@@ -3,7 +3,7 @@ use crate::{
         path::Path,
         types::{VertexId, Weight},
     },
-    queue::{radix_queue::RadixQueue, DijkstaQueue, State},
+    queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
 
 #[derive(Clone)]
@@ -33,7 +33,7 @@ impl DijkstraData {
         let mut queue = Box::new(RadixQueue::new());
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
         nodes[source as usize].weight = Some(0);
-        queue.push(State::new(0, source));
+        queue.push(DijkstraQueueElement::new(0, source));
         DijkstraData {
             queue,
             verticies: nodes,
@@ -47,7 +47,7 @@ impl DijkstraData {
             .count() as u32
     }
 
-    pub fn pop(&mut self) -> Option<State> {
+    pub fn pop(&mut self) -> Option<DijkstraQueueElement> {
         while let Some(state) = self.queue.pop() {
             if !self.verticies[state.vertex as usize].is_expanded {
                 self.verticies[state.vertex as usize].is_expanded = true;
@@ -68,7 +68,8 @@ impl DijkstraData {
         if alternative_cost < current_cost {
             self.verticies[head as usize].predecessor = Some(tail);
             self.verticies[head as usize].weight = Some(alternative_cost);
-            self.queue.push(State::new(alternative_cost, head));
+            self.queue
+                .push(DijkstraQueueElement::new(alternative_cost, head));
         }
     }
 

@@ -1,11 +1,11 @@
 use crate::graphs::types::Weight;
 
-use super::{DijkstaQueue, State};
+use super::{DijkstaQueue, DijkstraQueueElement};
 
 pub struct BucketQueue {
     current_index: usize,
     num_elements: u32,
-    buckets: Vec<Vec<State>>,
+    buckets: Vec<Vec<DijkstraQueueElement>>,
 }
 
 impl BucketQueue {
@@ -19,13 +19,13 @@ impl BucketQueue {
     }
 }
 impl DijkstaQueue for BucketQueue {
-    fn push(&mut self, state: State) {
+    fn push(&mut self, state: DijkstraQueueElement) {
         let key_index = state.weight as usize % self.buckets.len();
         self.buckets[key_index].push(state);
         self.num_elements += 1;
     }
 
-    fn pop(&mut self) -> Option<State> {
+    fn pop(&mut self) -> Option<DijkstraQueueElement> {
         for bucket_index in 0..self.buckets.len() {
             let key_index = (self.current_index + bucket_index) % self.buckets.len();
             if let Some(value) = self.buckets[key_index].pop() {

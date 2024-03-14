@@ -4,7 +4,9 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::{bucket_queue::BucketQueue, radix_queue::RadixQueue, DijkstaQueue, State},
+    queue::{
+        bucket_queue::BucketQueue, radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement,
+    },
 };
 
 #[derive(Clone)]
@@ -56,10 +58,10 @@ impl<'a> FastDijkstra<'a> {
         let mut predcessors = vec![u32::MAX; self.graph.number_of_vertices() as usize];
         let mut expanded = vec![false; self.graph.number_of_vertices() as usize];
 
-        queue.push(State::new(0, source));
+        queue.push(DijkstraQueueElement::new(0, source));
         weights[source as usize] = 0;
 
-        while let Some(State { vertex, .. }) = queue.pop() {
+        while let Some(DijkstraQueueElement { vertex, .. }) = queue.pop() {
             if vertex == target {
                 break;
             }
@@ -72,7 +74,7 @@ impl<'a> FastDijkstra<'a> {
                 let alternative_weight = weights[vertex as usize] + edge.weight;
                 let current_weight = weights[edge.head as usize];
                 if alternative_weight < current_weight {
-                    queue.push(State::new(alternative_weight, edge.head));
+                    queue.push(DijkstraQueueElement::new(alternative_weight, edge.head));
                     weights[edge.head as usize] = alternative_weight;
                     predcessors[edge.head as usize] = vertex;
                 }

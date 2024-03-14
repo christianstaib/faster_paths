@@ -1,10 +1,10 @@
 use std::collections::BinaryHeap;
 
-use super::{DijkstaQueue, State};
+use super::{DijkstaQueue, DijkstraQueueElement};
 
 #[derive(Clone)]
 pub struct HeapQueue {
-    queue: BinaryHeap<State>,
+    queue: BinaryHeap<DijkstraQueueElement>,
 }
 
 impl HeapQueue {
@@ -16,11 +16,11 @@ impl HeapQueue {
 }
 
 impl DijkstaQueue for HeapQueue {
-    fn push(&mut self, state: State) {
+    fn push(&mut self, state: DijkstraQueueElement) {
         self.queue.push(state)
     }
 
-    fn pop(&mut self) -> Option<State> {
+    fn pop(&mut self) -> Option<DijkstraQueueElement> {
         self.queue.pop()
     }
 

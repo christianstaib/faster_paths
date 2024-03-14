@@ -6,7 +6,7 @@ use std::{
 use ahash::{HashMap, HashMapExt};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::queue::State;
+use crate::queue::DijkstraQueueElement;
 
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},
@@ -114,10 +114,10 @@ impl Graph {
         let mut queue = BinaryHeap::new();
         let mut hops = HashMap::new();
 
-        queue.push(State::new(0, source));
+        queue.push(DijkstraQueueElement::new(0, source));
         hops.insert(source, 0);
 
-        while let Some(State { vertex, .. }) = queue.pop() {
+        while let Some(DijkstraQueueElement { vertex, .. }) = queue.pop() {
             let mut neighbors = self.out_neighborhood(vertex);
             neighbors.extend(self.in_neighborhood(vertex));
             for &neighbor in neighbors.iter() {
@@ -125,7 +125,7 @@ impl Graph {
                 if alternative_hops <= max_hops {
                     let current_cost = *hops.get(&neighbor).unwrap_or(&u32::MAX);
                     if alternative_hops < current_cost {
-                        queue.push(State::new(alternative_hops, neighbor));
+                        queue.push(DijkstraQueueElement::new(alternative_hops, neighbor));
                         hops.insert(neighbor, alternative_hops);
                     }
                 }

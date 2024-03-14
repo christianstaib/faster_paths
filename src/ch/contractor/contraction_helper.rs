@@ -13,7 +13,7 @@ use crate::{
         graph::Graph,
         types::{VertexId, Weight},
     },
-    queue::{radix_queue::RadixQueue, DijkstaQueue, State},
+    queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
 
 use super::Shortcut;
@@ -101,11 +101,11 @@ pub fn witness_search(
 
     let mut targets = targets.clone();
 
-    queue.push(State::new(0, source));
+    queue.push(DijkstraQueueElement::new(0, source));
     weight.insert(source, 0);
     hops.insert(source, 0);
 
-    while let Some(State { vertex, .. }) = queue.pop() {
+    while let Some(DijkstraQueueElement { vertex, .. }) = queue.pop() {
         if targets.remove(&vertex) && targets.is_empty() {
             break;
         }
@@ -119,7 +119,7 @@ pub fn witness_search(
             {
                 let current_cost = *weight.get(&edge.head).unwrap_or(&u32::MAX);
                 if alternative_weight < current_cost {
-                    queue.push(State::new(alternative_weight, edge.head));
+                    queue.push(DijkstraQueueElement::new(alternative_weight, edge.head));
                     weight.insert(edge.head, alternative_weight);
                     hops.insert(edge.head, alternative_hops);
                 }

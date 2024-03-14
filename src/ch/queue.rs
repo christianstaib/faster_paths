@@ -9,14 +9,16 @@ use crate::{
     graphs::{graph::Graph, types::VertexId},
 };
 
-use super::priority_function::{
-    cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
-    edge_difference::EdgeDifference, state::CHState, voronoi_region::VoronoiRegion,
-    PriorityFunction,
+use super::{
+    ch_priority_element::ChPriorityElement,
+    priority_function::{
+        cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
+        edge_difference::EdgeDifference, voronoi_region::VoronoiRegion, PriorityFunction,
+    },
 };
 
 pub struct CHQueue {
-    queue: BinaryHeap<CHState>,
+    queue: BinaryHeap<ChPriorityElement>,
     priority_terms: Vec<(i32, Box<dyn PriorityFunction + Sync>)>,
 }
 
@@ -92,7 +94,7 @@ impl CHQueue {
             .progress()
             .map(|vertex| {
                 let (priority, _) = self.priority_and_shortcuts(vertex, graph);
-                CHState { vertex, priority }
+                ChPriorityElement { vertex, priority }
             })
             .collect();
     }

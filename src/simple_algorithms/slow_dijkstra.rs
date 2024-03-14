@@ -5,7 +5,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::State,
+    queue::DijkstraQueueElement,
 };
 
 /// Works with slower Graph struct, not faster FastGrap
@@ -34,7 +34,7 @@ impl<'a> SlowDijkstra<'a> {
     pub fn get_data(&self, source: VertexId, target: VertexId) -> DijkstraData {
         let mut data = DijkstraData::new(self.graph.number_of_vertices() as usize, source);
 
-        while let Some(State { vertex, .. }) = data.pop() {
+        while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
             if vertex == target {
                 return data;
             }

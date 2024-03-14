@@ -8,7 +8,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         types::{VertexId, Weight},
     },
-    queue::State,
+    queue::DijkstraQueueElement,
 };
 
 use super::bidirectional_helpers::path_from_bidirectional_search;
@@ -55,7 +55,7 @@ impl<'a> ChDijkstra<'a> {
         let mut meeting_vertex = u32::MAX;
 
         while !forward_data.is_empty() || !backward_data.is_empty() {
-            if let Some(State { vertex, .. }) = forward_data.pop() {
+            if let Some(DijkstraQueueElement { vertex, .. }) = forward_data.pop() {
                 let forward_weight = forward_data.verticies[vertex as usize].weight.unwrap();
 
                 let mut stall = false;
@@ -85,7 +85,7 @@ impl<'a> ChDijkstra<'a> {
                 }
             }
 
-            if let Some(State { vertex, .. }) = backward_data.pop() {
+            if let Some(DijkstraQueueElement { vertex, .. }) = backward_data.pop() {
                 let backward_weight = backward_data.verticies[vertex as usize].weight.unwrap();
 
                 let mut stall = false;

@@ -1,6 +1,6 @@
 use radix_heap::RadixHeapMap;
 
-use super::{DijkstaQueue, State};
+use super::{DijkstaQueue, DijkstraQueueElement};
 
 #[derive(Clone)]
 pub struct RadixQueue {
@@ -15,13 +15,13 @@ impl RadixQueue {
     }
 }
 impl DijkstaQueue for RadixQueue {
-    fn push(&mut self, state: State) {
+    fn push(&mut self, state: DijkstraQueueElement) {
         self.heap.push(-(state.weight as i32), state.vertex);
     }
 
-    fn pop(&mut self) -> Option<State> {
+    fn pop(&mut self) -> Option<DijkstraQueueElement> {
         let (negative_weight, vertex) = self.heap.pop()?;
-        Some(State {
+        Some(DijkstraQueueElement {
             weight: -negative_weight as u32,
             vertex,
         })
