@@ -1,12 +1,9 @@
 use std::{
-    collections::{BTreeSet, BinaryHeap, HashSet},
+    collections::{BTreeSet, HashSet},
     usize,
 };
 
-use ahash::{HashMap, HashMapExt};
 use serde_derive::{Deserialize, Serialize};
-
-use crate::queue::DijkstraQueueElement;
 
 use super::{
     edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},

@@ -6,10 +6,7 @@ use std::{
 
 use clap::Parser;
 
-use faster_paths::{
-    ch::ContractedGraphInformation, hl::hub_graph_factory::HubGraphFactory,
-    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
-};
+use faster_paths::{ch::ContractedGraphInformation, hl::hub_graph_factory::HubGraphFactory};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

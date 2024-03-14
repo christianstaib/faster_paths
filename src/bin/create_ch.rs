@@ -2,10 +2,7 @@ use std::{fs::File, io::BufWriter, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
-    ch::{
-        contractor::{self, serial_contractor::SerialContractor},
-        preprocessor::Preprocessor,
-    },
+    ch::{contractor::serial_contractor::SerialContractor, preprocessor::Preprocessor},
     graphs::graph_factory::GraphFactory,
 };
 

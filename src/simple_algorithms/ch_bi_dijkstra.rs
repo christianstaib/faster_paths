@@ -1,7 +1,7 @@
 use std::usize;
 
 use crate::{
-    ch::{shortcut_replacer::ShortcutReplacer, ContractedGraphInformation},
+    ch::shortcut_replacer::ShortcutReplacer,
     dijkstra_data::DijkstraData,
     graphs::{
         fast_graph::FastGraph,

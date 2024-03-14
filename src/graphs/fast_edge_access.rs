@@ -3,10 +3,7 @@ use std::usize;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    edge::{
-        DirectedEdge, DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge,
-        DirectedWeightedEdge,
-    },
+    edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge},
     {VertexId, Weight},
 };
 

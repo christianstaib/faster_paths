@@ -1,5 +1,5 @@
 use crate::{
-    ch::shortcut_replacer::{self, ShortcutReplacer},
+    ch::shortcut_replacer::ShortcutReplacer,
     graphs::{
         path::{Path, PathFinding, ShortestPathRequest},
         Weight,

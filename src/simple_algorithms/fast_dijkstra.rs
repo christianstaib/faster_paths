@@ -4,15 +4,13 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         {VertexId, Weight},
     },
-    queue::{
-        bucket_queue::BucketQueue, radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement,
-    },
+    queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
 
 #[derive(Clone)]
 pub struct FastDijkstra<'a> {
     graph: &'a FastGraph,
-    max_edge_weight: Weight,
+    _max_edge_weight: Weight,
 }
 
 impl<'a> PathFinding for FastDijkstra<'a> {
@@ -48,7 +46,7 @@ impl<'a> FastDijkstra<'a> {
         let max_edge_weight = graph.max_edge_weight().unwrap_or(0);
         FastDijkstra {
             graph,
-            max_edge_weight,
+            _max_edge_weight: max_edge_weight,
         }
     }
 

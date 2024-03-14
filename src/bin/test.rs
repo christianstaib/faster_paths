@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::BufReader,
-    time::{self, Duration, Instant},
+    time::{Duration, Instant},
 };
 
 use clap::Parser;
@@ -17,11 +17,8 @@ use faster_paths::{
     },
     hl::{hub_graph::HubGraph, hub_graph_path_finder::HubGraphPathFinder},
     simple_algorithms::{
-        bi_dijkstra::BiDijkstra,
-        ch_bi_dijkstra::ChDijkstra,
-        dijkstra::Dijkstra,
-        fast_dijkstra::{self, FastDijkstra},
-        slow_dijkstra::SlowDijkstra,
+        bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra,
+        fast_dijkstra::FastDijkstra, slow_dijkstra::SlowDijkstra,
     },
 };
 use indicatif::ProgressIterator;
