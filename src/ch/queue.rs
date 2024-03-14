@@ -5,7 +5,7 @@ use rand::seq::SliceRandom;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
-    ch::{contractor::contraction_helper::get_shortcuts, Shortcut, ShortcutSearchResult},
+    ch::{contractor::contraction_helper::get_shortcuts, Shortcut},
     graphs::{graph::Graph, VertexId},
 };
 
@@ -13,8 +13,7 @@ use super::{
     ch_priority_element::ChPriorityElement,
     priority_function::{
         cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
-        edge_difference::EdgeDifference, search_space_size::SearchSpaceSize,
-        voronoi_region::VoronoiRegion, PriorityFunction,
+        edge_difference::EdgeDifference, search_space_size::SearchSpaceSize, PriorityFunction,
     },
 };
 
@@ -34,10 +33,9 @@ impl CHQueue {
         for letter in priority_functions_letters.chars() {
             match letter {
                 'E' => queue.register(200, EdgeDifference::new(&graph)),
-                'D' => queue.register(1, DeletedNeighbors::new(&graph)),
-                'C' => queue.register(1, CostOfQueries::new(&graph)),
+                'D' => queue.register(200, DeletedNeighbors::new(&graph)),
+                'C' => queue.register(200, CostOfQueries::new(&graph)),
                 'S' => queue.register(1, SearchSpaceSize::new(&graph)),
-                'V' => queue.register(1, VoronoiRegion::new(&graph)),
                 _ => panic!("letter not recognized"),
             }
         }

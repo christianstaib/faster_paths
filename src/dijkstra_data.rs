@@ -87,12 +87,19 @@ impl DijkstraData {
         })
     }
 
-    pub fn get_scanned_points(&self) -> Vec<usize> {
+    pub fn dijkstra_rank(&self) -> u32 {
+        self.verticies
+            .iter()
+            .filter(|entry| entry.is_expanded)
+            .count() as u32
+    }
+
+    pub fn get_scanned_vertices(&self) -> Vec<VertexId> {
         self.verticies
             .iter()
             .enumerate()
             .filter(|(_, entry)| entry.weight.is_some())
-            .map(|(i, _)| i)
+            .map(|(i, _)| i as VertexId)
             .collect()
     }
 }

@@ -6,8 +6,15 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::contractor::{serial_contractor::SerialContractor, Contractor},
-    graphs::{graph_factory::GraphFactory, path::ShortestPathValidation},
+    ch::{
+        contractor::serial_contractor::SerialContractor,
+        preprocessor::Preprocessor,
+        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+    },
+    graphs::{
+        graph_factory::GraphFactory,
+        path::{PathFinding, ShortestPathValidation},
+    },
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
@@ -33,18 +40,24 @@ fn main() {
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
-    let letters = vec!["ED", "E"];
+    let letters = vec!["E", "ED", "ES", "EC", "EDS", "EDC", "EDCS"];
+
     for letters in letters {
+        let contractor = Box::new(SerialContractor::new(letters));
+        let preprocessor = Preprocessor::with_contractor(contractor);
+
         let start = Instant::now();
-        let contractor = SerialContractor::new(&graph, letters);
-        let contracted_graph = contractor.get_graph();
+        let contracted_graph = preprocessor.get_ch(&graph);
         let ch_time = start.elapsed();
 
-        let dijkstra = ChDijkstra::new(&contracted_graph);
+        let shortcut_replacer: Box<dyn ShortcutReplacer> =
+            Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
+
+        let dijkstra = ChDijkstra::new(&contracted_graph.ch_graph, &shortcut_replacer);
         let mut times = Vec::new();
         for test in tests.iter() {
             let before = Instant::now();
-            let _ = dijkstra.get_cost(&test.request);
+            let _ = dijkstra.get_shortest_path_weight(&test.request);
             times.push(before.elapsed());
         }
         let query_time: Duration = (times.iter().sum::<Duration>()) / (times.len() as u32);
