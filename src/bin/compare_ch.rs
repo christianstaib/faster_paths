@@ -40,7 +40,7 @@ fn main() {
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
-    let letters = vec!["E", "ED", "ES", "EC", "EDS", "EDC", "EDCS"];
+    let letters = vec!["E", "ED"]; //, "ES", "EC", "EDS", "EDC", "EDCS"];
 
     for letters in letters {
         let contractor = Box::new(SerialContractor::new(letters));
@@ -53,19 +53,19 @@ fn main() {
         let shortcut_replacer: Box<dyn ShortcutReplacer> =
             Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
 
-        let dijkstra = ChPathFinder::new(&contracted_graph.ch_graph, &shortcut_replacer);
+        let ch = ChPathFinder::new(&contracted_graph.ch_graph, &shortcut_replacer);
         let mut times = Vec::new();
         for test in tests.iter() {
             let before = Instant::now();
-            let _ = dijkstra.get_shortest_path_weight(&test.request);
+            let _ = ch.get_shortest_path_weight(&test.request);
             times.push(before.elapsed());
         }
         let query_time: Duration = (times.iter().sum::<Duration>()) / (times.len() as u32);
         println!(
-            "{:<5} ch construction: {:>9} s {:>9} microseconds",
+            "{:<5} ch construction: {:>9} s {:?}",
             letters,
             ch_time.as_secs(),
-            query_time.as_micros()
+            query_time
         );
     }
 

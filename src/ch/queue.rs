@@ -32,8 +32,8 @@ impl CHQueue {
         };
         for letter in priority_functions_letters.chars() {
             match letter {
-                'E' => queue.register(200, EdgeDifference::new(&graph)),
-                'D' => queue.register(200, DeletedNeighbors::new(&graph)),
+                'E' => queue.register(190, EdgeDifference::new(&graph)),
+                'D' => queue.register(120, DeletedNeighbors::new(&graph)),
                 'C' => queue.register(200, CostOfQueries::new(&graph)),
                 'S' => queue.register(1, SearchSpaceSize::new(&graph)),
                 _ => panic!("letter not recognized"),
@@ -93,7 +93,7 @@ impl CHQueue {
 
     fn initialize(&mut self, graph: &Graph) {
         let mut vertices: Vec<u32> = (0..graph.number_of_vertices()).map(|x| x as u32).collect();
-        vertices.shuffle(&mut rand::thread_rng());
+        // vertices.shuffle(&mut rand::thread_rng());
 
         self.queue = vertices
             .into_par_iter()
