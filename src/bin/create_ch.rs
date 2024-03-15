@@ -24,7 +24,7 @@ fn main() {
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
     let start = Instant::now();
-    let contractor = Box::new(SerialContractor::new("ES"));
+    let contractor = Box::new(SerialContractor::new("EC"));
     let preprocessor = Preprocessor::with_contractor(contractor);
     let contracted_graph = preprocessor.get_ch(&graph);
     println!("Generating ch took {:?}", start.elapsed());

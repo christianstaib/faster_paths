@@ -165,8 +165,10 @@ impl Graph {
 
     /// Adds an edge to the graph.
     pub fn add_edge(&mut self, edge: &DirectedWeightedEdge) {
-        self.add_out_edge(edge);
-        self.add_in_edge(edge);
+        if edge.tail != edge.head {
+            self.add_out_edge(edge);
+            self.add_in_edge(edge);
+        }
     }
 
     /// Removes the node from the graph.

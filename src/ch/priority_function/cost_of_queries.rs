@@ -17,7 +17,7 @@ impl PriorityFunction for CostOfQueries {
         graph: &Graph,
         shortcuts_results: &ShortcutSearchResult,
     ) -> i32 {
-        *self.costs.get(vertex as usize).unwrap()
+        self.costs[vertex as usize]
     }
 
     fn update(&mut self, vertex: VertexId, graph: &Graph) {

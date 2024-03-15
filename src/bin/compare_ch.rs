@@ -40,7 +40,7 @@ fn main() {
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
-    let letters = vec!["E", "ED"]; //, "ES", "EC", "EDS", "EDC", "EDCS"];
+    let letters = vec!["E", "EC", "ED"]; //, "ES", "EC", "EDS", "EDC", "EDCS"];
 
     for letters in letters {
         let contractor = Box::new(SerialContractor::new(letters));

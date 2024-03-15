@@ -10,17 +10,15 @@ pub struct DeletedNeighbors {
 }
 
 impl PriorityFunction for DeletedNeighbors {
-    #[allow(unused_variables)]
     fn priority(
         &self,
         vertex: VertexId,
-        graph: &Graph,
-        shortcuts_results: &ShortcutSearchResult,
+        _graph: &Graph,
+        _shortcuts_results: &ShortcutSearchResult,
     ) -> i32 {
         self.deleted_neighbors[vertex as usize] as i32
     }
 
-    #[allow(unused_variables)]
     fn update(&mut self, vertex: VertexId, graph: &Graph) {
         graph
             .open_neighborhood(vertex, 1)

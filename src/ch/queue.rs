@@ -32,9 +32,9 @@ impl CHQueue {
         };
         for letter in priority_functions_letters.chars() {
             match letter {
-                'E' => queue.register(190, EdgeDifference::new(&graph)),
-                'D' => queue.register(120, DeletedNeighbors::new(&graph)),
-                'C' => queue.register(200, CostOfQueries::new(&graph)),
+                'E' => queue.register(1, EdgeDifference::new(&graph)),
+                'D' => queue.register(1, DeletedNeighbors::new(&graph)),
+                'C' => queue.register(1, CostOfQueries::new(&graph)),
                 'S' => queue.register(1, SearchSpaceSize::new(&graph)),
                 _ => panic!("letter not recognized"),
             }
