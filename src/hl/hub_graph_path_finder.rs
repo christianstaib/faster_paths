@@ -10,13 +10,13 @@ use super::hub_graph::HubGraph;
 
 pub struct HubGraphPathFinder<'a> {
     hub_graph: &'a HubGraph,
-    shortcut_replacer: &'a Box<dyn ShortcutReplacer + Sync + Send>,
+    shortcut_replacer: &'a Box<dyn ShortcutReplacer>,
 }
 
 impl<'a> HubGraphPathFinder<'a> {
     pub fn new(
         hub_graph: &'a HubGraph,
-        shortcut_replacer: &'a Box<dyn ShortcutReplacer + Sync + Send>,
+        shortcut_replacer: &'a Box<dyn ShortcutReplacer>,
     ) -> HubGraphPathFinder<'a> {
         HubGraphPathFinder {
             hub_graph,
