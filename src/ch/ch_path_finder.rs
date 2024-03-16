@@ -12,12 +12,12 @@ use crate::{
     simple_algorithms::bidirectional_helpers::path_from_bidirectional_search,
 };
 
-pub struct ChPathFinder<'a> {
-    ch_graph: &'a FastGraph,
-    shortuct_replacer: &'a Box<dyn ShortcutReplacer + Sync + Send>,
+pub struct ChPathFinder {
+    ch_graph: FastGraph,
+    shortuct_replacer: Box<dyn ShortcutReplacer>,
 }
 
-impl<'a> PathFinding for ChPathFinder<'a> {
+impl PathFinding for ChPathFinder {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let (meeting_vertex, _, forward, backward) = self.get_data(&route_request)?;
         let path = path_from_bidirectional_search(meeting_vertex, &forward, &backward)?;
@@ -31,11 +31,8 @@ impl<'a> PathFinding for ChPathFinder<'a> {
     }
 }
 
-impl<'a> ChPathFinder<'a> {
-    pub fn new(
-        ch_graph: &'a FastGraph,
-        shortuct_replacer: &'a Box<dyn ShortcutReplacer + Sync + Send>,
-    ) -> ChPathFinder<'a> {
+impl ChPathFinder {
+    pub fn new(ch_graph: FastGraph, shortuct_replacer: Box<dyn ShortcutReplacer>) -> ChPathFinder {
         ChPathFinder {
             ch_graph,
             shortuct_replacer,

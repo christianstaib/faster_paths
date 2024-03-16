@@ -8,16 +8,16 @@ use crate::{
 
 use super::hub_graph::HubGraph;
 
-pub struct HubGraphPathFinder<'a> {
-    hub_graph: &'a HubGraph,
-    shortcut_replacer: &'a Box<dyn ShortcutReplacer>,
+pub struct HubGraphPathFinder {
+    hub_graph: HubGraph,
+    shortcut_replacer: Box<dyn ShortcutReplacer>,
 }
 
-impl<'a> HubGraphPathFinder<'a> {
+impl HubGraphPathFinder {
     pub fn new(
-        hub_graph: &'a HubGraph,
-        shortcut_replacer: &'a Box<dyn ShortcutReplacer>,
-    ) -> HubGraphPathFinder<'a> {
+        hub_graph: HubGraph,
+        shortcut_replacer: Box<dyn ShortcutReplacer>,
+    ) -> HubGraphPathFinder {
         HubGraphPathFinder {
             hub_graph,
             shortcut_replacer,
@@ -25,7 +25,7 @@ impl<'a> HubGraphPathFinder<'a> {
     }
 }
 
-impl<'a> PathFinding for HubGraphPathFinder<'a> {
+impl PathFinding for HubGraphPathFinder {
     fn get_shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
         // wanted: source -> target
         let forward_label = self

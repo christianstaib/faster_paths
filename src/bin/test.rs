@@ -8,7 +8,10 @@ use clap::Parser;
 use faster_paths::{
     ch::{
         ch_path_finder::ChPathFinder,
-        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+        shortcut_replacer::{
+            fast_shortcut_replacer::FastShortcutReplacer,
+            slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer,
+        },
         ContractedGraphInformation,
     },
     graphs::{
@@ -57,15 +60,17 @@ fn main() {
 
     let reader = BufReader::new(File::open(args.ch_path).unwrap());
     let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
-    let shortcut_replacer: Box<dyn ShortcutReplacer> =
+
+    let slow_shortcut_replacer: Box<dyn ShortcutReplacer> =
         Box::new(SlowShortcutReplacer::new(&ch_information.shortcuts));
-
     let ch_graph = &ch_information.ch_graph;
-    let ch = ChPathFinder::new(&ch_graph, &shortcut_replacer);
+    let ch = ChPathFinder::new(ch_graph.clone(), slow_shortcut_replacer);
 
+    let fast_shortcut_replacer: Box<dyn ShortcutReplacer> =
+        Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
     let reader = BufReader::new(File::open(args.hl_path).unwrap());
     let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
-    let hl_path_finder = HubGraphPathFinder::new(&hl, &shortcut_replacer);
+    let hl_path_finder = HubGraphPathFinder::new(hl, fast_shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
     let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
