@@ -1,15 +1,28 @@
-use std::{fs::File, io::BufReader};
+use std::{
+    fs::File,
+    io::BufReader,
+    time::{Duration, Instant},
+};
 
 use clap::Parser;
-use osm_test::{
-    ch::contractor::ContractedGraph,
-    fast_graph::FastGraph,
-    graph::Graph,
-    hl::hub_graph::HubGraph,
-    naive_graph::NaiveGraph,
-    path::{RouteValidationRequest, Routing},
-    simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
+use faster_paths::{
+    ch::{
+        ch_path_finder::ChPathFinder,
+        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+        ContractedGraphInformation,
+    },
+    graphs::{
+        fast_graph::FastGraph,
+        graph_factory::GraphFactory,
+        path::{PathFinding, ShortestPathValidation},
+    },
+    hl::{hub_graph::HubGraph, hub_graph_path_finder::HubGraphPathFinder},
+    simple_algorithms::{
+        bi_dijkstra::BiDijkstra, dijkstra::Dijkstra, fast_dijkstra::FastDijkstra,
+        slow_dijkstra::SlowDijkstra,
+    },
 };
+use indicatif::ProgressIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -32,55 +45,53 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_fmi_file(args.graph_path.as_str());
-    let graph = Graph::from_edges(&graph.edges);
-    let graph = FastGraph::from_graph(&graph);
+    let slow_graph = GraphFactory::from_gr_file(args.graph_path.as_str());
+    let fast_graph = FastGraph::from_graph(&slow_graph);
 
-    let dijkstra = Dijkstra::new(&graph);
+    let slow_dijkstra = SlowDijkstra::new(&slow_graph);
 
-    let bi_dijkstra = BiDijkstra::new(&graph);
+    let dijkstra = Dijkstra::new(&fast_graph);
+    let fast_dijkstra = FastDijkstra::new(&fast_graph);
+
+    let bi_dijkstra = BiDijkstra::new(&fast_graph);
 
     let reader = BufReader::new(File::open(args.ch_path).unwrap());
-    let ch_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
-    let ch_bi_dijkstra = ChDijkstra::new(&ch_graph);
+    let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
+    let shortcut_replacer: Box<dyn ShortcutReplacer> =
+        Box::new(SlowShortcutReplacer::new(&ch_information.shortcuts));
+
+    let ch_graph = &ch_information.ch_graph;
+    let ch = ChPathFinder::new(&ch_graph, &shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.hl_path).unwrap());
-    let hl_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
+    let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
+    let hl_path_finder = HubGraphPathFinder::new(&hl, &shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
-    let requests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+    let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
-    for request in requests.iter() {
-        let true_cost = request.cost;
-        let request = request.request.clone();
+    let mut path_finder: Vec<(&str, Box<dyn PathFinding>, Vec<Duration>)> = Vec::new();
+    path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
+    path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
+    path_finder.push(("fast dijkstra", Box::new(fast_dijkstra), Vec::new()));
+    path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
+    path_finder.push(("ch", Box::new(ch), Vec::new()));
+    path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
 
-        // test dijkstra
-        let response = dijkstra.get_route(&request);
-        let mut cost = None;
-        if let Some(route) = response.route {
-            cost = Some(route.weight);
+    for validation in validations.iter().take(10).progress() {
+        for (name, path_finder, times) in path_finder.iter_mut() {
+            let start = Instant::now();
+            let path = path_finder.get_shortest_path(&validation.request);
+            times.push(start.elapsed());
+
+            if let Err(err) = slow_graph.validate_path(&validation, &path) {
+                panic!("{} wrong: {}", name, err);
+            }
         }
-        assert_eq!(true_cost, cost, "dijkstra wrong");
+    }
 
-        // test bi dijkstra
-        let response = bi_dijkstra.get_route(&request);
-        let mut cost = None;
-        if let Some(route) = response.route {
-            cost = Some(route.weight);
-        }
-        assert_eq!(true_cost, cost, "bi dijkstra wrong");
-
-        // test ch dijkstra
-        let response = ch_bi_dijkstra.get_route(&request);
-        let mut cost = None;
-        if let Some(route) = response {
-            cost = Some(route.weight);
-        }
-        assert_eq!(true_cost, cost, "ch dijkstra wrong");
-
-        // test hl
-        let response = hl_graph.get_weight(&request);
-        let cost = response;
-        assert_eq!(true_cost, cost, "bi dijkstra wrong");
+    for (name, _, times) in path_finder.iter() {
+        let average = times.iter().sum::<Duration>() / times.len() as u32;
+        println!("{:<15} {:?}", name, average);
     }
 }

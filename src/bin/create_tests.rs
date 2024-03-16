@@ -1,14 +1,13 @@
 use std::{fs::File, io::BufWriter, io::Write};
 
 use clap::Parser;
-use indicatif::ProgressIterator;
-use osm_test::{
-    fast_graph::FastGraph,
-    graph::Graph,
-    naive_graph::NaiveGraph,
-    path::{PathRequest, RouteValidationRequest, Routing},
+use faster_paths::{
+    graphs::fast_graph::FastGraph,
+    graphs::graph_factory::GraphFactory,
+    graphs::path::{PathFinding, ShortestPathRequest, ShortestPathValidation},
     simple_algorithms::dijkstra::Dijkstra,
 };
+use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
@@ -30,29 +29,37 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = NaiveGraph::from_gr_file(args.graph_path.as_str());
-    let graph = Graph::from_edges(&graph.edges);
+    let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
     let graph = FastGraph::from_graph(&graph);
     let dijkstra = Dijkstra::new(&graph);
 
     let routes: Vec<_> = (0..args.number_of_tests)
         .progress()
         .par_bridge()
-        .map(|_| {
-            let mut rng = rand::thread_rng();
-            let request = PathRequest {
-                source: rng.gen_range(0..graph.num_nodes()) as u32,
-                target: rng.gen_range(0..graph.num_nodes()) as u32,
-            };
+        .map_init(
+            || rand::thread_rng(), // get the thread-local RNG
+            |rng, _| {
+                // guarantee that source != tatget.
+                let source = rng.gen_range(0..graph.number_of_vertices()) as u32;
+                let mut target = rng.gen_range(0..(graph.number_of_vertices()) - 1) as u32;
+                if target >= source {
+                    target += 1;
+                }
 
-            let response = dijkstra.get_route(&request);
-            let mut cost = None;
-            if let Some(route) = response.route {
-                cost = Some(route.weight);
-            }
+                let request = ShortestPathRequest::new(source, target).unwrap();
 
-            RouteValidationRequest { request, cost }
-        })
+                let response = dijkstra.get_shortest_path(&request);
+                let mut cost = None;
+                if let Some(route) = response {
+                    cost = Some(route.weight);
+                }
+
+                ShortestPathValidation {
+                    request,
+                    weight: cost,
+                }
+            },
+        )
         .collect();
 
     let mut writer = BufWriter::new(File::create(args.tests_path.as_str()).unwrap());

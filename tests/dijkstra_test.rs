@@ -1,21 +1,19 @@
 use std::{fs::File, io::BufReader};
 
-use osm_test::{
+use faster_paths::{
     ch::contractor::Contractor,
-    fast_graph::FastGraph,
-    graph::Graph,
-    naive_graph::NaiveGraph,
-    path::{RouteValidationRequest, Routing},
+    graphs::fast_graph::FastGraph,
+    graphs::graph_factory::GraphFactory,
+    graphs::path::{Routing, ShortestPathValidation},
     simple_algorithms::{bi_dijkstra::BiDijkstra, ch_bi_dijkstra::ChDijkstra, dijkstra::Dijkstra},
 };
 
 #[test]
 fn dijkstra() {
-    let naive_graph = NaiveGraph::from_gr_file("tests/data/fmi/USA-road-d.NY.gr");
-    let graph = Graph::from_edges(&naive_graph.edges);
+    let graph = GraphFactory::from_gr_file("tests/data/fmi/USA-road-d.NY.gr");
 
     let reader = BufReader::new(File::open("tests/data/fmi/USA-road-d.NY.gr.tests.json").unwrap());
-    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+    let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
     let ch_graph = Contractor::get_contracted_graph(&graph);
     let ch_bi_dijkstra = ChDijkstra::new(&ch_graph);
@@ -32,35 +30,37 @@ fn dijkstra() {
         let request = &test.request;
 
         // test dijkstra
-        let response = dijkstra.get_route(&request);
+        let path = dijkstra.get_shortest_path(&request);
         let mut cost = None;
-        if let Some(route) = response.route {
-            cost = Some(route.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
+            graph.validate_route(request, &path);
         }
-        assert_eq!(test.cost, cost, "dijkstra wrong");
+        assert_eq!(test.weight, cost, "dijkstra wrong");
 
         // test bi dijkstra
-        let response = bi_dijkstra.get_route(&request);
+        let path = bi_dijkstra.get_shortest_path(&request);
         let mut cost = None;
-        if let Some(route) = response.route {
-            cost = Some(route.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
         }
-        assert_eq!(test.cost, cost, "bi dijkstra wrong");
+        assert_eq!(test.weight, cost, "bi dijkstra wrong");
 
         // test ch dijkstra
-        let response = ch_bi_dijkstra.get_route(&request);
+        let path = ch_bi_dijkstra.get_route(&request);
         let mut cost = None;
-        if let Some(route) = response {
-            cost = Some(route.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
         }
-        assert_eq!(test.cost, cost, "ch dijkstra wrong");
+        assert_eq!(test.weight, cost, "ch dijkstra wrong");
 
         // test hl
-        let response = hl_graph.get_path(&request);
+        let path = hl_graph.get_path(&request);
         let mut cost = None;
-        if let Some(this_cost) = response {
-            cost = Some(this_cost.weight);
+        if let Some(path) = path {
+            cost = Some(path.weight);
+            graph.validate_route(request, &path);
         }
-        assert_eq!(test.cost, cost, "hl wrong");
+        assert_eq!(test.weight, cost, "hl wrong");
     }
 }

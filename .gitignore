@@ -8,11 +8,10 @@
 *.data
 *.data.old
 *.svg
-*.fmi
 *.png
 *.csv
 *.txt
 *.speedy
 *.bincode
-*.que
-*.sol
+*.json
+*.gr

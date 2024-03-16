@@ -1,19 +1,20 @@
 use crate::{
     dijkstra_data::DijkstraData,
     graphs::{
-        fast_graph::FastGraph,
+        graph::Graph,
         path::{Path, PathFinding, ShortestPathRequest},
         {VertexId, Weight},
     },
     queue::DijkstraQueueElement,
 };
 
+/// Works with slower Graph struct, not faster FastGrap
 #[derive(Clone)]
-pub struct Dijkstra<'a> {
-    graph: &'a FastGraph,
+pub struct SlowDijkstra<'a> {
+    graph: &'a Graph,
 }
 
-impl<'a> PathFinding for Dijkstra<'a> {
+impl<'a> PathFinding for SlowDijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let data = self.get_data(route_request.source(), route_request.target());
         data.get_path(route_request.target())
@@ -25,9 +26,9 @@ impl<'a> PathFinding for Dijkstra<'a> {
     }
 }
 
-impl<'a> Dijkstra<'a> {
-    pub fn new(graph: &'a FastGraph) -> Dijkstra {
-        Dijkstra { graph }
+impl<'a> SlowDijkstra<'a> {
+    pub fn new(graph: &'a Graph) -> SlowDijkstra {
+        SlowDijkstra { graph }
     }
 
     pub fn get_data(&self, source: VertexId, target: VertexId) -> DijkstraData {

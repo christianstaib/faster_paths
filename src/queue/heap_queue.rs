@@ -1,42 +1,10 @@
-use std::{cmp::Ordering, collections::BinaryHeap};
+use std::collections::BinaryHeap;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct State {
-    pub key: u32,
-    pub value: u32,
-}
-
-// The priority queue depends on `Ord`.
-// Explicitly implement the trait so the queue becomes a min-heap
-// instead of a max-heap.
-impl Ord for State {
-    fn cmp(&self, other: &Self) -> Ordering {
-        // Notice that the we flip the ordering on costs.
-        // In case of a tie we compare positions - this step is necessary
-        // to make implementations of `PartialEq` and `Ord` consistent.
-        other
-            .key
-            .cmp(&self.key)
-            .then_with(|| self.value.cmp(&other.value))
-    }
-}
-
-// `PartialOrd` needs to be implemented as well.
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
+use super::{DijkstaQueue, DijkstraQueueElement};
 
 #[derive(Clone)]
 pub struct HeapQueue {
-    queue: BinaryHeap<State>,
-}
-
-impl Default for HeapQueue {
-    fn default() -> Self {
-        Self::new()
-    }
+    queue: BinaryHeap<DijkstraQueueElement>,
 }
 
 impl HeapQueue {
@@ -45,16 +13,18 @@ impl HeapQueue {
             queue: BinaryHeap::new(),
         }
     }
+}
 
-    pub fn insert(&mut self, key: u32, value: u32) {
-        self.queue.push(State { key, value })
+impl DijkstaQueue for HeapQueue {
+    fn push(&mut self, state: DijkstraQueueElement) {
+        self.queue.push(state)
     }
 
-    pub fn pop(&mut self) -> Option<State> {
+    fn pop(&mut self) -> Option<DijkstraQueueElement> {
         self.queue.pop()
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
 }

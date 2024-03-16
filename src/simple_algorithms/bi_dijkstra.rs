@@ -1,18 +1,28 @@
 use crate::{
     dijkstra_data::DijkstraData,
-    fast_graph::FastGraph,
-    path::{Path, PathRequest, RouteResponse, Routing},
-    types::VertexId,
+    graphs::{
+        fast_graph::FastGraph,
+        path::{Path, PathFinding, ShortestPathRequest},
+        Weight,
+    },
+    queue::DijkstraQueueElement,
 };
+
+use super::bidirectional_helpers::path_from_bidirectional_search;
 
 #[derive(Clone)]
 pub struct BiDijkstra<'a> {
     pub graph: &'a FastGraph,
 }
 
-impl<'a> Routing for BiDijkstra<'a> {
-    fn get_route(&self, route_request: &PathRequest) -> RouteResponse {
+impl<'a> PathFinding for BiDijkstra<'a> {
+    fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         self.get_data(&route_request)
+    }
+
+    fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
+        let data = self.get_shortest_path(path_request)?;
+        Some(data.weight)
     }
 }
 
@@ -21,16 +31,15 @@ impl<'a> BiDijkstra<'a> {
         BiDijkstra { graph }
     }
 
-    pub fn get_data(&self, request: &PathRequest) -> RouteResponse {
-        let mut forward_data = DijkstraData::new(self.graph.num_nodes() as usize, request.source);
-        let mut backward_data = DijkstraData::new(self.graph.num_nodes() as usize, request.target);
+    pub fn get_data(&self, request: &ShortestPathRequest) -> Option<Path> {
+        let mut forward_data =
+            DijkstraData::new(self.graph.number_of_vertices() as usize, request.source());
+        let mut backward_data =
+            DijkstraData::new(self.graph.number_of_vertices() as usize, request.target());
 
         let route = self.get_route_data(&mut forward_data, &mut backward_data);
 
-        RouteResponse {
-            route,
-            data: vec![forward_data, backward_data],
-        }
+        route
     }
 
     pub fn get_route_data(
@@ -38,57 +47,55 @@ impl<'a> BiDijkstra<'a> {
         forward: &mut DijkstraData,
         backward: &mut DijkstraData,
     ) -> Option<Path> {
-        let mut minimal_cost = u32::MAX;
-        let mut minimal_cost_vertex = u32::MAX;
+        let mut meeting_weight = u32::MAX;
+        let mut meeting_vertex = u32::MAX;
+
+        let mut forward_max_weight = 0;
+        let mut backward_max_weight = 0;
 
         while !forward.is_empty() || !backward.is_empty() {
-            if let Some(state) = forward.pop() {
-                if let Some(backward_cost) = backward.verticies[state.value as usize].cost {
-                    let forward_cost = forward.verticies[state.value as usize].cost.unwrap();
-                    let cost = forward_cost + backward_cost;
-                    if cost < minimal_cost {
-                        minimal_cost = cost;
-                        minimal_cost_vertex = state.value;
+            if let Some(DijkstraQueueElement { vertex, .. }) = forward.pop() {
+                let forward_weight = forward.verticies[vertex as usize].weight.unwrap();
+                if forward_weight > forward_max_weight {
+                    forward_max_weight = forward_weight;
+                }
+                if let Some(backward_weight) = backward.verticies[vertex as usize].weight {
+                    let cost = forward_weight + backward_weight;
+                    if cost < meeting_weight {
+                        meeting_weight = cost;
+                        meeting_vertex = vertex;
                     }
                 }
                 self.graph
-                    .out_edges(state.value)
+                    .out_edges(vertex)
                     .iter()
-                    .for_each(|edge| forward.update(state.value, edge.head, edge.cost));
+                    .for_each(|edge| forward.update(vertex, edge.head, edge.weight));
             }
 
-            if let Some(state) = backward.pop() {
-                if forward.verticies[state.value as usize].is_expanded {
-                    if let Some(forward_cost) = forward.verticies[state.value as usize].cost {
-                        let backward_cost = backward.verticies[state.value as usize].cost.unwrap();
-                        let cost = forward_cost + backward_cost;
-                        if cost < minimal_cost {
-                            minimal_cost = cost;
-                            minimal_cost_vertex = state.value;
+            if let Some(DijkstraQueueElement { vertex, .. }) = backward.pop() {
+                if forward.verticies[vertex as usize].is_expanded {
+                    let backward_weight = backward.verticies[vertex as usize].weight.unwrap();
+                    if backward_weight > backward_max_weight {
+                        backward_max_weight = backward_weight;
+                    }
+                    if let Some(forward_weight) = forward.verticies[vertex as usize].weight {
+                        let cost = forward_weight + backward_weight;
+                        if cost < meeting_weight {
+                            meeting_weight = cost;
+                            meeting_vertex = vertex;
                         }
                     }
                 }
-                self.graph.in_edges(state.value).iter().for_each(|edge| {
-                    backward.update(state.value, edge.tail, edge.cost);
+                self.graph.in_edges(vertex).iter().for_each(|edge| {
+                    backward.update(vertex, edge.tail, edge.weight);
                 });
+            }
+
+            if forward_max_weight + backward_max_weight >= meeting_weight {
+                break;
             }
         }
 
-        construct_route(minimal_cost_vertex, forward, backward)
+        path_from_bidirectional_search(meeting_vertex, forward, backward)
     }
-}
-
-fn construct_route(
-    contact_node: VertexId,
-    forward_data: &DijkstraData,
-    backward_data: &DijkstraData,
-) -> Option<Path> {
-    let mut forward_route = forward_data.get_route(contact_node)?;
-    let mut backward_route = backward_data.get_route(contact_node)?;
-    backward_route.vertices.pop();
-    backward_route.vertices.reverse();
-    forward_route.vertices.extend(backward_route.vertices);
-    forward_route.weight += backward_route.weight;
-
-    Some(forward_route)
 }

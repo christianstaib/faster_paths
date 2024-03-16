@@ -1,8 +1,8 @@
 use std::{fs::File, io::BufReader};
 
 use clap::Parser;
+use faster_paths::hl::hub_graph::HubGraph;
 use indicatif::ProgressIterator;
-use osm_test::hl::hub_graph::HubGraph;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

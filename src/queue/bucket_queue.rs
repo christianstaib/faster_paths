@@ -1,39 +1,43 @@
-use super::heap_queue::State;
+use crate::graphs::Weight;
+
+use super::{DijkstaQueue, DijkstraQueueElement};
 
 pub struct BucketQueue {
     current_index: usize,
-    buckets: Vec<Vec<State>>,
-}
-
-impl Default for BucketQueue {
-    fn default() -> Self {
-        Self::new()
-    }
+    num_elements: u32,
+    buckets: Vec<Vec<DijkstraQueueElement>>,
 }
 
 impl BucketQueue {
-    pub fn new() -> BucketQueue {
-        let buckets = vec![Vec::new(); 30_001];
+    pub fn new(max_edge_weight: Weight) -> BucketQueue {
+        let buckets = vec![Vec::new(); max_edge_weight as usize + 1];
         BucketQueue {
             current_index: 0,
+            num_elements: 0,
             buckets,
         }
     }
-
-    pub fn insert(&mut self, key: u32, value: u32) {
-        let state = State { key, value };
-        let key_index = key as usize % self.buckets.len();
-        self.buckets[key_index].push(state)
+}
+impl DijkstaQueue for BucketQueue {
+    fn push(&mut self, state: DijkstraQueueElement) {
+        let key_index = state.weight as usize % self.buckets.len();
+        self.buckets[key_index].push(state);
+        self.num_elements += 1;
     }
 
-    pub fn pop(&mut self) -> Option<State> {
+    fn pop(&mut self) -> Option<DijkstraQueueElement> {
         for bucket_index in 0..self.buckets.len() {
             let key_index = (self.current_index + bucket_index) % self.buckets.len();
             if let Some(value) = self.buckets[key_index].pop() {
                 self.current_index = key_index;
+                self.num_elements -= 1;
                 return Some(value);
             }
         }
         None
+    }
+
+    fn is_empty(&self) -> bool {
+        self.num_elements == 0
     }
 }
