@@ -21,8 +21,7 @@ use faster_paths::{
     },
     hl::{hub_graph::HubGraph, hub_graph_path_finder::HubGraphPathFinder},
     simple_algorithms::{
-        bi_dijkstra::BiDijkstra, dijkstra::Dijkstra, fast_dijkstra::FastDijkstra,
-        slow_dijkstra::SlowDijkstra,
+        dijkstra::Dijkstra, fast_dijkstra::FastDijkstra, slow_dijkstra::SlowDijkstra,
     },
 };
 use indicatif::ProgressIterator;
@@ -51,7 +50,7 @@ fn main() {
     let slow_graph = GraphFactory::from_gr_file(args.graph_path.as_str());
     let fast_graph = FastGraph::from_graph(&slow_graph);
 
-    let slow_dijkstra = SlowDijkstra::new(&slow_graph);
+    let slow_dijkstra = SlowDijkstra::new(slow_graph.clone());
 
     let dijkstra = Dijkstra::new(fast_graph.clone());
     let fast_dijkstra = FastDijkstra::new(&fast_graph);

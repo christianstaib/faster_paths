@@ -10,11 +10,11 @@ use crate::{
 
 /// Works with slower Graph struct, not faster FastGrap
 #[derive(Clone)]
-pub struct SlowDijkstra<'a> {
-    graph: &'a Graph,
+pub struct SlowDijkstra {
+    graph: Graph,
 }
 
-impl<'a> PathFinding for SlowDijkstra<'a> {
+impl PathFinding for SlowDijkstra {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let data = self.get_data(route_request.source(), route_request.target());
         data.get_path(route_request.target())
@@ -26,8 +26,8 @@ impl<'a> PathFinding for SlowDijkstra<'a> {
     }
 }
 
-impl<'a> SlowDijkstra<'a> {
-    pub fn new(graph: &'a Graph) -> SlowDijkstra {
+impl SlowDijkstra {
+    pub fn new(graph: Graph) -> SlowDijkstra {
         SlowDijkstra { graph }
     }
 
