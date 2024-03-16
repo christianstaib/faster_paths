@@ -14,7 +14,7 @@ use crate::{
 
 pub struct ChPathFinder<'a> {
     ch_graph: &'a FastGraph,
-    shortuct_replacer: &'a Box<dyn ShortcutReplacer>,
+    shortuct_replacer: &'a Box<dyn ShortcutReplacer + Sync + Send>,
 }
 
 impl<'a> PathFinding for ChPathFinder<'a> {
@@ -34,7 +34,7 @@ impl<'a> PathFinding for ChPathFinder<'a> {
 impl<'a> ChPathFinder<'a> {
     pub fn new(
         ch_graph: &'a FastGraph,
-        shortuct_replacer: &'a Box<dyn ShortcutReplacer>,
+        shortuct_replacer: &'a Box<dyn ShortcutReplacer + Sync + Send>,
     ) -> ChPathFinder<'a> {
         ChPathFinder {
             ch_graph,
