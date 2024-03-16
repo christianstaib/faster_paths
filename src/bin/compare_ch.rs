@@ -50,7 +50,7 @@ fn main() {
         let contracted_graph = preprocessor.get_ch(&graph);
         let ch_time = start.elapsed();
 
-        let shortcut_replacer: Box<dyn ShortcutReplacer> =
+        let shortcut_replacer: Box<dyn ShortcutReplacer + Sync + Send> =
             Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
 
         let ch = ChPathFinder::new(&contracted_graph.ch_graph, &shortcut_replacer);

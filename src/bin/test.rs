@@ -57,7 +57,7 @@ fn main() {
 
     let reader = BufReader::new(File::open(args.ch_path).unwrap());
     let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
-    let shortcut_replacer: Box<dyn ShortcutReplacer> =
+    let shortcut_replacer: Box<dyn ShortcutReplacer + Sync + Send> =
         Box::new(SlowShortcutReplacer::new(&ch_information.shortcuts));
 
     let ch_graph = &ch_information.ch_graph;
