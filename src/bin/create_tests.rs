@@ -31,7 +31,7 @@ fn main() {
 
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
     let graph = FastGraph::from_graph(&graph);
-    let dijkstra = Dijkstra::new(&graph);
+    let dijkstra = Dijkstra::new(graph.clone());
 
     let routes: Vec<_> = (0..args.number_of_tests)
         .progress()

@@ -30,7 +30,7 @@ fn main() {
     let graph = GraphFactory::from_fmi_file(args.graph_path.as_str());
 
     let fast_graph = FastGraph::from_graph(&graph);
-    let dijkstra = Dijkstra::new(&fast_graph);
+    let dijkstra = Dijkstra::new(fast_graph);
 
     let queue: Vec<_> = BufReader::new(File::open(args.queue_path).unwrap())
         .lines()

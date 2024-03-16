@@ -9,11 +9,11 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct Dijkstra<'a> {
-    graph: &'a FastGraph,
+pub struct Dijkstra {
+    graph: FastGraph,
 }
 
-impl<'a> PathFinding for Dijkstra<'a> {
+impl PathFinding for Dijkstra {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let data = self.get_data(route_request.source(), route_request.target());
         data.get_path(route_request.target())
@@ -25,8 +25,8 @@ impl<'a> PathFinding for Dijkstra<'a> {
     }
 }
 
-impl<'a> Dijkstra<'a> {
-    pub fn new(graph: &'a FastGraph) -> Dijkstra {
+impl Dijkstra {
+    pub fn new(graph: FastGraph) -> Dijkstra {
         Dijkstra { graph }
     }
 

@@ -53,10 +53,10 @@ fn main() {
 
     let slow_dijkstra = SlowDijkstra::new(&slow_graph);
 
-    let dijkstra = Dijkstra::new(&fast_graph);
+    let dijkstra = Dijkstra::new(fast_graph.clone());
     let fast_dijkstra = FastDijkstra::new(&fast_graph);
 
-    let bi_dijkstra = BiDijkstra::new(&fast_graph);
+    // let bi_dijkstra = BiDijkstra::new(&fast_graph);
 
     let reader = BufReader::new(File::open(args.ch_path).unwrap());
     let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
@@ -79,7 +79,7 @@ fn main() {
     path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
     path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
     path_finder.push(("fast dijkstra", Box::new(fast_dijkstra), Vec::new()));
-    path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
+    // path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
     path_finder.push(("ch", Box::new(ch), Vec::new()));
     path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
 
