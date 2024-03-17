@@ -101,6 +101,21 @@ test_ch:
 		--tests-path $(NETWORK_TESTS)
 
 
+hitting_set_ny:
+	cargo run --bin hitting_set --release --\
+		--graph-path $(NY_GRAPH)\
+		--ch-path $(NY_CH)\
+		--hl-path $(NY_HL)\
+		--tests-path $(NY_TESTS)
+
+hitting_set:
+	cargo run --bin hitting_set --release --\
+		--graph-path $(NETWORK_GRAPH)\
+		--ch-path $(NETWORK_CH)\
+		--hl-path $(NETWORK_HL)\
+		--tests-path $(NETWORK_TESTS)
+
+
 create_hl_ny:
 	cargo run --bin create_hl --release --\
 		--ch-graph $(NY_CH)\
