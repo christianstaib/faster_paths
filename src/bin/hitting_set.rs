@@ -1,4 +1,4 @@
-use std::{ collections::BTreeSet, fs::File, io::BufReader, usize};
+use std::{collections::BTreeSet, fs::File, io::BufReader, usize};
 
 use clap::Parser;
 use faster_paths::{
@@ -13,6 +13,7 @@ use faster_paths::{
         path::{PathFinding, ShortestPathRequest},
         VertexId,
     },
+    hl::{hub_graph::HubGraph, hub_graph_path_finder::HubGraphPathFinder},
 };
 use indicatif::ProgressIterator;
 use rand::Rng;
@@ -50,10 +51,16 @@ fn main() {
     let ch_graph = &ch_information.ch_graph;
     let ch = ChPathFinder::new(ch_graph.clone(), slow_shortcut_replacer);
 
+    let fast_shortcut_replacer: Box<dyn ShortcutReplacer> =
+        Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
+    let reader = BufReader::new(File::open(args.hl_path).unwrap());
+    let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
+    let ch: Box<dyn PathFinding> = Box::new(HubGraphPathFinder::new(hl, fast_shortcut_replacer));
+
     let mut hittings_set = BTreeSet::new();
 
     let n = 1_000;
-    for _ in 0..100 {
+    for _ in 0..1_000 {
         let mut hits = vec![0; fast_graph.number_of_vertices() as usize];
         let paths = get_paths(&fast_graph, &ch, n);
         let mut legal_paths = Vec::new();
@@ -97,7 +104,7 @@ fn main() {
     );
 }
 
-fn get_paths(fast_graph: &FastGraph, ch: &ChPathFinder, n: u32) -> Vec<Vec<VertexId>> {
+fn get_paths(fast_graph: &FastGraph, ch: &Box<dyn PathFinding>, n: u32) -> Vec<Vec<VertexId>> {
     (0..(n) as usize)
         .progress()
         .par_bridge()
