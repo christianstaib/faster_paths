@@ -3,7 +3,6 @@ use std::{collections::BTreeSet, fs::File, io::BufReader, usize};
 use clap::Parser;
 use faster_paths::{
     ch::{
-        ch_path_finder::ChPathFinder,
         shortcut_replacer::{fast_shortcut_replacer::FastShortcutReplacer, ShortcutReplacer},
         ContractedGraphInformation,
     },
@@ -45,11 +44,6 @@ fn main() {
 
     let reader = BufReader::new(File::open(args.ch_path).unwrap());
     let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
-
-    let slow_shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
-    let ch_graph = &ch_information.ch_graph;
-    let ch = ChPathFinder::new(ch_graph.clone(), slow_shortcut_replacer);
 
     let fast_shortcut_replacer: Box<dyn ShortcutReplacer> =
         Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
