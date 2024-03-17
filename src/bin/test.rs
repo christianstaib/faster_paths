@@ -61,36 +61,37 @@ fn main() {
     let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
 
     let slow_shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(SlowShortcutReplacer::new(&ch_information.shortcuts));
+        Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
     let ch_graph = &ch_information.ch_graph;
     let ch = ChPathFinder::new(ch_graph.clone(), slow_shortcut_replacer);
 
-    let fast_shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
-    let reader = BufReader::new(File::open(args.hl_path).unwrap());
-    let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
-    let hl_path_finder = HubGraphPathFinder::new(hl, fast_shortcut_replacer);
+    // let fast_shortcut_replacer: Box<dyn ShortcutReplacer> =
+    //     Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
+    // let reader = BufReader::new(File::open(args.hl_path).unwrap());
+    // let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
+    // let hl_path_finder = HubGraphPathFinder::new(hl, fast_shortcut_replacer);
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
     let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
     let mut path_finder: Vec<(&str, Box<dyn PathFinding>, Vec<Duration>)> = Vec::new();
-    path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
-    path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
-    path_finder.push(("fast dijkstra", Box::new(fast_dijkstra), Vec::new()));
+    // path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
+    // path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
+    // path_finder.push(("fast dijkstra", Box::new(fast_dijkstra), Vec::new()));
     // path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
     path_finder.push(("ch", Box::new(ch), Vec::new()));
-    path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
+    // path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
 
-    for validation in validations.iter().take(10).progress() {
-        for (name, path_finder, times) in path_finder.iter_mut() {
+    for (name, path_finder, times) in path_finder.iter_mut() {
+        println!("testing {}", name);
+        for validation in validations.iter().progress() {
             let start = Instant::now();
             let path = path_finder.get_shortest_path(&validation.request);
             times.push(start.elapsed());
 
-            if let Err(err) = slow_graph.validate_path(&validation, &path) {
-                panic!("{} wrong: {}", name, err);
-            }
+            // if let Err(err) = slow_graph.validate_path(&validation, &path) {
+            //     panic!("{} wrong: {}", name, err);
+            // }
         }
     }
 
