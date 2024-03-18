@@ -49,7 +49,7 @@ fn main() {
         Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
     let reader = BufReader::new(File::open(args.hl_path).unwrap());
     let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
-    let ch: Box<dyn PathFinding> = Box::new(HubGraphPathFinder::new(hl, fast_shortcut_replacer));
+    let ch = HubGraphPathFinder::new(hl, fast_shortcut_replacer);
 
     let mut hittings_set = BTreeSet::new();
 
@@ -76,7 +76,7 @@ fn main() {
             .flatten()
             .for_each(|&v| hits[v as usize] += 1);
 
-        let max = (0..hits.len()).max_by_key(|&i| hits[i as usize]).unwrap();
+        let max = (0..hits.len()).max_by_key(|&i| hits[i]).unwrap();
         println!(
             "selected {} who hits {}%",
             max,
@@ -98,7 +98,7 @@ fn main() {
     );
 }
 
-fn get_paths(fast_graph: &FastGraph, ch: &Box<dyn PathFinding>, n: u32) -> Vec<Vec<VertexId>> {
+fn get_paths(fast_graph: &FastGraph, ch: &dyn PathFinding, n: u32) -> Vec<Vec<VertexId>> {
     (0..(n) as usize)
         .progress()
         .par_bridge()
@@ -106,8 +106,8 @@ fn get_paths(fast_graph: &FastGraph, ch: &Box<dyn PathFinding>, n: u32) -> Vec<V
             || rand::thread_rng(), // get the thread-local RNG
             |rng, _| {
                 // guarantee that source != tatget.
-                let source = rng.gen_range(0..fast_graph.number_of_vertices()) as u32;
-                let mut target = rng.gen_range(0..(fast_graph.number_of_vertices()) - 1) as u32;
+                let source = rng.gen_range(0..fast_graph.number_of_vertices());
+                let mut target = rng.gen_range(0..fast_graph.number_of_vertices() - 1);
                 if target >= source {
                     target += 1;
                 }

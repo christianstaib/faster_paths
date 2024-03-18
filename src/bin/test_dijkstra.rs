@@ -34,8 +34,7 @@ fn main() {
 
     let queue: Vec<_> = BufReader::new(File::open(args.queue_path).unwrap())
         .lines()
-        .map(|s| s.ok())
-        .filter_map(|s| s)
+        .map_while(Result::ok)
         .map(|s| {
             s.split_whitespace()
                 .map(|num| num.parse::<u32>().unwrap())
@@ -45,8 +44,7 @@ fn main() {
 
     let sol: Vec<_> = BufReader::new(File::open(args.sol_path).unwrap())
         .lines()
-        .map(|s| s.ok())
-        .flatten()
+        .map_while(Result::ok)
         .map(|s| s.parse::<i32>().unwrap())
         .collect();
 
