@@ -22,7 +22,7 @@ dirs:
 
 
 test_queue_sol:
-	cargo run --bin test_queue_sol --release --\
+	cargo run --bin test_dijkstra --release --\
 		--graph-path $(STGT_GRAPH)\
 		--queue-path $(STGT_QUEUE)\
 		--sol-path $(STGT_SOL)
