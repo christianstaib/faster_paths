@@ -47,8 +47,8 @@ fn main() {
 
     let mut path_finder: Vec<(&str, Box<dyn PathFinding>, Vec<Duration>)> = Vec::new();
 
-    let dijkstra = Dijkstra::new(fast_graph.clone());
-    path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
+    // let dijkstra = Dijkstra::new(fast_graph.clone());
+    // path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
 
     // ch
     let ch_reader = BufReader::new(File::open(args.ch_path).unwrap());
@@ -60,12 +60,12 @@ fn main() {
     path_finder.push(("ch", Box::new(ch_path_finder), Vec::new()));
 
     // hl
-    let shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(SlowShortcutReplacer::new(&ch.shortcuts));
-    let hl_reader = BufReader::new(File::open(args.hl_path).unwrap());
-    let hl: HubGraph = bincode::deserialize_from(hl_reader).unwrap();
-    let hl_path_finder = HubGraphPathFinder::new(hl, shortcut_replacer);
-    path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
+    // let shortcut_replacer: Box<dyn ShortcutReplacer> =
+    //     Box::new(SlowShortcutReplacer::new(&ch.shortcuts));
+    // let hl_reader = BufReader::new(File::open(args.hl_path).unwrap());
+    // let hl: HubGraph = bincode::deserialize_from(hl_reader).unwrap();
+    // let hl_path_finder = HubGraphPathFinder::new(hl, shortcut_replacer);
+    // path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
     let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();

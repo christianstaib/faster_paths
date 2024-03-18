@@ -49,14 +49,14 @@ fn main() {
         Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
     let reader = BufReader::new(File::open(args.hl_path).unwrap());
     let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
-    let ch = HubGraphPathFinder::new(hl, fast_shortcut_replacer);
+    let hl_path_finder = HubGraphPathFinder::new(hl, fast_shortcut_replacer);
 
     let mut hittings_set = BTreeSet::new();
 
     let n = 1_000;
     for _ in 0..1_000 {
         let mut hits = vec![0; fast_graph.number_of_vertices() as usize];
-        let paths = get_paths(&fast_graph, &ch, n);
+        let paths = get_paths(&fast_graph, &hl_path_finder, n);
         let mut legal_paths = Vec::new();
         for path in paths.into_iter() {
             let mut legal = true;
@@ -85,7 +85,7 @@ fn main() {
         hittings_set.insert(max as VertexId);
     }
 
-    let final_paths = get_paths(&fast_graph, &ch, 10 * n);
+    let final_paths = get_paths(&fast_graph, &hl_path_finder, 10 * n);
     let hitted_final_paths: Vec<_> = final_paths
         .iter()
         .filter(|path| path.iter().any(|v| hittings_set.contains(v)))
