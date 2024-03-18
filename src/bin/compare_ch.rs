@@ -53,7 +53,7 @@ fn main() {
         let shortcut_replacer: Box<dyn ShortcutReplacer + Sync + Send> =
             Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
 
-        let ch = ChPathFinder::new(&contracted_graph.ch_graph, &shortcut_replacer);
+        let ch = ChPathFinder::new(contracted_graph.ch_graph, shortcut_replacer);
         let mut times = Vec::new();
         for test in tests.iter() {
             let before = Instant::now();
