@@ -1,6 +1,7 @@
 /target
 /tests/data/test_geojson/
 /tests/data/image/
+/tests/data/
 *.osm.pbf
 *.mbtiles
 *.mbtiles-journal
