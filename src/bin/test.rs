@@ -50,37 +50,30 @@ fn main() {
     let slow_graph = GraphFactory::from_gr_file(args.graph_path.as_str());
     let fast_graph = FastGraph::from_graph(&slow_graph);
 
-    let slow_dijkstra = SlowDijkstra::new(slow_graph.clone());
+    let mut path_finder: Vec<(&str, Box<dyn PathFinding>, Vec<Duration>)> = Vec::new();
 
     let dijkstra = Dijkstra::new(fast_graph.clone());
-    let fast_dijkstra = FastDijkstra::new(&fast_graph);
+    path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
 
-    // let bi_dijkstra = BiDijkstra::new(&fast_graph);
+    // ch
+    let ch_reader = BufReader::new(File::open(args.ch_path).unwrap());
+    let ch: ContractedGraphInformation = bincode::deserialize_from(ch_reader).unwrap();
 
-    let reader = BufReader::new(File::open(args.ch_path).unwrap());
-    let ch_information: ContractedGraphInformation = bincode::deserialize_from(reader).unwrap();
+    let shortcut_replacer: Box<dyn ShortcutReplacer> =
+        Box::new(FastShortcutReplacer::new(&ch.shortcuts));
+    let ch_path_finder = ChPathFinder::new(ch.ch_graph.clone(), shortcut_replacer);
+    path_finder.push(("ch", Box::new(ch_path_finder), Vec::new()));
 
-    let slow_shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
-    let ch_graph = &ch_information.ch_graph;
-    let ch = ChPathFinder::new(ch_graph.clone(), slow_shortcut_replacer);
-
-    // let fast_shortcut_replacer: Box<dyn ShortcutReplacer> =
-    //     Box::new(FastShortcutReplacer::new(&ch_information.shortcuts));
-    // let reader = BufReader::new(File::open(args.hl_path).unwrap());
-    // let hl: HubGraph = bincode::deserialize_from(reader).unwrap();
-    // let hl_path_finder = HubGraphPathFinder::new(hl, fast_shortcut_replacer);
+    // hl
+    let shortcut_replacer: Box<dyn ShortcutReplacer> =
+        Box::new(FastShortcutReplacer::new(&ch.shortcuts));
+    let hl_reader = BufReader::new(File::open(args.hl_path).unwrap());
+    let hl: HubGraph = bincode::deserialize_from(hl_reader).unwrap();
+    let hl_path_finder = HubGraphPathFinder::new(hl, shortcut_replacer);
+    path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
 
     let reader = BufReader::new(File::open(args.tests_path).unwrap());
     let validations: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
-
-    let mut path_finder: Vec<(&str, Box<dyn PathFinding>, Vec<Duration>)> = Vec::new();
-    // path_finder.push(("slow dijkstra", Box::new(slow_dijkstra), Vec::new()));
-    // path_finder.push(("dijkstra", Box::new(dijkstra), Vec::new()));
-    // path_finder.push(("fast dijkstra", Box::new(fast_dijkstra), Vec::new()));
-    // path_finder.push(("bi dijkstra", Box::new(bi_dijkstra), Vec::new()));
-    path_finder.push(("ch", Box::new(ch), Vec::new()));
-    // path_finder.push(("hl", Box::new(hl_path_finder), Vec::new()));
 
     for (name, path_finder, times) in path_finder.iter_mut() {
         println!("testing {}", name);
