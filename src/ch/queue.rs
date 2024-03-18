@@ -1,7 +1,7 @@
 use std::collections::BinaryHeap;
 
 use indicatif::ParallelProgressIterator;
-use rand::seq::SliceRandom;
+
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
@@ -32,10 +32,10 @@ impl CHQueue {
         };
         for letter in priority_functions_letters.chars() {
             match letter {
-                'E' => queue.register(1, EdgeDifference::new(&graph)),
-                'D' => queue.register(1, DeletedNeighbors::new(&graph)),
-                'C' => queue.register(1, CostOfQueries::new(&graph)),
-                'S' => queue.register(1, SearchSpaceSize::new(&graph)),
+                'E' => queue.register(1, EdgeDifference::new(graph)),
+                'D' => queue.register(1, DeletedNeighbors::new(graph)),
+                'C' => queue.register(1, CostOfQueries::new(graph)),
+                'S' => queue.register(1, SearchSpaceSize::new(graph)),
                 _ => panic!("letter not recognized"),
             }
         }
@@ -79,7 +79,7 @@ impl CHQueue {
     }
 
     pub fn priority_and_shortcuts(&self, vertex: VertexId, graph: &Graph) -> (i32, Vec<Shortcut>) {
-        let shortcuts_results = get_shortcuts(&graph, vertex, 100);
+        let shortcuts_results = get_shortcuts(graph, vertex, 100);
         let priority = self
             .priority_terms
             .iter()
@@ -92,7 +92,7 @@ impl CHQueue {
     }
 
     fn initialize(&mut self, graph: &Graph) {
-        let mut vertices: Vec<u32> = (0..graph.number_of_vertices()).map(|x| x as u32).collect();
+        let vertices: Vec<u32> = (0..graph.number_of_vertices()).collect();
         // vertices.shuffle(&mut rand::thread_rng());
 
         self.queue = vertices

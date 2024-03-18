@@ -19,7 +19,7 @@ pub struct ChPathFinder {
 
 impl PathFinding for ChPathFinder {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        let (meeting_vertex, _, forward, backward) = self.get_data(&route_request)?;
+        let (meeting_vertex, _, forward, backward) = self.get_data(route_request)?;
         let path = path_from_bidirectional_search(meeting_vertex, &forward, &backward)?;
         let path = self.shortuct_replacer.replace_shortcuts(&path);
         Some(path)

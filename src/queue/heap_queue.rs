@@ -7,6 +7,12 @@ pub struct HeapQueue {
     queue: BinaryHeap<DijkstraQueueElement>,
 }
 
+impl Default for HeapQueue {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HeapQueue {
     pub fn new() -> HeapQueue {
         HeapQueue {

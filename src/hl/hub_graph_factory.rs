@@ -17,7 +17,7 @@ impl<'a> HubGraphFactory<'a> {
 
     pub fn get_hl(&self) -> HubGraph {
         let mut forward_labels: Vec<_> = (0..self.ch_information.ch_graph.number_of_vertices())
-            .map(|vertex| Label::new(vertex))
+            .map(Label::new)
             .collect();
 
         let mut reverse_labels = forward_labels.clone();
@@ -43,7 +43,7 @@ impl<'a> HubGraphFactory<'a> {
         forward_labels
             .iter_mut()
             .chain(reverse_labels.iter_mut())
-            .for_each(|label| Self::set_predecessor(label));
+            .for_each(Self::set_predecessor);
 
         HubGraph {
             forward_labels,

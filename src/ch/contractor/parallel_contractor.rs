@@ -41,6 +41,12 @@ impl Contractor for ParallelContractor {
     }
 }
 
+impl Default for ParallelContractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ParallelContractor {
     pub fn new() -> Self {
         ParallelContractor {}
@@ -77,7 +83,7 @@ impl ParallelContractor {
 
         let vertex_shortcuts: Vec<_> = ids
             .par_iter()
-            .map(|&vertex| (vertex, get_shortcuts(&graph, vertex, 100)))
+            .map(|&vertex| (vertex, get_shortcuts(graph, vertex, 100)))
             .collect();
 
         vertex_shortcuts

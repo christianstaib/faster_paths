@@ -103,7 +103,7 @@ fn get_paths(fast_graph: &FastGraph, ch: &dyn PathFinding, n: u32) -> Vec<Vec<Ve
         .progress()
         .par_bridge()
         .map_init(
-            || rand::thread_rng(), // get the thread-local RNG
+            rand::thread_rng, // get the thread-local RNG
             |rng, _| {
                 // guarantee that source != tatget.
                 let source = rng.gen_range(0..fast_graph.number_of_vertices());

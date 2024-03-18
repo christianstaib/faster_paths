@@ -21,7 +21,7 @@ impl ShortcutReplacer for FastShortcutReplacer {
 
 impl FastShortcutReplacer {
     pub fn new(shortcuts: &Vec<(DirectedEdge, VertexId)>) -> Self {
-        let slow_shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
+        let slow_shortcut_replacer = SlowShortcutReplacer::new(shortcuts);
         let shortcuts = shortcuts
             .par_iter()
             .map(|(edge, skiped_vertex)| {

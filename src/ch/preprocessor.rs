@@ -9,6 +9,12 @@ pub struct Preprocessor {
     contractor: Box<dyn Contractor>,
 }
 
+impl Default for Preprocessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Preprocessor {
     pub fn new() -> Self {
         Preprocessor {
@@ -21,7 +27,7 @@ impl Preprocessor {
     }
 
     pub fn get_ch(&self, graph: &Graph) -> ContractedGraphInformation {
-        let (shortcuts, levels) = self.contractor.contract(&graph);
+        let (shortcuts, levels) = self.contractor.contract(graph);
 
         let mut graph = graph.clone();
         for shortcut in shortcuts.iter() {
@@ -59,11 +65,11 @@ fn removing_edges_violating_level_property(graph: &Graph, levels: &Vec<Vec<u32>>
         .collect();
 
     out_edges.iter_mut().enumerate().for_each(|(tail, edges)| {
-        edges.retain(|edge| vertex_to_level[edge.head as usize] >= vertex_to_level[tail as usize]);
+        edges.retain(|edge| vertex_to_level[edge.head as usize] >= vertex_to_level[tail]);
     });
 
     in_edges.iter_mut().enumerate().for_each(|(head, edges)| {
-        edges.retain(|edge| vertex_to_level[head as usize] <= vertex_to_level[edge.tail as usize]);
+        edges.retain(|edge| vertex_to_level[head] <= vertex_to_level[edge.tail as usize]);
     });
 
     Graph::from_out_in_edges(out_edges, in_edges)

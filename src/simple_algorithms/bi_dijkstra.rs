@@ -17,7 +17,7 @@ pub struct BiDijkstra<'a> {
 
 impl<'a> PathFinding for BiDijkstra<'a> {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        self.get_data(&route_request)
+        self.get_data(route_request)
     }
 
     fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
@@ -37,9 +37,9 @@ impl<'a> BiDijkstra<'a> {
         let mut backward_data =
             DijkstraData::new(self.graph.number_of_vertices() as usize, request.target());
 
-        let route = self.get_route_data(&mut forward_data, &mut backward_data);
+        
 
-        route
+        self.get_route_data(&mut forward_data, &mut backward_data)
     }
 
     pub fn get_route_data(

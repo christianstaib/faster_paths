@@ -45,13 +45,12 @@ impl Graph {
         self.out_edges
             .iter()
             .enumerate()
-            .map(|(tail, out_edges)| {
+            .flat_map(|(tail, out_edges)| {
                 out_edges
                     .iter()
                     .map(|out_edge| out_edge.set_tail(tail as VertexId))
                     .collect::<Vec<_>>()
             })
-            .flatten()
             .collect()
     }
 
@@ -205,10 +204,8 @@ impl Graph {
                 }
 
                 // Ensure that path is not empty when it should not be.
-                if path.vertices.is_empty() {
-                    if validation.request.source() != validation.request.target() {
-                        return Err("path is empty".to_string());
-                    }
+                if path.vertices.is_empty() && validation.request.source() != validation.request.target() {
+                    return Err("path is empty".to_string());
                 }
 
                 // Ensure fist and last vertex of path are source and target of request.
@@ -229,9 +226,7 @@ impl Graph {
                     let tail = path.vertices[index];
                     let head = path.vertices[index + 1];
                     if let Some(min_edge) = self.out_edges[tail as usize]
-                        .iter()
-                        .filter(|edge| edge.head == head)
-                        .next()
+                        .iter().find(|edge| edge.head == head)
                     {
                         edges.push(min_edge);
                     } else {
@@ -247,10 +242,8 @@ impl Graph {
             } else {
                 return Err("a path was found where there should be none".to_string());
             }
-        } else {
-            if !validation.weight.is_none() {
-                return Err("no path is found but there should be one".to_string());
-            }
+        } else if validation.weight.is_some() {
+            return Err("no path is found but there should be one".to_string());
         }
 
         Ok(())

@@ -37,7 +37,7 @@ fn main() {
         .progress()
         .par_bridge()
         .map_init(
-            || rand::thread_rng(), // get the thread-local RNG
+            rand::thread_rng, // get the thread-local RNG
             |rng, _| {
                 // guarantee that source != tatget.
                 let source = rng.gen_range(0..graph.number_of_vertices());

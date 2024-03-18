@@ -7,6 +7,12 @@ pub struct RadixQueue {
     heap: RadixHeapMap<i32, u32>,
 }
 
+impl Default for RadixQueue {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RadixQueue {
     pub fn new() -> RadixQueue {
         RadixQueue {

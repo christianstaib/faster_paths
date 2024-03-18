@@ -35,7 +35,7 @@ impl HubGraph {
                     overlap = overlap
                         .take()
                         .filter(|&(current_weight, _, _)| current_weight <= combined_weight)
-                        .or_else(|| {
+                        .or({
                             Some((combined_weight, index_forward as u32, index_reverse as u32))
                         });
 
