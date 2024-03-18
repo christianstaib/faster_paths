@@ -46,7 +46,7 @@ fn main() {
     let sol: Vec<_> = BufReader::new(File::open(args.sol_path).unwrap())
         .lines()
         .map(|s| s.ok())
-        .filter_map(|s| s)
+        .flatten()
         .map(|s| s.parse::<i32>().unwrap())
         .collect();
 
