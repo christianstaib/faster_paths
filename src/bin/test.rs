@@ -8,10 +8,7 @@ use clap::Parser;
 use faster_paths::{
     ch::{
         ch_path_finder::ChPathFinder,
-        shortcut_replacer::{
-            fast_shortcut_replacer::FastShortcutReplacer,
-            slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer,
-        },
+        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
         ContractedGraphInformation,
     },
     graphs::{
@@ -20,9 +17,7 @@ use faster_paths::{
         path::{PathFinding, ShortestPathValidation},
     },
     hl::{hub_graph::HubGraph, hub_graph_path_finder::HubGraphPathFinder},
-    simple_algorithms::{
-        dijkstra::Dijkstra, fast_dijkstra::FastDijkstra, slow_dijkstra::SlowDijkstra,
-    },
+    simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ProgressIterator;
 
@@ -60,13 +55,13 @@ fn main() {
     let ch: ContractedGraphInformation = bincode::deserialize_from(ch_reader).unwrap();
 
     let shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(FastShortcutReplacer::new(&ch.shortcuts));
+        Box::new(SlowShortcutReplacer::new(&ch.shortcuts));
     let ch_path_finder = ChPathFinder::new(ch.ch_graph.clone(), shortcut_replacer);
     path_finder.push(("ch", Box::new(ch_path_finder), Vec::new()));
 
     // hl
     let shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(FastShortcutReplacer::new(&ch.shortcuts));
+        Box::new(SlowShortcutReplacer::new(&ch.shortcuts));
     let hl_reader = BufReader::new(File::open(args.hl_path).unwrap());
     let hl: HubGraph = bincode::deserialize_from(hl_reader).unwrap();
     let hl_path_finder = HubGraphPathFinder::new(hl, shortcut_replacer);
@@ -79,7 +74,7 @@ fn main() {
         println!("testing {}", name);
         for validation in validations.iter().progress() {
             let start = Instant::now();
-            let path = path_finder.get_shortest_path(&validation.request);
+            let _path = path_finder.get_shortest_path(&validation.request);
             times.push(start.elapsed());
 
             // if let Err(err) = slow_graph.validate_path(&validation, &path) {
