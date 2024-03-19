@@ -40,7 +40,7 @@ fn main() {
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
-    let letters = vec!["E", "EC", "ED", "EDC"]; //, "ES", "EC", "EDS", "EDC", "EDCS"];
+    let letters = vec!["E", "EC", "ED", "EDC", "ES", "ECS", "EDS", "EDCS"];
 
     for letters in letters {
         let contractor = Box::new(SerialContractor::new(letters));
@@ -56,7 +56,7 @@ fn main() {
         let ch = ChPathFinder::new(contracted_graph.ch_graph.clone(), shortcut_replacer);
         let mut times = Vec::new();
         let mut search_space_size = Vec::new();
-        for test in tests.iter() {
+        for test in tests.iter().take(10_000) {
             let before = Instant::now();
             let _ = ch.get_shortest_path_weight(&test.request);
             times.push(before.elapsed());
