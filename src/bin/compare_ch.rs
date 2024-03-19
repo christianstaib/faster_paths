@@ -55,18 +55,23 @@ fn main() {
 
         let ch = ChPathFinder::new(contracted_graph.ch_graph.clone(), shortcut_replacer);
         let mut times = Vec::new();
+        let mut search_space_size = Vec::new();
         for test in tests.iter() {
             let before = Instant::now();
             let _ = ch.get_shortest_path_weight(&test.request);
             times.push(before.elapsed());
+
+            let (_, _, forward, backward) = ch.get_data(&test.request);
+            search_space_size.push(forward.dijkstra_rank() + backward.dijkstra_rank());
         }
         let query_time: Duration = (times.iter().sum::<Duration>()) / (times.len() as u32);
         println!(
-            "{:<5} ch construction: {:>9} s {:?}, {} shortcuts added",
+            "{:<5} ch construction: {:>9} s {:?}, {} shortcuts added, {} avg expanded nodes",
             letters,
             ch_time.as_secs(),
             query_time,
-            contracted_graph.shortcuts.len()
+            contracted_graph.shortcuts.len(),
+            search_space_size.iter().sum::<u32>() / search_space_size.len() as u32
         );
 
         let writer = BufWriter::new(

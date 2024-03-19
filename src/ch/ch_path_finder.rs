@@ -19,14 +19,14 @@ pub struct ChPathFinder {
 
 impl PathFinding for ChPathFinder {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        let (meeting_vertex, _, forward, backward) = self.get_data(route_request)?;
+        let (meeting_vertex, _, forward, backward) = self.get_data(route_request);
         let path = path_from_bidirectional_search(meeting_vertex, &forward, &backward)?;
         let path = self.shortuct_replacer.replace_shortcuts(&path);
         Some(path)
     }
 
     fn get_shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        let (_, weight, _, _) = self.get_data(path_request)?;
+        let (_, weight, _, _) = self.get_data(path_request);
         Some(weight)
     }
 }
@@ -42,7 +42,7 @@ impl ChPathFinder {
     pub fn get_data(
         &self,
         request: &ShortestPathRequest,
-    ) -> Option<(VertexId, Weight, DijkstraData, DijkstraData)> {
+    ) -> (VertexId, Weight, DijkstraData, DijkstraData) {
         let number_of_vertices = self.ch_graph.number_of_vertices() as usize;
         let mut forward_data = DijkstraData::new(number_of_vertices, request.source());
         let mut backward_data = DijkstraData::new(number_of_vertices, request.target());
@@ -114,10 +114,6 @@ impl ChPathFinder {
             }
         }
 
-        if meeting_weight == u32::MAX {
-            return None;
-        }
-
-        Some((meeting_vertex, meeting_weight, forward_data, backward_data))
+        (meeting_vertex, meeting_weight, forward_data, backward_data)
     }
 }
