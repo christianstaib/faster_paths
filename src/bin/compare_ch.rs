@@ -57,11 +57,11 @@ fn main() {
         let mut times = Vec::new();
         let mut search_space_size = Vec::new();
         for test in tests.iter().take(10_000) {
-            let before = Instant::now();
-            let _ = ch.get_shortest_path_weight(&test.request);
-            times.push(before.elapsed());
+            // let _ = ch.get_shortest_path_weight(&test.request);
 
+            let before = Instant::now();
             let (_, _, forward, backward) = ch.get_data(&test.request);
+            times.push(before.elapsed());
             search_space_size.push(forward.dijkstra_rank() + backward.dijkstra_rank());
         }
         let query_time: Duration = (times.iter().sum::<Duration>()) / (times.len() as u32);

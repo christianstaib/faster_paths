@@ -79,7 +79,7 @@ impl CHQueue {
     }
 
     pub fn priority_and_shortcuts(&self, vertex: VertexId, graph: &Graph) -> (i32, Vec<Shortcut>) {
-        let shortcuts_results = get_shortcuts(graph, vertex, 100);
+        let shortcuts_results = get_shortcuts(graph, vertex, u32::MAX);
         let priority = self
             .priority_terms
             .iter()

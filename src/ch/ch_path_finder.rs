@@ -50,55 +50,32 @@ impl ChPathFinder {
         let mut meeting_weight = u32::MAX;
         let mut meeting_vertex = u32::MAX;
 
-        while !forward_data.is_empty() || !backward_data.is_empty() {
-            if let Some(DijkstraQueueElement { vertex, .. }) = forward_data.pop() {
-                let forward_weight = forward_data.verticies[vertex as usize].weight.unwrap();
+        let mut f = 0;
+        let mut b = 0;
 
-                let mut stall = false;
-                for in_edge in self.ch_graph.in_edges(vertex).iter() {
-                    if let Some(predecessor_weight) =
-                        forward_data.verticies[in_edge.tail as usize].weight
-                    {
-                        if predecessor_weight + in_edge.weight < forward_weight {
-                            stall = true;
-                            break;
+        while (!forward_data.is_empty() && (f < meeting_weight))
+            || (!backward_data.is_empty() && (b < meeting_weight))
+        {
+            if f < meeting_weight {
+                if let Some(DijkstraQueueElement { vertex, .. }) = forward_data.pop() {
+                    let forward_weight = forward_data.verticies[vertex as usize].weight.unwrap();
+                    f = std::cmp::max(f, forward_weight);
+
+                    let mut stall = false;
+                    for in_edge in self.ch_graph.in_edges(vertex).iter() {
+                        if let Some(predecessor_weight) =
+                            forward_data.verticies[in_edge.tail as usize].weight
+                        {
+                            if predecessor_weight + in_edge.weight < forward_weight {
+                                stall = true;
+                                break;
+                            }
                         }
                     }
-                }
 
-                if !stall {
-                    if let Some(backward_weight) = backward_data.verticies[vertex as usize].weight {
-                        let weight = forward_weight + backward_weight;
-                        if weight < meeting_weight {
-                            meeting_weight = weight;
-                            meeting_vertex = vertex;
-                        }
-                    }
-                    self.ch_graph
-                        .out_edges(vertex)
-                        .iter()
-                        .for_each(|edge| forward_data.update(vertex, edge.head, edge.weight));
-                }
-            }
-
-            if let Some(DijkstraQueueElement { vertex, .. }) = backward_data.pop() {
-                let backward_weight = backward_data.verticies[vertex as usize].weight.unwrap();
-
-                let mut stall = false;
-                for out_edge in self.ch_graph.out_edges(vertex).iter() {
-                    if let Some(predecessor_weight) =
-                        backward_data.verticies[out_edge.head as usize].weight
-                    {
-                        if predecessor_weight + out_edge.weight < backward_weight {
-                            stall = true;
-                            break;
-                        }
-                    }
-                }
-
-                if !stall {
-                    if forward_data.verticies[vertex as usize].is_expanded {
-                        if let Some(forward_weight) = forward_data.verticies[vertex as usize].weight
+                    if !stall {
+                        if let Some(backward_weight) =
+                            backward_data.verticies[vertex as usize].weight
                         {
                             let weight = forward_weight + backward_weight;
                             if weight < meeting_weight {
@@ -106,11 +83,52 @@ impl ChPathFinder {
                                 meeting_vertex = vertex;
                             }
                         }
+                        self.ch_graph
+                            .out_edges(vertex)
+                            .iter()
+                            .for_each(|edge| forward_data.update(vertex, edge.head, edge.weight));
                     }
-                    self.ch_graph.in_edges(vertex).iter().for_each(|edge| {
-                        backward_data.update(vertex, edge.tail, edge.weight);
-                    });
                 }
+            }
+
+            if b < meeting_weight {
+                if let Some(DijkstraQueueElement { vertex, .. }) = backward_data.pop() {
+                    let backward_weight = backward_data.verticies[vertex as usize].weight.unwrap();
+                    b = std::cmp::max(b, backward_weight);
+
+                    let mut stall = false;
+                    for out_edge in self.ch_graph.out_edges(vertex).iter() {
+                        if let Some(predecessor_weight) =
+                            backward_data.verticies[out_edge.head as usize].weight
+                        {
+                            if predecessor_weight + out_edge.weight < backward_weight {
+                                stall = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if !stall {
+                        if forward_data.verticies[vertex as usize].is_expanded {
+                            if let Some(forward_weight) =
+                                forward_data.verticies[vertex as usize].weight
+                            {
+                                let weight = forward_weight + backward_weight;
+                                if weight < meeting_weight {
+                                    meeting_weight = weight;
+                                    meeting_vertex = vertex;
+                                }
+                            }
+                        }
+                        self.ch_graph.in_edges(vertex).iter().for_each(|edge| {
+                            backward_data.update(vertex, edge.tail, edge.weight);
+                        });
+                    }
+                }
+            }
+
+            if f >= meeting_weight && b >= meeting_weight {
+                break;
             }
         }
 
