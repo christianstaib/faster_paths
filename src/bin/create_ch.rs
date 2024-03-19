@@ -23,8 +23,10 @@ fn main() {
 
     let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
 
+    let letters = "E";
+
     let start = Instant::now();
-    let contractor = Box::new(SerialContractor::new("E"));
+    let contractor = Box::new(SerialContractor::new(letters));
     let preprocessor = Preprocessor::with_contractor(contractor);
     let contracted_graph = preprocessor.get_ch(&graph);
     println!("Generating ch took {:?}", start.elapsed());

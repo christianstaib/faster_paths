@@ -1,4 +1,10 @@
-use std::{collections::BTreeSet, fs::File, io::BufReader, usize};
+use std::{
+    collections::BTreeSet,
+    fs::File,
+    io::BufReader,
+    sync::atomic::{AtomicU32, Ordering},
+    usize,
+};
 
 use clap::Parser;
 use faster_paths::{
@@ -16,7 +22,7 @@ use faster_paths::{
 };
 use indicatif::ProgressIterator;
 use rand::Rng;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::prelude::*;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -53,39 +59,36 @@ fn main() {
 
     let mut hittings_set = BTreeSet::new();
 
-    let n = 1_000;
+    let mut paths = get_paths(fast_graph.number_of_vertices(), &hl_path_finder, 10_000_000);
+
+    let n = 100_000;
     for _ in 0..1_000 {
-        let mut hits = vec![0; fast_graph.number_of_vertices() as usize];
-        let paths = get_paths(&fast_graph, &hl_path_finder, n);
-        let mut legal_paths = Vec::new();
+        println!("1");
+        paths = paths
+            .into_par_iter()
+            .filter(|path| !path.iter().any(|v| hittings_set.contains(v)))
+            .collect();
+
+        println!("2");
+        let mut hits: Vec<_> = (0..fast_graph.number_of_vertices())
+            .map(|_| AtomicU32::new(0))
+            .collect();
         for path in paths.into_iter() {
-            let mut legal = true;
-            for v in path.iter() {
-                if hittings_set.contains(v) {
-                    legal = false;
-                    break;
-                }
-            }
-            if legal {
-                legal_paths.push(path);
+            for &v in path.iter() {
+                hits[v as usize].fetch_add(1, Ordering::Relaxed);
             }
         }
 
-        legal_paths
-            .iter()
-            .flatten()
-            .for_each(|&v| hits[v as usize] += 1);
+        let max = (0..hits.len())
+            .max_by_key(|&i| hits[i].load(Ordering::Release))
+            .unwrap();
 
-        let max = (0..hits.len()).max_by_key(|&i| hits[i]).unwrap();
-        println!(
-            "selected {} who hits {}%",
-            max,
-            100.0 * hits[max] as f64 / n as f64
-        );
+        println!("3");
+        print!("max is {}", max);
         hittings_set.insert(max as VertexId);
     }
 
-    let final_paths = get_paths(&fast_graph, &hl_path_finder, 10 * n);
+    let final_paths = get_paths(fast_graph.number_of_vertices(), &hl_path_finder, 10 * n);
     let hitted_final_paths: Vec<_> = final_paths
         .iter()
         .filter(|path| path.iter().any(|v| hittings_set.contains(v)))
@@ -98,26 +101,26 @@ fn main() {
     );
 }
 
-fn get_paths(fast_graph: &FastGraph, ch: &dyn PathFinding, n: u32) -> Vec<Vec<VertexId>> {
-    (0..(n) as usize)
+fn get_paths(
+    number_of_vertices: u32,
+    ch: &dyn PathFinding,
+    number_of_paths: u32,
+) -> Vec<Vec<VertexId>> {
+    (0..(number_of_paths) as usize)
         .progress()
         .par_bridge()
-        .map_init(
-            rand::thread_rng, // get the thread-local RNG
-            |rng, _| {
-                // guarantee that source != tatget.
-                let source = rng.gen_range(0..fast_graph.number_of_vertices());
-                let mut target = rng.gen_range(0..fast_graph.number_of_vertices() - 1);
-                if target >= source {
-                    target += 1;
-                }
+        .map_init(rand::thread_rng, |rng, _| {
+            let source = rng.gen_range(0..number_of_vertices);
+            let mut target = rng.gen_range(0..number_of_vertices - 1); // guarantee that source != tatget.
+            if target >= source {
+                target += 1;
+            }
 
-                let request = ShortestPathRequest::new(source, target).unwrap();
+            let request = ShortestPathRequest::new(source, target).unwrap();
 
-                ch.get_shortest_path(&request)
-            },
-        )
-        .filter_map(|path| path)
+            ch.get_shortest_path(&request)
+        })
+        .flatten()
         .map(|path| path.vertices)
         .collect()
 }

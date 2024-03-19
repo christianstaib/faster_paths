@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::BufReader,
+    io::{BufReader, BufWriter},
     time::{Duration, Instant},
 };
 
@@ -40,7 +40,7 @@ fn main() {
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
-    let letters = vec!["E", "EC", "ED"]; //, "ES", "EC", "EDS", "EDC", "EDCS"];
+    let letters = vec!["E", "EC", "ED", "EDC"]; //, "ES", "EC", "EDS", "EDC", "EDCS"];
 
     for letters in letters {
         let contractor = Box::new(SerialContractor::new(letters));
@@ -53,7 +53,7 @@ fn main() {
         let shortcut_replacer: Box<dyn ShortcutReplacer + Sync + Send> =
             Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
 
-        let ch = ChPathFinder::new(contracted_graph.ch_graph, shortcut_replacer);
+        let ch = ChPathFinder::new(contracted_graph.ch_graph.clone(), shortcut_replacer);
         let mut times = Vec::new();
         for test in tests.iter() {
             let before = Instant::now();
@@ -62,13 +62,16 @@ fn main() {
         }
         let query_time: Duration = (times.iter().sum::<Duration>()) / (times.len() as u32);
         println!(
-            "{:<5} ch construction: {:>9} s {:?}",
+            "{:<5} ch construction: {:>9} s {:?}, {} shortcuts added",
             letters,
             ch_time.as_secs(),
-            query_time
+            query_time,
+            contracted_graph.shortcuts.len()
         );
-    }
 
-    // let writer = BufWriter::new(File::create(args.ch_graph).unwrap());
-    // bincode::serialize_into(writer, &contracted_graph).unwrap();
+        let writer = BufWriter::new(
+            File::create(format!("{}_ch_{}.bincode", args.graph_path, letters)).unwrap(),
+        );
+        bincode::serialize_into(writer, &contracted_graph).unwrap();
+    }
 }
