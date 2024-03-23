@@ -26,8 +26,10 @@ impl<'a> HubGraphFactory<'a> {
             let labels: Vec<_> = level_list
                 .par_iter()
                 .map(|&vertex| {
-                    let forward_label = self.create_label(vertex, &forward_labels, &reverse_labels);
-                    let reverse_label = self.create_label(vertex, &reverse_labels, &forward_labels);
+                    let forward_label =
+                        self.create_f_label(vertex, &forward_labels, &reverse_labels);
+                    let reverse_label =
+                        self.create_r_label(vertex, &reverse_labels, &forward_labels);
 
                     (vertex, forward_label, reverse_label)
                 })
@@ -55,7 +57,7 @@ impl<'a> HubGraphFactory<'a> {
     ///
     /// If direction1 == forward and direction2 == reverse, the forward label is created. If the
     /// directions are switched, the reverse label is created.
-    fn create_label(
+    fn create_f_label(
         &self,
         vertex: VertexId,
         direction1_labels: &Vec<Label>,
@@ -64,6 +66,30 @@ impl<'a> HubGraphFactory<'a> {
         let mut labels = Vec::new();
         for out_edge in self.ch_information.ch_graph.out_edges(vertex) {
             let mut label = direction1_labels[out_edge.head as usize].clone();
+            label.entries.iter_mut().for_each(|entry| {
+                entry.predecessor.get_or_insert(vertex);
+                entry.weight += out_edge.weight
+            });
+            labels.push(label);
+        }
+        let mut direction1_label = Self::merge(labels, vertex);
+        Self::prune(&mut direction1_label, direction2_labels);
+        direction1_label
+    }
+
+    /// Creates the forward or reverse label for `vertex`.
+    ///
+    /// If direction1 == forward and direction2 == reverse, the forward label is created. If the
+    /// directions are switched, the reverse label is created.
+    fn create_r_label(
+        &self,
+        vertex: VertexId,
+        direction1_labels: &Vec<Label>,
+        direction2_labels: &Vec<Label>,
+    ) -> Label {
+        let mut labels = Vec::new();
+        for out_edge in self.ch_information.ch_graph.in_edges(vertex) {
+            let mut label = direction1_labels[out_edge.tail as usize].clone();
             label.entries.iter_mut().for_each(|entry| {
                 entry.predecessor.get_or_insert(vertex);
                 entry.weight += out_edge.weight
