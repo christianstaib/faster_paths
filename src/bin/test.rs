@@ -77,9 +77,9 @@ fn main() {
             let _path = path_finder.get_shortest_path(&validation.request);
             times.push(start.elapsed());
 
-            // if let Err(err) = slow_graph.validate_path(&validation, &path) {
-            //     panic!("{} wrong: {}", name, err);
-            // }
+            if let Err(err) = slow_graph.validate_path(&validation, &_path) {
+                panic!("{} wrong: {}", name, err);
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 pub mod ch;
 pub mod dijkstra_data;
+pub mod dijkstra_data_hash;
 pub mod graphs;
 pub mod hl;
 pub mod queue;
