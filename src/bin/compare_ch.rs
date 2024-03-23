@@ -12,10 +12,7 @@ use faster_paths::{
         preprocessor::Preprocessor,
         shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
     },
-    graphs::{
-        graph_factory::GraphFactory,
-        path::{PathFinding, ShortestPathValidation},
-    },
+    graphs::{graph_factory::GraphFactory, path::ShortestPathValidation},
 };
 
 /// Starts a routing service on localhost:3030/route
