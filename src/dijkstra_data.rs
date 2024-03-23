@@ -23,6 +23,12 @@ impl DijsktraEntry {
     }
 }
 
+impl Default for DijsktraEntry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct DijkstraData {
     pub queue: Box<dyn DijkstaQueue>,
     pub vertices: Vec<DijsktraEntry>,
