@@ -37,8 +37,6 @@ impl<'a> BiDijkstra<'a> {
         let mut backward_data =
             DijkstraData::new(self.graph.number_of_vertices() as usize, request.target());
 
-        
-
         self.get_route_data(&mut forward_data, &mut backward_data)
     }
 
@@ -55,11 +53,11 @@ impl<'a> BiDijkstra<'a> {
 
         while !forward.is_empty() || !backward.is_empty() {
             if let Some(DijkstraQueueElement { vertex, .. }) = forward.pop() {
-                let forward_weight = forward.verticies[vertex as usize].weight.unwrap();
+                let forward_weight = forward.vertices[vertex as usize].weight.unwrap();
                 if forward_weight > forward_max_weight {
                     forward_max_weight = forward_weight;
                 }
-                if let Some(backward_weight) = backward.verticies[vertex as usize].weight {
+                if let Some(backward_weight) = backward.vertices[vertex as usize].weight {
                     let cost = forward_weight + backward_weight;
                     if cost < meeting_weight {
                         meeting_weight = cost;
@@ -73,12 +71,12 @@ impl<'a> BiDijkstra<'a> {
             }
 
             if let Some(DijkstraQueueElement { vertex, .. }) = backward.pop() {
-                if forward.verticies[vertex as usize].is_expanded {
-                    let backward_weight = backward.verticies[vertex as usize].weight.unwrap();
+                if forward.vertices[vertex as usize].is_expanded {
+                    let backward_weight = backward.vertices[vertex as usize].weight.unwrap();
                     if backward_weight > backward_max_weight {
                         backward_max_weight = backward_weight;
                     }
-                    if let Some(forward_weight) = forward.verticies[vertex as usize].weight {
+                    if let Some(forward_weight) = forward.vertices[vertex as usize].weight {
                         let cost = forward_weight + backward_weight;
                         if cost < meeting_weight {
                             meeting_weight = cost;

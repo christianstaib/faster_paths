@@ -46,11 +46,11 @@ impl ChPathFinder {
 
         while !data.is_empty() {
             if let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
-                let forward_weight = data.verticies[vertex as usize].weight.unwrap();
+                let forward_weight = data.vertices[vertex as usize].weight.unwrap();
 
                 let mut stall = false;
                 for in_edge in self.ch_graph.in_edges(vertex).iter() {
-                    if let Some(predecessor_weight) = data.verticies[in_edge.tail as usize].weight {
+                    if let Some(predecessor_weight) = data.vertices[in_edge.tail as usize].weight {
                         if predecessor_weight + in_edge.weight < forward_weight {
                             stall = true;
                             break;
@@ -75,11 +75,11 @@ impl ChPathFinder {
         let mut data = DijkstraData::new(number_of_vertices, source);
 
         if let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
-            let backward_weight = data.verticies[vertex as usize].weight.unwrap();
+            let backward_weight = data.vertices[vertex as usize].weight.unwrap();
 
             let mut stall = false;
             for out_edge in self.ch_graph.out_edges(vertex).iter() {
-                if let Some(predecessor_weight) = data.verticies[out_edge.head as usize].weight {
+                if let Some(predecessor_weight) = data.vertices[out_edge.head as usize].weight {
                     if predecessor_weight + out_edge.weight < backward_weight {
                         stall = true;
                         break;
@@ -116,13 +116,13 @@ impl ChPathFinder {
         {
             if f < meeting_weight {
                 if let Some(DijkstraQueueElement { vertex, .. }) = forward_data.pop() {
-                    let forward_weight = forward_data.verticies[vertex as usize].weight.unwrap();
+                    let forward_weight = forward_data.vertices[vertex as usize].weight.unwrap();
                     f = std::cmp::max(f, forward_weight);
 
                     let mut stall = false;
                     for in_edge in self.ch_graph.in_edges(vertex).iter() {
                         if let Some(predecessor_weight) =
-                            forward_data.verticies[in_edge.tail as usize].weight
+                            forward_data.vertices[in_edge.tail as usize].weight
                         {
                             if predecessor_weight + in_edge.weight < forward_weight {
                                 stall = true;
@@ -133,7 +133,7 @@ impl ChPathFinder {
 
                     if !stall {
                         if let Some(backward_weight) =
-                            backward_data.verticies[vertex as usize].weight
+                            backward_data.vertices[vertex as usize].weight
                         {
                             let weight = forward_weight + backward_weight;
                             if weight < meeting_weight {
@@ -151,13 +151,13 @@ impl ChPathFinder {
 
             if b < meeting_weight {
                 if let Some(DijkstraQueueElement { vertex, .. }) = backward_data.pop() {
-                    let backward_weight = backward_data.verticies[vertex as usize].weight.unwrap();
+                    let backward_weight = backward_data.vertices[vertex as usize].weight.unwrap();
                     b = std::cmp::max(b, backward_weight);
 
                     let mut stall = false;
                     for out_edge in self.ch_graph.out_edges(vertex).iter() {
                         if let Some(predecessor_weight) =
-                            backward_data.verticies[out_edge.head as usize].weight
+                            backward_data.vertices[out_edge.head as usize].weight
                         {
                             if predecessor_weight + out_edge.weight < backward_weight {
                                 stall = true;
@@ -167,9 +167,9 @@ impl ChPathFinder {
                     }
 
                     if !stall {
-                        if forward_data.verticies[vertex as usize].is_expanded {
+                        if forward_data.vertices[vertex as usize].is_expanded {
                             if let Some(forward_weight) =
-                                forward_data.verticies[vertex as usize].weight
+                                forward_data.vertices[vertex as usize].weight
                             {
                                 let weight = forward_weight + backward_weight;
                                 if weight < meeting_weight {
