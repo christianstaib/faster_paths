@@ -8,20 +8,21 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         VertexId, Weight,
     },
+    hl::label::Label,
     queue::DijkstraQueueElement,
     simple_algorithms::bidirectional_helpers::path_from_bidirectional_search,
 };
 
 pub struct ChPathFinder {
     ch_graph: FastGraph,
-    shortuct_replacer: Box<dyn ShortcutReplacer>,
+    shortcut_replacer: Box<dyn ShortcutReplacer>,
 }
 
 impl PathFinding for ChPathFinder {
     fn get_shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
         let (meeting_vertex, _, forward, backward) = self.get_data(route_request);
         let path = path_from_bidirectional_search(meeting_vertex, &forward, &backward)?;
-        let path = self.shortuct_replacer.replace_shortcuts(&path);
+        let path = self.shortcut_replacer.replace_shortcuts(&path);
         Some(path)
     }
 
@@ -32,11 +33,68 @@ impl PathFinding for ChPathFinder {
 }
 
 impl ChPathFinder {
-    pub fn new(ch_graph: FastGraph, shortuct_replacer: Box<dyn ShortcutReplacer>) -> ChPathFinder {
+    pub fn new(ch_graph: FastGraph, shortcut_replacer: Box<dyn ShortcutReplacer>) -> ChPathFinder {
         ChPathFinder {
             ch_graph,
-            shortuct_replacer,
+            shortcut_replacer,
         }
+    }
+
+    pub fn forward_search(&self, source: VertexId) -> DijkstraData {
+        let number_of_vertices = self.ch_graph.number_of_vertices() as usize;
+        let mut data = DijkstraData::new(number_of_vertices, source);
+
+        while !data.is_empty() {
+            if let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+                let forward_weight = data.verticies[vertex as usize].weight.unwrap();
+
+                let mut stall = false;
+                for in_edge in self.ch_graph.in_edges(vertex).iter() {
+                    if let Some(predecessor_weight) = data.verticies[in_edge.tail as usize].weight {
+                        if predecessor_weight + in_edge.weight < forward_weight {
+                            stall = true;
+                            break;
+                        }
+                    }
+                }
+
+                if !stall {
+                    self.ch_graph
+                        .out_edges(vertex)
+                        .iter()
+                        .for_each(|edge| data.update(vertex, edge.head, edge.weight));
+                }
+            }
+        }
+
+        data
+    }
+
+    pub fn backward_search(&self, source: VertexId) -> DijkstraData {
+        let number_of_vertices = self.ch_graph.number_of_vertices() as usize;
+        let mut data = DijkstraData::new(number_of_vertices, source);
+
+        if let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+            let backward_weight = data.verticies[vertex as usize].weight.unwrap();
+
+            let mut stall = false;
+            for out_edge in self.ch_graph.out_edges(vertex).iter() {
+                if let Some(predecessor_weight) = data.verticies[out_edge.head as usize].weight {
+                    if predecessor_weight + out_edge.weight < backward_weight {
+                        stall = true;
+                        break;
+                    }
+                }
+            }
+
+            if !stall {
+                self.ch_graph.in_edges(vertex).iter().for_each(|edge| {
+                    data.update(vertex, edge.tail, edge.weight);
+                });
+            }
+        }
+
+        data
     }
 
     pub fn get_data(
@@ -131,6 +189,8 @@ impl ChPathFinder {
                 break;
             }
         }
+
+        assert_eq!(forward_data.dijkstra_rank(), backward_data.dijkstra_rank());
 
         (meeting_vertex, meeting_weight, forward_data, backward_data)
     }
