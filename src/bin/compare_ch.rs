@@ -75,7 +75,7 @@ fn main() {
         );
 
         let writer = BufWriter::new(
-            File::create(format!("{}_ch_{}.bincode", args.graph_path, letters)).unwrap(),
+            File::create(format!("{}.ch_{}.bincode", args.graph_path, letters)).unwrap(),
         );
         bincode::serialize_into(writer, &contracted_graph).unwrap();
     }
