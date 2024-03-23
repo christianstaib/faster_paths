@@ -27,9 +27,9 @@ impl<'a> HubGraphFactory<'a> {
                 .par_iter()
                 .map(|&vertex| {
                     let forward_label =
-                        self.create_f_label(vertex, &forward_labels, &reverse_labels);
+                        self.generate_forward_label(vertex, &forward_labels, &reverse_labels);
                     let reverse_label =
-                        self.create_r_label(vertex, &reverse_labels, &forward_labels);
+                        self.generate_reverse_label(vertex, &forward_labels, &reverse_labels);
 
                     (vertex, forward_label, reverse_label)
                 })
@@ -53,52 +53,56 @@ impl<'a> HubGraphFactory<'a> {
         }
     }
 
-    /// Creates the forward or reverse label for `vertex`.
+    /// Generates a forward label for a given vertex.
     ///
-    /// If direction1 == forward and direction2 == reverse, the forward label is created. If the
-    /// directions are switched, the reverse label is created.
-    fn create_f_label(
+    /// This function constructs a forward label for the specified vertex by considering outgoing edges. It accumulates
+    /// the weights and predecessors from the labels associated with the direction towards the destination (forward) and
+    /// adjusts them based on the graph's structure. The resulting label is optimized by merging similar paths and
+    /// pruning paths that are not efficient when considered with the reverse direction paths.
+    fn generate_forward_label(
         &self,
         vertex: VertexId,
-        direction1_labels: &Vec<Label>,
-        direction2_labels: &Vec<Label>,
+        forward_labels: &Vec<Label>,
+        reverse_labels: &Vec<Label>,
     ) -> Label {
         let mut labels = Vec::new();
         for out_edge in self.ch_information.ch_graph.out_edges(vertex) {
-            let mut label = direction1_labels[out_edge.head as usize].clone();
+            let mut label = forward_labels[out_edge.head as usize].clone();
             label.entries.iter_mut().for_each(|entry| {
                 entry.predecessor.get_or_insert(vertex);
-                entry.weight += out_edge.weight
+                entry.weight += out_edge.weight;
             });
             labels.push(label);
         }
-        let mut direction1_label = Self::merge(labels, vertex);
-        Self::prune(&mut direction1_label, direction2_labels);
-        direction1_label
+        let mut label = Self::merge(labels, vertex);
+        Self::prune(&mut label, reverse_labels);
+        label
     }
 
-    /// Creates the forward or reverse label for `vertex`.
+    /// Generates a reverse label for a given vertex.
     ///
-    /// If direction1 == forward and direction2 == reverse, the forward label is created. If the
-    /// directions are switched, the reverse label is created.
-    fn create_r_label(
+    /// This function constructs a reverse label for the specified vertex by considering incoming edges. It accumulates
+    /// the weights and predecessors from the labels associated with the direction from the source (reverse) and
+    /// adjusts them based on the graph's structure. The resulting label is optimized by merging similar paths and
+    /// pruning paths that are not efficient when considered with the forward direction paths.
+    fn generate_reverse_label(
         &self,
         vertex: VertexId,
-        direction1_labels: &Vec<Label>,
-        direction2_labels: &Vec<Label>,
+        forward_labels: &Vec<Label>,
+        reverse_labels: &Vec<Label>,
     ) -> Label {
         let mut labels = Vec::new();
-        for out_edge in self.ch_information.ch_graph.in_edges(vertex) {
-            let mut label = direction1_labels[out_edge.tail as usize].clone();
+        for in_edge in self.ch_information.ch_graph.in_edges(vertex) {
+            let mut label = reverse_labels[in_edge.tail as usize].clone();
             label.entries.iter_mut().for_each(|entry| {
                 entry.predecessor.get_or_insert(vertex);
-                entry.weight += out_edge.weight
+                entry.weight += in_edge.weight;
             });
             labels.push(label);
         }
-        let mut direction1_label = Self::merge(labels, vertex);
-        Self::prune(&mut direction1_label, direction2_labels);
-        direction1_label
+        let mut label = Self::merge(labels, vertex);
+        Self::prune(&mut label, forward_labels);
+        label
     }
 
     fn set_predecessor(label: &mut Label) {
