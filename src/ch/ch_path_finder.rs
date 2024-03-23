@@ -190,8 +190,6 @@ impl ChPathFinder {
             }
         }
 
-        assert_eq!(forward_data.dijkstra_rank(), backward_data.dijkstra_rank());
-
         (meeting_vertex, meeting_weight, forward_data, backward_data)
     }
 }

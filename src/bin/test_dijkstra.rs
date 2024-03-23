@@ -2,9 +2,16 @@ use std::{fs::File, io::BufRead, io::BufReader};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::fast_graph::FastGraph,
-    graphs::graph_factory::GraphFactory,
-    graphs::path::{PathFinding, ShortestPathRequest},
+    ch::{
+        ch_path_finder::ChPathFinder, preprocessor::Preprocessor,
+        shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
+    },
+    graphs::{
+        fast_graph::FastGraph,
+        graph_factory::GraphFactory,
+        path::{PathFinding, ShortestPathRequest},
+    },
+    hl::{hub_graph_factory::HubGraphFactory, hub_graph_path_finder::HubGraphPathFinder},
     simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ProgressIterator;
@@ -32,6 +39,16 @@ fn main() {
     let fast_graph = FastGraph::from_graph(&graph);
     let dijkstra = Dijkstra::new(fast_graph);
 
+    let preprocessor = Preprocessor::new();
+    let contracted_graph = preprocessor.get_ch(&graph);
+    let shortcut_replacer: Box<_> =
+        Box::new(SlowShortcutReplacer::new(&contracted_graph.shortcuts));
+
+    let ch = ChPathFinder::new(contracted_graph.ch_graph.clone(), shortcut_replacer.clone());
+    let hl = HubGraphFactory::new(&contracted_graph);
+    let hl = hl.get_hl();
+    let hl = HubGraphPathFinder::new(hl, shortcut_replacer);
+
     let queue: Vec<_> = BufReader::new(File::open(args.queue_path).unwrap())
         .lines()
         .map_while(Result::ok)
@@ -52,12 +69,30 @@ fn main() {
         let request = ShortestPathRequest::new(source_target[0], source_target[1]).unwrap();
 
         // test dijkstra
-        let response = dijkstra.get_shortest_path(&request);
+        let path = dijkstra.get_shortest_path(&request);
         let mut cost: i32 = -1;
-        if let Some(route) = response {
+        if let Some(route) = path {
             cost = route.weight as i32;
         }
-        assert_eq!(true_cost, &cost, "dijkstra wrong");
+        assert_eq!(
+            true_cost, &cost,
+            "Dijkstra wrong. Weight of path should be {} but is {}",
+            true_cost, cost
+        );
+
+        let ch_path = ch.get_shortest_path(&request);
+        if let Some(ch_path) = ch_path {
+            assert_eq!(cost, ch_path.weight as i32);
+        } else {
+            assert_eq!(true_cost, &-1);
+        }
+
+        let hl_path = hl.get_shortest_path(&request);
+        if let Some(hl_path) = hl_path {
+            assert_eq!(cost, hl_path.weight as i32);
+        } else {
+            assert_eq!(true_cost, &-1);
+        }
     }
 
     println!("dijkstra correct");
