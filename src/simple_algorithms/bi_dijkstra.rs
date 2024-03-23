@@ -1,5 +1,5 @@
 use crate::{
-    dijkstra_data::DijkstraData,
+    dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
         fast_graph::FastGraph,
         path::{Path, PathFinding, ShortestPathRequest},
@@ -33,17 +33,17 @@ impl<'a> BiDijkstra<'a> {
 
     pub fn get_data(&self, request: &ShortestPathRequest) -> Option<Path> {
         let mut forward_data =
-            DijkstraData::new(self.graph.number_of_vertices() as usize, request.source());
+            DijkstraDataVec::new(self.graph.number_of_vertices() as usize, request.source());
         let mut backward_data =
-            DijkstraData::new(self.graph.number_of_vertices() as usize, request.target());
+            DijkstraDataVec::new(self.graph.number_of_vertices() as usize, request.target());
 
         self.get_route_data(&mut forward_data, &mut backward_data)
     }
 
     pub fn get_route_data(
         &self,
-        forward: &mut DijkstraData,
-        backward: &mut DijkstraData,
+        forward: &mut DijkstraDataVec,
+        backward: &mut DijkstraDataVec,
     ) -> Option<Path> {
         let mut meeting_weight = u32::MAX;
         let mut meeting_vertex = u32::MAX;

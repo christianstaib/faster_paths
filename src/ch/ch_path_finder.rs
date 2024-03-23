@@ -2,7 +2,7 @@ use std::usize;
 
 use crate::{
     ch::shortcut_replacer::ShortcutReplacer,
-    dijkstra_data_hash::DijkstraDataHash,
+    dijkstra_data::{dijkstra_data_map::DijkstraDataHashMap, DijkstraData},
     graphs::{
         fast_graph::FastGraph,
         path::{Path, PathFinding, ShortestPathRequest},
@@ -100,10 +100,10 @@ impl ChPathFinder {
     pub fn get_data(
         &self,
         request: &ShortestPathRequest,
-    ) -> (VertexId, Weight, DijkstraDataHash, DijkstraDataHash) {
+    ) -> (VertexId, Weight, DijkstraDataHashMap, DijkstraDataHashMap) {
         let number_of_vertices = self.ch_graph.number_of_vertices() as usize;
-        let mut forward_data = DijkstraDataHash::new(number_of_vertices, request.source());
-        let mut backward_data = DijkstraDataHash::new(number_of_vertices, request.target());
+        let mut forward_data = DijkstraDataHashMap::new(number_of_vertices, request.source());
+        let mut backward_data = DijkstraDataHashMap::new(number_of_vertices, request.target());
 
         let mut meeting_weight = u32::MAX;
         let mut meeting_vertex = u32::MAX;

@@ -1,9 +1,9 @@
 use crate::{
-    dijkstra_data::DijkstraData,
+    dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
         graph::Graph,
         path::{Path, PathFinding, ShortestPathRequest},
-        {VertexId, Weight},
+        VertexId, Weight,
     },
     queue::DijkstraQueueElement,
 };
@@ -31,8 +31,8 @@ impl SlowDijkstra {
         SlowDijkstra { graph }
     }
 
-    pub fn get_data(&self, source: VertexId, target: VertexId) -> DijkstraData {
-        let mut data = DijkstraData::new(self.graph.number_of_vertices() as usize, source);
+    pub fn get_data(&self, source: VertexId, target: VertexId) -> DijkstraDataVec {
+        let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, source);
 
         while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
             if vertex == target {

@@ -6,6 +6,8 @@ use crate::{
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
 
+use super::DijkstraData;
+
 #[derive(Clone)]
 pub struct DijsktraEntry {
     pub predecessor: Option<VertexId>,
@@ -29,31 +31,33 @@ impl Default for DijsktraEntry {
     }
 }
 
-pub struct DijkstraData {
+pub struct DijkstraDataVec {
     pub queue: Box<dyn DijkstaQueue>,
     pub vertices: Vec<DijsktraEntry>,
 }
 
-impl DijkstraData {
-    pub fn new(num_nodes: usize, source: VertexId) -> DijkstraData {
+impl DijkstraDataVec {
+    pub fn new(num_nodes: usize, source: VertexId) -> DijkstraDataVec {
         let queue = Box::new(RadixQueue::new());
         let vertices = vec![DijsktraEntry::new(); num_nodes];
-        let mut data = DijkstraData { queue, vertices };
+        let mut data = DijkstraDataVec { queue, vertices };
 
         data.vertices[source as usize].weight = Some(0);
         data.queue.push(DijkstraQueueElement::new(0, source));
 
         data
     }
+}
 
-    pub fn search_space_size(&self) -> u32 {
+impl DijkstraData for DijkstraDataVec {
+    fn search_space_size(&self) -> u32 {
         self.vertices
             .iter()
             .filter(|entry| entry.is_expanded)
             .count() as u32
     }
 
-    pub fn pop(&mut self) -> Option<DijkstraQueueElement> {
+    fn pop(&mut self) -> Option<DijkstraQueueElement> {
         while let Some(state) = self.queue.pop() {
             if !self.vertices[state.vertex as usize].is_expanded {
                 self.vertices[state.vertex as usize].is_expanded = true;
@@ -64,11 +68,11 @@ impl DijkstraData {
         None
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
 
-    pub fn update(&mut self, tail: VertexId, head: VertexId, edge_weight: Weight) {
+    fn update(&mut self, tail: VertexId, head: VertexId, edge_weight: Weight) {
         let alternative_cost = self.vertices[tail as usize].weight.unwrap() + edge_weight;
         let current_cost = self.vertices[head as usize].weight.unwrap_or(u32::MAX);
         if alternative_cost < current_cost {
@@ -79,7 +83,7 @@ impl DijkstraData {
         }
     }
 
-    pub fn get_path(&self, target: VertexId) -> Option<Path> {
+    fn get_path(&self, target: VertexId) -> Option<Path> {
         let mut route = vec![target];
         let mut current = target;
         while let Some(predecessor) = self.vertices.get(current as usize)?.predecessor {
@@ -93,14 +97,14 @@ impl DijkstraData {
         })
     }
 
-    pub fn dijkstra_rank(&self) -> u32 {
+    fn dijkstra_rank(&self) -> u32 {
         self.vertices
             .iter()
             .filter(|entry| entry.is_expanded)
             .count() as u32
     }
 
-    pub fn get_scanned_vertices(&self) -> Vec<VertexId> {
+    fn get_scanned_vertices(&self) -> Vec<VertexId> {
         self.vertices
             .iter()
             .enumerate()

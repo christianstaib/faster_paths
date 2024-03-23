@@ -1,31 +1,32 @@
-use std::time::Instant;
-
 use ahash::{HashMap, HashMapExt};
 
 use crate::{
-    dijkstra_data::DijsktraEntry,
     graphs::{path::Path, VertexId, Weight},
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
 
-pub struct DijkstraDataHash {
+use super::{dijkstra_data_vec::DijsktraEntry, DijkstraData};
+
+pub struct DijkstraDataHashMap {
     pub queue: Box<dyn DijkstaQueue>,
     pub vertices: HashMap<VertexId, DijsktraEntry>,
 }
 
-impl DijkstraDataHash {
-    pub fn new(num_nodes: usize, source: VertexId) -> DijkstraDataHash {
+impl DijkstraDataHashMap {
+    pub fn new(num_nodes: usize, source: VertexId) -> DijkstraDataHashMap {
         let queue = Box::new(RadixQueue::new());
         let vertices = HashMap::new();
-        let mut data = DijkstraDataHash { queue, vertices };
+        let mut data = DijkstraDataHashMap { queue, vertices };
 
         data.vertices.entry(source).or_default().weight = Some(0);
         data.queue.push(DijkstraQueueElement::new(0, source));
 
         data
     }
+}
 
-    pub fn search_space_size(&self) -> u32 {
+impl DijkstraData for DijkstraDataHashMap {
+    fn search_space_size(&self) -> u32 {
         //     self.vertices
         //         .iter()
         //         .filter(|entry| entry.is_expanded)
@@ -33,7 +34,7 @@ impl DijkstraDataHash {
         0
     }
 
-    pub fn pop(&mut self) -> Option<DijkstraQueueElement> {
+    fn pop(&mut self) -> Option<DijkstraQueueElement> {
         while let Some(state) = self.queue.pop() {
             let mut entry = self.vertices.get_mut(&state.vertex).unwrap();
             if !entry.is_expanded {
@@ -45,11 +46,11 @@ impl DijkstraDataHash {
         None
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
 
-    pub fn update(&mut self, tail: VertexId, head: VertexId, edge_weight: Weight) {
+    fn update(&mut self, tail: VertexId, head: VertexId, edge_weight: Weight) {
         let alternative_cost = self.vertices[&tail].weight.unwrap() + edge_weight;
         let head_entry = self.vertices.entry(head).or_default();
         let current_cost = head_entry.weight.unwrap_or(u32::MAX);
@@ -61,7 +62,7 @@ impl DijkstraDataHash {
         }
     }
 
-    pub fn get_path(&self, target: VertexId) -> Option<Path> {
+    fn get_path(&self, target: VertexId) -> Option<Path> {
         let mut route = vec![target];
         let mut current = target;
         while let Some(predecessor) = self.vertices.get(&current)?.predecessor {
@@ -75,7 +76,7 @@ impl DijkstraDataHash {
         })
     }
 
-    pub fn dijkstra_rank(&self) -> u32 {
+    fn dijkstra_rank(&self) -> u32 {
         // self.vertices
         //     .iter()
         //     .filter(|entry| entry.is_expanded)
@@ -83,7 +84,7 @@ impl DijkstraDataHash {
         0
     }
 
-    pub fn get_scanned_vertices(&self) -> Vec<VertexId> {
+    fn get_scanned_vertices(&self) -> Vec<VertexId> {
         // self.vertices
         //     .iter()
         //     .enumerate()
