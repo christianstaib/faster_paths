@@ -1,7 +1,9 @@
+use itertools::Itertools;
 use std::{
     fs::File,
     io::{BufReader, BufWriter},
     time::{Duration, Instant},
+    vec,
 };
 
 use clap::Parser;
@@ -30,6 +32,34 @@ struct Args {
     tests_path: String,
 }
 
+fn generate_permutations(functions: Vec<&str>, values: Vec<&str>) -> Vec<String> {
+    let all_combinations = (0..functions.len())
+        .map(|_| values.iter())
+        .multi_cartesian_product()
+        .collect::<Vec<_>>();
+
+    let mut permutations = Vec::new();
+    for combination in all_combinations {
+        // Skip combinations where all values are the same
+        if combination[0] != &values[0] {
+            if combination.iter().all(|&x| x == combination[0]) {
+                continue;
+            }
+        }
+
+        let permutation = functions
+            .iter()
+            .zip(combination.iter())
+            .map(|(&function, &value)| format!("{}:{}", function, value))
+            .collect::<Vec<_>>()
+            .join("_");
+
+        permutations.push(permutation);
+    }
+
+    permutations
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -37,7 +67,15 @@ fn main() {
     let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
-    let letters = vec!["E", "EC", "ED", "EDC", "ES", "ECS", "EDS", "EDCS"];
+    let functions = vec!["E", "D", "C"];
+    let values = vec!["1", "2", "3"];
+
+    let letters = generate_permutations(functions, values);
+    let letters: Vec<_> = letters.iter().map(|s| s.as_str()).collect();
+
+    for f in letters.iter() {
+        println!("{}", f);
+    }
 
     for letters in letters {
         let contractor = Box::new(SerialContractor::new(letters));

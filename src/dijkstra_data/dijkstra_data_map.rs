@@ -77,11 +77,10 @@ impl DijkstraData for DijkstraDataHashMap {
     }
 
     fn dijkstra_rank(&self) -> u32 {
-        // self.vertices
-        //     .iter()
-        //     .filter(|entry| entry.is_expanded)
-        //     .count() as u32
-        0
+        self.vertices
+            .values()
+            .filter(|entry| entry.is_expanded)
+            .count() as u32
     }
 
     fn get_scanned_vertices(&self) -> Vec<VertexId> {

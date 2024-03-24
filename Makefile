@@ -15,7 +15,7 @@ STGT_GRAPH := $(FMI_DIR)/stgtregbz.fmi
 STGT_QUEUE := $(FMI_DIR)/stgtregbz.que
 STGT_SOL := $(FMI_DIR)/stgtregbz.sol
 
-NUM_TESTS := 1000
+NUM_TESTS := 100000
 
 dirs:
 	mkdir $(FMI_DIR)

@@ -30,12 +30,15 @@ impl CHQueue {
             queue,
             priority_terms: priority_functions,
         };
-        for letter in priority_functions_letters.chars() {
-            match letter {
-                'E' => queue.register(190, EdgeDifference::new(graph)),
-                'D' => queue.register(120, DeletedNeighbors::new(graph)),
-                'C' => queue.register(120, CostOfQueries::new(graph)),
-                'S' => queue.register(1, SearchSpaceSize::new(graph)),
+        for letter in priority_functions_letters.split("_") {
+            let letter = letter.split(":").collect::<Vec<_>>();
+            let priority_function = *letter.get(0).unwrap();
+            let coefficent = letter.get(1).unwrap().parse::<u32>().unwrap();
+            match priority_function {
+                "E" => queue.register(coefficent, EdgeDifference::new(graph)),
+                "D" => queue.register(coefficent, DeletedNeighbors::new(graph)),
+                "C" => queue.register(coefficent, CostOfQueries::new(graph)),
+                "S" => queue.register(coefficent, SearchSpaceSize::new(graph)),
                 _ => panic!("letter not recognized"),
             }
         }
@@ -45,11 +48,11 @@ impl CHQueue {
 
     fn register(
         &mut self,
-        coefficent: i32,
+        coefficent: u32,
         priority_function: impl PriorityFunction + 'static + Sync,
     ) {
         self.priority_terms
-            .push((coefficent, Box::new(priority_function)));
+            .push((coefficent as i32, Box::new(priority_function)));
     }
 
     // Lazy poping the vertex with minimum priority.
