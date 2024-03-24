@@ -1,5 +1,7 @@
 use std::usize;
 
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+
 use crate::{
     ch::shortcut_replacer::ShortcutReplacer,
     dijkstra_data::{dijkstra_data_map::DijkstraDataHashMap, DijkstraData},
@@ -9,7 +11,7 @@ use crate::{
         VertexId, Weight,
     },
     hl::label::Label,
-    queue::DijkstraQueueElement,
+    queue::{heap_queue::HeapQueue, radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
     simple_algorithms::bidirectional_helpers::path_from_bidirectional_search,
 };
 
@@ -113,6 +115,8 @@ impl ChPathFinder {
         let mut forward_data: Box<dyn DijkstraData> = Box::new(forward_data);
         let mut backward_data: Box<dyn DijkstraData> = Box::new(backward_data);
 
+        let mut forward_stall_weight: HashMap<VertexId, Weight> = HashMap::new();
+
         let mut meeting_weight = u32::MAX;
         let mut meeting_vertex = u32::MAX;
 
@@ -128,15 +132,18 @@ impl ChPathFinder {
                     f = std::cmp::max(f, forward_weight);
 
                     let mut stall = false;
-                    for in_edge in self.ch_graph.in_edges(vertex).iter() {
-                        if let Some(predecessor_weight) =
-                            forward_data.get_vertex_entry(in_edge.tail).weight
-                        {
-                            if predecessor_weight + in_edge.weight < forward_weight {
-                                stall = true;
-                                break;
-                            }
+                    if let Some(&forward_stall_weight) = forward_stall_weight.get(&vertex) {
+                        if forward_stall_weight < forward_weight {
+                            println!("stalled by propagation");
+                            stall = true;
                         }
+                    } else {
+                        stall = self.stall_forward(
+                            vertex,
+                            &mut forward_data,
+                            forward_weight,
+                            &mut forward_stall_weight,
+                        );
                     }
 
                     if !stall {
@@ -152,6 +159,8 @@ impl ChPathFinder {
                             .out_edges(vertex)
                             .iter()
                             .for_each(|edge| forward_data.update(vertex, edge.head, edge.weight));
+                    } else {
+                        // propagate
                     }
                 }
             }
@@ -161,17 +170,7 @@ impl ChPathFinder {
                     let backward_weight = backward_data.get_vertex_entry(vertex).weight.unwrap();
                     b = std::cmp::max(b, backward_weight);
 
-                    let mut stall = false;
-                    for out_edge in self.ch_graph.out_edges(vertex).iter() {
-                        if let Some(predecessor_weight) =
-                            backward_data.get_vertex_entry(out_edge.head).weight
-                        {
-                            if predecessor_weight + out_edge.weight < backward_weight {
-                                stall = true;
-                                break;
-                            }
-                        }
-                    }
+                    let stall = self.stall_backward(vertex, &mut backward_data, backward_weight);
 
                     if !stall {
                         if let Some(forward_weight) = forward_data.get_vertex_entry(vertex).weight {
@@ -187,12 +186,70 @@ impl ChPathFinder {
                     }
                 }
             }
-
-            if f >= meeting_weight && b >= meeting_weight {
-                break;
-            }
         }
 
         (meeting_vertex, meeting_weight, forward_data, backward_data)
+    }
+
+    fn stall_backward(
+        &self,
+        vertex: u32,
+        backward_data: &mut Box<dyn DijkstraData>,
+        backward_weight: u32,
+    ) -> bool {
+        for out_edge in self.ch_graph.out_edges(vertex).iter() {
+            if let Some(predecessor_weight) = backward_data.get_vertex_entry(out_edge.head).weight {
+                if predecessor_weight + out_edge.weight < backward_weight {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    fn stall_forward(
+        &self,
+        vertex: u32,
+        forward_data: &mut Box<dyn DijkstraData>,
+        forward_weight: u32,
+        forward_stall_weight: &mut HashMap<VertexId, Weight>,
+    ) -> bool {
+        for in_edge in self.ch_graph.in_edges(vertex).iter() {
+            if let Some(predecessor_weight) = forward_data.get_vertex_entry(in_edge.tail).weight {
+                if predecessor_weight + in_edge.weight < forward_weight {
+                    // propagate
+                    self.propagate_stall_forward(in_edge.tail, forward_data, forward_stall_weight);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    fn propagate_stall_forward(
+        &self,
+        vertex: VertexId,
+        forward_data: &mut Box<dyn DijkstraData>,
+        forward_stall_weight: &mut HashMap<VertexId, Weight>,
+    ) {
+        let mut weights = HeapQueue::new();
+        let mut expaned = HashSet::new();
+        weights.push(DijkstraQueueElement::new(0, vertex));
+        while let Some(state) = weights.pop() {
+            if expaned.insert(state.vertex) {
+                continue;
+            }
+            forward_stall_weight.insert(state.weight, state.vertex);
+            for in_edge in self.ch_graph.in_edges(state.vertex).iter() {
+                if let Some(state_weight) = forward_data.get_vertex_entry(state.vertex).weight {
+                    if let Some(pre_weight) = forward_data.get_vertex_entry(in_edge.tail).weight {
+                        let alt_weight = pre_weight + in_edge.weight;
+                        if alt_weight < state_weight {
+                            weights.push(DijkstraQueueElement::new(alt_weight, in_edge.tail));
+                        }
+                    }
+                }
+            }
+        }
     }
 }

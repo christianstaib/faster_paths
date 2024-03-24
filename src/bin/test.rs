@@ -8,7 +8,10 @@ use clap::Parser;
 use faster_paths::{
     ch::{
         ch_path_finder::ChPathFinder,
-        shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+        shortcut_replacer::{
+            fast_shortcut_replacer::FastShortcutReplacer,
+            slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer,
+        },
         ContractedGraphInformation,
     },
     graphs::{
@@ -55,7 +58,7 @@ fn main() {
     let ch: ContractedGraphInformation = bincode::deserialize_from(ch_reader).unwrap();
 
     let shortcut_replacer: Box<dyn ShortcutReplacer> =
-        Box::new(SlowShortcutReplacer::new(&ch.shortcuts));
+        Box::new(FastShortcutReplacer::new(&ch.shortcuts));
     let ch_path_finder = ChPathFinder::new(ch.ch_graph.clone(), shortcut_replacer);
     path_finder.push(("ch", Box::new(ch_path_finder), Vec::new()));
 
