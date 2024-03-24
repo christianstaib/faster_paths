@@ -107,8 +107,8 @@ impl ChPathFinder {
         Box<dyn DijkstraData>,
     ) {
         let number_of_vertices = self.ch_graph.number_of_vertices() as usize;
-        let mut forward_data = DijkstraDataHashMap::new(number_of_vertices, request.source());
-        let mut backward_data = DijkstraDataHashMap::new(number_of_vertices, request.target());
+        let forward_data = DijkstraDataHashMap::new(number_of_vertices, request.source());
+        let backward_data = DijkstraDataHashMap::new(number_of_vertices, request.target());
 
         let mut forward_data: Box<dyn DijkstraData> = Box::new(forward_data);
         let mut backward_data: Box<dyn DijkstraData> = Box::new(backward_data);
