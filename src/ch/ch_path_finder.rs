@@ -100,10 +100,18 @@ impl ChPathFinder {
     pub fn get_data(
         &self,
         request: &ShortestPathRequest,
-    ) -> (VertexId, Weight, DijkstraDataHashMap, DijkstraDataHashMap) {
+    ) -> (
+        VertexId,
+        Weight,
+        Box<dyn DijkstraData>,
+        Box<dyn DijkstraData>,
+    ) {
         let number_of_vertices = self.ch_graph.number_of_vertices() as usize;
         let mut forward_data = DijkstraDataHashMap::new(number_of_vertices, request.source());
         let mut backward_data = DijkstraDataHashMap::new(number_of_vertices, request.target());
+
+        let mut forward_data: Box<dyn DijkstraData> = Box::new(forward_data);
+        let mut backward_data: Box<dyn DijkstraData> = Box::new(backward_data);
 
         let mut meeting_weight = u32::MAX;
         let mut meeting_vertex = u32::MAX;
@@ -116,29 +124,28 @@ impl ChPathFinder {
         {
             if f < meeting_weight {
                 if let Some(DijkstraQueueElement { vertex, .. }) = forward_data.pop() {
-                    let forward_weight = forward_data.vertices[&vertex].weight.unwrap();
+                    let forward_weight = forward_data.get_vertex_entry(vertex).weight.unwrap();
                     f = std::cmp::max(f, forward_weight);
 
                     let mut stall = false;
                     for in_edge in self.ch_graph.in_edges(vertex).iter() {
-                        if let Some(predecessor_entry) = forward_data.vertices.get(&in_edge.tail) {
-                            if let Some(predecessor_weight) = predecessor_entry.weight {
-                                if predecessor_weight + in_edge.weight < forward_weight {
-                                    stall = true;
-                                    break;
-                                }
+                        if let Some(predecessor_weight) =
+                            forward_data.get_vertex_entry(in_edge.tail).weight
+                        {
+                            if predecessor_weight + in_edge.weight < forward_weight {
+                                stall = true;
+                                break;
                             }
                         }
                     }
 
                     if !stall {
-                        if let Some(backward_entry) = backward_data.vertices.get(&vertex) {
-                            if let Some(backward_weight) = backward_entry.weight {
-                                let weight = forward_weight + backward_weight;
-                                if weight < meeting_weight {
-                                    meeting_weight = weight;
-                                    meeting_vertex = vertex;
-                                }
+                        if let Some(backward_weight) = backward_data.get_vertex_entry(vertex).weight
+                        {
+                            let weight = forward_weight + backward_weight;
+                            if weight < meeting_weight {
+                                meeting_weight = weight;
+                                meeting_vertex = vertex;
                             }
                         }
                         self.ch_graph
@@ -151,30 +158,27 @@ impl ChPathFinder {
 
             if b < meeting_weight {
                 if let Some(DijkstraQueueElement { vertex, .. }) = backward_data.pop() {
-                    let backward_weight = backward_data.vertices[&vertex].weight.unwrap();
+                    let backward_weight = backward_data.get_vertex_entry(vertex).weight.unwrap();
                     b = std::cmp::max(b, backward_weight);
 
                     let mut stall = false;
                     for out_edge in self.ch_graph.out_edges(vertex).iter() {
-                        if let Some(predecessor_entry) = backward_data.vertices.get(&out_edge.head)
+                        if let Some(predecessor_weight) =
+                            backward_data.get_vertex_entry(out_edge.head).weight
                         {
-                            if let Some(predecessor_weight) = predecessor_entry.weight {
-                                if predecessor_weight + out_edge.weight < backward_weight {
-                                    stall = true;
-                                    break;
-                                }
+                            if predecessor_weight + out_edge.weight < backward_weight {
+                                stall = true;
+                                break;
                             }
                         }
                     }
 
                     if !stall {
-                        if let Some(forward_entry) = forward_data.vertices.get(&vertex) {
-                            if let Some(forward_weight) = forward_entry.weight {
-                                let weight = forward_weight + backward_weight;
-                                if weight < meeting_weight {
-                                    meeting_weight = weight;
-                                    meeting_vertex = vertex;
-                                }
+                        if let Some(forward_weight) = forward_data.get_vertex_entry(vertex).weight {
+                            let weight = forward_weight + backward_weight;
+                            if weight < meeting_weight {
+                                meeting_weight = weight;
+                                meeting_vertex = vertex;
                             }
                         }
                         self.ch_graph.in_edges(vertex).iter().for_each(|edge| {

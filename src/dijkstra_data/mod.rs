@@ -3,6 +3,8 @@ use crate::{
     queue::DijkstraQueueElement,
 };
 
+use self::dijkstra_data_vec::DijsktraEntry;
+
 pub mod dijkstra_data_map;
 pub mod dijkstra_data_vec;
 
@@ -20,4 +22,6 @@ pub trait DijkstraData {
     fn dijkstra_rank(&self) -> u32;
 
     fn get_scanned_vertices(&self) -> Vec<VertexId>;
+
+    fn get_vertex_entry(&mut self, vertex: VertexId) -> &mut DijsktraEntry;
 }

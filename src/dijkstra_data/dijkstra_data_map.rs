@@ -36,7 +36,7 @@ impl DijkstraData for DijkstraDataHashMap {
 
     fn pop(&mut self) -> Option<DijkstraQueueElement> {
         while let Some(state) = self.queue.pop() {
-            let mut entry = self.vertices.get_mut(&state.vertex).unwrap();
+            let entry = self.vertices.get_mut(&state.vertex).unwrap();
             if !entry.is_expanded {
                 entry.is_expanded = true;
                 return Some(state);
@@ -92,5 +92,9 @@ impl DijkstraData for DijkstraDataHashMap {
         //     .map(|(i, _)| i as VertexId)
         //     .collect()
         Vec::new()
+    }
+
+    fn get_vertex_entry(&mut self, vertex: VertexId) -> &mut DijsktraEntry {
+        self.vertices.entry(vertex).or_default()
     }
 }

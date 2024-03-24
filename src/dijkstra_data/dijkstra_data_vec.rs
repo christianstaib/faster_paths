@@ -1,3 +1,5 @@
+use std::usize;
+
 use crate::{
     graphs::{
         path::Path,
@@ -111,5 +113,9 @@ impl DijkstraData for DijkstraDataVec {
             .filter(|(_, entry)| entry.weight.is_some())
             .map(|(i, _)| i as VertexId)
             .collect()
+    }
+
+    fn get_vertex_entry(&mut self, vertex: VertexId) -> &mut DijsktraEntry {
+        &mut self.vertices[vertex as usize]
     }
 }
