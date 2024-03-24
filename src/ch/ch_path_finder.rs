@@ -1,5 +1,3 @@
-use std::usize;
-
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
 use crate::{
@@ -132,16 +130,18 @@ impl ChPathFinder {
                     f = std::cmp::max(f, forward_weight);
 
                     let mut stall = false;
-                    if let Some(&forward_stall_weight) = forward_stall_weight.get(&vertex) {
+                    if let Some(forward_stall_weight) = forward_stall_weight.remove(&vertex) {
                         if forward_stall_weight < forward_weight {
-                            println!("stalled by propagation");
+                            // println!("stalled by propagation");
                             stall = true;
+                        } else {
+                            // println!("unstalled");
                         }
                     } else {
                         stall = self.stall_forward(
                             vertex,
-                            &mut forward_data,
                             forward_weight,
+                            &mut forward_data,
                             &mut forward_stall_weight,
                         );
                     }
@@ -159,8 +159,6 @@ impl ChPathFinder {
                             .out_edges(vertex)
                             .iter()
                             .for_each(|edge| forward_data.update(vertex, edge.head, edge.weight));
-                    } else {
-                        // propagate
                     }
                 }
             }
@@ -209,16 +207,17 @@ impl ChPathFinder {
 
     fn stall_forward(
         &self,
-        vertex: u32,
+        u: VertexId,
+        u_weight: Weight,
         forward_data: &mut Box<dyn DijkstraData>,
-        forward_weight: u32,
         forward_stall_weight: &mut HashMap<VertexId, Weight>,
     ) -> bool {
-        for in_edge in self.ch_graph.in_edges(vertex).iter() {
-            if let Some(predecessor_weight) = forward_data.get_vertex_entry(in_edge.tail).weight {
-                if predecessor_weight + in_edge.weight < forward_weight {
-                    // propagate
-                    self.propagate_stall_forward(in_edge.tail, forward_data, forward_stall_weight);
+        for in_edge in self.ch_graph.in_edges(u).iter() {
+            let v = in_edge.tail;
+            if let Some(v_weight) = forward_data.get_vertex_entry(v).weight {
+                let alt_u_weight = v_weight + in_edge.weight;
+                if alt_u_weight < u_weight {
+                    // self.propagate_forward(u, alt_u_weight, forward_data, forward_stall_weight);
                     return true;
                 }
             }
@@ -226,26 +225,39 @@ impl ChPathFinder {
         return false;
     }
 
-    fn propagate_stall_forward(
+    fn propagate_forward(
         &self,
-        vertex: VertexId,
+        u: VertexId,
+        alt_u_weight: Weight,
         forward_data: &mut Box<dyn DijkstraData>,
         forward_stall_weight: &mut HashMap<VertexId, Weight>,
     ) {
-        let mut weights = HeapQueue::new();
-        let mut expaned = HashSet::new();
-        weights.push(DijkstraQueueElement::new(0, vertex));
-        while let Some(state) = weights.pop() {
-            if expaned.insert(state.vertex) {
+        let mut queue = HeapQueue::new();
+        let mut weights: HashMap<VertexId, Weight> = HashMap::new();
+
+        queue.push(DijkstraQueueElement::new(0, u));
+        weights.insert(u, alt_u_weight);
+
+        while let Some(state) = queue.pop() {
+            let x = state.vertex;
+
+            if forward_stall_weight.contains_key(&x) {
                 continue;
             }
-            forward_stall_weight.insert(state.weight, state.vertex);
-            for in_edge in self.ch_graph.in_edges(state.vertex).iter() {
-                if let Some(state_weight) = forward_data.get_vertex_entry(state.vertex).weight {
-                    if let Some(pre_weight) = forward_data.get_vertex_entry(in_edge.tail).weight {
-                        let alt_weight = pre_weight + in_edge.weight;
-                        if alt_weight < state_weight {
-                            weights.push(DijkstraQueueElement::new(alt_weight, in_edge.tail));
+
+            if let Some(x_weight) = forward_data.get_vertex_entry(x).weight {
+                if weights.get(&x).unwrap() < &x_weight {
+                    for edge in self.ch_graph.out_edges(x).iter() {
+                        if forward_stall_weight.contains_key(&edge.head) {
+                            continue;
+                        }
+                        if let Some(head_weight) = forward_data.get_vertex_entry(edge.head).weight {
+                            let alt_weight = x_weight + edge.weight;
+                            if alt_weight < head_weight {
+                                queue.push(DijkstraQueueElement::new(alt_weight, edge.head));
+                                weights.insert(edge.head, alt_weight);
+                                forward_stall_weight.insert(edge.head, alt_weight);
+                            }
                         }
                     }
                 }
