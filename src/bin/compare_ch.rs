@@ -68,7 +68,7 @@ fn main() {
     let tests: Vec<ShortestPathValidation> = serde_json::from_reader(reader).unwrap();
 
     let functions = vec!["E", "D", "C"];
-    let values = vec!["1", "2", "3"];
+    let values = vec!["10", "12", "15", "17"];
 
     let letters = generate_permutations(functions, values);
     let letters: Vec<_> = letters.iter().map(|s| s.as_str()).collect();

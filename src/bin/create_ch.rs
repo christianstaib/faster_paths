@@ -21,9 +21,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = GraphFactory::from_gr_file(args.graph_path.as_str());
+    let graph = GraphFactory::from_fmi_file(args.graph_path.as_str());
 
-    let letters = "E";
+    let letters = "E:1_D:1";
 
     let start = Instant::now();
     let contractor = Box::new(SerialContractor::new(letters));

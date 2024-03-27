@@ -3,6 +3,9 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use indicatif::{ParallelProgressIterator, ProgressIterator};
+use rayon::iter::ParallelBridge;
+
 use super::{edge::DirectedWeightedEdge, graph::Graph};
 
 #[derive(Clone)]
@@ -31,20 +34,26 @@ impl GraphFactory {
                 values.next();
             })
             .collect();
-
+        //
+        //
         let edges: Vec<_> = lines
             .by_ref()
+            .progress_count(number_of_edges as u64)
             .take(number_of_edges)
             .map(|edge_line| {
                 // srcIDX trgIDX cost type maxspeed
                 let line = edge_line.unwrap();
                 let mut values = line.split_whitespace();
+                // println!(
+                //     "{:?}",
+                //     values.clone().map(|x| x.to_string()).collect::<Vec<_>>()
+                // );
                 let tail: u32 = values.next().unwrap().parse().unwrap();
                 let head: u32 = values.next().unwrap().parse().unwrap();
-                let cost: u32 = values.next().unwrap().parse().unwrap();
+                let cost: f64 = values.next().unwrap().parse().unwrap();
                 values.next();
                 values.next();
-                DirectedWeightedEdge::new(tail, head, cost)
+                DirectedWeightedEdge::new(tail, head, cost as u32)
             })
             .collect();
 
