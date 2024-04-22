@@ -43,7 +43,7 @@ impl Preprocessor {
     }
 
     pub fn new_all_in(graph: &dyn Graph) -> Self {
-        let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(250, graph));
+        let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, graph));
         let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
         let shortcut_generator = Box::new(shortcut_generator);
         Preprocessor {
