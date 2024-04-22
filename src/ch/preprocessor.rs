@@ -8,7 +8,7 @@ use crate::{
     graphs::{
         edge::DirectedWeightedEdge, graph_functions::to_vec_graph, vec_graph::VecGraph, Graph,
     },
-    heuristics::{none_heuristic::NoneHeuristic, Heuristic},
+    heuristics::{landmarks::Landmarks, none_heuristic::NoneHeuristic, Heuristic},
 };
 
 use super::{
@@ -42,8 +42,8 @@ impl Preprocessor {
         }
     }
 
-    pub fn new_all_in() -> Self {
-        let heuristic: Box<dyn Heuristic> = Box::new(NoneHeuristic {});
+    pub fn new_all_in(graph: &dyn Graph) -> Self {
+        let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(250, graph));
         let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
         let shortcut_generator = Box::new(shortcut_generator);
         Preprocessor {

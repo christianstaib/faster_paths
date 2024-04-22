@@ -25,13 +25,7 @@ impl Heuristic for Landmark {
         Some(std::cmp::max(to_target - to_source, from_source - from_target) as u32)
     }
 
-    fn upper_bound(&self, _request: &ShortestPathRequest) -> Option<u32> {
-        todo!()
-    }
-}
-
-impl Landmark {
-    fn upper_bound_shortest_path_weight(&self, request: &ShortestPathRequest) -> Option<u32> {
+    fn upper_bound(&self, request: &ShortestPathRequest) -> Option<u32> {
         let to_target = (*self.to_weight.get(request.target() as usize)?)?;
         let from_source = (*self.from_weight.get(request.source() as usize)?)?;
         Some(from_source + to_target)
@@ -50,19 +44,15 @@ impl Heuristic for Landmarks {
             .max()
     }
 
-    fn upper_bound(&self, _request: &ShortestPathRequest) -> Option<u32> {
-        todo!()
+    fn upper_bound(&self, request: &ShortestPathRequest) -> Option<u32> {
+        self.landmarks
+            .iter()
+            .flat_map(|landmark| landmark.upper_bound(request))
+            .min()
     }
 }
 
 impl Landmarks {
-    pub fn upper_bound_shortest_path_weight(&self, request: &ShortestPathRequest) -> Option<u32> {
-        self.landmarks
-            .iter()
-            .flat_map(|landmark| landmark.upper_bound_shortest_path_weight(request))
-            .min()
-    }
-
     pub fn new(num_landmarks: u32, graph: &dyn Graph) -> Landmarks {
         let dijkstra = Dijkstra::new(graph);
         let landmarks = (0..num_landmarks)
