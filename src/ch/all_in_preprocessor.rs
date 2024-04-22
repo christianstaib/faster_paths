@@ -9,7 +9,11 @@ use crate::{
         contracted_graph::ContractedGraph, preprocessor::removing_edges_violating_level_property,
         shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer, Shortcut,
     },
-    graphs::{edge::DirectedWeightedEdge, graph_functions::to_vec_graph, Graph, VertexId},
+    graphs::{
+        edge::DirectedWeightedEdge, graph_functions::to_vec_graph, path::ShortestPathRequest,
+        Graph, VertexId,
+    },
+    heuristics::{landmarks::Landmarks, Heuristic},
 };
 
 pub struct AllInPrerocessor {}
@@ -30,9 +34,10 @@ impl AllInPrerocessor {
         )
         .unwrap();
 
+        let landmarks = Landmarks::new(100, &*graph);
         let bar = ProgressBar::new(graph.number_of_vertices() as u64);
         while let Some(vertex) = Self::get_next_vertex(&graph, &mut remaining_vertices) {
-            let start = Instant::now();
+            // let start = Instant::now();
             let vertex_shortcuts: Vec<_> = graph
                 .in_edges(vertex)
                 .par_bridge()
@@ -52,24 +57,33 @@ impl AllInPrerocessor {
                 })
                 .flatten()
                 .filter(|shortcut| {
+                    let request =
+                        ShortestPathRequest::new(shortcut.edge.tail(), shortcut.edge.head())
+                            .unwrap();
+                    landmarks.landmarks.iter().all(|landmark| {
+                        let upper_bound = landmark.upper_bound(&request).unwrap_or(u32::MAX);
+                        shortcut.edge.weight() <= upper_bound
+                    })
+                })
+                .filter(|shortcut| {
                     let current_weight = graph
                         .get_edge_weight(&shortcut.edge.unweighted())
                         .unwrap_or(u32::MAX);
                     shortcut.edge.weight() < current_weight
                 })
                 .collect();
-            let duration_create_shortcuts = start.elapsed();
+            // let duration_create_shortcuts = start.elapsed();
 
-            let start = Instant::now();
+            // let start = Instant::now();
             vertex_shortcuts.iter().for_each(|shortcut| {
                 graph.set_edge(&shortcut.edge);
             });
-            let duration_add_edges = start.elapsed();
+            // let duration_add_edges = start.elapsed();
 
             let possible_shortcuts = graph.in_edges(vertex).len() * graph.out_edges(vertex).len();
             let vertex_shortcuts_len = vertex_shortcuts.len();
 
-            let start = Instant::now();
+            // let start = Instant::now();
             // insert serial
             for shortcut in vertex_shortcuts {
                 let this_key = (
@@ -78,28 +92,28 @@ impl AllInPrerocessor {
                 );
                 shortcuts.insert(this_key, shortcut);
             }
-            let duration_add_shortcuts = start.elapsed();
+            // let duration_add_shortcuts = start.elapsed();
 
-            let start = Instant::now();
+            // let start = Instant::now();
             graph.remove_vertex(vertex);
-            let duration_remove_vertex = start.elapsed();
+            // let duration_remove_vertex = start.elapsed();
 
             levels.push(vec![vertex]);
-            writeln!(
-                writer,
-                "{},{},{},{},{},{},{},{},{}",
-                duration_create_shortcuts.as_nanos(),
-                duration_add_edges.as_nanos(),
-                duration_add_shortcuts.as_nanos(),
-                duration_remove_vertex.as_nanos(),
-                possible_shortcuts,
-                vertex_shortcuts_len,
-                graph.number_of_edges(),
-                shortcuts.len(),
-                graph.number_of_vertices() - levels.len() as u32
-            )
-            .unwrap();
-            writer.flush().unwrap();
+            // writeln!(
+            //     writer,
+            //     "{},{},{},{},{},{},{},{},{}",
+            //     duration_create_shortcuts.as_nanos(),
+            //     duration_add_edges.as_nanos(),
+            //     duration_add_shortcuts.as_nanos(),
+            //     duration_remove_vertex.as_nanos(),
+            //     possible_shortcuts,
+            //     vertex_shortcuts_len,
+            //     graph.number_of_edges(),
+            //     shortcuts.len(),
+            //     graph.number_of_vertices() - levels.len() as u32
+            // )
+            // .unwrap();
+            // writer.flush().unwrap();
 
             bar.inc(1);
         }

@@ -51,12 +51,13 @@ fn main() {
     let working_graph = ReversibleHashGraph::from_edges(&all_edges(&graph));
 
     println!("starting ch");
-    let mut preprocessor = Preprocessor::new_all_in(&graph);
     let boxed_graph = Box::new(working_graph);
-    let contracted_graph = preprocessor.get_ch(boxed_graph);
 
-    // let mut preprocessor = AllInPrerocessor {};
+    // let mut preprocessor = Preprocessor::new_all_in(&graph);
     // let contracted_graph = preprocessor.get_ch(boxed_graph);
+
+    let mut preprocessor = AllInPrerocessor {};
+    let contracted_graph = preprocessor.get_ch(boxed_graph);
 
     println!("writing ch to file");
     let writer = BufWriter::new(File::create(args.outfile).unwrap());
