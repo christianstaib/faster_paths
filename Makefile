@@ -62,6 +62,20 @@ create_ch:
 
 
 
+create_tphl_ny:
+	cargo run --bin create_top_down_hl --release --\
+		--infile $(NY_GRAPH)\
+		--tests $(NY_TESTS_RANDOM)\
+		--outfile $(NY_CH)
+
+create_tphl:
+	cargo run --bin create_top_down_hl  --release --\
+		--infile $(NETWORK_GRAPH)\
+		--tests $(NETWORK_TESTS_RANDOM)\
+		--outfile $(NETWORK_CH)
+
+
+
 hitting_set_ny:
 	cargo run --bin hitting_set --release --\
 		--graph-path $(NY_GRAPH)\
