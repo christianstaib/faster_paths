@@ -32,7 +32,8 @@ use itertools::Itertools;
 
 use rand::prelude::*;
 use rayon::iter::{
-    IndexedParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelBridge,
+    ParallelIterator,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -75,6 +76,9 @@ fn main() {
 
     let hub_graph = get_hl(&graph, &order);
 
+    let writer = BufWriter::new(File::create("hl_test.bincode").unwrap());
+    bincode::serialize_into(writer, &hub_graph).unwrap();
+
     test_cases
         .par_iter()
         .take(1_000)
@@ -94,8 +98,8 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
     let dijkstra = Dijkstra::new(graph);
 
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
         .progress()
-        .par_bridge()
         .map(|source| {
             let data = dijkstra.single_source(source);
             get_label(source, &data, &order)
@@ -120,6 +124,16 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
         },
     }
 }
+
+// let source = test_case.request.source();
+// let data = dijkstra.single_source(source);
+// let forward_label = get_label(source, &data, &order);
+
+// let target = test_case.request.target();
+// let data = dijkstra.single_source(target);
+// let reverse_label = get_label(target, &data, &order);
+
+// let x = HubGraph::overlap(&forward_label, &reverse_label);
 
 fn get_label(vertex: VertexId, data: &DijkstraDataVec, order: &[u32]) -> Label {
     let mut children = vec![Vec::new(); data.vertices.len()];
