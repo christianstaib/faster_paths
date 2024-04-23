@@ -81,7 +81,7 @@ impl<'a> Dijkstra<'a> {
         while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
             self.graph
                 .in_edges(vertex)
-                .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
+                .for_each(|edge| data.update(vertex, edge.tail(), edge.weight()));
         }
 
         data
