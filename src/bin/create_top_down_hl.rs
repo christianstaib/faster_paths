@@ -65,7 +65,7 @@ fn main() {
     let graph = GraphFactory::from_file(&args.infile);
 
     let mut order = (0..graph.number_of_vertices()).collect_vec();
-    // order.shuffle(&mut rand::thread_rng());
+    order.shuffle(&mut rand::thread_rng());
 
     let start = Instant::now();
     let labels: Vec<_> = test_cases
