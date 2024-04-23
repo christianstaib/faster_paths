@@ -2,6 +2,7 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
+    process::exit,
     time::Instant,
     usize,
 };
@@ -46,6 +47,16 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    // let graph = get_small_graph();
+    // let order = vec![11, 1, 7, 5, 2, 10, 6, 9, 3, 8, 4];
+    // let label = get_out_label(1, &graph, &order);
+
+    // println!();
+    // for entry in label.entries.iter() {
+    //     println!("{}", entry.vertex);
+    // }
+    // exit(0);
+
     println!("loading test cases");
     let reader = BufReader::new(File::open(&args.tests).unwrap());
     let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();
@@ -63,7 +74,7 @@ fn main() {
         .progress()
         .map(|test_case| {
             let forward_label = get_out_label(test_case.request.source(), &graph, &order);
-            let backward_label = get_in_label(test_case.request.target(), &graph, &order);
+            let backward_label = get_out_label(test_case.request.target(), &graph, &order);
 
             let mut weight = None;
             if let Some((this_weight, _, _)) = HubGraph::overlap(&forward_label, &backward_label) {
@@ -113,18 +124,20 @@ fn get_out_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> Label {
     while let Some(current) = stack.pop() {
         let mut current_children = std::mem::take(&mut children[current as usize]);
 
+        // println!();
+        // println!("looking at {}", current);
         while let Some(child) = current_children.pop() {
-            let child_children = std::mem::take(&mut children[child]);
-
             if order[child] > order[current] {
-                stack.extend(child_children);
+                // println!("including edge {} -> {}", current, child);
+                stack.push(child);
                 label.entries.push(LabelEntry {
                     vertex: child as VertexId,
                     predecessor: Some(current as VertexId),
                     weight: data.vertices[child].weight.unwrap(),
                 });
             } else {
-                current_children.extend(child_children);
+                // println!("not including edge {} -> {}", current, child);
+                current_children.extend(std::mem::take(&mut children[child]));
             }
         }
     }
