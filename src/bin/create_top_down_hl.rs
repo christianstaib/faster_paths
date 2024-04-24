@@ -10,30 +10,22 @@ use std::{
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use clap::Parser;
 use faster_paths::{
-    ch::{
-        all_in_preprocessor::AllInPrerocessor, preprocessor::Preprocessor,
-        shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer,
-    },
-    dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
+    ch::shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer,
+    dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
-        edge::DirectedWeightedEdge,
         graph_factory::GraphFactory,
-        graph_functions::{add_edge_bidrectional, all_edges},
         path::{PathFinding, ShortestPathTestCase},
-        reversible_hash_graph::ReversibleHashGraph,
-        reversible_vec_graph::ReversibleVecGraph,
-        Graph, VertexId, Weight,
+        Graph, VertexId,
     },
     hl::{hub_graph::HubGraph, label::Label, label_entry::LabelEntry},
     simple_algorithms::dijkstra::Dijkstra,
 };
-use indicatif::{ParallelProgressIterator, ProgressIterator};
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 
 use rand::prelude::*;
 use rayon::iter::{
-    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelBridge,
-    ParallelIterator,
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -53,16 +45,6 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-
-    // let graph = get_small_graph();
-    // let order = vec![11, 1, 7, 5, 2, 10, 6, 9, 3, 8, 4];
-    // let label = get_out_label(1, &graph, &order);
-
-    // println!();
-    // for entry in label.entries.iter() {
-    //     println!("{}", entry.vertex);
-    // }
-    // exit(0);
 
     println!("loading test cases");
     let reader = BufReader::new(File::open(&args.tests).unwrap());
@@ -95,26 +77,17 @@ fn main() {
 }
 
 fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
-    let dijkstra = Dijkstra::new(graph);
-
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
-        .map(|source| {
-            let data = dijkstra.single_source(source);
-            get_label(source, &data, &order)
-        })
+        .map(|vertex| get_out_label(vertex, graph, order))
         .collect();
 
-    let reverse_labels: Vec<_> = forward_labels.clone();
-    // let reverse_labels = (0..graph.number_of_vertices())
-    //     .progress()
-    //     .par_bridge()
-    //     .map(|source| {
-    //         let data = dijkstra.single_target(source);
-    //         get_label(source, &data, &order)
-    //     })
-    //     .collect();
+    let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
+        .progress()
+        .map(|vertex| get_in_label(vertex, graph, order))
+        .collect();
 
     HubGraph {
         forward_labels,
@@ -125,45 +98,49 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
     }
 }
 
-// let source = test_case.request.source();
-// let data = dijkstra.single_source(source);
-// let forward_label = get_label(source, &data, &order);
+fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
+    let mut search_tree = vec![Vec::new(); data.vertices.len()];
 
-// let target = test_case.request.target();
-// let data = dijkstra.single_source(target);
-// let reverse_label = get_label(target, &data, &order);
-
-// let x = HubGraph::overlap(&forward_label, &reverse_label);
-
-fn get_label(vertex: VertexId, data: &DijkstraDataVec, order: &[u32]) -> Label {
-    let mut children = vec![Vec::new(); data.vertices.len()];
-
-    for (vertex, entry) in data.vertices.iter().enumerate() {
-        if let Some(predecessor) = entry.predecessor {
-            children[predecessor as usize].push(vertex);
+    for (child, entry) in data.vertices.iter().enumerate() {
+        if let Some(parent) = entry.predecessor {
+            search_tree[parent as usize].push(child as VertexId);
         }
     }
+
+    search_tree
+}
+
+fn get_out_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> Label {
+    let dijkstra = Dijkstra::new(graph);
+    let data = dijkstra.single_source(vertex);
+    get_label_from_data(vertex, &data, &order)
+}
+
+fn get_in_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> Label {
+    let dijkstra = Dijkstra::new(graph);
+    let data = dijkstra.single_source(vertex);
+    get_label_from_data(vertex, &data, &order)
+}
+
+fn get_label_from_data(vertex: VertexId, data: &DijkstraDataVec, order: &[u32]) -> Label {
+    let mut shortest_path_tree = shortests_path_tree(data);
 
     let mut stack = vec![vertex as usize];
 
     let mut label = Label::new(vertex);
-    while let Some(current) = stack.pop() {
-        let mut current_children = std::mem::take(&mut children[current as usize]);
+    while let Some(parent) = stack.pop() {
+        let mut children = std::mem::take(&mut shortest_path_tree[parent as usize]);
 
-        // println!();
-        // println!("looking at {}", current);
-        while let Some(child) = current_children.pop() {
-            if order[child] > order[current] {
-                // println!("including edge {} -> {}", current, child);
-                stack.push(child);
+        while let Some(child) = children.pop() {
+            if order[child as usize] > order[parent] {
+                stack.push(child as usize);
                 label.entries.push(LabelEntry {
-                    vertex: child as VertexId,
-                    predecessor: Some(current as VertexId),
-                    weight: data.vertices[child].weight.unwrap(),
+                    vertex: child,
+                    predecessor: Some(parent as VertexId),
+                    weight: data.vertices[child as usize].weight.unwrap(),
                 });
             } else {
-                // println!("not including edge {} -> {}", current, child);
-                current_children.extend(std::mem::take(&mut children[child]));
+                children.extend(std::mem::take(&mut shortest_path_tree[child as usize]));
             }
         }
     }
