@@ -35,7 +35,10 @@ impl AllInPrerocessor {
         )
         .unwrap();
 
+        println!("generating landmarks");
         let landmarks = Landmarks::new(100, &*graph);
+
+        println!("starting actual contraction");
         let bar = ProgressBar::new(graph.number_of_vertices() as u64);
         while let Some(vertex) = Self::get_next_vertex(&graph, &mut remaining_vertices) {
             // let start = Instant::now();

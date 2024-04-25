@@ -1,6 +1,7 @@
 use crate::graphs::{edge::DirectedWeightedEdge, VertexId};
 
 pub mod all_in_preprocessor;
+pub mod ch_dijkstra;
 pub mod ch_priority_element;
 pub mod contracted_graph;
 pub mod contractor;
