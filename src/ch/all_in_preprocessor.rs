@@ -20,6 +20,7 @@ pub struct AllInPrerocessor {}
 
 impl AllInPrerocessor {
     pub fn get_ch(&mut self, mut graph: Box<dyn Graph>) -> ContractedGraph {
+        println!("copying graph");
         let mut base_graph = to_vec_graph(&*graph);
 
         let mut shortcuts: HashMap<(VertexId, VertexId), Shortcut> = HashMap::new();
@@ -119,14 +120,19 @@ impl AllInPrerocessor {
         }
         bar.finish();
 
+        println!("generating shortcut vector");
         let shortcuts: Vec<_> = shortcuts.into_values().collect();
 
+        println!("adding shortcuts to graph");
         for shortcut in shortcuts.iter() {
             base_graph.set_edge(&shortcut.edge);
         }
+
+        println!("creating upward and downward_graph");
         let (upward_graph, downward_graph) =
             removing_edges_violating_level_property(&base_graph, &levels);
 
+        println!("generatin shortcut lookup map");
         let shortcuts = shortcuts
             .iter()
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
