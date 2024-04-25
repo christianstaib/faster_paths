@@ -60,6 +60,14 @@ impl AllInPrerocessor {
                         .collect::<Vec<_>>()
                 })
                 .flatten()
+                // only add edges that are less expensive than currently
+                .filter(|shortcut| {
+                    let current_weight = graph
+                        .get_edge_weight(&shortcut.edge.unweighted())
+                        .unwrap_or(u32::MAX);
+                    shortcut.edge.weight() < current_weight
+                })
+                // only add shortcut deemed necessary by Heuristic
                 .filter(|shortcut| {
                     let request =
                         ShortestPathRequest::new(shortcut.edge.tail(), shortcut.edge.head())
@@ -68,12 +76,6 @@ impl AllInPrerocessor {
                         let upper_bound = landmark.upper_bound(&request).unwrap_or(u32::MAX);
                         shortcut.edge.weight() <= upper_bound
                     })
-                })
-                .filter(|shortcut| {
-                    let current_weight = graph
-                        .get_edge_weight(&shortcut.edge.unweighted())
-                        .unwrap_or(u32::MAX);
-                    shortcut.edge.weight() < current_weight
                 })
                 .collect();
             // let duration_create_shortcuts = start.elapsed();
@@ -146,7 +148,6 @@ impl AllInPrerocessor {
         ContractedGraph {
             upward_graph,
             downward_graph,
-            number_of_vertices: base_graph.number_of_vertices(),
             shortcut_replacer,
             levels,
         }

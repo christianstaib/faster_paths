@@ -80,7 +80,6 @@ impl Preprocessor {
         ContractedGraph {
             upward_graph,
             downward_graph,
-            number_of_vertices: base_graph.number_of_vertices(),
             shortcut_replacer,
             levels,
         }

@@ -6,7 +6,9 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::{all_in_preprocessor::AllInPrerocessor, preprocessor::Preprocessor},
+    ch::{
+        all_in_preprocessor::AllInPrerocessor, ch_dijkstra::ChDijkstra, preprocessor::Preprocessor,
+    },
     graphs::{
         graph_factory::GraphFactory,
         graph_functions::all_edges,
@@ -53,11 +55,11 @@ fn main() {
     println!("starting ch");
     let boxed_graph = Box::new(working_graph);
 
-    // let mut preprocessor = Preprocessor::new_wittness_search();
-    // let contracted_graph = preprocessor.get_ch(boxed_graph);
-
-    let mut preprocessor = AllInPrerocessor {};
+    let mut preprocessor = Preprocessor::new_wittness_search();
     let contracted_graph = preprocessor.get_ch(boxed_graph);
+
+    // let mut preprocessor = AllInPrerocessor {};
+    // let contracted_graph = preprocessor.get_ch(boxed_graph);
 
     println!("writing ch to file");
     let writer = BufWriter::new(File::create(args.outfile).unwrap());
@@ -69,7 +71,8 @@ fn main() {
             / contracted_graph.upward_graph.number_of_vertices() as f32
     );
 
-    let path_finder: Box<dyn PathFinding> = Box::new(contracted_graph);
+    let ch_dijkstra = ChDijkstra::new(&contracted_graph);
+    let path_finder: Box<dyn PathFinding> = Box::new(ch_dijkstra);
 
     for test_case in test_cases.iter().progress() {
         let _path = path_finder.shortest_path_weight(&test_case.request);
