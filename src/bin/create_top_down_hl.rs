@@ -21,6 +21,7 @@ use faster_paths::{
     graphs::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_factory::GraphFactory,
+        graph_functions::validate_path,
         path::{PathFinding, ShortestPathTestCase},
         Graph, VertexId,
     },
@@ -63,6 +64,7 @@ fn main() {
     let mut order = (0..graph.number_of_vertices()).collect_vec();
     order.shuffle(&mut rand::thread_rng());
 
+    println!("generating hl");
     let hub_graph = get_hl(&graph, &order);
 
     let writer = BufWriter::new(File::create("hl_test.bincode").unwrap());
@@ -73,10 +75,10 @@ fn main() {
         .take(1_000)
         .progress()
         .for_each(|test_case| {
-            let weight = hub_graph.shortest_path_weight(&test_case.request);
+            let _path = hub_graph.shortest_path(&test_case.request);
 
-            if weight != test_case.weight {
-                println!("err soll {:?}, ist {:?}", test_case.weight, weight);
+            if let Err(err) = validate_path(&graph, test_case, &_path) {
+                panic!("top down hl wrong: {}", err);
             }
         });
 
@@ -91,6 +93,10 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
         .into_par_iter()
         .progress()
         .map(|vertex| {
+            if vertex % 1_000 == 0 {
+                println!("{}/{}", vertex, graph.number_of_vertices());
+            }
+
             let (label, label_shortcuts) = get_out_label(vertex, graph, order);
 
             if let Ok(mut shortcuts) = shortcuts.lock() {
@@ -107,6 +113,10 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
         .into_par_iter()
         .progress()
         .map(|vertex| {
+            if vertex % 1_000 == 0 {
+                println!("{}/{}", vertex, graph.number_of_vertices());
+            }
+
             let (label, label_shortcuts) = get_in_label(vertex, graph, order);
 
             if let Ok(mut shortcuts) = shortcuts.lock() {
@@ -119,7 +129,13 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
         })
         .collect();
 
-    let shortcuts = Vec::new();
+    let shortcuts = shortcuts
+        .lock()
+        .unwrap()
+        .to_owned()
+        .into_iter()
+        .collect_vec();
+
     let slow_shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
     let shortcut_replacer = FastShortcutReplacer::new(&slow_shortcut_replacer);
 
