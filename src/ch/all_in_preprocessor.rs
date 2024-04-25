@@ -141,9 +141,8 @@ impl AllInPrerocessor {
         let shortcuts = shortcuts
             .iter()
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
-            .collect_vec();
-
-        let shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
+            .collect();
+        let shortcut_replacer = SlowShortcutReplacer { shortcuts };
 
         ContractedGraph {
             upward_graph,

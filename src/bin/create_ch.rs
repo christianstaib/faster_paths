@@ -7,10 +7,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::{
-        ch_dijkstra::ChDijkstra,
-        preprocessor::ch_with_witness,
-    },
+    ch::{ch_dijkstra::ChDijkstra, preprocessor::ch_with_witness},
     graphs::{
         graph_factory::GraphFactory,
         graph_functions::all_edges,
