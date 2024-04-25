@@ -8,7 +8,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     ch::{
-        ch_dijkstra::{self, ChDijkstra},
+        ch_dijkstra::{ChDijkstra},
         contracted_graph::ContractedGraph,
     },
     graphs::path::{PathFinding, ShortestPathTestCase},

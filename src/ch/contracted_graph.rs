@@ -10,21 +10,16 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    dijkstra_data::{dijkstra_data_map::DijkstraDataHashMap, DijkstraData},
     graphs::{
-        edge::{DirectedTaillessWeightedEdge, DirectedWeightedEdge},
-        path::{Path, PathFinding, ShortestPathRequest},
+        edge::{DirectedWeightedEdge},
         vec_graph::VecGraph,
-        Graph, VertexId, Weight,
+        Graph, VertexId,
     },
-    queue::DijkstraQueueElement,
-    simple_algorithms::bidirectional_helpers::path_from_bidirectional_search,
 };
 
 use super::{
     shortcut_replacer::{
-        fast_shortcut_replacer::FastShortcutReplacer, slow_shortcut_replacer::SlowShortcutReplacer,
-        ShortcutReplacer,
+        slow_shortcut_replacer::SlowShortcutReplacer,
     },
     ContractedGraphTrait,
 };

@@ -8,7 +8,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     ch::{
-        all_in_preprocessor::AllInPrerocessor, ch_dijkstra::ChDijkstra,
+        ch_dijkstra::ChDijkstra,
         preprocessor::ch_with_witness,
     },
     graphs::{

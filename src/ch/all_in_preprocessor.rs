@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufWriter, io::Write, time::Instant};
+use std::{fs::File, io::BufWriter, io::Write};
 
 use ahash::{HashMap, HashMapExt, HashSet};
 use indicatif::ProgressBar;
@@ -87,8 +87,8 @@ impl AllInPrerocessor {
             });
             // let duration_add_edges = start.elapsed();
 
-            let possible_shortcuts = graph.in_edges(vertex).len() * graph.out_edges(vertex).len();
-            let vertex_shortcuts_len = vertex_shortcuts.len();
+            let _possible_shortcuts = graph.in_edges(vertex).len() * graph.out_edges(vertex).len();
+            let _vertex_shortcuts_len = vertex_shortcuts.len();
 
             // let start = Instant::now();
             // insert serial

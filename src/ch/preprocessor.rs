@@ -10,7 +10,7 @@ use crate::{
     graphs::{
         edge::DirectedWeightedEdge, graph_functions::to_vec_graph, vec_graph::VecGraph, Graph,
     },
-    heuristics::{landmarks::Landmarks, none_heuristic::NoneHeuristic, Heuristic},
+    heuristics::{landmarks::Landmarks, Heuristic},
 };
 
 use super::{
@@ -58,7 +58,7 @@ pub fn get_ch_stateless(
         base_graph.set_edge(&shortcut.edge);
     }
 
-    let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
+    let (upward_graph, downward_graph) = partition_by_levels(&base_graph, levels);
 
     let shortcuts = shortcuts
         .iter()

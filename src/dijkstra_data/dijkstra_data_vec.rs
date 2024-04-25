@@ -1,11 +1,11 @@
 use std::usize;
 
-use keyed_priority_queue::KeyedPriorityQueue;
+
 
 use crate::{
     graphs::{path::Path, VertexId, Weight},
     queue::{
-        heap_queue::HeapQueue, keyed_queue::KeyedQueue, radix_queue::RadixQueue, DijkstaQueue,
+        radix_queue::RadixQueue, DijkstaQueue,
         DijkstraQueueElement,
     },
 };
