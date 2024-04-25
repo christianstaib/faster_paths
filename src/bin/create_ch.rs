@@ -28,7 +28,7 @@ struct Args {
     /// Infile in .gr or .fmi format
     #[arg(short, long)]
     infile: PathBuf,
-    /// Path of .fmi file
+    /// Testcase file
     #[arg(short, long)]
     tests: PathBuf,
     /// Outfile in .bincode format

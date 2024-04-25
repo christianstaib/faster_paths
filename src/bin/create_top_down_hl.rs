@@ -3,6 +3,7 @@ use std::{
     io::{BufReader, BufWriter},
     path::PathBuf,
     sync::{Arc, Mutex},
+    time::Instant,
     usize,
 };
 
@@ -75,6 +76,13 @@ fn main() {
         .take(1_000)
         .progress()
         .for_each(|test_case| {
+            // let forward_label = get_out_label(test_case.request.source(), &graph, &order).0;
+            // let reverse_label = get_in_label(test_case.request.target(), &graph, &order).0;
+            // let (weight, _, _) = HubGraph::overlap(&forward_label, &reverse_label).unwrap();
+            // let weight = Some(weight);
+
+            // assert_eq!(weight, test_case.weight);
+
             let _path = hub_graph.shortest_path(&test_case.request);
 
             if let Err(err) = validate_path(&graph, test_case, &_path) {
@@ -89,46 +97,38 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
     let shortcuts: Arc<Mutex<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(Mutex::new(HashMap::new()));
 
+    println!("generating forward labels");
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            if vertex % 1_000 == 0 {
-                println!("{}/{}", vertex, graph.number_of_vertices());
-            }
-
             let (label, label_shortcuts) = get_out_label(vertex, graph, order);
 
-            if let Ok(mut shortcuts) = shortcuts.lock() {
-                for shortcut in label_shortcuts {
-                    shortcuts.insert(shortcut.edge.unweighted(), shortcut.vertex);
-                }
-            }
+            shortcuts.lock().unwrap().extend(label_shortcuts);
 
             label
         })
         .collect();
 
-    let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
-        .into_par_iter()
-        .progress()
-        .map(|vertex| {
-            if vertex % 1_000 == 0 {
-                println!("{}/{}", vertex, graph.number_of_vertices());
-            }
+    println!("generating reverse labels");
+    // let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
+    //     .into_par_iter()
+    //     .progress()
+    //     .map(|vertex| {
+    //         if vertex % 1_000 == 0 {
+    //             println!("{}/{}", vertex, graph.number_of_vertices());
+    //         }
 
-            let (label, label_shortcuts) = get_in_label(vertex, graph, order);
+    //         let (label, label_shortcuts) = get_in_label(vertex, graph, order);
 
-            if let Ok(mut shortcuts) = shortcuts.lock() {
-                for shortcut in label_shortcuts {
-                    shortcuts.insert(shortcut.edge.unweighted(), shortcut.vertex);
-                }
-            }
+    //         shortcuts.lock().unwrap().extend(label_shortcuts);
 
-            label
-        })
-        .collect();
+    //         label
+    //     })
+    //     .collect();
+    let reverse_labels = forward_labels.clone();
 
+    println!("getting shortcuts vec");
     let shortcuts = shortcuts
         .lock()
         .unwrap()
@@ -136,7 +136,10 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
         .into_iter()
         .collect_vec();
 
+    println!("generating slow shortcut replacer");
     let slow_shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
+
+    println!("generating fast short replacer");
     let shortcut_replacer = FastShortcutReplacer::new(&slow_shortcut_replacer);
 
     HubGraph {
@@ -158,13 +161,21 @@ fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
     search_tree
 }
 
-fn get_out_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> (Label, Vec<Shortcut>) {
+fn get_out_label(
+    vertex: VertexId,
+    graph: &dyn Graph,
+    order: &[u32],
+) -> (Label, Vec<(DirectedEdge, VertexId)>) {
     let dijkstra = Dijkstra::new(graph);
     let data = dijkstra.single_source(vertex);
     get_label_from_data(vertex, &data, order)
 }
 
-fn get_in_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> (Label, Vec<Shortcut>) {
+fn get_in_label(
+    vertex: VertexId,
+    graph: &dyn Graph,
+    order: &[u32],
+) -> (Label, Vec<(DirectedEdge, VertexId)>) {
     let dijkstra = Dijkstra::new(graph);
     let data = dijkstra.single_source(vertex);
     get_label_from_data(vertex, &data, order)
@@ -174,35 +185,29 @@ fn get_label_from_data(
     vertex: VertexId,
     data: &DijkstraDataVec,
     order: &[u32],
-) -> (Label, Vec<Shortcut>) {
+) -> (Label, Vec<(DirectedEdge, VertexId)>) {
     let mut shortest_path_tree = shortests_path_tree(data);
     let mut shortcuts = Vec::new();
 
     let mut stack = vec![vertex as usize];
 
     let mut label = Label::new(vertex);
-    while let Some(parent) = stack.pop() {
-        let mut children = std::mem::take(&mut shortest_path_tree[parent]);
+    while let Some(tail) = stack.pop() {
+        let mut heads = std::mem::take(&mut shortest_path_tree[tail]);
 
-        while let Some(child) = children.pop() {
-            if order[child as usize] > order[parent] {
-                stack.push(child as usize);
+        while let Some(head) = heads.pop() {
+            if order[head as usize] > order[tail] {
+                stack.push(head as usize);
                 label.entries.push(LabelEntry {
-                    vertex: child,
-                    predecessor: Some(parent as VertexId),
-                    weight: data.vertices[child as usize].weight.unwrap(),
+                    vertex: head,
+                    predecessor: Some(tail as VertexId),
+                    weight: data.vertices[head as usize].weight.unwrap(),
                 });
             } else {
-                for &child_child in std::mem::take(&mut shortest_path_tree[child as usize]).iter() {
-                    children.push(child_child);
-                    let weight = data.vertices[child_child as usize].weight.unwrap()
-                        - data.vertices[parent].weight.unwrap();
-                    let shortcut = Shortcut {
-                        edge: DirectedWeightedEdge::new(parent as VertexId, child_child, weight)
-                            .unwrap(),
-                        vertex: child_child,
-                    };
-                    shortcuts.push(shortcut);
+                for &tail_child in std::mem::take(&mut shortest_path_tree[head as usize]).iter() {
+                    heads.push(tail_child);
+                    let edge = DirectedEdge::new(tail as VertexId, tail_child).unwrap();
+                    shortcuts.push((edge, tail_child));
                 }
             }
         }
