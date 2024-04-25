@@ -11,7 +11,9 @@ use crate::{
         shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer, Shortcut,
     },
     graphs::{
-        edge::DirectedWeightedEdge, graph_functions::to_vec_graph, path::ShortestPathRequest,
+        edge::{DirectedEdge, DirectedWeightedEdge},
+        graph_functions::to_vec_graph,
+        path::ShortestPathRequest,
         Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
@@ -24,7 +26,7 @@ impl AllInPrerocessor {
         println!("copying graph");
         let mut base_graph = to_vec_graph(&*graph);
 
-        let mut shortcuts: HashMap<(VertexId, VertexId), Shortcut> = HashMap::new();
+        let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
         let mut levels = Vec::new();
 
         let mut remaining_vertices: HashSet<VertexId> = (0..graph.number_of_vertices()).collect();
@@ -36,8 +38,8 @@ impl AllInPrerocessor {
         )
         .unwrap();
 
-        println!("generating landmarks");
-        let landmarks = Landmarks::new(100, &*graph);
+        // println!("generating landmarks");
+        // let landmarks = Landmarks::new(100, &*graph);
 
         println!("starting actual contraction");
         let bar = ProgressBar::new(graph.number_of_vertices() as u64);
@@ -68,16 +70,16 @@ impl AllInPrerocessor {
                         .unwrap_or(u32::MAX);
                     shortcut.edge.weight() < current_weight
                 })
-                // only add shortcut deemed necessary by Heuristic
-                .filter(|shortcut| {
-                    let request =
-                        ShortestPathRequest::new(shortcut.edge.tail(), shortcut.edge.head())
-                            .unwrap();
-                    landmarks.landmarks.iter().all(|landmark| {
-                        let upper_bound = landmark.upper_bound(&request).unwrap_or(u32::MAX);
-                        shortcut.edge.weight() <= upper_bound
-                    })
-                })
+                // // only add shortcut deemed necessary by Heuristic
+                // .filter(|shortcut| {
+                //     let request =
+                //         ShortestPathRequest::new(shortcut.edge.tail(), shortcut.edge.head())
+                //             .unwrap();
+                //     landmarks.landmarks.iter().all(|landmark| {
+                //         let upper_bound = landmark.upper_bound(&request).unwrap_or(u32::MAX);
+                //         shortcut.edge.weight() <= upper_bound
+                //     })
+                // })
                 .collect();
             // let duration_create_shortcuts = start.elapsed();
 
@@ -93,11 +95,7 @@ impl AllInPrerocessor {
             // let start = Instant::now();
             // insert serial
             for shortcut in vertex_shortcuts {
-                let this_key = (
-                    shortcut.edge.unweighted().tail(),
-                    shortcut.edge.unweighted().head(),
-                );
-                shortcuts.insert(this_key, shortcut);
+                shortcuts.insert(shortcut.edge.unweighted(), shortcut);
             }
             // let duration_add_shortcuts = start.elapsed();
 
@@ -126,11 +124,8 @@ impl AllInPrerocessor {
         }
         bar.finish();
 
-        println!("generating shortcut vector");
-        let shortcuts: Vec<_> = shortcuts.into_values().collect();
-
         println!("adding shortcuts to graph");
-        for shortcut in shortcuts.iter() {
+        for shortcut in shortcuts.values() {
             base_graph.set_edge(&shortcut.edge);
         }
 
@@ -139,7 +134,7 @@ impl AllInPrerocessor {
 
         println!("generatin shortcut lookup map");
         let shortcuts = shortcuts
-            .iter()
+            .values()
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
             .collect();
         let shortcut_replacer = SlowShortcutReplacer { shortcuts };

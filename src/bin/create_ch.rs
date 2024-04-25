@@ -7,7 +7,10 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::{ch_dijkstra::ChDijkstra, preprocessor::ch_with_witness},
+    ch::{
+        all_in_preprocessor::AllInPrerocessor, ch_dijkstra::ChDijkstra,
+        preprocessor::ch_with_witness,
+    },
     graphs::{
         graph_factory::GraphFactory,
         graph_functions::all_edges,
@@ -54,10 +57,10 @@ fn main() {
     println!("starting ch");
     let boxed_graph = Box::new(working_graph);
 
-    let contracted_graph = ch_with_witness(boxed_graph);
+    // let contracted_graph = ch_with_witness(boxed_graph);
 
-    // let mut preprocessor = AllInPrerocessor {};
-    // let contracted_graph = preprocessor.get_ch(boxed_graph);
+    let mut preprocessor = AllInPrerocessor {};
+    let contracted_graph = preprocessor.get_ch(boxed_graph);
 
     println!("writing ch to file");
     let writer = BufWriter::new(File::create(args.outfile).unwrap());
