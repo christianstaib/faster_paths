@@ -56,7 +56,7 @@ fn main() {
     println!("starting ch");
     let boxed_graph = Box::new(working_graph);
 
-    let mut preprocessor = Preprocessor::new_wittness_search();
+    let mut preprocessor = Preprocessor::new_landmark(&*boxed_graph);
     let contracted_graph = preprocessor.get_ch(boxed_graph);
 
     // let mut preprocessor = AllInPrerocessor {};

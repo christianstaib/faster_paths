@@ -10,9 +10,10 @@ use std::{
 use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use clap::Parser;
 use faster_paths::{
-    ch::shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer,
+    ch::{shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer, Shortcut},
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
+        edge::DirectedWeightedEdge,
         graph_factory::GraphFactory,
         path::{PathFinding, ShortestPathTestCase},
         Graph, VertexId,
@@ -113,17 +114,22 @@ fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
 fn get_out_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> Label {
     let dijkstra = Dijkstra::new(graph);
     let data = dijkstra.single_source(vertex);
-    get_label_from_data(vertex, &data, &order)
+    get_label_from_data(vertex, &data, &order).0
 }
 
 fn get_in_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> Label {
     let dijkstra = Dijkstra::new(graph);
     let data = dijkstra.single_source(vertex);
-    get_label_from_data(vertex, &data, &order)
+    get_label_from_data(vertex, &data, &order).0
 }
 
-fn get_label_from_data(vertex: VertexId, data: &DijkstraDataVec, order: &[u32]) -> Label {
+fn get_label_from_data(
+    vertex: VertexId,
+    data: &DijkstraDataVec,
+    order: &[u32],
+) -> (Label, Vec<Shortcut>) {
     let mut shortest_path_tree = shortests_path_tree(data);
+    let mut shortcuts = Vec::new();
 
     let mut stack = vec![vertex as usize];
 
@@ -140,12 +146,22 @@ fn get_label_from_data(vertex: VertexId, data: &DijkstraDataVec, order: &[u32]) 
                     weight: data.vertices[child as usize].weight.unwrap(),
                 });
             } else {
-                children.extend(std::mem::take(&mut shortest_path_tree[child as usize]));
+                for &child_child in std::mem::take(&mut shortest_path_tree[child as usize]).iter() {
+                    children.push(child_child);
+                    let weight = data.vertices[child_child as usize].weight.unwrap()
+                        - data.vertices[parent as usize].weight.unwrap();
+                    let shortcut = Shortcut {
+                        edge: DirectedWeightedEdge::new(parent as VertexId, child_child, weight)
+                            .unwrap(),
+                        vertex: child_child,
+                    };
+                    shortcuts.push(shortcut);
+                }
             }
         }
     }
 
     label.entries.sort_unstable_by_key(|entry| entry.vertex);
 
-    label
+    (label, shortcuts)
 }
