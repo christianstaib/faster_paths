@@ -2,16 +2,24 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
+    sync::{Arc, Mutex},
     usize,
 };
 
 use ahash::{HashMap, HashMapExt, HashSetExt};
 use clap::Parser;
 use faster_paths::{
-    ch::{shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer, Shortcut},
+    ch::{
+        shortcut_replacer::{
+            self,
+            fast_shortcut_replacer::{self, FastShortcutReplacer},
+            slow_shortcut_replacer::SlowShortcutReplacer,
+        },
+        Shortcut,
+    },
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
-        edge::DirectedWeightedEdge,
+        edge::{DirectedEdge, DirectedWeightedEdge},
         graph_factory::GraphFactory,
         path::{PathFinding, ShortestPathTestCase},
         Graph, VertexId,
@@ -76,24 +84,49 @@ fn main() {
 }
 
 fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
+    let shortcuts: Arc<Mutex<HashMap<DirectedEdge, VertexId>>> =
+        Arc::new(Mutex::new(HashMap::new()));
+
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
-        .map(|vertex| get_out_label(vertex, graph, order))
+        .map(|vertex| {
+            let (label, label_shortcuts) = get_out_label(vertex, graph, order);
+
+            if let Ok(mut shortcuts) = shortcuts.lock() {
+                for shortcut in label_shortcuts {
+                    shortcuts.insert(shortcut.edge.unweighted(), shortcut.vertex);
+                }
+            }
+
+            label
+        })
         .collect();
 
     let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
-        .map(|vertex| get_in_label(vertex, graph, order))
+        .map(|vertex| {
+            let (label, label_shortcuts) = get_in_label(vertex, graph, order);
+
+            if let Ok(mut shortcuts) = shortcuts.lock() {
+                for shortcut in label_shortcuts {
+                    shortcuts.insert(shortcut.edge.unweighted(), shortcut.vertex);
+                }
+            }
+
+            label
+        })
         .collect();
+
+    let shortcuts = Vec::new();
+    let slow_shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
+    let shortcut_replacer = FastShortcutReplacer::new(&slow_shortcut_replacer);
 
     HubGraph {
         forward_labels,
         reverse_labels,
-        shortcut_replacer: FastShortcutReplacer {
-            shortcuts: HashMap::new(),
-        },
+        shortcut_replacer,
     }
 }
 
@@ -109,16 +142,16 @@ fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
     search_tree
 }
 
-fn get_out_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> Label {
+fn get_out_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> (Label, Vec<Shortcut>) {
     let dijkstra = Dijkstra::new(graph);
     let data = dijkstra.single_source(vertex);
-    get_label_from_data(vertex, &data, order).0
+    get_label_from_data(vertex, &data, order)
 }
 
-fn get_in_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> Label {
+fn get_in_label(vertex: VertexId, graph: &dyn Graph, order: &[u32]) -> (Label, Vec<Shortcut>) {
     let dijkstra = Dijkstra::new(graph);
     let data = dijkstra.single_source(vertex);
-    get_label_from_data(vertex, &data, order).0
+    get_label_from_data(vertex, &data, order)
 }
 
 fn get_label_from_data(
