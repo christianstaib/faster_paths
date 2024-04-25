@@ -7,7 +7,10 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::contracted_graph::ContractedGraph,
+    ch::{
+        ch_dijkstra::{self, ChDijkstra},
+        contracted_graph::ContractedGraph,
+    },
     graphs::path::{PathFinding, ShortestPathTestCase},
 };
 use indicatif::ProgressIterator;
@@ -28,7 +31,8 @@ fn main() {
     let args = Args::parse();
 
     let graph = ContractedGraph::from_fmi_file(&args.fmi_ch);
-    let path_finder: Box<dyn PathFinding> = Box::new(graph);
+    let ch_dijkstra = ChDijkstra::new(&graph);
+    let path_finder: Box<dyn PathFinding> = Box::new(ch_dijkstra);
 
     let reader = BufReader::new(File::open(&args.random_pairs).unwrap());
     let random_pairs: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();

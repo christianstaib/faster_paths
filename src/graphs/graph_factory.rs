@@ -26,7 +26,18 @@ impl GraphFactory {
         let file = File::open(path).unwrap();
         let reader = BufReader::new(file);
 
-        let mut lines = reader.lines();
+        let mut lines = reader.lines().peekable();
+        //
+        // skip comment line
+        while let Some(next_line) = lines.peek_mut() {
+            let next_line = next_line.as_mut().expect("x");
+            if next_line.starts_with('#') {
+                lines.by_ref().next();
+            } else {
+                break;
+            }
+        }
+
         lines.by_ref().next();
         let number_of_vertices: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
         let number_of_edges: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();

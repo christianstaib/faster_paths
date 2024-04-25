@@ -1,6 +1,6 @@
 use crate::{
     ch::Shortcut,
-    graphs::{Graph, VertexId},
+    graphs::{graph_functions::neighbors, Graph, VertexId},
 };
 
 use super::PriorityFunction;
@@ -18,11 +18,11 @@ impl PriorityFunction for CostOfQueries {
     fn update(&mut self, vertex: VertexId, _graph: &Box<dyn Graph>) {
         self.costs[vertex as usize] += 1;
 
-        // for neighbor in graph.open_neighborhood(vertex, 1) {
-        //     if self.costs[vertex as usize] > self.costs[neighbor as usize] {
-        //         self.costs[neighbor as usize] = self.costs[vertex as usize];
-        //     }
-        // }
+        for neighbor in neighbors(vertex, &**_graph) {
+            if self.costs[vertex as usize] > self.costs[neighbor as usize] {
+                self.costs[neighbor as usize] = self.costs[vertex as usize];
+            }
+        }
     }
 
     fn initialize(&mut self, graph: &Box<dyn Graph>) {

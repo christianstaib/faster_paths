@@ -2,6 +2,7 @@ use std::{fs::File, io::BufWriter, io::Write, time::Instant};
 
 use ahash::{HashMap, HashMapExt, HashSet};
 use indicatif::ProgressBar;
+use itertools::Itertools;
 use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
 use crate::{
@@ -141,7 +142,7 @@ impl AllInPrerocessor {
         let shortcuts = shortcuts
             .iter()
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
-            .collect();
+            .collect_vec();
 
         let shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
 

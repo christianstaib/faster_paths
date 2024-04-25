@@ -1,6 +1,6 @@
 use crate::{
     ch::Shortcut,
-    graphs::{Graph, VertexId},
+    graphs::{graph_functions::neighbors, Graph, VertexId},
 };
 
 use super::PriorityFunction;
@@ -20,10 +20,9 @@ impl PriorityFunction for DeletedNeighbors {
     }
 
     fn update(&mut self, _vertex: VertexId, _graph: &Box<dyn Graph>) {
-        // graph
-        //     .open_neighborhood(vertex, 1)
-        //     .iter()
-        //     .for_each(|&neighbor| self.deleted_neighbors[neighbor as usize] += 1);
+        neighbors(_vertex, &**_graph)
+            .iter()
+            .for_each(|&neighbor| self.deleted_neighbors[neighbor as usize] += 1);
     }
 
     fn initialize(&mut self, graph: &Box<dyn Graph>) {

@@ -2,6 +2,7 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
+    time::{Duration, Instant},
 };
 
 use clap::Parser;
@@ -74,18 +75,23 @@ fn main() {
     let ch_dijkstra = ChDijkstra::new(&contracted_graph);
     let path_finder: Box<dyn PathFinding> = Box::new(ch_dijkstra);
 
+    let mut times = Vec::new();
     for test_case in test_cases.iter().progress() {
+        let start = Instant::now();
         let _path = path_finder.shortest_path_weight(&test_case.request);
+        times.push(start.elapsed());
 
         if _path != test_case.weight {
             println!("err soll {:?}, ist {:?}", test_case.weight, _path);
         }
-
-        // assert_eq!(_path, test_case.weight);
-        // if let Err(err) = validate_path(&graph, test_case, &_path) {
-        //     panic!("ch wrong: {}", err);
-        // }
     }
 
     println!("all {} tests passed", test_cases.len());
+
+    let average = times.iter().sum::<Duration>() / times.len() as u32;
+    println!(
+        "the average query time over {} queries was {:?}",
+        test_cases.len(),
+        average
+    );
 }

@@ -1,5 +1,7 @@
 use std::usize;
 
+use itertools::Itertools;
+
 use crate::{
     ch::{
         contracted_graph::ContractedGraph,
@@ -36,19 +38,31 @@ impl Preprocessor {
         let shortcut_generator = Box::new(shortcut_generator);
         Preprocessor {
             contractor: Box::new(SerialWitnessSearchContractor::new(
-                decode_function("E:1"),
+                decode_function("E:1_D:1_C:1"),
                 shortcut_generator,
             )),
         }
     }
 
-    pub fn new_all_in(graph: &dyn Graph) -> Self {
+    pub fn new_all_in() -> Self {
+        let heuristic: Box<dyn Heuristic> = Box::new(NoneHeuristic {});
+        let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
+        let shortcut_generator = Box::new(shortcut_generator);
+        Preprocessor {
+            contractor: Box::new(SerialWitnessSearchContractor::new(
+                decode_function("E:1_D:1_C:1"),
+                shortcut_generator,
+            )),
+        }
+    }
+
+    pub fn new_landmark(graph: &dyn Graph) -> Self {
         let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, graph));
         let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
         let shortcut_generator = Box::new(shortcut_generator);
         Preprocessor {
             contractor: Box::new(SerialWitnessSearchContractor::new(
-                decode_function("E:1"),
+                decode_function("E:1_D:1_C:1"),
                 shortcut_generator,
             )),
         }
@@ -73,7 +87,7 @@ impl Preprocessor {
         let shortcuts = shortcuts
             .iter()
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
-            .collect();
+            .collect_vec();
 
         let shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
 

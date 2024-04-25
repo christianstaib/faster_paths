@@ -6,6 +6,7 @@ use std::{
 };
 
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -21,7 +22,10 @@ use crate::{
 };
 
 use super::{
-    shortcut_replacer::{slow_shortcut_replacer::SlowShortcutReplacer, ShortcutReplacer},
+    shortcut_replacer::{
+        fast_shortcut_replacer::FastShortcutReplacer, slow_shortcut_replacer::SlowShortcutReplacer,
+        ShortcutReplacer,
+    },
     ContractedGraphTrait,
 };
 
@@ -138,38 +142,25 @@ impl ContractedGraph {
             })
             .collect();
 
-        let mut forward = vec![Vec::new(); number_of_vertices];
-        edges
+        let upward_edges = edges
             .iter()
             .filter(|edge| levels[edge.tail() as usize] <= levels[edge.head() as usize])
-            .for_each(|edge| forward[edge.tail() as usize].push(edge.tailless()));
+            .cloned()
+            .collect_vec();
+        let upward_graph = VecGraph::from_edges(&upward_edges);
 
-        let mut reverse = vec![Vec::new(); number_of_vertices];
-        edges
+        let downward_edges = edges
             .iter()
-            .filter(|edge| levels[edge.tail() as usize] >= levels[edge.head() as usize])
-            .for_each(|edge| {
-                reverse[edge.head() as usize].push(DirectedTaillessWeightedEdge::new(
-                    edge.tail(),
-                    edge.weight(),
-                ))
-            });
+            .map(DirectedWeightedEdge::reversed)
+            .filter(|edge| levels[edge.tail() as usize] <= levels[edge.head() as usize])
+            .collect_vec();
+        let downward_graph = VecGraph::from_edges(&downward_edges);
 
-        todo!();
-        // let graph = ReversibleVecGraph {
-        //     out_edges: forward,
-        //     in_edges: reverse,
-        // };
-
-        // let levels = Vec::new();
-        // let shortcut_replacer = SlowShortcutReplacer {
-        //     shortcuts: HashMap::new(),
-        // };
-
-        // ContractedGraph {
-        //     graph,
-        //     shortcut_replacer,
-        //     levels,
-        // }
+        ContractedGraph {
+            upward_graph,
+            downward_graph,
+            shortcut_replacer: SlowShortcutReplacer::new(&[]),
+            levels: Vec::new(),
+        }
     }
 }

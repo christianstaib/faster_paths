@@ -1,8 +1,10 @@
+use ahash::{HashSet, HashSetExt};
+
 use super::{
     edge::DirectedWeightedEdge,
     path::{Path, ShortestPathTestCase},
     vec_graph::VecGraph,
-    Graph,
+    Graph, VertexId,
 };
 
 /// Check if a route is correct for a given request. Panics if not.
@@ -77,6 +79,20 @@ pub fn number_of_edges(graph: &dyn Graph) -> u32 {
 
 pub fn to_vec_graph(graph: &dyn Graph) -> VecGraph {
     VecGraph::from_edges(&all_edges(graph))
+}
+
+pub fn neighbors(vertex: VertexId, graph: &dyn Graph) -> HashSet<VertexId> {
+    let mut neighbors = HashSet::new();
+
+    for out_edge in graph.out_edges(vertex) {
+        neighbors.insert(out_edge.head());
+    }
+
+    for in_edge in graph.in_edges(vertex) {
+        neighbors.insert(in_edge.tail());
+    }
+
+    neighbors
 }
 
 pub fn add_edge_bidrectional(graph: &mut dyn Graph, edge: &DirectedWeightedEdge) {

@@ -19,7 +19,7 @@ impl ShortcutReplacer for SlowShortcutReplacer {
 }
 
 impl SlowShortcutReplacer {
-    pub fn new(shortcuts: &Vec<(DirectedEdge, VertexId)>) -> Self {
+    pub fn new(shortcuts: &[(DirectedEdge, VertexId)]) -> Self {
         let shortcuts = shortcuts.iter().cloned().collect();
 
         SlowShortcutReplacer { shortcuts }
