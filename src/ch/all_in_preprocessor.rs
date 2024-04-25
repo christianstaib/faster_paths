@@ -7,7 +7,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
 use crate::{
     ch::{
-        contracted_graph::ContractedGraph, preprocessor::removing_edges_violating_level_property,
+        contracted_graph::ContractedGraph, preprocessor::partition_by_levels,
         shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer, Shortcut,
     },
     graphs::{
@@ -135,8 +135,7 @@ impl AllInPrerocessor {
         }
 
         println!("creating upward and downward_graph");
-        let (upward_graph, downward_graph) =
-            removing_edges_violating_level_property(&base_graph, &levels);
+        let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
 
         println!("generatin shortcut lookup map");
         let shortcuts = shortcuts

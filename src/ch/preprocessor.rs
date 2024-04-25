@@ -20,6 +20,7 @@ use super::{
         Contractor,
     },
     priority_function::decode_function,
+    Shortcut,
 };
 
 pub struct Preprocessor {
@@ -81,8 +82,7 @@ impl Preprocessor {
         for shortcut in shortcuts.iter() {
             base_graph.set_edge(&shortcut.edge);
         }
-        let (upward_graph, downward_graph) =
-            removing_edges_violating_level_property(&base_graph, &levels);
+        let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
 
         let shortcuts = shortcuts
             .iter()
@@ -100,10 +100,59 @@ impl Preprocessor {
     }
 }
 
-pub fn removing_edges_violating_level_property(
-    graph: &dyn Graph,
-    levels: &Vec<Vec<u32>>,
-) -> (VecGraph, VecGraph) {
+pub fn ch_with_witness(graph: Box<dyn Graph>) -> ContractedGraph {
+    let base_graph = to_vec_graph(&*graph);
+    let priority_terms = decode_function("E:1_D:1_C:1");
+
+    let shortcut_generator = ShortcutGeneratorWithWittnessSearch { max_hops: 16 };
+    let shortcut_generator = Box::new(shortcut_generator);
+    let mut contractor = SerialWitnessSearchContractor::new(priority_terms, shortcut_generator);
+
+    let (shortcuts, levels) = contractor.contract(graph);
+    get_ch_stateless(base_graph, &shortcuts, &levels)
+}
+
+pub fn ch_with_landmark(graph: Box<dyn Graph>) -> ContractedGraph {
+    let base_graph = to_vec_graph(&*graph);
+    let priority_terms = decode_function("E:1_D:1_C:1");
+
+    let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, &*graph));
+    let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
+    let shortcut_generator = Box::new(shortcut_generator);
+
+    let mut contractor = SerialWitnessSearchContractor::new(priority_terms, shortcut_generator);
+
+    let (shortcuts, levels) = contractor.contract(graph);
+    get_ch_stateless(base_graph, &shortcuts, &levels)
+}
+
+pub fn get_ch_stateless(
+    mut base_graph: VecGraph,
+    shortcuts: &[Shortcut],
+    levels: &[Vec<u32>],
+) -> ContractedGraph {
+    for shortcut in shortcuts.iter() {
+        base_graph.set_edge(&shortcut.edge);
+    }
+
+    let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
+
+    let shortcuts = shortcuts
+        .iter()
+        .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
+        .collect_vec();
+
+    let shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
+
+    ContractedGraph {
+        upward_graph,
+        downward_graph,
+        shortcut_replacer,
+        levels: levels.to_vec(),
+    }
+}
+
+pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph, VecGraph) {
     let mut vertex_to_level = vec![0; graph.number_of_vertices() as usize];
     for (level, level_list) in levels.iter().enumerate() {
         for &vertex in level_list.iter() {
