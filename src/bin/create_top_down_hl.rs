@@ -29,7 +29,7 @@ use faster_paths::{
     hl::{hub_graph::HubGraph, label::Label, label_entry::LabelEntry},
     simple_algorithms::dijkstra::Dijkstra,
 };
-use indicatif::ParallelProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
 
 use rand::prelude::*;
@@ -65,6 +65,17 @@ fn main() {
     let mut order = (0..graph.number_of_vertices()).collect_vec();
     order.shuffle(&mut rand::thread_rng());
 
+    let n = 1_000;
+
+    let start = Instant::now();
+    order.par_iter().take(n).progress().for_each(|&vertex| {
+        get_out_label(vertex, &graph, &order);
+    });
+    println!(
+        "will take {:?} for whole graph",
+        start.elapsed() / n as u32 * graph.number_of_vertices()
+    );
+
     println!("generating hl");
     let hub_graph = get_hl(&graph, &order);
 
@@ -81,13 +92,14 @@ fn main() {
             // let (weight, _, _) = HubGraph::overlap(&forward_label, &reverse_label).unwrap();
             // let weight = Some(weight);
 
-            // assert_eq!(weight, test_case.weight);
+            let weight = hub_graph.shortest_path_weight(&test_case.request);
+            assert_eq!(weight, test_case.weight);
 
-            let _path = hub_graph.shortest_path(&test_case.request);
+            // let _path = hub_graph.shortest_path(&test_case.request);
 
-            if let Err(err) = validate_path(&graph, test_case, &_path) {
-                panic!("top down hl wrong: {}", err);
-            }
+            // if let Err(err) = validate_path(&graph, test_case, &_path) {
+            //     panic!("top down hl wrong: {}", err);
+            // }
         });
 
     println!("all {} tests passed", test_cases.len());
@@ -102,7 +114,8 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (label, label_shortcuts) = get_out_label(vertex, graph, order);
+            let (mut label, label_shortcuts) = get_out_label(vertex, graph, order);
+            label.entries.shrink_to_fit();
 
             shortcuts.lock().unwrap().extend(label_shortcuts);
 
