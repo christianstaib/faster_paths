@@ -1,11 +1,10 @@
 use ahash::{HashSet, HashSetExt};
 
+use super::PriorityFunction;
 use crate::{
     ch::Shortcut,
     graphs::{Graph, VertexId},
 };
-
-use super::PriorityFunction;
 
 pub struct HittingSet {
     hitting_set: HashSet<VertexId>,

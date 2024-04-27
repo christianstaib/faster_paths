@@ -1,11 +1,10 @@
 use std::usize;
 
-use crate::graphs::VertexId;
 use serde::{Deserialize, Serialize};
 
-use crate::graphs::Weight;
-
 use super::{label::Label, HubGraphTrait};
+use crate::graphs::VertexId;
+use crate::graphs::Weight;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectedHubGraph {

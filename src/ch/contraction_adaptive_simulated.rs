@@ -2,6 +2,15 @@ use std::usize;
 
 use ahash::HashMap;
 
+use super::{
+    contractor::{
+        contraction_helper::{ShortcutGeneratorWithHeuristic, ShortcutGeneratorWithWittnessSearch},
+        serial_witness_search_contractor::SerialWitnessSearchContractor,
+        Contractor,
+    },
+    priority_function::decode_function,
+    Shortcut,
+};
 use crate::{
     ch::contracted_graph::DirectedContractedGraph,
     graphs::{
@@ -11,16 +20,6 @@ use crate::{
         Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
-};
-
-use super::{
-    contractor::{
-        contraction_helper::{ShortcutGeneratorWithHeuristic, ShortcutGeneratorWithWittnessSearch},
-        serial_witness_search_contractor::SerialWitnessSearchContractor,
-        Contractor,
-    },
-    priority_function::decode_function,
-    Shortcut,
 };
 
 pub fn ch_with_witness(

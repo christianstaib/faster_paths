@@ -1,6 +1,5 @@
-use crate::graphs::path::ShortestPathRequest;
-
 use super::Heuristic;
+use crate::graphs::path::ShortestPathRequest;
 
 pub struct NoneHeuristic {}
 

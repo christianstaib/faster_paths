@@ -1,6 +1,5 @@
-use crate::graphs::{Graph, VertexId};
-
 use super::Shortcut;
+use crate::graphs::{Graph, VertexId};
 
 pub mod contraction_helper;
 pub mod serial_witness_search_contractor;

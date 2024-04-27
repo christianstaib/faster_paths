@@ -1,3 +1,10 @@
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter, Write},
+    path::PathBuf,
+    time::{Duration, Instant},
+};
+
 use clap::Parser;
 use faster_paths::{
     ch::preprocessor::Preprocessor,
@@ -8,12 +15,6 @@ use faster_paths::{
     },
 };
 use indicatif::ProgressIterator;
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter, Write},
-    path::PathBuf,
-    time::{Duration, Instant},
-};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

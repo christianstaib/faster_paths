@@ -4,12 +4,11 @@ use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
+use super::Heuristic;
 use crate::{
     graphs::{path::ShortestPathRequest, Graph, Weight},
     simple_algorithms::dijkstra::Dijkstra,
 };
-
-use super::Heuristic;
 
 pub struct Landmark {
     pub to_weight: Vec<Option<Weight>>,

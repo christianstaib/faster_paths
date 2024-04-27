@@ -1,9 +1,8 @@
+use super::{hub_graph::overlap, HubGraphTrait};
 use crate::graphs::{
     path::{Path, PathFinding, ShortestPathRequest},
     Weight,
 };
-
-use super::{hub_graph::overlap, HubGraphTrait};
 
 pub struct HLPathFinder<'a> {
     pub hub_graph: &'a dyn HubGraphTrait,

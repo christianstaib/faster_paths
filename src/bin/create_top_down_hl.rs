@@ -26,7 +26,6 @@ use faster_paths::{
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
-
 use rand::prelude::*;
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,

@@ -1,9 +1,8 @@
+use self::dijkstra_data_vec::DijsktraEntry;
 use crate::{
     graphs::{path::Path, VertexId, Weight},
     queue::DijkstraQueueElement,
 };
-
-use self::dijkstra_data_vec::DijsktraEntry;
 
 pub mod dijkstra_data_map;
 pub mod dijkstra_data_vec;

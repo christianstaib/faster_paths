@@ -1,6 +1,5 @@
-use crate::graphs::Weight;
-
 use super::{DijkstaQueue, DijkstraQueueElement};
+use crate::graphs::Weight;
 
 pub struct BucketQueue {
     current_index: usize,

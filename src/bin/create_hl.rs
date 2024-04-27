@@ -6,7 +6,6 @@ use std::{
 };
 
 use clap::Parser;
-
 use faster_paths::{
     ch::contracted_graph::DirectedContractedGraph,
     hl::{

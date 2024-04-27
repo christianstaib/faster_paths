@@ -68,9 +68,7 @@ pub struct DirectedTaillessWeightedEdge {
 
 impl DirectedTaillessWeightedEdge {
     pub fn new(head: VertexId, weight: Weight) -> DirectedTaillessWeightedEdge {
-        DirectedTaillessWeightedEdge{
-            head, weight
-        }
+        DirectedTaillessWeightedEdge { head, weight }
     }
 
     pub fn head(&self) -> VertexId {

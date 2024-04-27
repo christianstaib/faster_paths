@@ -1,6 +1,5 @@
-use crate::graphs::VertexId;
-
 use self::label::Label;
+use crate::graphs::VertexId;
 
 pub mod hl_from_ch;
 pub mod hl_path_finding;

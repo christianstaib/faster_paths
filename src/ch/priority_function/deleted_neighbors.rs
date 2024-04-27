@@ -1,9 +1,8 @@
+use super::PriorityFunction;
 use crate::{
     ch::Shortcut,
     graphs::{graph_functions::neighbors, Graph, VertexId},
 };
-
-use super::PriorityFunction;
 
 pub struct DeletedNeighbors {
     deleted_neighbors: Vec<u32>,

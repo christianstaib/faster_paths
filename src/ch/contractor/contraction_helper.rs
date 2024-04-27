@@ -1,16 +1,15 @@
-use ahash::HashSet;
-use itertools::Itertools;
-
-use rayon::prelude::*;
 use std::collections::HashMap;
 
+use ahash::HashSet;
+use itertools::Itertools;
+use rayon::prelude::*;
+
+use super::Shortcut;
 use crate::{
     graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, VertexId, Weight},
     heuristics::Heuristic,
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
-
-use super::Shortcut;
 
 pub trait ShortcutGenerator: Send + Sync {
     fn get_shortcuts(&self, graph: &Box<dyn Graph>, vertex: VertexId) -> Vec<Shortcut>;

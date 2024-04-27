@@ -1,5 +1,3 @@
-use rand::Rng;
-use rayon::iter::{ParallelBridge, ParallelIterator};
 use std::{
     fs::File,
     io::{BufWriter, Write},
@@ -18,6 +16,8 @@ use faster_paths::{
     simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::*;
+use rand::Rng;
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

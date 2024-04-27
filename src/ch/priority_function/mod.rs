@@ -1,11 +1,9 @@
-use crate::graphs::{Graph, VertexId};
-
 use self::{
     cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors,
     edge_difference::EdgeDifference,
 };
-
 use super::Shortcut;
+use crate::graphs::{Graph, VertexId};
 
 pub mod cost_of_queries;
 pub mod deleted_neighbors;

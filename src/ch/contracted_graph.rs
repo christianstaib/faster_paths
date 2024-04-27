@@ -9,9 +9,8 @@ use indicatif::ProgressIterator;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::graphs::{edge::DirectedWeightedEdge, vec_graph::VecGraph, Graph, VertexId};
-
 use super::ContractedGraphTrait;
+use crate::graphs::{edge::DirectedWeightedEdge, vec_graph::VecGraph, Graph, VertexId};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct DirectedContractedGraph {

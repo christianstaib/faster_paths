@@ -1,9 +1,8 @@
+use super::PriorityFunction;
 use crate::{
     ch::Shortcut,
     graphs::{graph_functions::neighbors, Graph, VertexId},
 };
-
-use super::PriorityFunction;
 
 pub struct CostOfQueries {
     costs: Vec<i32>,

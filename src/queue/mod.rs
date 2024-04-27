@@ -4,8 +4,8 @@ use crate::graphs::{VertexId, Weight};
 
 pub mod bucket_queue;
 pub mod heap_queue;
-pub mod radix_queue;
 pub mod keyed_queue;
+pub mod radix_queue;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct DijkstraQueueElement {

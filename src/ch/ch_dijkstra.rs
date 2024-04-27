@@ -1,3 +1,4 @@
+use super::ContractedGraphTrait;
 use crate::{
     dijkstra_data::{dijkstra_data_map::DijkstraDataHashMap, DijkstraData},
     graphs::{
@@ -7,8 +8,6 @@ use crate::{
     queue::DijkstraQueueElement,
     simple_algorithms::bidirectional_helpers::path_from_bidirectional_search,
 };
-
-use super::ContractedGraphTrait;
 
 pub struct ChDijkstra<'a> {
     ch: &'a dyn ContractedGraphTrait,

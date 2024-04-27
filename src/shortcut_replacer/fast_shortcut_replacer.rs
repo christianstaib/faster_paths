@@ -1,13 +1,12 @@
 use ahash::HashMap;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
+use super::slow_shortcut_replacer::replace_shortcuts_slow;
 use crate::graphs::{
     edge::DirectedEdge,
     path::{Path, PathFinding, ShortestPathRequest},
     VertexId, Weight,
 };
-
-use super::slow_shortcut_replacer::replace_shortcuts_slow;
 
 pub struct FastShortcutReplacer<'a> {
     shortcuts: &'a HashMap<DirectedEdge, Vec<VertexId>>,

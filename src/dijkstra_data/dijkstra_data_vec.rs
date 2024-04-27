@@ -1,16 +1,10 @@
 use std::usize;
 
-
-
+use super::DijkstraData;
 use crate::{
     graphs::{path::Path, VertexId, Weight},
-    queue::{
-        radix_queue::RadixQueue, DijkstaQueue,
-        DijkstraQueueElement,
-    },
+    queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
-
-use super::DijkstraData;
 
 #[derive(Clone)]
 pub struct DijsktraEntry {

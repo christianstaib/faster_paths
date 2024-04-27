@@ -2,16 +2,14 @@ use std::{collections::BinaryHeap, time::Instant};
 
 use ahash::{HashMap, HashMapExt};
 use indicatif::{ParallelProgressIterator, ProgressBar};
-
 use rand::prelude::SliceRandom;
 use rayon::prelude::*;
 
+use super::{contraction_helper::ShortcutGenerator, Contractor};
 use crate::{
     ch::{ch_priority_element::ChPriorityElement, priority_function::PriorityFunction, Shortcut},
     graphs::{Graph, VertexId},
 };
-
-use super::{contraction_helper::ShortcutGenerator, Contractor};
 
 pub struct SerialWitnessSearchContractor {
     queue: BinaryHeap<ChPriorityElement>,

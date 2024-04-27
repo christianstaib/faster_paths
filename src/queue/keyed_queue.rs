@@ -2,9 +2,8 @@ use std::cmp::Reverse;
 
 use keyed_priority_queue::{Entry, KeyedPriorityQueue};
 
-use crate::graphs::{VertexId, Weight};
-
 use super::{DijkstaQueue, DijkstraQueueElement};
+use crate::graphs::{VertexId, Weight};
 
 #[derive(Clone)]
 pub struct KeyedQueue {

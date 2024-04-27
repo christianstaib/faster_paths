@@ -1,11 +1,10 @@
 use ahash::{HashMap, HashMapExt};
 
+use super::{dijkstra_data_vec::DijsktraEntry, DijkstraData};
 use crate::{
     graphs::{path::Path, VertexId, Weight},
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
-
-use super::{dijkstra_data_vec::DijsktraEntry, DijkstraData};
 
 pub struct DijkstraDataHashMap {
     pub queue: Box<dyn DijkstaQueue>,

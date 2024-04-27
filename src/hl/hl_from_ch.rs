@@ -2,14 +2,13 @@ use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::{
-    ch::contracted_graph::DirectedContractedGraph,
-    graphs::{Graph, VertexId},
-};
-
 use super::{
     hub_graph::{overlap, DirectedHubGraph},
     label::Label,
+};
+use crate::{
+    ch::contracted_graph::DirectedContractedGraph,
+    graphs::{Graph, VertexId},
 };
 
 pub fn directed_hub_graph_from_directed_contracted_graph(
