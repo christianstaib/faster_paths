@@ -2,18 +2,23 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use clap::Parser;
 use faster_paths::{
-    ch::{ch_dijkstra::ChDijkstra, contraction_adaptive_simulated::ch_with_witness},
+    ch::{
+        ch_dijkstra::ChDijkstra,
+        contraction_adaptive_non_simulated::contract_adaptive_non_simulated_all_in,
+        contraction_adaptive_simulated::{
+            contract_adaptive_simulated_with_landmarks, contract_adaptive_simulated_with_witness,
+        },
+    },
     graphs::{
         graph_factory::GraphFactory,
-        graph_functions::all_edges,
+        graph_functions::{all_edges, validate_path},
         path::{PathFinding, ShortestPathTestCase},
         reversible_hash_graph::ReversibleHashGraph,
-        Graph,
     },
     shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
 };
@@ -47,15 +52,14 @@ fn main() {
     println!("switching graph represenation");
     let working_graph = ReversibleHashGraph::from_edges(&all_edges(&graph));
 
-    println!("starting ch");
+    println!("starting graph contraction");
     let boxed_graph = Box::new(working_graph);
 
-    let (contracted_graph, shortcuts) = ch_with_witness(boxed_graph);
+    let start = Instant::now();
+    let (contracted_graph, shortcuts) = contract_adaptive_non_simulated_all_in(boxed_graph);
+    println!("it took {:?} to contract the graph", start.elapsed());
 
-    // let mut preprocessor = AllInPrerocessor {};
-    // let contracted_graph = preprocessor.get_ch(boxed_graph);
-
-    println!("writing ch to file");
+    println!("writing contracted graph to file");
     let writer = BufWriter::new(File::create(args.outfile).unwrap());
     bincode::serialize_into(writer, &contracted_graph).unwrap();
 
@@ -65,7 +69,11 @@ fn main() {
 
     println!("running {} tests", test_cases.len());
     for test_case in test_cases.iter().progress() {
-        let _path = path_finder.shortest_path(&test_case.request);
+        let path = path_finder.shortest_path(&test_case.request);
+
+        if let Err(err) = validate_path(&graph, test_case, &path) {
+            panic!("ch wrong: {}", err);
+        }
     }
     println!("all {} tests passed", test_cases.len());
 }

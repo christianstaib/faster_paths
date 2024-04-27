@@ -22,7 +22,7 @@ use crate::{
     heuristics::{landmarks::Landmarks, Heuristic},
 };
 
-pub fn ch_with_witness(
+pub fn contract_adaptive_simulated_with_witness(
     graph: Box<dyn Graph>,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
     let base_graph = to_vec_graph(&*graph);
@@ -36,7 +36,7 @@ pub fn ch_with_witness(
     get_ch_stateless(base_graph, &shortcuts, &levels)
 }
 
-pub fn ch_with_landmark(
+pub fn contract_adaptive_simulated_with_landmarks(
     graph: Box<dyn Graph>,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
     let base_graph = to_vec_graph(&*graph);
