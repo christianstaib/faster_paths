@@ -99,3 +99,15 @@ pub fn add_edge_bidrectional(graph: &mut dyn Graph, edge: &DirectedWeightedEdge)
     graph.set_edge(edge);
     graph.set_edge(&edge.reversed());
 }
+
+pub fn is_bidirectional(graph: &dyn Graph) -> bool {
+    for vertex in 0..graph.number_of_vertices() {
+        for out_edge in graph.out_edges(vertex) {
+            if graph.get_edge_weight(&out_edge.reversed().unweighted()) != Some(out_edge.weight()) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
