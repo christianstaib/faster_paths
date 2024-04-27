@@ -14,7 +14,6 @@ use crate::{
     },
     graphs::{
         edge::{DirectedEdge, DirectedWeightedEdge},
-        graph_functions::to_vec_graph,
         hash_graph::HashGraph,
         path::ShortestPathRequest,
         Graph, VertexId,
@@ -91,6 +90,7 @@ pub fn contract_adaptive_non_simulated_all_in(
         // let start = Instant::now();
         vertex_shortcuts.iter().for_each(|shortcut| {
             graph.set_edge(&shortcut.edge);
+            base_graph.set_edge(&shortcut.edge);
         });
         // let duration_add_edges = start.elapsed();
 
@@ -128,11 +128,6 @@ pub fn contract_adaptive_non_simulated_all_in(
         bar.inc(1);
     }
     bar.finish();
-
-    println!("adding shortcuts to graph");
-    for shortcut in shortcuts.values() {
-        base_graph.set_edge(&shortcut.edge);
-    }
 
     println!("creating upward and downward_graph");
     let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);

@@ -89,6 +89,7 @@ pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph,
         .flat_map(|vertex| graph.out_edges(vertex))
         .collect();
 
+    println!("creating upward graph");
     let upward_edges: Vec<_> = edges
         .iter()
         .filter(|edge| {
@@ -98,6 +99,7 @@ pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph,
         .collect();
     let upward_graph = VecGraph::from_edges(&upward_edges);
 
+    println!("creating downward graph");
     let downward_edges: Vec<_> = edges
         .iter()
         .map(DirectedWeightedEdge::reversed)

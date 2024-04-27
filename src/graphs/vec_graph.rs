@@ -1,5 +1,6 @@
 use std::{slice::Iter, usize};
 
+use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -103,7 +104,7 @@ impl VecGraph {
 
     pub fn from_edges(edges: &[DirectedWeightedEdge]) -> VecGraph {
         let mut graph = VecGraph::new();
-        edges.iter().for_each(|edge| {
+        edges.iter().progress().for_each(|edge| {
             graph.set_edge(edge);
         });
         graph
