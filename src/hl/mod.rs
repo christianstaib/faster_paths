@@ -2,9 +2,9 @@ use crate::graphs::VertexId;
 
 use self::label::Label;
 
+pub mod hl_from_ch;
 pub mod hl_path_finding;
 pub mod hub_graph;
-pub mod hub_graph_factory;
 pub mod hub_graph_investigator;
 pub mod label;
 pub mod label_entry;

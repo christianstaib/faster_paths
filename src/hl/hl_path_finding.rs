@@ -16,10 +16,11 @@ impl<'a> PathFinding for HLPathFinder<'a> {
         let backward_label = self.hub_graph.reverse_label(path_request.target())?;
         let (_, forward_index, reverse_index) = overlap(forward_label, backward_label)?;
 
-        let mut forward_path = forward_label.get_path(forward_index)?;
-        let reverse_path = backward_label.get_path(reverse_index)?;
+        // unwrap can be called as be found overlapp and therefore path exists
+        let mut forward_path = forward_label.get_path(forward_index).unwrap();
+        let reverse_path = backward_label.get_path(reverse_index).unwrap();
 
-        // now got: forward(meeting -> source) and reverse (meeting -> target)
+        // now got: forward_path (meeting -> source) and reverse_reverse (meeting -> target)
         forward_path.vertices.reverse();
         forward_path.vertices.pop();
 

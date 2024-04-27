@@ -12,7 +12,7 @@ use super::{
     label::Label,
 };
 
-pub fn get_hl(ch_information: &ContractedGraph) -> HubGraph {
+pub fn get_hl_from_ch(ch_information: &ContractedGraph) -> HubGraph {
     let mut forward_labels: Vec<_> = (0..ch_information.upward_graph.number_of_vertices())
         .map(Label::new)
         .collect();
