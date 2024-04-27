@@ -1,4 +1,7 @@
-use std::{fs::File, io::BufWriter, io::Write};
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+};
 
 use ahash::{HashMap, HashMapExt, HashSet};
 use indicatif::ProgressBar;

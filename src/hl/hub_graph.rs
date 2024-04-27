@@ -3,8 +3,7 @@ use std::usize;
 use serde::{Deserialize, Serialize};
 
 use super::{label::Label, HubGraphTrait};
-use crate::graphs::VertexId;
-use crate::graphs::Weight;
+use crate::graphs::{VertexId, Weight};
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectedHubGraph {
