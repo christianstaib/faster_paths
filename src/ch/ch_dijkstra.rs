@@ -1,12 +1,12 @@
 use super::ContractedGraphTrait;
 use crate::{
+    classical_search::bidirectional_helpers::path_from_bidirectional_search,
     dijkstra_data::{dijkstra_data_map::DijkstraDataHashMap, DijkstraData},
     graphs::{
         path::{Path, PathFinding, ShortestPathRequest},
         VertexId, Weight,
     },
     queue::DijkstraQueueElement,
-    simple_algorithms::bidirectional_helpers::path_from_bidirectional_search,
 };
 
 pub struct ChDijkstra<'a> {

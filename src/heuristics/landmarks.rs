@@ -6,8 +6,8 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use super::Heuristic;
 use crate::{
+    classical_search::dijkstra::Dijkstra,
     graphs::{path::ShortestPathRequest, Graph, Weight},
-    simple_algorithms::dijkstra::Dijkstra,
 };
 
 pub struct Landmark {

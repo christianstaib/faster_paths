@@ -7,13 +7,13 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
+    classical_search::dijkstra::Dijkstra,
     dijkstra_data::DijkstraData,
     graphs::{
         graph_factory::GraphFactory,
         path::{ShortestPathRequest, ShortestPathTestCase},
         Graph,
     },
-    simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::*;
 use rand::Rng;

@@ -1,5 +1,4 @@
 use ahash::HashMap;
-use serde::{Deserialize, Serialize};
 
 use crate::graphs::{
     edge::DirectedEdge,

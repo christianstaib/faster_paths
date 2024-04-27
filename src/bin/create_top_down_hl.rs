@@ -10,6 +10,7 @@ use std::{
 use ahash::{HashMap, HashMapExt};
 use clap::Parser;
 use faster_paths::{
+    classical_search::dijkstra::Dijkstra,
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
         edge::DirectedEdge,
@@ -22,7 +23,6 @@ use faster_paths::{
         hub_graph::DirectedHubGraph,
         label::{Label, LabelEntry},
     },
-    simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
