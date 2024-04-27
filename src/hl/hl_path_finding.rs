@@ -3,7 +3,7 @@ use crate::graphs::{
     Weight,
 };
 
-use super::{hub_graph::HubGraph, HubGraphTrait};
+use super::{hub_graph::overlap, HubGraphTrait};
 
 pub struct HLPathFinder<'a> {
     pub hub_graph: &'a dyn HubGraphTrait,
@@ -14,7 +14,7 @@ impl<'a> PathFinding for HLPathFinder<'a> {
         // wanted: source -> target
         let forward_label = self.hub_graph.forward_label(path_request.source())?;
         let backward_label = self.hub_graph.reverse_label(path_request.target())?;
-        let (_, forward_index, reverse_index) = HubGraph::overlap(forward_label, backward_label)?;
+        let (_, forward_index, reverse_index) = overlap(forward_label, backward_label)?;
 
         let mut forward_path = forward_label.get_path(forward_index)?;
         let reverse_path = backward_label.get_path(reverse_index)?;
@@ -32,7 +32,7 @@ impl<'a> PathFinding for HLPathFinder<'a> {
     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
         let forward_label = self.hub_graph.forward_label(path_request.source())?;
         let backward_label = self.hub_graph.reverse_label(path_request.target())?;
-        let (weight, _, _) = HubGraph::overlap(forward_label, backward_label)?;
+        let (weight, _, _) = overlap(forward_label, backward_label)?;
 
         Some(weight)
     }

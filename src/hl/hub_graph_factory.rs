@@ -10,7 +10,10 @@ use crate::{
     graphs::{Graph, VertexId},
 };
 
-use super::{hub_graph::HubGraph, label::Label};
+use super::{
+    hub_graph::{overlap, HubGraph},
+    label::Label,
+};
 
 pub struct HubGraphFactory<'a> {
     pub ch_information: &'a ContractedGraph,
@@ -173,9 +176,7 @@ impl<'a> HubGraphFactory<'a> {
             .par_iter()
             .filter(|entry| {
                 let reverse_label = &direction2_labels_labels[entry.vertex as usize];
-                let true_weight = HubGraph::overlap(direction1_label, reverse_label)
-                    .unwrap()
-                    .0;
+                let true_weight = overlap(direction1_label, reverse_label).unwrap().0;
                 entry.weight == true_weight
             })
             .cloned()
