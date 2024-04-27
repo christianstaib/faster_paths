@@ -3,10 +3,7 @@ use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    ch::{
-        contracted_graph::ContractedGraph,
-        shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer,
-    },
+    ch::contracted_graph::ContractedGraph,
     graphs::{Graph, VertexId},
 };
 
@@ -59,12 +56,9 @@ impl<'a> HubGraphFactory<'a> {
             .chain(reverse_labels.iter_mut())
             .for_each(Self::set_predecessor);
 
-        let shortcut_replacer = FastShortcutReplacer::new(&self.ch_information.shortcut_replacer);
-
         HubGraph {
             forward_labels,
             reverse_labels,
-            shortcut_replacer,
         }
     }
 

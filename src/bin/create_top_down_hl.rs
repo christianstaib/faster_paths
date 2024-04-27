@@ -147,23 +147,16 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
     let reverse_labels = forward_labels.clone();
 
     println!("getting shortcuts vec");
-    let shortcuts = shortcuts
+    let _shortcuts = shortcuts
         .lock()
         .unwrap()
         .to_owned()
         .into_iter()
         .collect_vec();
 
-    println!("generating slow shortcut replacer");
-    let slow_shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
-
-    println!("generating fast short replacer");
-    let shortcut_replacer = FastShortcutReplacer::new(&slow_shortcut_replacer);
-
     HubGraph {
         forward_labels,
         reverse_labels,
-        shortcut_replacer,
     }
 }
 

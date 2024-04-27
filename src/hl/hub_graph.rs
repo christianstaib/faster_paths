@@ -3,7 +3,7 @@ use std::usize;
 use crate::graphs::VertexId;
 use serde::{Deserialize, Serialize};
 
-use crate::{ch::shortcut_replacer::fast_shortcut_replacer::FastShortcutReplacer, graphs::Weight};
+use crate::graphs::Weight;
 
 use super::{label::Label, HubGraphTrait};
 
@@ -11,7 +11,6 @@ use super::{label::Label, HubGraphTrait};
 pub struct HubGraph {
     pub forward_labels: Vec<Label>,
     pub reverse_labels: Vec<Label>,
-    pub shortcut_replacer: FastShortcutReplacer,
 }
 
 impl HubGraphTrait for HubGraph {
