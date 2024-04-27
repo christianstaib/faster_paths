@@ -15,6 +15,7 @@ use faster_paths::{
         reversible_hash_graph::ReversibleHashGraph,
         Graph,
     },
+    shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
 };
 use indicatif::ProgressIterator;
 
@@ -43,11 +44,6 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
-    println!(
-        "average vertex degree of base graph is {}",
-        graph.number_of_edges() as f32 / graph.number_of_vertices() as f32
-    );
-
     println!("switching graph represenation");
     let working_graph = ReversibleHashGraph::from_edges(&all_edges(&graph));
 
@@ -63,32 +59,13 @@ fn main() {
     let writer = BufWriter::new(File::create(args.outfile).unwrap());
     bincode::serialize_into(writer, &contracted_graph).unwrap();
 
-    println!(
-        "average vertex degree of upward_graph is {}",
-        contracted_graph.upward_graph.number_of_edges() as f32
-            / contracted_graph.upward_graph.number_of_vertices() as f32
-    );
-
+    // setting up path finder
     let ch_dijkstra = ChDijkstra::new(&contracted_graph);
-    let path_finder: Box<dyn PathFinding> = Box::new(ch_dijkstra);
+    let path_finder = SlowShortcutReplacer::new(&shortcuts, &ch_dijkstra);
 
-    let mut times = Vec::new();
+    println!("running {} tests", test_cases.len());
     for test_case in test_cases.iter().progress() {
-        let start = Instant::now();
-        let _path = path_finder.shortest_path_weight(&test_case.request);
-        times.push(start.elapsed());
-
-        if _path != test_case.weight {
-            println!("err soll {:?}, ist {:?}", test_case.weight, _path);
-        }
+        let _path = path_finder.shortest_path(&test_case.request);
     }
-
     println!("all {} tests passed", test_cases.len());
-
-    let average = times.iter().sum::<Duration>() / times.len() as u32;
-    println!(
-        "the average query time over {} queries was {:?}",
-        test_cases.len(),
-        average
-    );
 }
