@@ -1,4 +1,6 @@
-use crate::ch::shortcut_replacer::ShortcutReplacer;
+use std::usize;
+
+use crate::{ch::shortcut_replacer::ShortcutReplacer, graphs::VertexId};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -9,13 +11,23 @@ use crate::{
     },
 };
 
-use super::label::Label;
+use super::{label::Label, HubGraphTrait};
 
 #[derive(Serialize, Deserialize)]
 pub struct HubGraph {
     pub forward_labels: Vec<Label>,
     pub reverse_labels: Vec<Label>,
     pub shortcut_replacer: FastShortcutReplacer,
+}
+
+impl HubGraphTrait for HubGraph {
+    fn forward_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+        self.forward_labels.get(vertex as usize)
+    }
+
+    fn reverse_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+        self.reverse_labels.get(vertex as usize)
+    }
 }
 
 impl HubGraph {
@@ -55,36 +67,5 @@ impl HubGraph {
         }
 
         overlap
-    }
-}
-
-impl PathFinding for HubGraph {
-    fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
-        // wanted: source -> target
-        let forward_label = self.forward_labels.get(path_request.source() as usize)?;
-        let backward_label = self.reverse_labels.get(path_request.target() as usize)?;
-        let (_, forward_index, reverse_index) = HubGraph::overlap(forward_label, backward_label)?;
-
-        let mut forward_path = forward_label.get_path(forward_index)?;
-        let reverse_path = backward_label.get_path(reverse_index)?;
-
-        // now got: forward(meeting -> source) and reverse (meeting -> target)
-        forward_path.vertices.reverse();
-        forward_path.vertices.pop();
-
-        forward_path.vertices.extend(reverse_path.vertices);
-        forward_path.weight += reverse_path.weight;
-
-        let path = self.shortcut_replacer.replace_shortcuts(&forward_path);
-
-        Some(path)
-    }
-
-    fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        let forward_label = self.forward_labels.get(path_request.source() as usize)?;
-        let backward_label = self.reverse_labels.get(path_request.target() as usize)?;
-        let (weight, _, _) = HubGraph::overlap(forward_label, backward_label)?;
-
-        Some(weight)
     }
 }

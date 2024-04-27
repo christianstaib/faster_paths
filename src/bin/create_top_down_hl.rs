@@ -26,7 +26,9 @@ use faster_paths::{
         path::{PathFinding, ShortestPathTestCase},
         Graph, VertexId,
     },
-    hl::{hub_graph::HubGraph, label::Label, label_entry::LabelEntry},
+    hl::{
+        hl_path_finding::HLPathFinder, hub_graph::HubGraph, label::Label, label_entry::LabelEntry,
+    },
     simple_algorithms::dijkstra::Dijkstra,
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
@@ -78,6 +80,9 @@ fn main() {
 
     println!("generating hl");
     let hub_graph = get_hl(&graph, &order);
+    let hub_graph_path_finder = HLPathFinder {
+        hub_graph: &hub_graph,
+    };
 
     let writer = BufWriter::new(File::create("hl_test.bincode").unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();
@@ -92,7 +97,7 @@ fn main() {
             // let (weight, _, _) = HubGraph::overlap(&forward_label, &reverse_label).unwrap();
             // let weight = Some(weight);
 
-            let weight = hub_graph.shortest_path_weight(&test_case.request);
+            let weight = hub_graph_path_finder.shortest_path_weight(&test_case.request);
             assert_eq!(weight, test_case.weight);
 
             // let _path = hub_graph.shortest_path(&test_case.request);
