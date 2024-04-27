@@ -7,10 +7,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::{
-        ch_dijkstra::{ChDijkstra},
-        contracted_graph::ContractedGraph,
-    },
+    ch::{ch_dijkstra::ChDijkstra, contracted_graph::DirectedContractedGraph},
     graphs::path::{PathFinding, ShortestPathTestCase},
 };
 use indicatif::ProgressIterator;
@@ -30,7 +27,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = ContractedGraph::from_fmi_file(&args.fmi_ch);
+    let graph = DirectedContractedGraph::from_fmi_file(&args.fmi_ch);
     let ch_dijkstra = ChDijkstra::new(&graph);
     let path_finder: Box<dyn PathFinding> = Box::new(ch_dijkstra);
 

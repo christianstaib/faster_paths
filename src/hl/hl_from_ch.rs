@@ -3,16 +3,18 @@ use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    ch::contracted_graph::ContractedGraph,
+    ch::contracted_graph::DirectedContractedGraph,
     graphs::{Graph, VertexId},
 };
 
 use super::{
-    hub_graph::{overlap, HubGraph},
+    hub_graph::{overlap, DirectedHubGraph},
     label::Label,
 };
 
-pub fn get_hl_from_ch(ch_information: &ContractedGraph) -> HubGraph {
+pub fn directed_hub_graph_from_directed_contracted_graph(
+    ch_information: &DirectedContractedGraph,
+) -> DirectedHubGraph {
     let mut forward_labels: Vec<_> = (0..ch_information.upward_graph.number_of_vertices())
         .map(Label::new)
         .collect();
@@ -55,7 +57,7 @@ pub fn get_hl_from_ch(ch_information: &ContractedGraph) -> HubGraph {
         .chain(reverse_labels.iter_mut())
         .for_each(set_predecessor);
 
-    HubGraph {
+    DirectedHubGraph {
         forward_labels,
         reverse_labels,
     }
@@ -68,7 +70,7 @@ pub fn get_hl_from_ch(ch_information: &ContractedGraph) -> HubGraph {
 /// adjusts them based on the graph's structure. The resulting label is optimized by merging similar paths and
 /// pruning paths that are not efficient when considered with the reverse direction paths.
 fn generate_forward_label(
-    ch_information: &ContractedGraph,
+    ch_information: &DirectedContractedGraph,
     vertex: VertexId,
     forward_labels: &Vec<Label>,
     reverse_labels: &Vec<Label>,
@@ -94,7 +96,7 @@ fn generate_forward_label(
 /// adjusts them based on the graph's structure. The resulting label is optimized by merging similar paths and
 /// pruning paths that are not efficient when considered with the forward direction paths.
 fn generate_reverse_label(
-    ch_information: &ContractedGraph,
+    ch_information: &DirectedContractedGraph,
     vertex: VertexId,
     forward_labels: &Vec<Label>,
     reverse_labels: &Vec<Label>,

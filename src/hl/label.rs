@@ -2,9 +2,7 @@ use std::usize;
 
 use serde::{Deserialize, Serialize};
 
-use crate::graphs::{path::Path, VertexId};
-
-use super::label_entry::LabelEntry;
+use crate::graphs::{path::Path, VertexId, Weight};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Label {
@@ -30,7 +28,7 @@ impl Label {
 
             // cycle detection
             if path.vertices.len() > self.entries.len() {
-                return None;
+                panic!("label is incorrect");
             }
 
             // exit the loop if there's no predecessor
@@ -42,5 +40,22 @@ impl Label {
         }
 
         Some(path)
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct LabelEntry {
+    pub vertex: VertexId,
+    pub predecessor: Option<u32>,
+    pub weight: Weight,
+}
+
+impl LabelEntry {
+    pub fn new(vertex: VertexId) -> LabelEntry {
+        LabelEntry {
+            vertex,
+            predecessor: None,
+            weight: 0,
+        }
     }
 }

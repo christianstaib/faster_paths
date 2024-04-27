@@ -7,31 +7,24 @@ use std::{
     usize,
 };
 
-use ahash::{HashMap, HashMapExt, HashSetExt};
+use ahash::{HashMap, HashMapExt};
 use clap::Parser;
 use faster_paths::{
-    ch::{
-        shortcut_replacer::{
-            self,
-            fast_shortcut_replacer::{self, FastShortcutReplacer},
-            slow_shortcut_replacer::SlowShortcutReplacer,
-        },
-        Shortcut,
-    },
-    dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
+    dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
-        edge::{DirectedEdge, DirectedWeightedEdge},
+        edge::DirectedEdge,
         graph_factory::GraphFactory,
-        graph_functions::validate_path,
         path::{PathFinding, ShortestPathTestCase},
         Graph, VertexId,
     },
     hl::{
-        hl_path_finding::HLPathFinder, hub_graph::HubGraph, label::Label, label_entry::LabelEntry,
+        hl_path_finding::HLPathFinder,
+        hub_graph::DirectedHubGraph,
+        label::{Label, LabelEntry},
     },
     simple_algorithms::dijkstra::Dijkstra,
 };
-use indicatif::{ParallelProgressIterator, ProgressIterator};
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 
 use rand::prelude::*;
@@ -110,7 +103,7 @@ fn main() {
     println!("all {} tests passed", test_cases.len());
 }
 
-fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
+fn get_hl(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {
     let shortcuts: Arc<Mutex<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(Mutex::new(HashMap::new()));
 
@@ -154,7 +147,7 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> HubGraph {
         .into_iter()
         .collect_vec();
 
-    HubGraph {
+    DirectedHubGraph {
         forward_labels,
         reverse_labels,
     }

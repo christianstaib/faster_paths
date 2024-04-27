@@ -1,6 +1,6 @@
-use super::hub_graph::HubGraph;
+use super::hub_graph::DirectedHubGraph;
 
-pub fn get_avg_label_size(hub_graph: &HubGraph) -> f32 {
+pub fn get_avg_label_size(hub_graph: &DirectedHubGraph) -> f32 {
     let summed_label_size: u64 = hub_graph
         .forward_labels
         .iter()
@@ -14,7 +14,7 @@ pub fn get_avg_label_size(hub_graph: &HubGraph) -> f32 {
     summed_label_size as f32 / (2 * hub_graph.forward_labels.len()) as f32
 }
 
-pub fn get_label_hits(hub_graph: &HubGraph) -> Vec<u32> {
+pub fn get_label_hits(hub_graph: &DirectedHubGraph) -> Vec<u32> {
     let mut hits = vec![0; hub_graph.forward_labels.len()];
 
     for label in hub_graph

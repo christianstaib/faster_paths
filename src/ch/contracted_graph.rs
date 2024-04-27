@@ -9,30 +9,18 @@ use indicatif::ProgressIterator;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    graphs::{
-        edge::{DirectedWeightedEdge},
-        vec_graph::VecGraph,
-        Graph, VertexId,
-    },
-};
+use crate::graphs::{edge::DirectedWeightedEdge, vec_graph::VecGraph, Graph, VertexId};
 
-use super::{
-    shortcut_replacer::{
-        slow_shortcut_replacer::SlowShortcutReplacer,
-    },
-    ContractedGraphTrait,
-};
+use super::ContractedGraphTrait;
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct ContractedGraph {
+pub struct DirectedContractedGraph {
     pub upward_graph: VecGraph,
     pub downward_graph: VecGraph,
-    pub shortcut_replacer: SlowShortcutReplacer,
     pub levels: Vec<Vec<u32>>,
 }
 
-impl ContractedGraphTrait for ContractedGraph {
+impl ContractedGraphTrait for DirectedContractedGraph {
     fn upward_edges(
         &self,
         source: VertexId,
@@ -59,8 +47,8 @@ impl ContractedGraphTrait for ContractedGraph {
     }
 }
 
-impl ContractedGraph {
-    pub fn from_fmi_file(path: &PathBuf) -> ContractedGraph {
+impl DirectedContractedGraph {
+    pub fn from_fmi_file(path: &PathBuf) -> DirectedContractedGraph {
         let file = File::open(path).unwrap();
         let reader = BufReader::new(file);
         let mut lines = reader.lines().peekable();
@@ -151,10 +139,9 @@ impl ContractedGraph {
             .collect_vec();
         let downward_graph = VecGraph::from_edges(&downward_edges);
 
-        ContractedGraph {
+        DirectedContractedGraph {
             upward_graph,
             downward_graph,
-            shortcut_replacer: SlowShortcutReplacer::new(&[]),
             levels: Vec::new(),
         }
     }

@@ -1,14 +1,14 @@
 use std::usize;
 
-use itertools::Itertools;
+use ahash::HashMap;
 
 use crate::{
-    ch::{
-        contracted_graph::ContractedGraph,
-        shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
-    },
+    ch::contracted_graph::DirectedContractedGraph,
     graphs::{
-        edge::DirectedWeightedEdge, graph_functions::to_vec_graph, vec_graph::VecGraph, Graph,
+        edge::{DirectedEdge, DirectedWeightedEdge},
+        graph_functions::to_vec_graph,
+        vec_graph::VecGraph,
+        Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
 };
@@ -23,7 +23,9 @@ use super::{
     Shortcut,
 };
 
-pub fn ch_with_witness(graph: Box<dyn Graph>) -> ContractedGraph {
+pub fn ch_with_witness(
+    graph: Box<dyn Graph>,
+) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
     let base_graph = to_vec_graph(&*graph);
     let priority_terms = decode_function("E:1_D:1_C:1");
 
@@ -35,7 +37,9 @@ pub fn ch_with_witness(graph: Box<dyn Graph>) -> ContractedGraph {
     get_ch_stateless(base_graph, &shortcuts, &levels)
 }
 
-pub fn ch_with_landmark(graph: Box<dyn Graph>) -> ContractedGraph {
+pub fn ch_with_landmark(
+    graph: Box<dyn Graph>,
+) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
     let base_graph = to_vec_graph(&*graph);
     let priority_terms = decode_function("E:1_D:1_C:1");
 
@@ -53,7 +57,7 @@ pub fn get_ch_stateless(
     mut base_graph: VecGraph,
     shortcuts: &[Shortcut],
     levels: &[Vec<u32>],
-) -> ContractedGraph {
+) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
     for shortcut in shortcuts.iter() {
         base_graph.set_edge(&shortcut.edge);
     }
@@ -63,16 +67,15 @@ pub fn get_ch_stateless(
     let shortcuts = shortcuts
         .iter()
         .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
-        .collect_vec();
+        .collect();
 
-    let shortcut_replacer = SlowShortcutReplacer::new(&shortcuts);
-
-    ContractedGraph {
+    let directed_contracted_graph = DirectedContractedGraph {
         upward_graph,
         downward_graph,
-        shortcut_replacer,
         levels: levels.to_vec(),
-    }
+    };
+
+    (directed_contracted_graph, shortcuts)
 }
 
 pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph, VecGraph) {

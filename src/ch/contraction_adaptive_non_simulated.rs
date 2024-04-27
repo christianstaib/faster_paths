@@ -7,8 +7,8 @@ use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
 use crate::{
     ch::{
-        contracted_graph::ContractedGraph, preprocessor::partition_by_levels,
-        shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer, Shortcut,
+        contracted_graph::DirectedContractedGraph,
+        contraction_adaptive_simulated::partition_by_levels, Shortcut,
     },
     graphs::{
         edge::{DirectedEdge, DirectedWeightedEdge},
@@ -22,7 +22,10 @@ use crate::{
 pub struct AllInPrerocessor {}
 
 impl AllInPrerocessor {
-    pub fn get_ch(&mut self, mut graph: Box<dyn Graph>) -> ContractedGraph {
+    pub fn get_ch(
+        &mut self,
+        mut graph: Box<dyn Graph>,
+    ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
         println!("copying graph");
         let mut base_graph = to_vec_graph(&*graph);
 
@@ -137,14 +140,14 @@ impl AllInPrerocessor {
             .values()
             .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
             .collect();
-        let shortcut_replacer = SlowShortcutReplacer { shortcuts };
 
-        ContractedGraph {
+        let directed_contracted_graph = DirectedContractedGraph {
             upward_graph,
             downward_graph,
-            shortcut_replacer,
             levels,
-        }
+        };
+
+        (directed_contracted_graph, shortcuts)
     }
 
     fn get_next_vertex(

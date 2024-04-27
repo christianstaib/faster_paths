@@ -8,18 +8,33 @@ use crate::graphs::Weight;
 use super::{label::Label, HubGraphTrait};
 
 #[derive(Serialize, Deserialize)]
-pub struct HubGraph {
+pub struct DirectedHubGraph {
     pub forward_labels: Vec<Label>,
     pub reverse_labels: Vec<Label>,
 }
 
-impl HubGraphTrait for HubGraph {
+impl HubGraphTrait for DirectedHubGraph {
     fn forward_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
         self.forward_labels.get(vertex as usize)
     }
 
     fn reverse_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
         self.reverse_labels.get(vertex as usize)
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct HubGraph {
+    pub labels: Vec<Label>,
+}
+
+impl HubGraphTrait for HubGraph {
+    fn forward_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+        self.labels.get(vertex as usize)
+    }
+
+    fn reverse_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+        self.labels.get(vertex as usize)
     }
 }
 
@@ -47,7 +62,11 @@ pub fn overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
                 overlap = overlap
                     .take()
                     .filter(|&(current_weight, _, _)| current_weight <= combined_weight)
-                    .or({ Some((combined_weight, index_forward as u32, index_reverse as u32)) });
+                    .or(Some((
+                        combined_weight,
+                        index_forward as u32,
+                        index_reverse as u32,
+                    )));
 
                 index_forward += 1;
                 index_reverse += 1;

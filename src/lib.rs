@@ -5,4 +5,5 @@ pub mod graphs;
 pub mod heuristics;
 pub mod hl;
 pub mod queue;
+pub mod shortcut_replacer;
 pub mod simple_algorithms;

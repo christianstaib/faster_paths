@@ -8,8 +8,11 @@ use std::{
 use clap::Parser;
 
 use faster_paths::{
-    ch::contracted_graph::ContractedGraph,
-    hl::{hl_from_ch::get_hl_from_ch, hub_graph_investigator::get_avg_label_size},
+    ch::contracted_graph::DirectedContractedGraph,
+    hl::{
+        hl_from_ch::directed_hub_graph_from_directed_contracted_graph,
+        hub_graph_investigator::get_avg_label_size,
+    },
 };
 use itertools::Itertools;
 
@@ -32,7 +35,7 @@ fn main() {
     let args = Args::parse();
 
     let reader = BufReader::new(File::open(args.ch_graph).unwrap());
-    let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
+    let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
 
     // // optimize levels
     // println!("{}", contracted_graph.levels.len());
@@ -54,7 +57,7 @@ fn main() {
     println!("{}", contracted_graph.levels.len());
 
     let start = Instant::now();
-    let hub_graph = get_hl_from_ch(&contracted_graph);
+    let hub_graph = directed_hub_graph_from_directed_contracted_graph(&contracted_graph);
     println!("Generating hl took {:?}", start.elapsed());
 
     println!(
