@@ -9,7 +9,7 @@ use clap::Parser;
 
 use faster_paths::{
     ch::contracted_graph::ContractedGraph,
-    hl::{hub_graph_factory::HubGraphFactory, hub_graph_investigator::get_avg_label_size},
+    hl::{hub_graph_factory::get_hl, hub_graph_investigator::get_avg_label_size},
 };
 use itertools::Itertools;
 
@@ -54,8 +54,7 @@ fn main() {
     println!("{}", contracted_graph.levels.len());
 
     let start = Instant::now();
-    let hub_graph_factory = HubGraphFactory::new(&contracted_graph);
-    let hub_graph = hub_graph_factory.get_hl();
+    let hub_graph = get_hl(&contracted_graph);
     println!("Generating hl took {:?}", start.elapsed());
 
     println!(
