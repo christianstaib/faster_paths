@@ -44,6 +44,8 @@ pub fn contract_adaptive_non_simulated_all_in(
     println!("starting actual contraction");
     let bar = ProgressBar::new(graph.number_of_vertices() as u64);
 
+    let landmarks = Landmarks::new(25, &*graph);
+
     let mut vertex_buf = Vec::new();
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
         let start = Instant::now();
@@ -74,6 +76,12 @@ pub fn contract_adaptive_non_simulated_all_in(
                 let current_weight = graph
                     .get_edge_weight(&shortcut.edge.unweighted())
                     .unwrap_or(u32::MAX);
+                shortcut.edge.weight() < current_weight
+            })
+            .filter(|shortcut| {
+                let request =
+                    ShortestPathRequest::new(shortcut.edge.tail(), shortcut.edge.head()).unwrap();
+                let current_weight = landmarks.upper_bound(&request).unwrap_or(u32::MAX);
                 shortcut.edge.weight() < current_weight
             })
             .cloned()

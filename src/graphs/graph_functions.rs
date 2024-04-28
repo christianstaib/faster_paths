@@ -1,11 +1,17 @@
+use std::usize;
+
 use ahash::{HashSet, HashSetExt};
+use indicatif::{ParallelProgressIterator, ProgressBar};
+use rand::Rng;
+use rayon::prelude::*;
 
 use super::{
     edge::DirectedWeightedEdge,
-    path::{Path, ShortestPathTestCase},
+    path::{Path, ShortestPathRequest, ShortestPathTestCase},
     vec_graph::VecGraph,
     Graph, VertexId,
 };
+use crate::{classical_search::dijkstra::Dijkstra, dijkstra_data::DijkstraData};
 
 /// Check if a route is correct for a given request. Panics if not.
 pub fn validate_path(
@@ -110,4 +116,103 @@ pub fn is_bidirectional(graph: &dyn Graph) -> bool {
     }
 
     return true;
+}
+
+pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> Vec<VertexId> {
+    let mut hitting_set = Vec::new();
+    let mut active_paths: HashSet<usize> = (0..paths.len()).collect();
+
+    let pb = ProgressBar::new(active_paths.len() as u64);
+    while !active_paths.is_empty() {
+        let mut number_of_hits = vec![0; number_of_vertices as usize];
+
+        for &path_idx in active_paths.iter() {
+            let path = &paths[path_idx];
+            for &vertex in path.vertices.iter() {
+                number_of_hits[vertex as usize] += 1;
+            }
+        }
+
+        let max_hitting_vertex = number_of_hits
+            .iter()
+            .enumerate()
+            .max_by_key(|(_, &hits)| hits)
+            .unwrap()
+            .0;
+        hitting_set.push(max_hitting_vertex as VertexId);
+
+        active_paths.retain(|&paths_idx| {
+            !paths[paths_idx]
+                .vertices
+                .contains(&(max_hitting_vertex as VertexId))
+        });
+
+        pb.set_position((paths.len() - active_paths.len()) as u64);
+    }
+    pb.finish();
+
+    hitting_set
+}
+
+pub fn test_cases(number_of_paths: u32, graph: &dyn Graph) -> Vec<ShortestPathTestCase> {
+    let dijkstra = Dijkstra::new(graph);
+
+    (0..number_of_paths)
+        .into_par_iter()
+        .progress()
+        .map_init(
+            rand::thread_rng, // get the thread-local RNG
+            |rng, _| {
+                // guarantee that source != tatget.
+                let source = rng.gen_range(0..graph.number_of_vertices());
+                let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
+                if target >= source {
+                    target += 1;
+                }
+
+                let request = ShortestPathRequest::new(source, target).unwrap();
+
+                let data = dijkstra.get_data(request.source(), request.target());
+                let path = data.get_path(target);
+
+                let mut weight = None;
+                if let Some(path) = path {
+                    weight = Some(path.weight);
+                }
+
+                ShortestPathTestCase {
+                    request,
+                    weight,
+                    dijkstra_rank: data.dijkstra_rank(),
+                }
+            },
+        )
+        .collect()
+}
+
+pub fn random_paths(number_of_paths: u32, graph: &dyn Graph) -> Vec<Path> {
+    let dijkstra = Dijkstra::new(graph);
+
+    (0..u32::MAX)
+        .into_par_iter()
+        .take(number_of_paths as usize)
+        .progress()
+        .map_init(
+            rand::thread_rng, // get the thread-local RNG
+            |rng, _| {
+                // guarantee that source != tatget.
+                let source = rng.gen_range(0..graph.number_of_vertices());
+                let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
+                if target >= source {
+                    target += 1;
+                }
+
+                let request = ShortestPathRequest::new(source, target).unwrap();
+
+                let data = dijkstra.get_data(request.source(), request.target());
+                data.get_path(target)
+            },
+        )
+        .flatten()
+        .collect()
 }

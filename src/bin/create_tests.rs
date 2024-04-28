@@ -6,18 +6,12 @@ use std::{
 };
 
 use clap::Parser;
-use faster_paths::{
-    classical_search::dijkstra::Dijkstra,
-    dijkstra_data::DijkstraData,
-    graphs::{
-        graph_factory::GraphFactory,
-        path::{ShortestPathRequest, ShortestPathTestCase},
-        Graph,
-    },
+use faster_paths::graphs::{
+    graph_factory::GraphFactory,
+    graph_functions::{hitting_set, random_paths, test_cases},
+    Graph,
 };
-use indicatif::*;
-use rand::Rng;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use itertools::Itertools;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -41,41 +35,21 @@ fn main() {
     let args = Args::parse();
 
     let graph = GraphFactory::from_file(&args.graph);
-    let dijkstra = Dijkstra::new(&graph);
+
+    let paths = random_paths(args.number_of_tests, &graph);
+
+    let hitting_set = hitting_set(&paths, graph.number_of_vertices());
+    println!("{:?}", hitting_set.iter().take(100).collect_vec());
+
+    println!(
+        "hitted {} out of {} vertices",
+        hitting_set.len(),
+        graph.number_of_vertices()
+    );
 
     println!("generating random pair test");
     let start = Instant::now();
-    let random_pairs: Vec<_> = (0..args.number_of_tests)
-        .progress()
-        .par_bridge()
-        .map_init(
-            rand::thread_rng, // get the thread-local RNG
-            |rng, _| {
-                // guarantee that source != tatget.
-                let source = rng.gen_range(0..graph.number_of_vertices());
-                let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
-                if target >= source {
-                    target += 1;
-                }
-
-                let request = ShortestPathRequest::new(source, target).unwrap();
-
-                let data = dijkstra.get_data(request.source(), request.target());
-                let path = data.get_path(target);
-
-                let mut weight = None;
-                if let Some(path) = path {
-                    weight = Some(path.weight);
-                }
-
-                ShortestPathTestCase {
-                    request,
-                    weight,
-                    dijkstra_rank: data.dijkstra_rank(),
-                }
-            },
-        )
-        .collect();
+    let random_pairs = test_cases(args.number_of_tests, &graph);
     println!("took {:?}", start.elapsed());
 
     let mut writer = BufWriter::new(File::create(&args.random_pairs).unwrap());
