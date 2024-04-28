@@ -6,6 +6,7 @@ use std::{
 
 use ahash::{HashMap, HashMapExt, HashSet};
 use indicatif::ProgressBar;
+use itertools::Itertools;
 use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
 use crate::{
@@ -122,9 +123,11 @@ pub fn contract_adaptive_non_simulated_all_in(
     bar.finish();
 
     println!("assing shortcuts to base graph");
-    for shortcut in shortcuts.values() {
-        base_graph.set_edge(&shortcut.edge);
-    }
+    let edges = shortcuts
+        .values()
+        .map(|shortcut| shortcut.edge.clone())
+        .collect_vec();
+    base_graph.set_edges(&edges);
 
     println!("creating upward and downward_graph");
     let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
