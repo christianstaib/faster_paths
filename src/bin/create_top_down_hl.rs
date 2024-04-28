@@ -21,7 +21,7 @@ use faster_paths::{
     },
     hl::{
         hl_path_finding::HLPathFinder,
-        hub_graph::DirectedHubGraph,
+        hub_graph::{overlap, DirectedHubGraph},
         label::{Label, LabelEntry},
     },
 };
@@ -76,15 +76,34 @@ fn main() {
         .map(|vertex| hitting_set.iter().position(|&x| x == vertex).unwrap() as u32)
         .collect();
 
-    let n = 1_000;
+    println!("testing logic");
+    let labels: Vec<_> = test_cases
+        .par_iter()
+        .take(1_000)
+        .progress()
+        .map(|test_case| {
+            let forward_label = get_out_label(test_case.request.source(), &graph, &order).0;
+            let reverse_label = get_in_label(test_case.request.target(), &graph, &order).0;
+            let x = overlap(&forward_label, &reverse_label);
+            let mut weight = None;
+            if let Some((t, _, _)) = x {
+                weight = Some(t);
+            }
 
-    let start = Instant::now();
-    order.par_iter().take(n).progress().for_each(|&vertex| {
-        get_out_label(vertex, &graph, &order);
-    });
+            assert_eq!(weight, test_case.weight);
+
+            // let _path = hub_graph.shortest_path(&test_case.request);
+
+            // if let Err(err) = validate_path(&graph, test_case, &_path) {
+            //     panic!("top down hl wrong: {}", err);
+            // }
+            forward_label
+        })
+        .collect();
+
     println!(
-        "will take {:?} for whole graph",
-        start.elapsed() / n as u32 * graph.number_of_vertices()
+        "average label size is {} ",
+        labels.iter().map(|l| l.entries.len()).sum::<usize>() as f64 / labels.len() as f64
     );
 
     println!("generating hl");
