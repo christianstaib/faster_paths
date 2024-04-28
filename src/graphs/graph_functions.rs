@@ -216,3 +216,9 @@ pub fn random_paths(number_of_paths: u32, graph: &dyn Graph) -> Vec<Path> {
         .flatten()
         .collect()
 }
+
+pub fn degree_vec(graph: &dyn Graph) -> Vec<u32> {
+    (0..graph.number_of_vertices())
+        .map(|vertex| graph.out_edges(vertex).len() as u32)
+        .collect()
+}

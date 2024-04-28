@@ -5,6 +5,7 @@ pub mod ch_priority_element;
 pub mod contracted_graph;
 pub mod contraction_adaptive_non_simulated;
 pub mod contraction_adaptive_simulated;
+pub mod contraction_non_adaptive;
 pub mod contractor;
 pub mod priority_function;
 

@@ -36,9 +36,9 @@ fn main() {
 
     let graph = GraphFactory::from_file(&args.graph);
 
-    let paths = random_paths(args.number_of_tests, &graph);
+    let random_paths = random_paths(args.number_of_tests, &graph);
 
-    let hitting_set = hitting_set(&paths, graph.number_of_vertices());
+    let hitting_set = hitting_set(&random_paths, graph.number_of_vertices());
     println!("{:?}", hitting_set.iter().take(100).collect_vec());
 
     println!(

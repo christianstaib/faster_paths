@@ -15,6 +15,7 @@ use faster_paths::{
     graphs::{
         edge::DirectedEdge,
         graph_factory::GraphFactory,
+        graph_functions::{hitting_set, random_paths},
         path::{PathFinding, ShortestPathTestCase},
         Graph, VertexId,
     },
@@ -56,8 +57,24 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
-    let mut order = (0..graph.number_of_vertices()).collect_vec();
-    order.shuffle(&mut rand::thread_rng());
+    let paths = random_paths(500_000, &graph);
+    let mut hitting_set = hitting_set(&paths, graph.number_of_vertices());
+
+    let mut not_hitting_set = (0..graph.number_of_vertices())
+        .into_iter()
+        .filter(|vertex| !hitting_set.contains(&vertex))
+        .collect_vec();
+    not_hitting_set.shuffle(&mut thread_rng());
+
+    hitting_set.extend(not_hitting_set);
+    hitting_set.reverse();
+
+    // let mut order = (0..graph.number_of_vertices()).collect_vec();
+    // order.shuffle(&mut rand::thread_rng());
+    let order: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
+        .map(|vertex| hitting_set.iter().position(|&x| x == vertex).unwrap() as u32)
+        .collect();
 
     let n = 1_000;
 
