@@ -50,6 +50,9 @@ pub fn contract_adaptive_non_simulated_all_in(
             graph
                 .out_edges(vertex)
                 .filter_map(|out_edge| {
+                    // println!("{:?}", in_edge);
+                    // println!("{:?}", out_edge);
+                    // println!("");
                     let edge = DirectedWeightedEdge::new(
                         in_edge.tail(),
                         out_edge.head(),
@@ -64,7 +67,8 @@ pub fn contract_adaptive_non_simulated_all_in(
         });
 
         let vertex_shortcuts: Vec<_> = vertex_buf
-            .par_iter() // only add edges that are less expensive than currently
+            .par_iter()
+            // only add edges that are less expensive than currently
             .filter(|shortcut| {
                 let current_weight = graph
                     .get_edge_weight(&shortcut.edge.unweighted())
@@ -79,7 +83,6 @@ pub fn contract_adaptive_non_simulated_all_in(
         let start = Instant::now();
         vertex_shortcuts.iter().for_each(|shortcut| {
             graph.set_edge(&shortcut.edge);
-            base_graph.set_edge(&shortcut.edge);
         });
         let duration_add_edges = start.elapsed();
 
@@ -117,6 +120,11 @@ pub fn contract_adaptive_non_simulated_all_in(
         bar.inc(1);
     }
     bar.finish();
+
+    println!("assing shortcuts to base graph");
+    for shortcut in shortcuts.values() {
+        base_graph.set_edge(&shortcut.edge);
+    }
 
     println!("creating upward and downward_graph");
     let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
