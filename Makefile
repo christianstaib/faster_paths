@@ -1,10 +1,10 @@
 DATA_DIR := tests/data
 FMI_DIR := $(DATA_DIR)
 
-NETWORK_GRAPH := $(FMI_DIR)/stgtregbz.fmi
+# NETWORK_GRAPH := $(FMI_DIR)/stgtregbz.fmi
 # NETWORK_GRAPH := $(FMI_DIR)/network.fmi
 # NETWORK_GRAPH := $(FMI_DIR)/aegaeis10-visibility-small.fmi
-# NETWORK_GRAPH := $(FMI_DIR)/aegaeis10-ref-visibility-mercator.fmi
+NETWORK_GRAPH := $(FMI_DIR)/aegaeis10-ref-visibility-mercator.fmi
 NETWORK_CH := $(NETWORK_GRAPH).ch.bincode
 NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS_RANDOM := $(NETWORK_GRAPH).tests_random.json
