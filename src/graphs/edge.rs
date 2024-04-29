@@ -127,6 +127,13 @@ impl DirectedEdge {
         Some(DirectedEdge { tail, head })
     }
 
+    pub fn reversed(&self) -> DirectedEdge {
+        DirectedEdge {
+            tail: self.head,
+            head: self.tail,
+        }
+    }
+
     pub fn tail(&self) -> VertexId {
         self.tail
     }

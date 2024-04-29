@@ -61,7 +61,7 @@ fn main() {
     let graph = GraphFactory::from_file(&args.infile);
 
     let dijkstra = Dijkstra::new(&graph);
-    let paths = random_paths(5_000, &graph, &dijkstra);
+    let paths = random_paths(5_00, &graph, &dijkstra);
     let mut hitting_set = hitting_set(&paths, graph.number_of_vertices());
 
     let mut not_hitting_set = (0..graph.number_of_vertices())
@@ -93,11 +93,20 @@ fn main() {
             let (reverse_label, reverse_shortcuts) =
                 get_in_label(test_case.request.target(), &graph, &order);
 
-            shortcuts.extend(forward_shortcuts);
-            shortcuts.extend(reverse_shortcuts);
+            shortcuts.extend(forward_shortcuts.iter().cloned());
+            // shortcuts.extend(
+            //     forward_shortcuts
+            //         .into_iter()
+            //         .map(|(x, y)| (x.reversed(), y)),
+            // );
+            // shortcuts.extend(reverse_shortcuts.iter().cloned());
+            shortcuts.extend(
+                reverse_shortcuts
+                    .into_iter()
+                    .map(|(x, y)| (x.reversed(), y)),
+            );
 
             let mut path = shortest_path(&forward_label, &reverse_label).unwrap();
-            println!("{:?}", path.vertices);
             replace_shortcuts_slow(&mut path.vertices, &shortcuts);
 
             if let Err(err) = validate_path(&graph, test_case, &Some(path)) {
@@ -250,7 +259,7 @@ fn get_label_from_data(
                 for &tail_child in std::mem::take(&mut shortest_path_tree[head as usize]).iter() {
                     heads.push(tail_child);
                     let edge = DirectedEdge::new(tail as VertexId, tail_child).unwrap();
-                    shortcuts.push((edge, tail_child));
+                    shortcuts.push((edge, head));
                 }
             }
         }

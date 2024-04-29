@@ -48,6 +48,9 @@ pub fn replace_shortcuts_slow(
         let edge = DirectedEdge::new(tail, head).unwrap();
 
         if let Some(&skiped_vertex) = shortcuts.get(&edge) {
+            if skiped_vertex == head || skiped_vertex == tail {
+                panic!("{} {} {}", tail, skiped_vertex, head);
+            }
             path_with_shortcuts.push(skiped_vertex);
             path_with_shortcuts.push(edge.head());
         } else {
