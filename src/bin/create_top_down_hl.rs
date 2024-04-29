@@ -2,6 +2,7 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
+    process::exit,
     sync::{Arc, Mutex},
     time::Instant,
     usize,
@@ -15,17 +16,19 @@ use faster_paths::{
     graphs::{
         edge::DirectedEdge,
         graph_factory::GraphFactory,
-        graph_functions::{hitting_set, random_paths},
+        graph_functions::{hitting_set, random_paths, validate_path},
         path::{PathFinding, ShortestPathTestCase},
         Graph, VertexId,
     },
     hl::{
-        hl_path_finding::HLPathFinder,
+        hl_from_ch::set_predecessor,
+        hl_path_finding::{shortest_path, HLPathFinder},
         hub_graph::{overlap, DirectedHubGraph},
         label::{Label, LabelEntry},
     },
+    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
-use indicatif::ParallelProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::iter::{
@@ -57,7 +60,8 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
-    let paths = random_paths(500_000, &graph);
+    let dijkstra = Dijkstra::new(&graph);
+    let paths = random_paths(5_000, &graph, &dijkstra);
     let mut hitting_set = hitting_set(&paths, graph.number_of_vertices());
 
     let mut not_hitting_set = (0..graph.number_of_vertices())
@@ -78,25 +82,27 @@ fn main() {
 
     println!("testing logic");
     let labels: Vec<_> = test_cases
-        .par_iter()
+        .iter()
         .take(1_000)
         .progress()
         .map(|test_case| {
-            let forward_label = get_out_label(test_case.request.source(), &graph, &order).0;
-            let reverse_label = get_in_label(test_case.request.target(), &graph, &order).0;
-            let x = overlap(&forward_label, &reverse_label);
-            let mut weight = None;
-            if let Some((t, _, _)) = x {
-                weight = Some(t);
+            let mut shortcuts = HashMap::new();
+
+            let (forward_label, forward_shortcuts) =
+                get_out_label(test_case.request.source(), &graph, &order);
+            let (reverse_label, reverse_shortcuts) =
+                get_in_label(test_case.request.target(), &graph, &order);
+
+            shortcuts.extend(forward_shortcuts);
+            shortcuts.extend(reverse_shortcuts);
+
+            let mut path = shortest_path(&forward_label, &reverse_label).unwrap();
+            println!("{:?}", path.vertices);
+            replace_shortcuts_slow(&mut path.vertices, &shortcuts);
+
+            if let Err(err) = validate_path(&graph, test_case, &Some(path)) {
+                panic!("top down hl wrong: {}", err);
             }
-
-            assert_eq!(weight, test_case.weight);
-
-            // let _path = hub_graph.shortest_path(&test_case.request);
-
-            // if let Err(err) = validate_path(&graph, test_case, &_path) {
-            //     panic!("top down hl wrong: {}", err);
-            // }
             forward_label
         })
         .collect();
@@ -107,7 +113,7 @@ fn main() {
     );
 
     println!("generating hl");
-    let hub_graph = get_hl(&graph, &order);
+    let (hub_graph, _shortcuts) = get_hl(&graph, &order);
     let hub_graph_path_finder = HLPathFinder {
         hub_graph: &hub_graph,
     };
@@ -138,7 +144,7 @@ fn main() {
     println!("all {} tests passed", test_cases.len());
 }
 
-fn get_hl(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {
+fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) {
     let shortcuts: Arc<Mutex<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(Mutex::new(HashMap::new()));
 
@@ -175,17 +181,15 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {
     let reverse_labels = forward_labels.clone();
 
     println!("getting shortcuts vec");
-    let _shortcuts = shortcuts
-        .lock()
-        .unwrap()
-        .to_owned()
-        .into_iter()
-        .collect_vec();
+    let shortcuts: HashMap<DirectedEdge, VertexId> =
+        shortcuts.lock().unwrap().to_owned().into_iter().collect();
 
-    DirectedHubGraph {
+    let directed_hub_graph = DirectedHubGraph {
         forward_labels,
         reverse_labels,
-    }
+    };
+
+    (directed_hub_graph, shortcuts)
 }
 
 fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
@@ -253,6 +257,7 @@ fn get_label_from_data(
     }
 
     label.entries.sort_unstable_by_key(|entry| entry.vertex);
+    set_predecessor(&mut label);
 
     (label, shortcuts)
 }

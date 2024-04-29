@@ -2,12 +2,12 @@ use std::usize;
 
 use ahash::{HashSet, HashSetExt};
 use indicatif::{ParallelProgressIterator, ProgressBar};
-use rand::Rng;
+use rand::{rngs::ThreadRng, Rng};
 use rayon::prelude::*;
 
 use super::{
     edge::DirectedWeightedEdge,
-    path::{Path, ShortestPathRequest, ShortestPathTestCase},
+    path::{Path, PathFinding, ShortestPathRequest, ShortestPathTestCase},
     vec_graph::VecGraph,
     Graph, VertexId,
 };
@@ -190,9 +190,11 @@ pub fn test_cases(number_of_paths: u32, graph: &dyn Graph) -> Vec<ShortestPathTe
         .collect()
 }
 
-pub fn random_paths(number_of_paths: u32, graph: &dyn Graph) -> Vec<Path> {
-    let dijkstra = Dijkstra::new(graph);
-
+pub fn random_paths(
+    number_of_paths: u32,
+    graph: &dyn Graph,
+    path_finder: &dyn PathFinding,
+) -> Vec<Path> {
     (0..u32::MAX)
         .into_par_iter()
         .take(number_of_paths as usize)
@@ -200,20 +202,13 @@ pub fn random_paths(number_of_paths: u32, graph: &dyn Graph) -> Vec<Path> {
         .map_init(
             rand::thread_rng, // get the thread-local RNG
             |rng, _| {
-                // guarantee that source != tatget.
-                let source = rng.gen_range(0..graph.number_of_vertices());
-                let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
-                if target >= source {
-                    target += 1;
-                }
+                // return None if no valid request can be build
+                let request = random_request(graph, rng)?;
 
-                let request = ShortestPathRequest::new(source, target).unwrap();
-
-                let data = dijkstra.get_data(request.source(), request.target());
-                data.get_path(target)
+                path_finder.shortest_path(&request)
             },
         )
-        .flatten()
+        .flatten() // flatten Option<Path> to Path
         .collect()
 }
 
@@ -221,4 +216,20 @@ pub fn degree_vec(graph: &dyn Graph) -> Vec<u32> {
     (0..graph.number_of_vertices())
         .map(|vertex| graph.out_edges(vertex).len() as u32)
         .collect()
+}
+
+pub fn random_request(graph: &dyn Graph, rng: &mut ThreadRng) -> Option<ShortestPathRequest> {
+    if graph.number_of_vertices() <= 1 {
+        // not enough vertices to get a request with source != target
+        return None;
+    }
+
+    // guarantee that source != target
+    let source = rng.gen_range(0..graph.number_of_vertices());
+    let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
+    if target >= source {
+        target += 1;
+    }
+
+    ShortestPathRequest::new(source, target)
 }

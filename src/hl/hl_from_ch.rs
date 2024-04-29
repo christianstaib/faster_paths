@@ -114,7 +114,7 @@ fn generate_reverse_label(
     label
 }
 
-fn set_predecessor(label: &mut Label) {
+pub fn set_predecessor(label: &mut Label) {
     // maps vertex -> index
     let mut vertex_to_index = HashMap::new();
     for idx in 0..label.entries.len() {

@@ -15,6 +15,7 @@ use crate::{
         contracted_graph::DirectedContractedGraph,
         contraction_adaptive_simulated::partition_by_levels, Shortcut,
     },
+    classical_search::dijkstra::Dijkstra,
     graphs::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::{hitting_set, random_paths},
@@ -42,7 +43,8 @@ pub fn contract_non_adaptive(
     println!("starting actual contraction");
     let bar = ProgressBar::new(graph.number_of_vertices() as u64);
 
-    let paths = random_paths(10_000, &*graph);
+    let dijkstra = Dijkstra::new(&*graph);
+    let paths = random_paths(10_000, &*graph, &dijkstra);
     let mut hitting_set = hitting_set(&paths, graph.number_of_vertices());
 
     let mut not_hitting_set = (0..graph.number_of_vertices())

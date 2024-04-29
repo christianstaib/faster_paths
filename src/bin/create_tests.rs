@@ -6,27 +6,23 @@ use std::{
 };
 
 use clap::Parser;
-use faster_paths::graphs::{
-    graph_factory::GraphFactory,
-    graph_functions::{hitting_set, random_paths, test_cases},
-    Graph,
-};
-use itertools::Itertools;
+use faster_paths::graphs::{graph_factory::GraphFactory, graph_functions::test_cases};
 
-/// Starts a routing service on localhost:3030/route
+/// Generates `number_of_tests` many random pair test cases for the graph specified at `graph`. The
+/// test cases will be saved at `random_pairs`. For larger `number_of_tests` and complex `graph`s this may take a while.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Path of .fmi file
+    /// Graph in `.fmi` of `.gr` format
     #[arg(short, long)]
     graph: PathBuf,
-    /// Path of .fmi file
+    /// Path where the test cases will be saved
     #[arg(short, long)]
     random_pairs: PathBuf,
-    /// Path of .fmi file
+    /// TODO
     #[arg(short, long)]
     dijkstra_rank_pairs: PathBuf,
-    /// Number of tests to be run
+    /// Number of tests to be generated
     #[arg(short, long)]
     number_of_tests: u32,
 }
@@ -35,17 +31,6 @@ fn main() {
     let args = Args::parse();
 
     let graph = GraphFactory::from_file(&args.graph);
-
-    let random_paths = random_paths(args.number_of_tests, &graph);
-
-    let hitting_set = hitting_set(&random_paths, graph.number_of_vertices());
-    println!("{:?}", hitting_set.iter().take(100).collect_vec());
-
-    println!(
-        "hitted {} out of {} vertices",
-        hitting_set.len(),
-        graph.number_of_vertices()
-    );
 
     println!("generating random pair test");
     let start = Instant::now();
