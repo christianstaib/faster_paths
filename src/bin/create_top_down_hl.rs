@@ -61,7 +61,7 @@ fn main() {
     let graph = GraphFactory::from_file(&args.infile);
 
     let dijkstra = Dijkstra::new(&graph);
-    let paths = random_paths(5_00, &graph, &dijkstra);
+    let paths = random_paths(50_000, &graph, &dijkstra);
     let mut hitting_set = hitting_set(&paths, graph.number_of_vertices());
 
     let mut not_hitting_set = (0..graph.number_of_vertices())
@@ -82,7 +82,7 @@ fn main() {
 
     println!("testing logic");
     let labels: Vec<_> = test_cases
-        .iter()
+        .par_iter()
         .take(1_000)
         .progress()
         .map(|test_case| {
@@ -94,12 +94,12 @@ fn main() {
                 get_in_label(test_case.request.target(), &graph, &order);
 
             shortcuts.extend(forward_shortcuts.iter().cloned());
-            shortcuts.extend(
-                forward_shortcuts
-                    .into_iter()
-                    .map(|(x, y)| (x.reversed(), y)),
-            );
-            shortcuts.extend(reverse_shortcuts.iter().cloned());
+            // shortcuts.extend(
+            //     forward_shortcuts
+            //         .into_iter()
+            //         .map(|(x, y)| (x.reversed(), y)),
+            // );
+            // shortcuts.extend(reverse_shortcuts.iter().cloned());
             shortcuts.extend(
                 reverse_shortcuts
                     .into_iter()
