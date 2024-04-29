@@ -26,7 +26,7 @@ use faster_paths::{
         hub_graph::{overlap, DirectedHubGraph},
         label::{Label, LabelEntry},
     },
-    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
+    shortcut_replacer::slow_shortcut_replacer::{replace_shortcuts_slow, SlowShortcutReplacer},
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
@@ -62,22 +62,22 @@ fn main() {
 
     let dijkstra = Dijkstra::new(&graph);
     let paths = random_paths(50_000, &graph, &dijkstra);
-    let mut hitting_set = hitting_set(&paths, graph.number_of_vertices());
+    let mut hitting_setx = hitting_set(&paths, graph.number_of_vertices());
 
     let mut not_hitting_set = (0..graph.number_of_vertices())
         .into_iter()
-        .filter(|vertex| !hitting_set.contains(&vertex))
+        .filter(|vertex| !hitting_setx.contains(&vertex))
         .collect_vec();
     not_hitting_set.shuffle(&mut thread_rng());
 
-    hitting_set.extend(not_hitting_set);
-    hitting_set.reverse();
+    hitting_setx.extend(not_hitting_set);
+    hitting_setx.reverse();
 
     // let mut order = (0..graph.number_of_vertices()).collect_vec();
     // order.shuffle(&mut rand::thread_rng());
     let order: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
-        .map(|vertex| hitting_set.iter().position(|&x| x == vertex).unwrap() as u32)
+        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
         .collect();
 
     println!("testing logic");
@@ -126,6 +126,69 @@ fn main() {
     let hub_graph_path_finder = HLPathFinder {
         hub_graph: &hub_graph,
     };
+    let hl = HLPathFinder {
+        hub_graph: &hub_graph,
+    };
+    let path_finder = SlowShortcutReplacer::new(&_shortcuts, &hl);
+
+    let paths = random_paths(5_000_000, &graph, &path_finder);
+    let mut hitting_setx = hitting_set(&paths, graph.number_of_vertices());
+
+    let mut not_hitting_set = (0..graph.number_of_vertices())
+        .into_iter()
+        .filter(|vertex| !hitting_setx.contains(&vertex))
+        .collect_vec();
+    not_hitting_set.shuffle(&mut thread_rng());
+
+    hitting_setx.extend(not_hitting_set);
+    hitting_setx.reverse();
+
+    // let mut order = (0..graph.number_of_vertices()).collect_vec();
+    // order.shuffle(&mut rand::thread_rng());
+    let order: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
+        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
+        .collect();
+
+    let labels: Vec<_> = test_cases
+        .par_iter()
+        .take(1_000)
+        .progress()
+        .map(|test_case| {
+            let mut shortcuts = HashMap::new();
+
+            let (forward_label, forward_shortcuts) =
+                get_out_label(test_case.request.source(), &graph, &order);
+            let (reverse_label, reverse_shortcuts) =
+                get_in_label(test_case.request.target(), &graph, &order);
+
+            shortcuts.extend(forward_shortcuts.iter().cloned());
+            // shortcuts.extend(
+            //     forward_shortcuts
+            //         .into_iter()
+            //         .map(|(x, y)| (x.reversed(), y)),
+            // );
+            // shortcuts.extend(reverse_shortcuts.iter().cloned());
+            shortcuts.extend(
+                reverse_shortcuts
+                    .into_iter()
+                    .map(|(x, y)| (x.reversed(), y)),
+            );
+
+            let mut path = shortest_path(&forward_label, &reverse_label).unwrap();
+            replace_shortcuts_slow(&mut path.vertices, &shortcuts);
+
+            if let Err(err) = validate_path(&graph, test_case, &Some(path)) {
+                panic!("top down hl wrong: {}", err);
+            }
+            forward_label
+        })
+        .collect();
+
+    println!(
+        "average label size is {} ",
+        labels.iter().map(|l| l.entries.len()).sum::<usize>() as f64 / labels.len() as f64
+    );
 
     let writer = BufWriter::new(File::create("hl_test.bincode").unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();
