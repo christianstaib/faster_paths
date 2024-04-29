@@ -94,12 +94,12 @@ fn main() {
                 get_in_label(test_case.request.target(), &graph, &order);
 
             shortcuts.extend(forward_shortcuts.iter().cloned());
-            // shortcuts.extend(
-            //     forward_shortcuts
-            //         .into_iter()
-            //         .map(|(x, y)| (x.reversed(), y)),
-            // );
-            // shortcuts.extend(reverse_shortcuts.iter().cloned());
+            shortcuts.extend(
+                forward_shortcuts
+                    .into_iter()
+                    .map(|(x, y)| (x.reversed(), y)),
+            );
+            shortcuts.extend(reverse_shortcuts.iter().cloned());
             shortcuts.extend(
                 reverse_shortcuts
                     .into_iter()
