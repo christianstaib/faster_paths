@@ -59,15 +59,6 @@ fn main() {
     let hub_graph = directed_hub_graph_from_directed_contracted_graph(&contracted_graph);
     println!("Generating hl took {:?}", start.elapsed());
 
-    println!(
-        "{:?}",
-        hub_graph.forward_labels[1_111]
-            .entries
-            .iter()
-            .map(|entry| entry.vertex)
-            .collect_vec()
-    );
-
     let writer = BufWriter::new(File::create(args.hl_graph).unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();
 
