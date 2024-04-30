@@ -1,4 +1,5 @@
 use std::{
+    cmp::Reverse,
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
@@ -11,6 +12,7 @@ use std::{
 use ahash::{HashMap, HashMapExt};
 use clap::Parser;
 use faster_paths::{
+    ch::{ch_dijkstra::ChDijkstra, contracted_graph::DirectedContractedGraph},
     classical_search::dijkstra::Dijkstra,
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
@@ -60,15 +62,26 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
-    let dijkstra = Dijkstra::new(&graph);
-    let paths = random_paths(50_000, &graph, &dijkstra);
-    let mut hitting_setx = hitting_set(&paths, graph.number_of_vertices());
+    let reader = BufReader::new(File::open("tests/data/USA-road-d.NY.gr.ch.bincode").unwrap());
+    let (contracted_graph, shortcuts): (DirectedContractedGraph, HashMap<DirectedEdge, u32>) =
+        bincode::deserialize_from(reader).unwrap();
 
+    let ch_dijkstra = ChDijkstra::new(&contracted_graph);
+    let path_finder = SlowShortcutReplacer::new(&shortcuts, &ch_dijkstra);
+
+    println!("generating random paths");
+    let paths = random_paths(5_000_000, &graph, &path_finder);
+
+    println!("generating hitting set");
+    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
+
+    println!("generating vertex order");
     let mut not_hitting_set = (0..graph.number_of_vertices())
         .into_iter()
         .filter(|vertex| !hitting_setx.contains(&vertex))
         .collect_vec();
     not_hitting_set.shuffle(&mut thread_rng());
+    not_hitting_set.sort_unstable_by_key(|&vertex| Reverse(num_hits[vertex as usize]));
 
     hitting_setx.extend(not_hitting_set);
     hitting_setx.reverse();
@@ -131,64 +144,17 @@ fn main() {
     };
     let path_finder = SlowShortcutReplacer::new(&_shortcuts, &hl);
 
-    let paths = random_paths(5_000_000, &graph, &path_finder);
-    let mut hitting_setx = hitting_set(&paths, graph.number_of_vertices());
-
-    let mut not_hitting_set = (0..graph.number_of_vertices())
-        .into_iter()
-        .filter(|vertex| !hitting_setx.contains(&vertex))
-        .collect_vec();
-    not_hitting_set.shuffle(&mut thread_rng());
-
-    hitting_setx.extend(not_hitting_set);
-    hitting_setx.reverse();
-
-    // let mut order = (0..graph.number_of_vertices()).collect_vec();
-    // order.shuffle(&mut rand::thread_rng());
-    let order: Vec<_> = (0..graph.number_of_vertices())
-        .into_par_iter()
-        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
-        .collect();
-
-    let labels: Vec<_> = test_cases
+    test_cases
         .par_iter()
         .take(1_000)
         .progress()
-        .map(|test_case| {
-            let mut shortcuts = HashMap::new();
+        .for_each(|test_case| {
+            let path = path_finder.shortest_path(&test_case.request);
 
-            let (forward_label, forward_shortcuts) =
-                get_out_label(test_case.request.source(), &graph, &order);
-            let (reverse_label, reverse_shortcuts) =
-                get_in_label(test_case.request.target(), &graph, &order);
-
-            shortcuts.extend(forward_shortcuts.iter().cloned());
-            // shortcuts.extend(
-            //     forward_shortcuts
-            //         .into_iter()
-            //         .map(|(x, y)| (x.reversed(), y)),
-            // );
-            // shortcuts.extend(reverse_shortcuts.iter().cloned());
-            shortcuts.extend(
-                reverse_shortcuts
-                    .into_iter()
-                    .map(|(x, y)| (x.reversed(), y)),
-            );
-
-            let mut path = shortest_path(&forward_label, &reverse_label).unwrap();
-            replace_shortcuts_slow(&mut path.vertices, &shortcuts);
-
-            if let Err(err) = validate_path(&graph, test_case, &Some(path)) {
+            if let Err(err) = validate_path(&graph, test_case, &path) {
                 panic!("top down hl wrong: {}", err);
             }
-            forward_label
-        })
-        .collect();
-
-    println!(
-        "average label size is {} ",
-        labels.iter().map(|l| l.entries.len()).sum::<usize>() as f64 / labels.len() as f64
-    );
+        });
 
     let writer = BufWriter::new(File::create("hl_test.bincode").unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();

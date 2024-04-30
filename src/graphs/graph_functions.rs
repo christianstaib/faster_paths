@@ -118,9 +118,11 @@ pub fn is_bidirectional(graph: &dyn Graph) -> bool {
     return true;
 }
 
-pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> Vec<VertexId> {
+pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, Vec<u32>) {
     let mut hitting_set = Vec::new();
     let mut active_paths: HashSet<usize> = (0..paths.len()).collect();
+
+    let mut all_hits = vec![0; number_of_vertices as usize];
 
     let pb = ProgressBar::new(active_paths.len() as u64);
     while !active_paths.is_empty() {
@@ -130,6 +132,7 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> Vec<VertexId> {
             let path = &paths[path_idx];
             for &vertex in path.vertices.iter() {
                 number_of_hits[vertex as usize] += 1;
+                all_hits[vertex as usize] += 1;
             }
         }
 
@@ -151,7 +154,7 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> Vec<VertexId> {
     }
     pb.finish();
 
-    hitting_set
+    (hitting_set, all_hits)
 }
 
 pub fn test_cases(number_of_paths: u32, graph: &dyn Graph) -> Vec<ShortestPathTestCase> {

@@ -7,7 +7,11 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::{ch_dijkstra::ChDijkstra, contraction_non_adaptive::contract_non_adaptive},
+    ch::{
+        ch_dijkstra::ChDijkstra,
+        contraction_adaptive_simulated::contract_adaptive_simulated_with_witness,
+        contraction_non_adaptive::contract_non_adaptive,
+    },
     graphs::{
         graph_factory::GraphFactory,
         graph_functions::{all_edges, validate_path},
@@ -50,12 +54,14 @@ fn main() {
     let boxed_graph = Box::new(working_graph);
 
     let start = Instant::now();
-    let (contracted_graph, shortcuts) = contract_non_adaptive(boxed_graph);
+    let ch_and_shortctus = contract_adaptive_simulated_with_witness(boxed_graph);
     println!("it took {:?} to contract the graph", start.elapsed());
 
     println!("writing contracted graph to file");
     let writer = BufWriter::new(File::create(args.outfile).unwrap());
-    bincode::serialize_into(writer, &contracted_graph).unwrap();
+    bincode::serialize_into(writer, &ch_and_shortctus).unwrap();
+
+    let (contracted_graph, shortcuts) = ch_and_shortctus;
 
     // setting up path finder
     let ch_dijkstra = ChDijkstra::new(&contracted_graph);

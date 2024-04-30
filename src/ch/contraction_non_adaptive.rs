@@ -45,7 +45,7 @@ pub fn contract_non_adaptive(
 
     let dijkstra = Dijkstra::new(&*graph);
     let paths = random_paths(10_000, &*graph, &dijkstra);
-    let mut hitting_set = hitting_set(&paths, graph.number_of_vertices());
+    let mut hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
 
     let mut not_hitting_set = (0..graph.number_of_vertices())
         .into_iter()
