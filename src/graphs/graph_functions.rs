@@ -1,7 +1,10 @@
-use std::usize;
+use std::{
+    time::{Duration, Instant},
+    usize,
+};
 
 use ahash::{HashSet, HashSetExt};
-use indicatif::{ParallelProgressIterator, ProgressBar};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use rand::{rngs::ThreadRng, Rng};
 use rayon::prelude::*;
 
@@ -250,4 +253,24 @@ pub fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
     }
 
     search_tree
+}
+
+pub fn validate_and_time(
+    test_cases: &Vec<ShortestPathTestCase>,
+    path_finder: &dyn PathFinding,
+    graph: &dyn Graph,
+) -> Vec<Duration> {
+    let mut times = Vec::new();
+
+    test_cases.iter().progress().for_each(|test_case| {
+        let start = Instant::now();
+        let path = path_finder.shortest_path(&test_case.request);
+        times.push(start.elapsed());
+
+        if let Err(err) = validate_path(graph, test_case, &path) {
+            panic!("top down hl wrong: {}", err);
+        }
+    });
+
+    times
 }

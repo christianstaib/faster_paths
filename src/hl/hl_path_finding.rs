@@ -5,7 +5,13 @@ use crate::graphs::{
 };
 
 pub struct HLPathFinder<'a> {
-    pub hub_graph: &'a dyn HubGraphTrait,
+    hub_graph: &'a dyn HubGraphTrait,
+}
+
+impl<'a> HLPathFinder<'a> {
+    pub fn new(hub_graph: &'a dyn HubGraphTrait) -> Self {
+        HLPathFinder { hub_graph }
+    }
 }
 
 impl<'a> PathFinding for HLPathFinder<'a> {
@@ -33,7 +39,8 @@ pub fn shortest_path(forward_label: &Label, backward_label: &Label) -> Option<Pa
     let mut forward_path = forward_label.get_path(forward_index).unwrap();
     let reverse_path = backward_label.get_path(reverse_index).unwrap();
 
-    // now got: forward_path (meeting -> source) and reverse_reverse (meeting -> target)
+    // now got: forward_path (meeting -> source) and reverse_reverse (meeting ->
+    // target)
     forward_path.vertices.reverse();
     forward_path.vertices.pop();
 

@@ -27,7 +27,7 @@ pub fn generate_hub_graph(
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (label, mut label_shortcuts) = get_out_label(vertex, graph, order);
+            let (label, mut label_shortcuts) = generate_forward_label(vertex, graph, order);
 
             // Spend as little time as possible in a locked shortcuts state, therefore
             // remove label_shortcuts already present in shortcuts in readmode.
@@ -75,7 +75,7 @@ pub fn generate_directed_hub_graph(
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (label, mut label_shortcuts) = get_out_label(vertex, graph, order);
+            let (label, mut label_shortcuts) = generate_forward_label(vertex, graph, order);
 
             // Spend as little time as possible in a locked shortcuts state, therefore
             // remove label_shortcuts already present in shortcuts in readmode.
@@ -98,7 +98,7 @@ pub fn generate_directed_hub_graph(
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (label, mut label_shortcuts) = get_in_label(vertex, graph, order);
+            let (label, mut label_shortcuts) = generate_reverse_label(vertex, graph, order);
 
             if let Ok(readable_shortcuts) = shortcuts.read() {
                 label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
@@ -124,7 +124,7 @@ pub fn generate_directed_hub_graph(
     (directed_hub_graph, shortcuts)
 }
 
-pub fn get_out_label(
+pub fn generate_forward_label(
     vertex: VertexId,
     graph: &dyn Graph,
     order: &[u32],
@@ -133,7 +133,7 @@ pub fn get_out_label(
     get_label_from_data(vertex, &data, order)
 }
 
-pub fn get_in_label(
+pub fn generate_reverse_label(
     vertex: VertexId,
     graph: &dyn Graph,
     order: &[u32],
