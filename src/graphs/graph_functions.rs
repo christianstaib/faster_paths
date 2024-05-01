@@ -11,7 +11,10 @@ use super::{
     vec_graph::VecGraph,
     Graph, VertexId,
 };
-use crate::{classical_search::dijkstra::Dijkstra, dijkstra_data::DijkstraData};
+use crate::{
+    classical_search::dijkstra::Dijkstra,
+    dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
+};
 
 /// Check if a route is correct for a given request. Panics if not.
 pub fn validate_path(
@@ -235,4 +238,16 @@ pub fn random_request(graph: &dyn Graph, rng: &mut ThreadRng) -> Option<Shortest
     }
 
     ShortestPathRequest::new(source, target)
+}
+
+pub fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
+    let mut search_tree = vec![Vec::new(); data.vertices.len()];
+
+    for (child, entry) in data.vertices.iter().enumerate() {
+        if let Some(parent) = entry.predecessor {
+            search_tree[parent as usize].push(child as VertexId);
+        }
+    }
+
+    search_tree
 }
