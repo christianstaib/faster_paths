@@ -26,7 +26,7 @@ use faster_paths::{
     hl::{
         hl_from_ch::set_predecessor,
         hl_path_finding::{shortest_path, HLPathFinder},
-        hub_graph::{overlap, DirectedHubGraph},
+        hub_graph::{overlap, DirectedHubGraph, HubGraph},
         label::{Label, LabelEntry},
     },
     shortcut_replacer::slow_shortcut_replacer::{replace_shortcuts_slow, SlowShortcutReplacer},
@@ -95,7 +95,7 @@ fn main() {
     println!("average label size is {} ", average_label_size);
 
     println!("generating hl");
-    let (hub_graph, _shortcuts) = get_hl(&graph, &order);
+    let (hub_graph, _shortcuts) = generate_directed_hub_graph(&graph, &order);
     let path_finder = HLPathFinder {
         hub_graph: &hub_graph,
     };
@@ -184,7 +184,56 @@ fn predict_average_label_size(
     average_label_size
 }
 
-fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) {
+fn generate_hub_graph(
+    graph: &dyn Graph,
+    order: &[u32],
+) -> (HubGraph, HashMap<DirectedEdge, VertexId>) {
+    let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
+        Arc::new(RwLock::new(HashMap::new()));
+
+    println!("generating labels");
+    let labels: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
+        .progress()
+        .map(|vertex| {
+            let (label, mut label_shortcuts) = get_out_label(vertex, graph, order);
+
+            // Spend as little time as possible in a locked shortcuts state, therefore
+            // remove label_shortcuts already present in shortcuts in readmode.
+            // Important to put readable_shortcuts into its own scope as it would otherwise
+            // block read access
+            if let Ok(readable_shortcuts) = shortcuts.read() {
+                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
+            }
+
+            shortcuts.write().unwrap().extend(label_shortcuts);
+
+            label
+        })
+        .collect();
+
+    println!("generating shortcut map");
+    let mut shortcuts: HashMap<DirectedEdge, VertexId> =
+        shortcuts.read().unwrap().to_owned().into_iter().collect();
+
+    // the shortcuts for the reverse direction have not yet been
+    // added.
+    let reverse_shortcuts: Vec<_> = shortcuts
+        .par_iter()
+        .map(|(edge, &vertex)| (edge.reversed(), vertex))
+        .filter(|(edge, _)| !shortcuts.contains_key(edge))
+        .collect();
+    shortcuts.extend(reverse_shortcuts);
+
+    let hub_graph = HubGraph { labels };
+
+    (hub_graph, shortcuts)
+}
+
+fn generate_directed_hub_graph(
+    graph: &dyn Graph,
+    order: &[u32],
+) -> (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) {
     let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(RwLock::new(HashMap::new()));
 
@@ -210,36 +259,25 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<Direct
         .collect();
 
     println!("generating reverse labels");
-    // let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
-    //     .into_par_iter()
-    //     .progress()
-    //     .map(|vertex| {
-    //         if vertex % 1_000 == 0 {
-    //             println!("{}/{}", vertex, graph.number_of_vertices());
-    //         }
+    let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
+        .progress()
+        .map(|vertex| {
+            let (label, mut label_shortcuts) = get_in_label(vertex, graph, order);
 
-    //         let (label, label_shortcuts) = get_in_label(vertex, graph, order);
+            if let Ok(readable_shortcuts) = shortcuts.read() {
+                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
+            }
 
-    //         shortcuts.lock().unwrap().extend(label_shortcuts);
+            shortcuts.write().unwrap().extend(label_shortcuts);
 
-    //         label
-    //     })
-    //     .collect();
-    let reverse_labels = forward_labels.clone();
+            label
+        })
+        .collect();
 
     println!("getting shortcuts vec");
-    let mut shortcuts: HashMap<DirectedEdge, VertexId> =
+    let shortcuts: HashMap<DirectedEdge, VertexId> =
         shortcuts.read().unwrap().to_owned().into_iter().collect();
-
-    // This is only necessary if reverse_labels is cloned from forward_labels. In
-    // this case, the shortcuts for the reverse direction have not yet been
-    // added.
-    let reverse_shortcuts: Vec<_> = shortcuts
-        .par_iter()
-        .map(|(edge, &vertex)| (edge.reversed(), vertex))
-        .filter(|(edge, _)| !shortcuts.contains_key(edge))
-        .collect();
-    shortcuts.extend(reverse_shortcuts);
 
     let directed_hub_graph = DirectedHubGraph {
         forward_labels,
