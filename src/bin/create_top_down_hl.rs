@@ -121,10 +121,11 @@ fn main() {
         .take(1_000)
         .progress()
         .for_each(|test_case| {
-            // let forward_label = get_out_label(test_case.request.source(), &graph, &order).0;
-            // let reverse_label = get_in_label(test_case.request.target(), &graph, &order).0;
-            // let (weight, _, _) = HubGraph::overlap(&forward_label, &reverse_label).unwrap();
-            // let weight = Some(weight);
+            // let forward_label = get_out_label(test_case.request.source(), &graph,
+            // &order).0; let reverse_label =
+            // get_in_label(test_case.request.target(), &graph, &order).0;
+            // let (weight, _, _) = HubGraph::overlap(&forward_label,
+            // &reverse_label).unwrap(); let weight = Some(weight);
 
             let weight = path_finder.shortest_path_weight(&test_case.request);
             assert_eq!(weight, test_case.weight);
@@ -194,16 +195,15 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<Direct
         .map(|vertex| {
             let (label, mut label_shortcuts) = get_out_label(vertex, graph, order);
 
-            // important to put readable_shortcuts into its own scope as it would otherwise block
-            // read access
+            // Spend as little time as possible in a locked shortcuts state, therefore
+            // remove label_shortcuts already present in shortcuts in readmode.
+            // Important to put readable_shortcuts into its own scope as it would otherwise
+            // block read access
             if let Ok(readable_shortcuts) = shortcuts.read() {
-                label_shortcuts
-                    .retain(|label_shortcut| !readable_shortcuts.contains_key(&label_shortcut.0));
+                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
             }
 
             shortcuts.write().unwrap().extend(label_shortcuts);
-
-            // shortcuts.lock().unwrap().extend(label_shortcuts);
 
             label
         })
@@ -228,8 +228,18 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<Direct
     let reverse_labels = forward_labels.clone();
 
     println!("getting shortcuts vec");
-    let shortcuts: HashMap<DirectedEdge, VertexId> =
+    let mut shortcuts: HashMap<DirectedEdge, VertexId> =
         shortcuts.read().unwrap().to_owned().into_iter().collect();
+
+    // This is only necessary if reverse_labels is cloned from forward_labels. In
+    // this case, the shortcuts for the reverse direction have not yet been
+    // added.
+    let reverse_shortcuts: Vec<_> = shortcuts
+        .par_iter()
+        .map(|(edge, &vertex)| (edge.reversed(), vertex))
+        .filter(|(edge, _)| !shortcuts.contains_key(edge))
+        .collect();
+    shortcuts.extend(reverse_shortcuts);
 
     let directed_hub_graph = DirectedHubGraph {
         forward_labels,
