@@ -95,7 +95,7 @@ fn main() {
     println!("average label size is {} ", average_label_size);
 
     println!("generating hl");
-    let (hub_graph, _shortcuts) = generate_directed_hub_graph(&graph, &order);
+    let (hub_graph, _shortcuts) = generate_hub_graph(&graph, &order);
     let path_finder = HLPathFinder {
         hub_graph: &hub_graph,
     };
@@ -201,7 +201,7 @@ fn generate_hub_graph(
             // Spend as little time as possible in a locked shortcuts state, therefore
             // remove label_shortcuts already present in shortcuts in readmode.
             // Important to put readable_shortcuts into its own scope as it would otherwise
-            // block read access
+            // block write access
             if let Ok(readable_shortcuts) = shortcuts.read() {
                 label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
             }
@@ -249,7 +249,7 @@ fn generate_directed_hub_graph(
             // Spend as little time as possible in a locked shortcuts state, therefore
             // remove label_shortcuts already present in shortcuts in readmode.
             // Important to put readable_shortcuts into its own scope as it would otherwise
-            // block read access
+            // block write access
             if let Ok(readable_shortcuts) = shortcuts.read() {
                 label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
             }
