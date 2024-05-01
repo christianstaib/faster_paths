@@ -5,7 +5,7 @@ use std::{
 };
 
 use ahash::{HashMap, HashMapExt, HashSet};
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
@@ -136,11 +136,14 @@ pub fn contract_adaptive_non_simulated_all_in(
     let writer = BufWriter::new(File::create("all_in.bincode").unwrap());
     bincode::serialize_into(writer, &(&base_graph, &shortcuts)).unwrap();
 
-    println!("Adding shortcuts to base graph");
+    println!("Building edge vec");
     let edges = shortcuts
         .values()
+        .progress()
         .map(|shortcut| shortcut.edge.clone())
         .collect_vec();
+
+    println!("Adding shortcuts to base graph");
     base_graph.set_edges(&edges);
 
     println!("creating upward and downward_graph");
