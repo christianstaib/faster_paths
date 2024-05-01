@@ -200,8 +200,10 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<Direct
         })
         .collect();
 
+    println!("adding forward shortcuts to shortcuts");
     let forward_labels: Vec<_> = labels_and_shortcuts
         .into_iter()
+        .progress()
         .map(|(label, label_shortcuts)| {
             shortcuts.extend(label_shortcuts);
             label
