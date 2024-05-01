@@ -163,7 +163,10 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, V
     (hitting_set, all_hits)
 }
 
-pub fn test_cases(number_of_paths: u32, graph: &dyn Graph) -> Vec<ShortestPathTestCase> {
+pub fn generate_random_pair_testcases(
+    number_of_paths: u32,
+    graph: &dyn Graph,
+) -> Vec<ShortestPathTestCase> {
     let dijkstra = Dijkstra::new(graph);
 
     (0..number_of_paths)

@@ -1,15 +1,28 @@
 use std::{
     fs::File,
-    io::{BufWriter, Write},
+    io::{BufReader, BufWriter, Write},
     path::PathBuf,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use clap::Parser;
-use faster_paths::graphs::{graph_factory::GraphFactory, graph_functions::test_cases};
+use faster_paths::{
+    classical_search::{cache_dijkstra::CacheDijkstra, dijkstra::Dijkstra},
+    dijkstra_data::DijkstraData,
+    graphs::{
+        graph_factory::GraphFactory,
+        graph_functions::{generate_random_pair_testcases, hitting_set, random_paths},
+        path::{ShortestPathRequest, ShortestPathTestCase},
+        Graph,
+    },
+};
+use indicatif::{ParallelProgressIterator, ProgressIterator};
+use rand::{thread_rng, Rng};
+use rayon::prelude::*;
 
-/// Generates `number_of_tests` many random pair test cases for the graph specified at `graph`. The
-/// test cases will be saved at `random_pairs`. For larger `number_of_tests` and complex `graph`s this may take a while.
+/// Generates `number_of_tests` many random pair test cases for the graph
+/// specified at `graph`. The test cases will be saved at `random_pairs`. For
+/// larger `number_of_tests` and complex `graph`s this may take a while.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -30,14 +43,68 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    println!("Loading graph");
     let graph = GraphFactory::from_file(&args.graph);
+
+    println!("Loading test cases");
+    let reader = BufReader::new(File::open(&args.random_pairs).unwrap());
+    let random_pairs: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();
+
+    let number_of_random_pairs = 50_000;
+    println!("Generating {} random paths", number_of_random_pairs);
+    let dijkstra = Dijkstra::new(&graph);
+    let paths = random_paths(number_of_random_pairs, &graph, &dijkstra);
+
+    println!("generating hitting set");
+    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
+
+    let mut times = Vec::new();
 
     println!("generating random pair test");
     let start = Instant::now();
-    let random_pairs = test_cases(args.number_of_tests, &graph);
-    println!("took {:?}", start.elapsed());
 
-    let mut writer = BufWriter::new(File::create(&args.random_pairs).unwrap());
-    serde_json::to_writer_pretty(&mut writer, &random_pairs).unwrap();
-    writer.flush().unwrap();
+    println!("generating cache");
+    let number_of_paths = args.number_of_tests;
+    let graph: &dyn Graph = &graph;
+    let mut cache_dijkstra = CacheDijkstra::new(graph);
+    cache_dijkstra.cache = hitting_setx
+        .iter()
+        .progress()
+        .map(|&vertex| (vertex, dijkstra.single_source(vertex).vertices))
+        .collect();
+
+    // to beat 43.580883ms
+    random_pairs
+        .iter()
+        .take(5_000)
+        .progress()
+        .for_each(|test_case| {
+            let source = test_case.request.source();
+            let target = test_case.request.target();
+
+            let request = ShortestPathRequest::new(source, target).unwrap();
+
+            let start = Instant::now();
+            let data = cache_dijkstra.single_source(request.source());
+            times.push(start.elapsed());
+
+            let path = data.get_path(target);
+
+            let mut weight = None;
+            if let Some(path) = path {
+                weight = Some(path.weight);
+            }
+
+            assert_eq!(weight, test_case.weight);
+        });
+
+    println!(
+        "average query time {:?}",
+        times.iter().sum::<Duration>() / times.len() as u32
+    );
+
+    // let mut writer =
+    // BufWriter::new(File::create(&args.random_pairs).unwrap());
+    // serde_json::to_writer_pretty(&mut writer, &random_pairs).unwrap();
+    // writer.flush().unwrap();
 }
