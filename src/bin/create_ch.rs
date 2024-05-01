@@ -9,6 +9,7 @@ use clap::Parser;
 use faster_paths::{
     ch::{
         ch_dijkstra::ChDijkstra,
+        contraction_adaptive_non_simulated::contract_adaptive_non_simulated_all_in,
         contraction_adaptive_simulated::contract_adaptive_simulated_with_witness,
         contraction_non_adaptive::contract_non_adaptive,
     },
@@ -54,7 +55,7 @@ fn main() {
     let boxed_graph = Box::new(working_graph);
 
     let start = Instant::now();
-    let ch_and_shortctus = contract_adaptive_simulated_with_witness(boxed_graph);
+    let ch_and_shortctus = contract_adaptive_non_simulated_all_in(boxed_graph);
     println!("it took {:?} to contract the graph", start.elapsed());
 
     println!("writing contracted graph to file");

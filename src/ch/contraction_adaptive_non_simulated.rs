@@ -33,6 +33,8 @@ pub fn contract_adaptive_non_simulated_all_in(
     let mut levels = Vec::new();
 
     let mut remaining_vertices: HashSet<VertexId> = (0..graph.number_of_vertices()).collect();
+    remaining_vertices
+        .retain(|&vertex| graph.out_edges(vertex).len() + graph.in_edges(vertex).len() > 0);
 
     let mut writer = BufWriter::new(File::create("reasons_slow.csv").unwrap());
     writeln!(
@@ -42,7 +44,7 @@ pub fn contract_adaptive_non_simulated_all_in(
         .unwrap();
 
     println!("starting actual contraction");
-    let bar = ProgressBar::new(graph.number_of_vertices() as u64);
+    let bar = ProgressBar::new(remaining_vertices.len() as u64);
 
     let landmarks = Landmarks::new(25, &*graph);
 
@@ -130,7 +132,11 @@ pub fn contract_adaptive_non_simulated_all_in(
     }
     bar.finish();
 
-    println!("assing shortcuts to base graph");
+    println!("writing base_grap and shortcuts to file");
+    let writer = BufWriter::new(File::create("all_in.bincode").unwrap());
+    bincode::serialize_into(writer, &(&base_graph, &shortcuts)).unwrap();
+
+    println!("Adding shortcuts to base graph");
     let edges = shortcuts
         .values()
         .map(|shortcut| shortcut.edge.clone())

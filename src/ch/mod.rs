@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::graphs::{edge::DirectedWeightedEdge, VertexId};
 
 pub mod ch_dijkstra;
@@ -9,7 +11,7 @@ pub mod contraction_non_adaptive;
 pub mod contractor;
 pub mod priority_function;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Shortcut {
     pub edge: DirectedWeightedEdge,
     pub vertex: VertexId,
