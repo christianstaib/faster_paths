@@ -206,7 +206,9 @@ fn generate_hub_graph(
                 label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
             }
 
-            shortcuts.write().unwrap().extend(label_shortcuts);
+            if !label_shortcuts.is_empty() {
+                shortcuts.write().unwrap().extend(label_shortcuts);
+            }
 
             label
         })
@@ -252,7 +254,9 @@ fn generate_directed_hub_graph(
                 label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
             }
 
-            shortcuts.write().unwrap().extend(label_shortcuts);
+            if !label_shortcuts.is_empty() {
+                shortcuts.write().unwrap().extend(label_shortcuts);
+            }
 
             label
         })
@@ -269,7 +273,9 @@ fn generate_directed_hub_graph(
                 label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
             }
 
-            shortcuts.write().unwrap().extend(label_shortcuts);
+            if !label_shortcuts.is_empty() {
+                shortcuts.write().unwrap().extend(label_shortcuts);
+            }
 
             label
         })
