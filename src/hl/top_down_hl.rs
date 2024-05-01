@@ -4,6 +4,7 @@ use std::{
 };
 
 use ahash::{HashMap, HashMapExt};
+use dashmap::DashMap;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 
@@ -22,44 +23,18 @@ pub fn generate_hub_graph(
     graph: &dyn Graph,
     order: &[u32],
 ) -> (HubGraph, HashMap<DirectedEdge, VertexId>) {
-    let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
-        Arc::new(RwLock::new(HashMap::new()));
+    let shortcuts: Arc<DashMap<DirectedEdge, VertexId>> = Arc::new(DashMap::new());
 
     println!("generating labels");
     let labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (label, mut label_shortcuts) = generate_forward_label(vertex, graph, order);
+            let (label, label_shortcuts) = generate_forward_label(vertex, graph, order);
 
-            if label_shortcuts.is_empty() {
-                return label;
-            }
-
-            // Spend as little time as possible in a locked shortcuts state, therefore
-            // remove label_shortcuts already present in shortcuts in readmode.
-            // Important to put readable_shortcuts into its own scope as it would otherwise
-            // block write access
-            let start = Instant::now();
-            if let Ok(readable_shortcuts) = shortcuts.read() {
-                let elapsed = start.elapsed().as_secs_f32();
-                if elapsed > 1.0 {
-                    println!("waited {}s for read lock", elapsed);
-                }
-                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
-            }
-
-            if label_shortcuts.is_empty() {
-                return label;
-            }
-
-            let start = Instant::now();
-            if let Ok(ref mut shortcuts) = shortcuts.write() {
-                let elapsed = start.elapsed().as_secs_f32();
-                if elapsed > 1.0 {
-                    println!("waited {}s for write lock", elapsed);
-                }
-                shortcuts.extend(label_shortcuts);
+            for (edge, vertex_id) in label_shortcuts {
+                // DashMap's entry API can be used to efficiently check and update the map
+                shortcuts.entry(edge).or_insert(vertex_id);
             }
 
             label
@@ -68,7 +43,7 @@ pub fn generate_hub_graph(
 
     println!("generating shortcut map");
     let mut shortcuts: HashMap<DirectedEdge, VertexId> =
-        shortcuts.read().unwrap().to_owned().into_iter().collect();
+        Arc::into_inner(shortcuts).unwrap().into_iter().collect();
 
     // the shortcuts for the reverse direction have not yet been
     // added.
