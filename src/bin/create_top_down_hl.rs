@@ -20,6 +20,7 @@ use faster_paths::{
         graph_factory::GraphFactory,
         graph_functions::{hitting_set, random_paths, validate_path},
         path::{PathFinding, ShortestPathTestCase},
+        reversible_vec_graph::ReversibleVecGraph,
         Graph, VertexId,
     },
     hl::{
@@ -65,7 +66,7 @@ fn main() {
     let dijkstra = Dijkstra::new(&graph);
 
     println!("generating random paths");
-    let paths = random_paths(5_000_000, &graph, &dijkstra);
+    let paths = random_paths(5_000, &graph, &dijkstra);
 
     println!("generating hitting set");
     let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
@@ -89,58 +90,16 @@ fn main() {
         .collect();
 
     println!("testing logic");
-    let labels: Vec<_> = test_cases
-        .par_iter()
-        .take(1_000)
-        .progress()
-        .map(|test_case| {
-            let mut shortcuts = HashMap::new();
+    let average_label_size = predict_average_label_size(&test_cases, &graph, &order);
 
-            let (forward_label, forward_shortcuts) =
-                get_out_label(test_case.request.source(), &graph, &order);
-            let (reverse_label, reverse_shortcuts) =
-                get_in_label(test_case.request.target(), &graph, &order);
-
-            shortcuts.extend(forward_shortcuts.iter().cloned());
-            // shortcuts.extend(
-            //     forward_shortcuts
-            //         .into_iter()
-            //         .map(|(x, y)| (x.reversed(), y)),
-            // );
-            // shortcuts.extend(reverse_shortcuts.iter().cloned());
-            shortcuts.extend(
-                reverse_shortcuts
-                    .into_iter()
-                    .map(|(x, y)| (x.reversed(), y)),
-            );
-
-            let mut path = shortest_path(&forward_label, &reverse_label);
-
-            if let Some(ref mut path) = path {
-                replace_shortcuts_slow(&mut path.vertices, &shortcuts);
-            }
-
-            if let Err(err) = validate_path(&graph, test_case, &path) {
-                panic!("top down hl wrong: {}", err);
-            }
-            forward_label
-        })
-        .collect();
-
-    println!(
-        "average label size is {} ",
-        labels.iter().map(|l| l.entries.len()).sum::<usize>() as f64 / labels.len() as f64
-    );
+    println!("average label size is {} ", average_label_size);
 
     println!("generating hl");
     let (hub_graph, _shortcuts) = get_hl(&graph, &order);
-    let hub_graph_path_finder = HLPathFinder {
+    let path_finder = HLPathFinder {
         hub_graph: &hub_graph,
     };
-    let hl = HLPathFinder {
-        hub_graph: &hub_graph,
-    };
-    let path_finder = SlowShortcutReplacer::new(&_shortcuts, &hl);
+    let path_finder = SlowShortcutReplacer::new(&_shortcuts, &path_finder);
 
     test_cases
         .par_iter()
@@ -167,7 +126,7 @@ fn main() {
             // let (weight, _, _) = HubGraph::overlap(&forward_label, &reverse_label).unwrap();
             // let weight = Some(weight);
 
-            let weight = hub_graph_path_finder.shortest_path_weight(&test_case.request);
+            let weight = path_finder.shortest_path_weight(&test_case.request);
             assert_eq!(weight, test_case.weight);
 
             // let _path = hub_graph.shortest_path(&test_case.request);
@@ -178,6 +137,50 @@ fn main() {
         });
 
     println!("all {} tests passed", test_cases.len());
+}
+
+fn predict_average_label_size(
+    test_cases: &Vec<ShortestPathTestCase>,
+    graph: &dyn Graph,
+    order: &Vec<u32>,
+) -> f64 {
+    let labels: Vec<_> = test_cases
+        .par_iter()
+        .take(1_000)
+        .progress()
+        .map(|test_case| {
+            let mut shortcuts = HashMap::new();
+
+            let (forward_label, forward_shortcuts) =
+                get_out_label(test_case.request.source(), graph, order);
+            let (reverse_label, reverse_shortcuts) =
+                get_in_label(test_case.request.target(), graph, order);
+
+            shortcuts.extend(forward_shortcuts.iter().cloned());
+            shortcuts.extend(
+                reverse_shortcuts
+                    .into_iter()
+                    .map(|(x, y)| (x.reversed(), y)),
+            );
+
+            let mut path = shortest_path(&forward_label, &reverse_label);
+
+            if let Some(ref mut path) = path {
+                replace_shortcuts_slow(&mut path.vertices, &shortcuts);
+            }
+
+            if let Err(err) = validate_path(graph, test_case, &path) {
+                panic!("top down hl wrong: {}", err);
+            }
+
+            vec![forward_label, reverse_label]
+        })
+        .flatten()
+        .collect();
+
+    let average_label_size =
+        labels.iter().map(|l| l.entries.len()).sum::<usize>() as f64 / labels.len() as f64;
+    average_label_size
 }
 
 fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) {
