@@ -184,26 +184,19 @@ fn predict_average_label_size(
 }
 
 fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) {
-    let mut shortcuts: HashMap<DirectedEdge, VertexId> = HashMap::new();
+    let shortcuts: Arc<Mutex<HashMap<DirectedEdge, VertexId>>> =
+        Arc::new(Mutex::new(HashMap::new()));
 
     println!("generating forward labels");
-    let labels_and_shortcuts: Vec<_> = (0..graph.number_of_vertices())
+    let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
         .map(|vertex| {
             let (mut label, label_shortcuts) = get_out_label(vertex, graph, order);
             label.entries.shrink_to_fit();
 
-            // shortcuts.lock().unwrap().extend(label_shortcuts);
+            shortcuts.lock().unwrap().extend(label_shortcuts);
 
-            (label, label_shortcuts)
-        })
-        .collect();
-
-    let forward_labels: Vec<_> = labels_and_shortcuts
-        .into_iter()
-        .map(|(label, label_shortcuts)| {
-            shortcuts.extend(label_shortcuts);
             label
         })
         .collect();
@@ -225,6 +218,10 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<Direct
     //     })
     //     .collect();
     let reverse_labels = forward_labels.clone();
+
+    println!("getting shortcuts vec");
+    let shortcuts: HashMap<DirectedEdge, VertexId> =
+        shortcuts.lock().unwrap().to_owned().into_iter().collect();
 
     let directed_hub_graph = DirectedHubGraph {
         forward_labels,
