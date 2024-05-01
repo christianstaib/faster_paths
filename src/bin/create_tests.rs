@@ -50,29 +50,29 @@ fn main() {
     let reader = BufReader::new(File::open(&args.random_pairs).unwrap());
     let random_pairs: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();
 
-    let number_of_random_pairs = 50_000;
-    println!("Generating {} random paths", number_of_random_pairs);
     let dijkstra = Dijkstra::new(&graph);
-    let paths = random_paths(number_of_random_pairs, &graph, &dijkstra);
 
-    println!("generating hitting set");
-    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
+    // let number_of_random_pairs = 50_000;
+    // println!("Generating {} random paths", number_of_random_pairs);
+    // let paths = random_paths(number_of_random_pairs, &graph, &dijkstra);
+
+    // println!("generating hitting set");
+    // let (mut hitting_setx, num_hits) = hitting_set(&paths,
+    // graph.number_of_vertices());
+
+    // println!("generating random pair test");
+    // let start = Instant::now();
+
+    // println!("generating cache");
+    // let graph: &dyn Graph = &graph;
+    // let mut cache_dijkstra = CacheDijkstra::new(graph);
+    // cache_dijkstra.cache = hitting_setx
+    //     .par_iter()
+    //     .progress()
+    //     .map(|&vertex| (vertex, dijkstra.single_source(vertex).vertices))
+    //     .collect();
 
     let mut times = Vec::new();
-
-    println!("generating random pair test");
-    let start = Instant::now();
-
-    println!("generating cache");
-    let number_of_paths = args.number_of_tests;
-    let graph: &dyn Graph = &graph;
-    let mut cache_dijkstra = CacheDijkstra::new(graph);
-    cache_dijkstra.cache = hitting_setx
-        .iter()
-        .progress()
-        .map(|&vertex| (vertex, dijkstra.single_source(vertex).vertices))
-        .collect();
-
     // to beat 43.580883ms
     random_pairs
         .iter()
@@ -85,7 +85,7 @@ fn main() {
             let request = ShortestPathRequest::new(source, target).unwrap();
 
             let start = Instant::now();
-            let data = cache_dijkstra.single_source(request.source());
+            let data = dijkstra.single_source(request.source());
             times.push(start.elapsed());
 
             let path = data.get_path(target);
