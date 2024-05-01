@@ -4,7 +4,7 @@ use std::{
     io::{BufReader, BufWriter},
     path::PathBuf,
     process::exit,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
     time::Instant,
     usize,
 };
@@ -184,18 +184,26 @@ fn predict_average_label_size(
 }
 
 fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) {
-    let shortcuts: Arc<Mutex<HashMap<DirectedEdge, VertexId>>> =
-        Arc::new(Mutex::new(HashMap::new()));
+    let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
+        Arc::new(RwLock::new(HashMap::new()));
 
     println!("generating forward labels");
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (mut label, label_shortcuts) = get_out_label(vertex, graph, order);
+            let (mut label, mut label_shortcuts) = get_out_label(vertex, graph, order);
             label.entries.shrink_to_fit();
 
-            shortcuts.lock().unwrap().extend(label_shortcuts);
+            {
+                let readable_shortcuts = shortcuts.read().unwrap();
+                label_shortcuts
+                    .retain(|label_shortcut| !readable_shortcuts.contains_key(&label_shortcut.0));
+            }
+
+            shortcuts.write().unwrap().extend(label_shortcuts);
+
+            // shortcuts.lock().unwrap().extend(label_shortcuts);
 
             label
         })
@@ -221,7 +229,7 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<Direct
 
     println!("getting shortcuts vec");
     let shortcuts: HashMap<DirectedEdge, VertexId> =
-        shortcuts.lock().unwrap().to_owned().into_iter().collect();
+        shortcuts.read().unwrap().to_owned().into_iter().collect();
 
     let directed_hub_graph = DirectedHubGraph {
         forward_labels,
