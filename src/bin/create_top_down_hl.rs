@@ -62,15 +62,10 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
-    let reader = BufReader::new(File::open("tests/data/USA-road-d.NY.gr.ch.bincode").unwrap());
-    let (contracted_graph, shortcuts): (DirectedContractedGraph, HashMap<DirectedEdge, u32>) =
-        bincode::deserialize_from(reader).unwrap();
-
-    let ch_dijkstra = ChDijkstra::new(&contracted_graph);
-    let path_finder = SlowShortcutReplacer::new(&shortcuts, &ch_dijkstra);
+    let dijkstra = Dijkstra::new(&graph);
 
     println!("generating random paths");
-    let paths = random_paths(5_000_000, &graph, &path_finder);
+    let paths = random_paths(5_000_000, &graph, &dijkstra);
 
     println!("generating hitting set");
     let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
