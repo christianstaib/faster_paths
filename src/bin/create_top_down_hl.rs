@@ -119,10 +119,13 @@ fn main() {
                     .map(|(x, y)| (x.reversed(), y)),
             );
 
-            let mut path = shortest_path(&forward_label, &reverse_label).unwrap();
-            replace_shortcuts_slow(&mut path.vertices, &shortcuts);
+            let mut path = shortest_path(&forward_label, &reverse_label);
 
-            if let Err(err) = validate_path(&graph, test_case, &Some(path)) {
+            if let Some(ref mut path) = path {
+                replace_shortcuts_slow(&mut path.vertices, &shortcuts);
+            }
+
+            if let Err(err) = validate_path(&graph, test_case, &path) {
                 panic!("top down hl wrong: {}", err);
             }
             forward_label
