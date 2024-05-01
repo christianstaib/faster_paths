@@ -192,11 +192,11 @@ fn get_hl(graph: &dyn Graph, order: &[u32]) -> (DirectedHubGraph, HashMap<Direct
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (mut label, mut label_shortcuts) = get_out_label(vertex, graph, order);
-            label.entries.shrink_to_fit();
+            let (label, mut label_shortcuts) = get_out_label(vertex, graph, order);
 
-            {
-                let readable_shortcuts = shortcuts.read().unwrap();
+            // important to put readable_shortcuts into its own scope as it would otherwise block
+            // read access
+            if let Ok(readable_shortcuts) = shortcuts.read() {
                 label_shortcuts
                     .retain(|label_shortcut| !readable_shortcuts.contains_key(&label_shortcut.0));
             }
@@ -256,8 +256,7 @@ fn get_out_label(
     graph: &dyn Graph,
     order: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
-    let dijkstra = Dijkstra::new(graph);
-    let data = dijkstra.single_source(vertex);
+    let data = Dijkstra::new(graph).single_source(vertex);
     get_label_from_data(vertex, &data, order)
 }
 
@@ -266,8 +265,7 @@ fn get_in_label(
     graph: &dyn Graph,
     order: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
-    let dijkstra = Dijkstra::new(graph);
-    let data = dijkstra.single_source(vertex);
+    let data = Dijkstra::new(graph).single_source(vertex);
     get_label_from_data(vertex, &data, order)
 }
 
@@ -304,6 +302,7 @@ fn get_label_from_data(
     }
 
     label.entries.sort_unstable_by_key(|entry| entry.vertex);
+    label.entries.shrink_to_fit();
     set_predecessor(&mut label);
 
     (label, shortcuts)
