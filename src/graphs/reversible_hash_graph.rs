@@ -12,7 +12,10 @@ use rayon::iter::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{edge::DirectedWeightedEdge, Graph, VertexId, Weight};
+use super::{
+    edge::{DirectedEdge, DirectedWeightedEdge},
+    Graph, VertexId, Weight,
+};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ReversibleHashGraph {
@@ -95,13 +98,11 @@ impl Graph for ReversibleHashGraph {
         Box::new(edge_iterator)
     }
 
-    fn get_edge_weight(&self, edge: &super::edge::DirectedEdge) -> Option<Weight> {
-        Some(
-            *self
-                .out_edges
-                .get(edge.tail() as usize)?
-                .get(&edge.head())?,
-        )
+    fn get_edge_weight(&self, edge: &DirectedEdge) -> Option<Weight> {
+        self.out_edges
+            .get(edge.tail() as usize)?
+            .get(&edge.head())
+            .cloned()
     }
 
     fn number_of_vertices(&self) -> u32 {
