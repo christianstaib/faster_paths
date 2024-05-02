@@ -13,9 +13,8 @@ use faster_paths::{
     },
     graphs::{
         graph_factory::GraphFactory,
-        graph_functions::{all_edges, validate_path},
+        graph_functions::validate_path,
         path::{PathFinding, ShortestPathTestCase},
-        reversible_hash_graph::ReversibleHashGraph,
     },
     shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
 };
@@ -46,14 +45,8 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
-    println!("switching graph represenation");
-    let working_graph = ReversibleHashGraph::from_edges(&all_edges(&graph));
-
-    println!("starting graph contraction");
-    let boxed_graph = Box::new(working_graph);
-
     let start = Instant::now();
-    let ch_and_shortctus = contract_adaptive_non_simulated_all_in(boxed_graph);
+    let ch_and_shortctus = contract_adaptive_non_simulated_all_in(&graph);
     println!("it took {:?} to contract the graph", start.elapsed());
 
     println!("writing contracted graph to file");

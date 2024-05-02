@@ -14,6 +14,7 @@ use faster_paths::{
         graph_factory::GraphFactory,
         graph_functions::{hitting_set, random_paths, validate_and_time},
         path::ShortestPathTestCase,
+        reversible_vec_graph::ReversibleVecGraph,
         Graph,
     },
     hl::{
@@ -52,30 +53,7 @@ fn main() {
     let graph = GraphFactory::from_file(&args.infile);
 
     let number_of_random_pairs = 5_000;
-    println!("Generating {} random paths", number_of_random_pairs);
-    let dijkstra = Dijkstra::new(&graph);
-    let paths = random_paths(number_of_random_pairs, &graph, &dijkstra);
-
-    println!("generating hitting set");
-    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
-
-    println!("generating vertex order");
-    let mut not_hitting_set = (0..graph.number_of_vertices())
-        .into_iter()
-        .filter(|vertex| !hitting_setx.contains(&vertex))
-        .collect_vec();
-
-    // shuffle to break neighboring ties
-    not_hitting_set.shuffle(&mut thread_rng());
-    not_hitting_set.sort_unstable_by_key(|&vertex| Reverse(num_hits[vertex as usize]));
-
-    hitting_setx.extend(not_hitting_set);
-    hitting_setx.reverse();
-
-    let order: Vec<_> = (0..graph.number_of_vertices())
-        .into_par_iter()
-        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
-        .collect();
+    let order = generate_hiting_set_order(number_of_random_pairs, &graph);
 
     let number_of_vertices_with_labels = 1_000;
     println!(
@@ -116,4 +94,32 @@ fn main() {
         test_cases.len(),
         times.iter().sum::<Duration>() / times.len() as u32
     );
+}
+
+fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
+    println!("Generating {} random paths", number_of_random_pairs);
+    let dijkstra = Dijkstra::new(graph);
+    let paths = random_paths(number_of_random_pairs, graph, &dijkstra);
+
+    println!("generating hitting set");
+    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
+
+    println!("generating vertex order");
+    let mut not_hitting_set = (0..graph.number_of_vertices())
+        .into_iter()
+        .filter(|vertex| !hitting_setx.contains(&vertex))
+        .collect_vec();
+
+    // shuffle to break neighboring ties
+    not_hitting_set.shuffle(&mut thread_rng());
+    not_hitting_set.sort_unstable_by_key(|&vertex| Reverse(num_hits[vertex as usize]));
+
+    hitting_setx.extend(not_hitting_set);
+    hitting_setx.reverse();
+
+    let order: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
+        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
+        .collect();
+    order
 }
