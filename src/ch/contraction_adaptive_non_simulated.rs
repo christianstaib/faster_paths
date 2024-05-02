@@ -18,11 +18,9 @@ use crate::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::all_edges,
         hash_graph::HashGraph,
-        path::ShortestPathRequest,
         reversible_hash_graph::ReversibleHashGraph,
         Graph, VertexId,
     },
-    heuristics::{landmarks::Landmarks, Heuristic},
 };
 
 pub fn contract_adaptive_non_simulated_all_in(
@@ -54,7 +52,7 @@ pub fn contract_adaptive_non_simulated_all_in(
     println!("starting actual contraction");
     let bar = ProgressBar::new(remaining_vertices.len() as u64);
 
-    let landmarks = Landmarks::new(25, &graph);
+    // let landmarks = Landmarks::new(25, &graph);
 
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
         // generating shortcuts
