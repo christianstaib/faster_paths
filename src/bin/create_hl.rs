@@ -13,7 +13,6 @@ use faster_paths::{
         hub_graph_investigator::get_avg_label_size,
     },
 };
-use itertools::Itertools;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -41,7 +40,8 @@ fn main() {
     // let mut new_levels = vec![Vec::new()];
     // let mut current_neighbors = HashSet::new();
 
-    // let vertices: Vec<_> = contracted_graph.levels.iter().flatten().cloned().collect();
+    // let vertices: Vec<_> =
+    // contracted_graph.levels.iter().flatten().cloned().collect();
 
     // for &vertex in vertices.iter().progress() {
     //     if current_neighbors.contains(&vertex) {
@@ -49,8 +49,8 @@ fn main() {
     //         current_neighbors.clear();
     //     }
     //     new_levels.last_mut().unwrap().push(vertex);
-    //     current_neighbors.extend(contracted_graph.graph.open_neighborhood(vertex, 1));
-    // }
+    //     current_neighbors.extend(contracted_graph.graph.open_neighborhood(vertex,
+    // 1)); }
 
     // contracted_graph.levels = new_levels;
     println!("{}", contracted_graph.levels.len());

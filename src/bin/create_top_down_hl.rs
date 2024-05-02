@@ -6,6 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use ahash::{HashSet, HashSetExt};
 use clap::Parser;
 use faster_paths::{
     classical_search::dijkstra::Dijkstra,

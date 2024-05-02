@@ -76,7 +76,8 @@ fn main() {
     // to beat
     // ny 43.580883ms
     //
-    // aegeis average query time 187.731216ms
+    // aegeis average query time with cache 187.731216ms
+    // without 453.373613ms
     random_pairs
         .iter()
         .take(5_000)

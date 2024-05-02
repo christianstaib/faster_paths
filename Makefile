@@ -93,14 +93,14 @@ hitting_set:
 
 create_hl_ny:
 	cargo run --bin create_hl --release --\
-		--ch-graph $(NY_CH)\
+		--contracted-graph $(NY_CH)\
 		--tests $(NY_TESTS_RANDOM)\
-		--hl-graph $(NY_HL)
+		--hub-graph $(NY_HL)
 
 create_hl:
 	cargo run --bin create_hl --release --\
-		--ch-graph $(NETWORK_CH)\
+		--contracted-graph $(NETWORK_CH)\
 		--tests $(NETWORK_TESTS_RANDOM)\
-		--hl-graph $(NETWORK_HL)
+		--hub-graph $(NETWORK_HL)
 
 
