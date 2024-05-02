@@ -1,11 +1,12 @@
 use std::{
+    cmp::Reverse,
     fs::File,
     io::{BufWriter, Write},
     time::Instant,
 };
 
 use ahash::{HashMap, HashMapExt, HashSet};
-use indicatif::{ProgressBar, ProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -32,8 +33,17 @@ pub fn contract_adaptive_non_simulated_all_in(
     println!("switching graph represenation");
     let mut graph = ReversibleHashGraph::from_edges(&all_edges(&*graph));
 
-    let mut all_shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
     let mut levels = Vec::new();
+
+    let mut writer = BufWriter::new(File::create("reasons_slow.csv").unwrap());
+    writeln!(
+            writer,
+            "duration_create_shortcuts,duration_add_edges,duration_add_shortcuts,duration_remove_vertex,number_of_edges,number_of_shortcuts,number_of_vertices"
+        )
+        .unwrap();
+
+    println!("starting actual contraction");
+    let mut all_shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
 
     let mut remaining_vertices: HashSet<VertexId> = (0..graph.number_of_vertices()).collect();
     remaining_vertices.retain(|&vertex| {
@@ -41,15 +51,6 @@ pub fn contract_adaptive_non_simulated_all_in(
         let in_degree = graph.in_edges(vertex).len();
         out_degree + in_degree > 0
     });
-
-    let mut writer = BufWriter::new(File::create("reasons_slow.csv").unwrap());
-    writeln!(
-            writer,
-            "duration_create_shortcuts,duration_add_edges,duration_remove_vertex,number_of_edges,number_of_shortcuts,number_of_vertices"
-        )
-        .unwrap();
-
-    println!("starting actual contraction");
     let bar = ProgressBar::new(remaining_vertices.len() as u64);
 
     // let landmarks = Landmarks::new(25, &graph);
@@ -57,48 +58,21 @@ pub fn contract_adaptive_non_simulated_all_in(
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
         // generating shortcuts
         let start = Instant::now();
-        let shortcuts: Vec<_> = graph
-            .in_edges(vertex)
-            .par_bridge()
-            .map(|in_edge| {
-                graph
-                    .out_edges(vertex)
-                    .filter(|out_edge| in_edge.tail() != out_edge.head())
-                    .map(|out_edge| {
-                        let edge = DirectedWeightedEdge::new(
-                            in_edge.tail(),
-                            out_edge.head(),
-                            in_edge.weight() + out_edge.weight(),
-                        )
-                        .unwrap();
-                        Shortcut { edge, vertex }
-                    })
-                    .collect_vec()
-            })
-            .flatten()
-            // only add edges that are less expensive than currently
-            .filter(|shortcut| {
-                let edge = shortcut.edge.unweighted();
-                let current_weight = graph.get_edge_weight(&edge).unwrap_or(u32::MAX);
-                shortcut.edge.weight() < current_weight
-            })
-            // // only add edges that are less expensive than currently
-            // .filter(|shortcut| {
-            //     let request =
-            //         ShortestPathRequest::new(shortcut.edge.tail(),
-            // shortcut.edge.head()).unwrap();     let upper_bound =
-            // landmarks.upper_bound(&request).unwrap_or(u32::MAX);     shortcut.edge.
-            // weight() < upper_bound })
-            .collect();
+        let shortcuts = generate_all_shortcuts(&graph, vertex, &all_shortcuts);
         let duration_create_shortcuts = start.elapsed();
 
         // adding shortcuts to graph and all_shortcuts
         let start = Instant::now();
-        shortcuts.into_iter().for_each(|shortcut| {
+        shortcuts.iter().for_each(|shortcut| {
             graph.set_edge(&shortcut.edge);
-            all_shortcuts.insert(shortcut.edge.unweighted(), shortcut);
         });
         let duration_add_edges = start.elapsed();
+
+        let start = Instant::now();
+        shortcuts.into_iter().for_each(|shortcut| {
+            all_shortcuts.insert(shortcut.edge.unweighted(), shortcut);
+        });
+        let duration_add_shortcuts = start.elapsed();
 
         // removing graph
         let start = Instant::now();
@@ -108,9 +82,10 @@ pub fn contract_adaptive_non_simulated_all_in(
         levels.push(vec![vertex]);
         writeln!(
             writer,
-            "{},{},{},{},{},{}",
+            "{},{},{},{},{},{},{}",
             duration_create_shortcuts.as_nanos(),
             duration_add_edges.as_nanos(),
+            duration_add_shortcuts.as_nanos(),
             duration_remove_vertex.as_nanos(),
             graph.number_of_edges(),
             all_shortcuts.len(),
@@ -155,14 +130,60 @@ pub fn contract_adaptive_non_simulated_all_in(
     (directed_contracted_graph, shortcuts)
 }
 
+fn generate_all_shortcuts(
+    graph: &dyn Graph,
+    vertex: u32,
+    all_shortcuts: &HashMap<DirectedEdge, Shortcut>,
+) -> Vec<Shortcut> {
+    let in_edges = graph.in_edges(vertex).collect_vec();
+    let out_edges = graph.out_edges(vertex).collect_vec();
+
+    let shortcuts: Vec<_> = in_edges
+        .par_iter()
+        .map(|in_edge| {
+            out_edges
+                .iter()
+                .filter(|out_edge| in_edge.tail() != out_edge.head())
+                .filter_map(|out_edge| {
+                    let edge = DirectedWeightedEdge::new(
+                        in_edge.tail(),
+                        out_edge.head(),
+                        in_edge.weight() + out_edge.weight(),
+                    )
+                    .unwrap();
+
+                    if let Some(current_shortcut) = all_shortcuts.get(&edge.unweighted()) {
+                        let current_shortcut_weight = current_shortcut.edge.weight();
+                        if edge.weight() >= current_shortcut_weight {
+                            return None;
+                        }
+                    }
+
+                    if let Some(current_weight) = graph.get_edge_weight(&edge.unweighted()) {
+                        if edge.weight() >= current_weight {
+                            return None;
+                        }
+                    }
+
+                    let shortcut = Shortcut { edge, vertex };
+
+                    Some(shortcut)
+                })
+                .collect_vec()
+        })
+        .flatten()
+        .collect();
+    shortcuts
+}
+
 fn get_next_vertex(
     graph: &dyn Graph,
     remaining_vertices: &mut HashSet<VertexId>,
 ) -> Option<VertexId> {
     let min_vertex = *remaining_vertices.par_iter().min_by_key(|&&vertex| {
         (graph.in_edges(vertex).len() as i32 * graph.out_edges(vertex).len() as i32)
-            - (graph.in_edges(vertex).len() as i32)
-            - graph.out_edges(vertex).len() as i32
+        // - (graph.in_edges(vertex).len() as i32)
+        // - graph.out_edges(vertex).len() as i32
     })?;
     remaining_vertices.remove(&min_vertex);
     Some(min_vertex)
