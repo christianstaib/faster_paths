@@ -65,7 +65,7 @@ pub fn contract_adaptive_non_simulated_all_in(
             .map(|in_edge| {
                 graph
                     .out_edges(vertex)
-                    .filter(|out_edge| out_edge.head() != in_edge.tail())
+                    .filter(|out_edge| in_edge.tail() != out_edge.head())
                     .map(|out_edge| {
                         let edge = DirectedWeightedEdge::new(
                             in_edge.tail(),
@@ -84,13 +84,13 @@ pub fn contract_adaptive_non_simulated_all_in(
                 let current_weight = graph.get_edge_weight(&edge).unwrap_or(u32::MAX);
                 shortcut.edge.weight() < current_weight
             })
-            // only add edges that are less expensive than currently
-            .filter(|shortcut| {
-                let request =
-                    ShortestPathRequest::new(shortcut.edge.tail(), shortcut.edge.head()).unwrap();
-                let upper_bound = landmarks.upper_bound(&request).unwrap_or(u32::MAX);
-                shortcut.edge.weight() < upper_bound
-            })
+            // // only add edges that are less expensive than currently
+            // .filter(|shortcut| {
+            //     let request =
+            //         ShortestPathRequest::new(shortcut.edge.tail(),
+            // shortcut.edge.head()).unwrap();     let upper_bound =
+            // landmarks.upper_bound(&request).unwrap_or(u32::MAX);     shortcut.edge.
+            // weight() < upper_bound })
             .collect();
         let duration_create_shortcuts = start.elapsed();
 
