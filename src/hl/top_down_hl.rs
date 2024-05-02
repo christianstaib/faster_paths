@@ -16,7 +16,14 @@ use super::{
 use crate::{
     classical_search::dijkstra::Dijkstra,
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
-    graphs::{edge::DirectedEdge, graph_functions::shortests_path_tree, Graph, VertexId},
+    graphs::{
+        edge::DirectedEdge,
+        graph_functions::{shortests_path_tree, validate_path},
+        path::ShortestPathTestCase,
+        Graph, VertexId,
+    },
+    hl::hl_path_finding::shortest_path,
+    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
 
 pub fn generate_hub_graph(
@@ -187,4 +194,50 @@ pub fn get_label_from_data(
     set_predecessor(&mut label);
 
     (label, shortcuts)
+}
+
+pub fn predict_average_label_size(
+    test_cases: &Vec<ShortestPathTestCase>,
+    number_of_labels: u32,
+    graph: &dyn Graph,
+    order: &Vec<u32>,
+) -> f64 {
+    let labels: Vec<_> = test_cases
+        .par_iter()
+        .take(number_of_labels as usize)
+        .progress()
+        .map(|test_case| {
+            let mut shortcuts = HashMap::new();
+
+            let (forward_label, forward_shortcuts) =
+                generate_forward_label(test_case.request.source(), graph, order);
+            let (reverse_label, reverse_shortcuts) =
+                generate_reverse_label(test_case.request.target(), graph, order);
+
+            shortcuts.extend(forward_shortcuts.iter().cloned());
+            shortcuts.extend(
+                reverse_shortcuts
+                    .into_iter()
+                    .map(|(x, y)| (x.reversed(), y)),
+            );
+
+            let mut path = shortest_path(&forward_label, &reverse_label);
+
+            // if there exits a path, replace the shortcuts on it
+            if let Some(ref mut path) = path {
+                replace_shortcuts_slow(&mut path.vertices, &shortcuts);
+            }
+
+            if let Err(err) = validate_path(graph, test_case, &path) {
+                panic!("{}", err);
+            }
+
+            vec![forward_label, reverse_label]
+        })
+        .flatten()
+        .collect();
+
+    let average_label_size =
+        labels.iter().map(|l| l.entries.len()).sum::<usize>() as f64 / labels.len() as f64;
+    average_label_size
 }

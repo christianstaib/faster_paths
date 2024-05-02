@@ -73,7 +73,10 @@ fn main() {
     //     .collect();
 
     let mut times = Vec::new();
-    // to beat 43.580883ms
+    // to beat
+    // ny 43.580883ms
+    //
+    // aegeis average query time 187.731216ms
     random_pairs
         .iter()
         .take(5_000)

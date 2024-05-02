@@ -66,13 +66,13 @@ create_tphl_ny:
 	cargo run --bin create_top_down_hl --release --\
 		--infile $(NY_GRAPH)\
 		--tests $(NY_TESTS_RANDOM)\
-		--outfile $(NY_CH)
+		--outfile $(NY_HL)
 
 create_tphl:
 	cargo run --bin create_top_down_hl  --release --\
 		--infile $(NETWORK_GRAPH)\
 		--tests $(NETWORK_TESTS_RANDOM)\
-		--outfile $(NETWORK_CH)
+		--outfile $(NETWORK_HL)
 
 
 
