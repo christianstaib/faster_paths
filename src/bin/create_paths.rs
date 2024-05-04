@@ -11,6 +11,7 @@ use faster_paths::{
     hl::{hl_path_finding::HLPathFinder, hub_graph::HubGraph},
     shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
 };
+use indicatif::ProgressIterator;
 use itertools::Itertools;
 
 #[derive(Parser, Debug)]
@@ -27,17 +28,20 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    println!("Loading graph");
     let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
     let (hub_graph, shortcuts): (HubGraph, HashMap<DirectedEdge, VertexId>) =
         bincode::deserialize_from(reader).unwrap();
 
+    println!("Generating paths");
     let path_finder = HLPathFinder::new(&hub_graph);
     let path_finder = SlowShortcutReplacer::new(&shortcuts, &path_finder);
 
     let paths = random_paths(100_000, hub_graph.labels.len() as u32, &path_finder);
 
+    println!("Writing paths to file");
     let mut writer = BufWriter::new(File::create(&args.paths).unwrap());
-    for path in paths {
+    for path in paths.iter().progress() {
         writeln!(writer, "{}", path.vertices.iter().join(" ")).unwrap();
     }
     writer.flush().unwrap();
