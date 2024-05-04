@@ -19,9 +19,11 @@ use crate::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::all_edges,
         hash_graph::HashGraph,
+        path::ShortestPathRequest,
         reversible_hash_graph::ReversibleHashGraph,
         Graph, VertexId,
     },
+    heuristics::{landmarks::Landmarks, Heuristic},
 };
 
 pub fn contract_adaptive_non_simulated_all_in(
@@ -53,12 +55,12 @@ pub fn contract_adaptive_non_simulated_all_in(
     });
     let bar = ProgressBar::new(remaining_vertices.len() as u64);
 
-    // let landmarks = Landmarks::new(25, &graph);
+    let landmarks = Landmarks::new(10, &graph);
 
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
         // generating shortcuts
         let start = Instant::now();
-        let shortcuts = generate_all_shortcuts(&graph, vertex, &all_shortcuts);
+        let shortcuts = generate_all_shortcuts(&graph, &landmarks, vertex, &all_shortcuts);
         let duration_create_shortcuts = start.elapsed();
 
         // adding shortcuts to graph and all_shortcuts
@@ -132,6 +134,7 @@ pub fn contract_adaptive_non_simulated_all_in(
 
 fn generate_all_shortcuts(
     graph: &dyn Graph,
+    heuristic: &dyn Heuristic,
     vertex: u32,
     all_shortcuts: &HashMap<DirectedEdge, Shortcut>,
 ) -> Vec<Shortcut> {
@@ -155,6 +158,14 @@ fn generate_all_shortcuts(
                     if let Some(current_shortcut) = all_shortcuts.get(&edge.unweighted()) {
                         let current_shortcut_weight = current_shortcut.edge.weight();
                         if edge.weight() >= current_shortcut_weight {
+                            return None;
+                        }
+                    }
+
+                    let request =
+                        ShortestPathRequest::new(in_edge.tail(), out_edge.head()).unwrap();
+                    if let Some(upper_bound) = heuristic.upper_bound(&request) {
+                        if edge.weight() >= upper_bound {
                             return None;
                         }
                     }

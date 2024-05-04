@@ -1,8 +1,8 @@
 use std::usize;
 
-use indicatif::ProgressIterator;
+use indicatif::ParallelProgressIterator;
 use rand::Rng;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::Heuristic;
 use crate::{
@@ -25,8 +25,8 @@ impl Heuristic for Landmark {
     }
 
     fn upper_bound(&self, request: &ShortestPathRequest) -> Option<u32> {
-        let to_target = (*self.to_weight.get(request.target() as usize)?)?;
         let from_source = (*self.from_weight.get(request.source() as usize)?)?;
+        let to_target = (*self.to_weight.get(request.target() as usize)?)?;
         Some(from_source + to_target)
     }
 }
@@ -55,8 +55,8 @@ impl Landmarks {
     pub fn new(num_landmarks: u32, graph: &dyn Graph) -> Landmarks {
         let dijkstra = Dijkstra::new(graph);
         let landmarks = (0..num_landmarks)
+            .into_par_iter()
             .progress()
-            .par_bridge()
             .map_init(rand::thread_rng, |rng, _| {
                 let source = rng.gen_range(0..graph.number_of_vertices());
                 let data_source = dijkstra.single_source(source);

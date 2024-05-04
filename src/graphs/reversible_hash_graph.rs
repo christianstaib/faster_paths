@@ -119,16 +119,6 @@ impl Graph for ReversibleHashGraph {
     }
 
     fn set_edges(&mut self, edges: &[DirectedWeightedEdge]) {
-        let edges: Vec<_> = edges
-            .par_iter()
-            // no self loops
-            .filter(|edge| edge.tail() != edge.head())
-            // only if new weight is less
-            .filter(|edge| {
-                edge.weight() < self.get_edge_weight(&edge.unweighted()).unwrap_or(u32::MAX)
-            })
-            .collect();
-
         self.out_edges
             .par_iter_mut()
             .enumerate()
