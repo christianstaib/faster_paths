@@ -209,8 +209,6 @@ pub fn random_paths(
 ) -> Vec<Path> {
     (0..u32::MAX)
         .into_par_iter()
-        .take(number_of_paths as usize)
-        .progress()
         .map_init(
             rand::thread_rng, // get the thread-local RNG
             |rng, _| {
@@ -230,6 +228,8 @@ pub fn random_paths(
             },
         )
         .flatten() // flatten Option<Path> to Path
+        .take_any(number_of_paths as usize)
+        .progress_count(number_of_paths as u64)
         .collect()
 }
 
