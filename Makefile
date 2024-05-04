@@ -10,8 +10,8 @@ NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS_RANDOM := $(NETWORK_GRAPH).tests_random.json
 NETWORK_TESTS_DIJKSTRA_RANK := $(NETWORK_GRAPH).tests_dijkstra_rank.json
 
-# NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
-NY_GRAPH := $(FMI_DIR)/bremen_dist.gr
+NY_GRAPH := $(FMI_DIR)/USA-road-d.FLA.gr
+# NY_GRAPH := $(FMI_DIR)/bremen_dist.gr
 NY_CH := $(NY_GRAPH).ch.bincode
 NY_HL := $(NY_GRAPH).hl.bincode
 NY_TESTS_RANDOM := $(NY_GRAPH).tests_random.json

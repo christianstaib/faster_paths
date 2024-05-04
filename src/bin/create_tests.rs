@@ -11,7 +11,9 @@ use faster_paths::{
     dijkstra_data::DijkstraData,
     graphs::{
         graph_factory::GraphFactory,
-        graph_functions::{generate_random_pair_testcases, hitting_set, random_paths},
+        graph_functions::{
+            generate_random_pair_testcases, hitting_set, random_paths, shortests_path_tree,
+        },
         path::{ShortestPathRequest, ShortestPathTestCase},
         Graph,
     },
@@ -52,25 +54,32 @@ fn main() {
 
     let dijkstra = Dijkstra::new(&graph);
 
-    // let number_of_random_pairs = 50_000;
-    // println!("Generating {} random paths", number_of_random_pairs);
-    // let paths = random_paths(number_of_random_pairs, &graph, &dijkstra);
+    let number_of_random_pairs = 50_000;
+    println!("Generating {} random paths", number_of_random_pairs);
+    let paths = random_paths(
+        number_of_random_pairs,
+        graph.number_of_vertices(),
+        &dijkstra,
+    );
 
-    // println!("generating hitting set");
-    // let (mut hitting_setx, num_hits) = hitting_set(&paths,
-    // graph.number_of_vertices());
+    println!("generating hitting set");
+    let (hitting_setx, _) = hitting_set(&paths, graph.number_of_vertices());
 
-    // println!("generating random pair test");
-    // let start = Instant::now();
+    println!("generating random pair test");
 
-    // println!("generating cache");
-    // let graph: &dyn Graph = &graph;
-    // let mut cache_dijkstra = CacheDijkstra::new(graph);
-    // cache_dijkstra.cache = hitting_setx
-    //     .par_iter()
-    //     .progress()
-    //     .map(|&vertex| (vertex, dijkstra.single_source(vertex).vertices))
-    //     .collect();
+    println!("generating cache");
+    let graph: &dyn Graph = &graph;
+    let mut dijkstra = CacheDijkstra::new(graph);
+    dijkstra.cache = hitting_setx
+        .par_iter()
+        .progress()
+        .map(|&vertex| {
+            let data = dijkstra.single_source(vertex);
+            let tree = shortests_path_tree(&data);
+            let data = data.vertices;
+            (vertex, (data, tree))
+        })
+        .collect();
 
     let mut times = Vec::new();
     // to beat
@@ -80,7 +89,7 @@ fn main() {
     // without 453.373613ms
     random_pairs
         .iter()
-        .take(5_000)
+        .take(2_000)
         .progress()
         .for_each(|test_case| {
             let source = test_case.request.source();
