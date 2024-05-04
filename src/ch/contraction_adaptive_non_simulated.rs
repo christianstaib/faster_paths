@@ -1,12 +1,12 @@
 use std::{
-    cmp::Reverse,
     fs::File,
     io::{BufWriter, Write},
     time::Instant,
 };
 
-use ahash::{HashMap, HashMapExt, HashSet};
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use ahash::{HashMap, HashSet};
+use dashmap::{DashMap, Map};
+use indicatif::{ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -19,9 +19,11 @@ use crate::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::all_edges,
         hash_graph::HashGraph,
+        path::ShortestPathRequest,
         reversible_hash_graph::ReversibleHashGraph,
         Graph, VertexId,
     },
+    heuristics::{landmarks::Landmarks, Heuristic},
 };
 
 pub fn contract_adaptive_non_simulated_all_in(
@@ -43,7 +45,7 @@ pub fn contract_adaptive_non_simulated_all_in(
         .unwrap();
 
     println!("starting actual contraction");
-    let mut all_shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
+    let mut all_shortcuts: DashMap<DirectedEdge, Shortcut> = DashMap::new();
 
     let mut remaining_vertices: HashSet<VertexId> = (0..graph.number_of_vertices()).collect();
     remaining_vertices.retain(|&vertex| {
@@ -53,12 +55,12 @@ pub fn contract_adaptive_non_simulated_all_in(
     });
     let bar = ProgressBar::new(remaining_vertices.len() as u64);
 
-    // let landmarks = Landmarks::new(25, &graph);
+    let landmarks = Landmarks::new(0, &graph);
 
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
         // generating shortcuts
         let start = Instant::now();
-        let shortcuts = generate_all_shortcuts(&graph, vertex, &all_shortcuts);
+        let shortcuts = generate_all_shortcuts(&graph, &landmarks, vertex, &all_shortcuts);
         let duration_create_shortcuts = start.elapsed();
 
         // adding shortcuts to graph and all_shortcuts
@@ -69,9 +71,11 @@ pub fn contract_adaptive_non_simulated_all_in(
         let duration_add_edges = start.elapsed();
 
         let start = Instant::now();
-        shortcuts.into_iter().for_each(|shortcut| {
-            all_shortcuts.insert(shortcut.edge.unweighted(), shortcut);
-        });
+        all_shortcuts.par_extend(
+            shortcuts
+                .into_par_iter()
+                .map(|shortcut| (shortcut.edge.unweighted(), shortcut)),
+        );
         let duration_add_shortcuts = start.elapsed();
 
         // removing graph
@@ -98,6 +102,7 @@ pub fn contract_adaptive_non_simulated_all_in(
     }
     bar.finish();
 
+    let all_shortcuts: HashMap<DirectedEdge, Shortcut> = all_shortcuts.into_iter().collect();
     println!("writing base_grap and shortcuts to file");
     let writer = BufWriter::new(File::create("all_in.bincode").unwrap());
     bincode::serialize_into(writer, &(&base_graph, &all_shortcuts)).unwrap();
@@ -132,8 +137,9 @@ pub fn contract_adaptive_non_simulated_all_in(
 
 fn generate_all_shortcuts(
     graph: &dyn Graph,
+    heuristic: &dyn Heuristic,
     vertex: u32,
-    all_shortcuts: &HashMap<DirectedEdge, Shortcut>,
+    all_shortcuts: &DashMap<DirectedEdge, Shortcut>,
 ) -> Vec<Shortcut> {
     let in_edges = graph.in_edges(vertex).collect_vec();
     let out_edges = graph.out_edges(vertex).collect_vec();
@@ -152,6 +158,16 @@ fn generate_all_shortcuts(
                     )
                     .unwrap();
 
+                    // edge is cheaper than upper bound heuristic
+                    let request =
+                        ShortestPathRequest::new(in_edge.tail(), out_edge.head()).unwrap();
+                    if let Some(upper_bound) = heuristic.upper_bound(&request) {
+                        if edge.weight() >= upper_bound {
+                            return None;
+                        }
+                    }
+
+                    // check if new shortcut is cheaper than current shortcut (if it exists)
                     if let Some(current_shortcut) = all_shortcuts.get(&edge.unweighted()) {
                         let current_shortcut_weight = current_shortcut.edge.weight();
                         if edge.weight() >= current_shortcut_weight {
@@ -159,6 +175,7 @@ fn generate_all_shortcuts(
                         }
                     }
 
+                    // check if new edge is cheaper than current edge (if it exists)
                     if let Some(current_weight) = graph.get_edge_weight(&edge.unweighted()) {
                         if edge.weight() >= current_weight {
                             return None;
