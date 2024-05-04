@@ -7,7 +7,6 @@ use std::{
 };
 
 use ahash::{HashMap, HashMapExt};
-use dashmap::DashMap;
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
@@ -120,41 +119,38 @@ impl Graph for ReversibleHashGraph {
     }
 
     fn set_edges(&mut self, edges: &[DirectedWeightedEdge]) {
-        let out_edges_map = DashMap::new();
-        let in_edges_map = DashMap::new();
-
-        edges.par_iter().for_each(|edge| {
-            out_edges_map
-                .entry(edge.tail())
-                .or_insert(Vec::new())
-                .push(edge.clone());
-
-            in_edges_map
-                .entry(edge.head())
-                .or_insert(Vec::new())
-                .push(edge.clone());
-        });
+        let edges: Vec<_> = edges
+            .par_iter()
+            // no self loops
+            .filter(|edge| edge.tail() != edge.head())
+            // only if new weight is less
+            .filter(|edge| {
+                edge.weight() < self.get_edge_weight(&edge.unweighted()).unwrap_or(u32::MAX)
+            })
+            .collect();
 
         self.out_edges
             .par_iter_mut()
             .enumerate()
             .for_each(|(tail, out_edges)| {
-                if let Some(out_edges_from_map) = out_edges_map.get(&(tail as VertexId)) {
-                    out_edges_from_map.iter().for_each(|edge| {
+                edges
+                    .iter()
+                    .filter(|edge| edge.tail() == tail as u32)
+                    .for_each(|edge| {
                         out_edges.insert(edge.head(), edge.weight());
                     })
-                }
             });
 
         self.in_edges
             .par_iter_mut()
             .enumerate()
             .for_each(|(head, in_edges)| {
-                if let Some(in_edges_from_map) = in_edges_map.get(&(head as VertexId)) {
-                    in_edges_from_map.iter().for_each(|edge| {
+                edges
+                    .iter()
+                    .filter(|edge| edge.head() == head as u32)
+                    .for_each(|edge| {
                         in_edges.insert(edge.tail(), edge.weight());
                     })
-                }
             });
     }
 

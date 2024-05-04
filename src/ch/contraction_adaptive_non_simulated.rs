@@ -65,12 +65,9 @@ pub fn contract_adaptive_non_simulated_all_in(
 
         // adding shortcuts to graph and all_shortcuts
         let start = Instant::now();
-        let edges = shortcuts
-            .iter()
-            .map(|shortcut| &shortcut.edge)
-            .cloned()
-            .collect_vec();
-        graph.set_edges(&edges);
+        shortcuts.iter().for_each(|shortcut| {
+            graph.set_edge(&shortcut.edge);
+        });
         let duration_add_edges = start.elapsed();
 
         let start = Instant::now();
