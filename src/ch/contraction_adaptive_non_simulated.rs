@@ -14,9 +14,10 @@ use crate::{
         contracted_graph::DirectedContractedGraph,
         contraction_adaptive_simulated::partition_by_levels, Shortcut,
     },
+    classical_search::dijkstra::Dijkstra,
     graphs::{
         edge::{DirectedEdge, DirectedWeightedEdge},
-        graph_functions::all_edges,
+        graph_functions::{all_edges, hitting_set, random_paths},
         hash_graph::HashGraph,
         path::ShortestPathRequest,
         reversible_hash_graph::ReversibleHashGraph,
@@ -28,7 +29,10 @@ use crate::{
 pub fn contract_adaptive_non_simulated_all_in(
     graph: &dyn Graph,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
-    let landmarks = Landmarks::new(100, graph);
+    let dijkstra = Dijkstra::new(graph);
+    let paths = random_paths(5_000, graph, &dijkstra);
+    let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
+    let landmarks = Landmarks::for_vertices(&hitting_set, graph);
 
     println!("copying base graph");
     let mut base_graph = HashGraph::from_graph(&*graph);
@@ -110,7 +114,7 @@ pub fn contract_adaptive_non_simulated_all_in(
         .map(|shortcut| shortcut.edge.clone())
         .collect_vec();
 
-    println!("Adding shortcuts to base graph");
+    println!("Adding {} shortcuts to base graph", all_shortcuts.len());
     base_graph.set_edges(&edges);
 
     println!("creating upward and downward_graph");

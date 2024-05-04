@@ -1,13 +1,14 @@
 use std::usize;
 
 use indicatif::ParallelProgressIterator;
+use itertools::Itertools;
 use rand::Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::Heuristic;
 use crate::{
     classical_search::dijkstra::Dijkstra,
-    graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, Weight},
+    graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, VertexId, Weight},
 };
 
 pub struct Landmark {
@@ -59,8 +60,13 @@ impl Heuristic for Landmarks {
 
 impl Landmarks {
     pub fn new(num_landmarks: u32, graph: &dyn Graph) -> Landmarks {
+        let vertices = (0..num_landmarks).collect_vec();
+        Self::for_vertices(&vertices, graph)
+    }
+
+    pub fn for_vertices(vertices: &[VertexId], graph: &dyn Graph) -> Landmarks {
         let dijkstra = Dijkstra::new(graph);
-        let landmarks = (0..num_landmarks)
+        let landmarks = vertices
             .into_par_iter()
             .progress()
             .map_init(rand::thread_rng, |rng, _| {
