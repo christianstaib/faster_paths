@@ -99,7 +99,11 @@ fn main() {
 fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
     println!("Generating {} random paths", number_of_random_pairs);
     let dijkstra = Dijkstra::new(graph);
-    let paths = random_paths(number_of_random_pairs, graph, &dijkstra);
+    let paths = random_paths(
+        number_of_random_pairs,
+        graph.number_of_vertices(),
+        &dijkstra,
+    );
 
     println!("generating hitting set");
     let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());

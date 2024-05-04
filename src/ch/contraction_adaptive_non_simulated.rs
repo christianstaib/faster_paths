@@ -30,7 +30,7 @@ pub fn contract_adaptive_non_simulated_all_in(
     graph: &dyn Graph,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
     let dijkstra = Dijkstra::new(graph);
-    let paths = random_paths(5_000, graph, &dijkstra);
+    let paths = random_paths(5_000, graph.number_of_vertices(), &dijkstra);
     let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
     let landmarks = Landmarks::for_vertices(&hitting_set, graph);
 

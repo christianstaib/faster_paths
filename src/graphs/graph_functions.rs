@@ -204,7 +204,7 @@ pub fn generate_random_pair_testcases(
 
 pub fn random_paths(
     number_of_paths: u32,
-    graph: &dyn Graph,
+    number_of_vertices: u32,
     path_finder: &dyn PathFinding,
 ) -> Vec<Path> {
     (0..u32::MAX)
@@ -215,7 +215,16 @@ pub fn random_paths(
             rand::thread_rng, // get the thread-local RNG
             |rng, _| {
                 // return None if no valid request can be build
-                let request = random_request(graph, rng)?;
+                let request = {
+                    // guarantee that source != target
+                    let source = rng.gen_range(0..number_of_vertices);
+                    let mut target = rng.gen_range(0..number_of_vertices - 1);
+                    if target >= source {
+                        target += 1;
+                    }
+
+                    ShortestPathRequest::new(source, target)
+                }?;
 
                 path_finder.shortest_path(&request)
             },

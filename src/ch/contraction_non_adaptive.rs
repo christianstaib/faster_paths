@@ -44,7 +44,7 @@ pub fn contract_non_adaptive(
     let bar = ProgressBar::new(graph.number_of_vertices() as u64);
 
     let dijkstra = Dijkstra::new(&*graph);
-    let paths = random_paths(10_000, &*graph, &dijkstra);
+    let paths = random_paths(10_000, graph.number_of_vertices(), &dijkstra);
     let mut hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
 
     let mut not_hitting_set = (0..graph.number_of_vertices())
