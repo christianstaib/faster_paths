@@ -1,12 +1,11 @@
 use std::{
-    cmp::Reverse,
     fs::File,
     io::{BufWriter, Write},
     time::Instant,
 };
 
 use ahash::{HashMap, HashMapExt, HashSet};
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use indicatif::{ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -29,6 +28,8 @@ use crate::{
 pub fn contract_adaptive_non_simulated_all_in(
     graph: &dyn Graph,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
+    let landmarks = Landmarks::new(100, graph);
+
     println!("copying base graph");
     let mut base_graph = HashGraph::from_graph(&*graph);
 
@@ -54,8 +55,6 @@ pub fn contract_adaptive_non_simulated_all_in(
         out_degree + in_degree > 0
     });
     let bar = ProgressBar::new(remaining_vertices.len() as u64);
-
-    let landmarks = Landmarks::new(10, &graph);
 
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
         // generating shortcuts
@@ -142,47 +141,42 @@ fn generate_all_shortcuts(
     let out_edges = graph.out_edges(vertex).collect_vec();
 
     let shortcuts: Vec<_> = in_edges
-        .par_iter()
-        .map(|in_edge| {
-            out_edges
-                .iter()
-                .filter(|out_edge| in_edge.tail() != out_edge.head())
-                .filter_map(|out_edge| {
-                    let edge = DirectedWeightedEdge::new(
-                        in_edge.tail(),
-                        out_edge.head(),
-                        in_edge.weight() + out_edge.weight(),
-                    )
-                    .unwrap();
+        .iter()
+        .cartesian_product(out_edges.iter())
+        .par_bridge()
+        .filter_map(|(in_edge, out_edge)| {
+            if in_edge.tail() == out_edge.head() {
+                return None;
+            }
 
-                    if let Some(current_shortcut) = all_shortcuts.get(&edge.unweighted()) {
-                        let current_shortcut_weight = current_shortcut.edge.weight();
-                        if edge.weight() >= current_shortcut_weight {
-                            return None;
-                        }
-                    }
+            let edge = DirectedWeightedEdge::new(
+                in_edge.tail(),
+                out_edge.head(),
+                in_edge.weight() + out_edge.weight(),
+            )
+            .unwrap();
 
-                    let request =
-                        ShortestPathRequest::new(in_edge.tail(), out_edge.head()).unwrap();
-                    if let Some(upper_bound) = heuristic.upper_bound(&request) {
-                        if edge.weight() >= upper_bound {
-                            return None;
-                        }
-                    }
+            if let Some(current_shortcut) = all_shortcuts.get(&edge.unweighted()) {
+                let current_shortcut_weight = current_shortcut.edge.weight();
+                if edge.weight() >= current_shortcut_weight {
+                    return None;
+                }
+            }
 
-                    if let Some(current_weight) = graph.get_edge_weight(&edge.unweighted()) {
-                        if edge.weight() >= current_weight {
-                            return None;
-                        }
-                    }
+            if !heuristic.respects_upper_bound(&edge) {
+                return None;
+            }
 
-                    let shortcut = Shortcut { edge, vertex };
+            if let Some(current_weight) = graph.get_edge_weight(&edge.unweighted()) {
+                if edge.weight() >= current_weight {
+                    return None;
+                }
+            }
 
-                    Some(shortcut)
-                })
-                .collect_vec()
+            let shortcut = Shortcut { edge, vertex };
+
+            Some(shortcut)
         })
-        .flatten()
         .collect();
     shortcuts
 }
@@ -193,8 +187,8 @@ fn get_next_vertex(
 ) -> Option<VertexId> {
     let min_vertex = *remaining_vertices.par_iter().min_by_key(|&&vertex| {
         (graph.in_edges(vertex).len() as i32 * graph.out_edges(vertex).len() as i32)
-        // - (graph.in_edges(vertex).len() as i32)
-        // - graph.out_edges(vertex).len() as i32
+            - (graph.in_edges(vertex).len() as i32)
+            - graph.out_edges(vertex).len() as i32
     })?;
     remaining_vertices.remove(&min_vertex);
     Some(min_vertex)

@@ -7,7 +7,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use super::Heuristic;
 use crate::{
     classical_search::dijkstra::Dijkstra,
-    graphs::{path::ShortestPathRequest, Graph, Weight},
+    graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, Weight},
 };
 
 pub struct Landmark {
@@ -48,6 +48,12 @@ impl Heuristic for Landmarks {
             .iter()
             .flat_map(|landmark| landmark.upper_bound(request))
             .min()
+    }
+
+    fn respects_upper_bound(&self, edge: &DirectedWeightedEdge) -> bool {
+        self.landmarks
+            .iter()
+            .all(|landmark| landmark.respects_upper_bound(edge))
     }
 }
 
