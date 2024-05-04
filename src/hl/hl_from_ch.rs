@@ -3,7 +3,7 @@ use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use super::{
-    hub_graph::{overlap, DirectedHubGraph},
+    hub_graph::{overlap, DirectedHubGraph, HubGraph},
     label::Label,
 };
 use crate::{
@@ -49,8 +49,8 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
     }
     pb.finish();
 
-    // Needs to be called after all labels are creates as replacing the predecessor VertexId
-    // with the index of predecessor in label makes merging impossible.
+    // Needs to be called after all labels are creates as replacing the predecessor
+    // VertexId with the index of predecessor in label makes merging impossible.
     forward_labels
         .iter_mut()
         .chain(reverse_labels.iter_mut())
@@ -62,12 +62,57 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
     }
 }
 
+pub fn hub_graph_from_directed_contracted_graph(
+    ch_information: &DirectedContractedGraph,
+) -> HubGraph {
+    let mut forward_labels: Vec<_> = (0..ch_information.upward_graph.number_of_vertices())
+        .map(Label::new)
+        .collect();
+
+    let mut reverse_labels = forward_labels.clone();
+
+    let pb = ProgressBar::new(ch_information.upward_graph.number_of_vertices() as u64);
+    for level_list in ch_information.levels.iter().rev() {
+        let labels: Vec<_> = level_list
+            .par_iter()
+            .map(|&vertex| {
+                let forward_label = generate_forward_label(
+                    ch_information,
+                    vertex,
+                    &forward_labels,
+                    &reverse_labels,
+                );
+
+                (vertex, forward_label)
+            })
+            .collect();
+        for (vertex, forward_label) in labels {
+            forward_labels[vertex as usize] = forward_label;
+        }
+        pb.inc(level_list.len() as u64);
+    }
+    pb.finish();
+
+    // Needs to be called after all labels are creates as replacing the predecessor
+    // VertexId with the index of predecessor in label makes merging impossible.
+    forward_labels
+        .iter_mut()
+        .chain(reverse_labels.iter_mut())
+        .for_each(set_predecessor);
+
+    HubGraph {
+        labels: forward_labels,
+    }
+}
+
 /// Generates a forward label for a given vertex.
 ///
-/// This function constructs a forward label for the specified vertex by considering outgoing edges. It accumulates
-/// the weights and predecessors from the labels associated with the direction towards the destination (forward) and
-/// adjusts them based on the graph's structure. The resulting label is optimized by merging similar paths and
-/// pruning paths that are not efficient when considered with the reverse direction paths.
+/// This function constructs a forward label for the specified vertex by
+/// considering outgoing edges. It accumulates the weights and predecessors from
+/// the labels associated with the direction towards the destination (forward)
+/// and adjusts them based on the graph's structure. The resulting label is
+/// optimized by merging similar paths and pruning paths that are not efficient
+/// when considered with the reverse direction paths.
 fn generate_forward_label(
     ch_information: &DirectedContractedGraph,
     vertex: VertexId,
@@ -90,10 +135,12 @@ fn generate_forward_label(
 
 /// Generates a reverse label for a given vertex.
 ///
-/// This function constructs a reverse label for the specified vertex by considering incoming edges. It accumulates
-/// the weights and predecessors from the labels associated with the direction from the source (reverse) and
-/// adjusts them based on the graph's structure. The resulting label is optimized by merging similar paths and
-/// pruning paths that are not efficient when considered with the forward direction paths.
+/// This function constructs a reverse label for the specified vertex by
+/// considering incoming edges. It accumulates the weights and predecessors from
+/// the labels associated with the direction from the source (reverse) and
+/// adjusts them based on the graph's structure. The resulting label is
+/// optimized by merging similar paths and pruning paths that are not efficient
+/// when considered with the forward direction paths.
 fn generate_reverse_label(
     ch_information: &DirectedContractedGraph,
     vertex: VertexId,

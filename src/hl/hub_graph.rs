@@ -38,11 +38,13 @@ impl HubGraphTrait for HubGraph {
 
 /// Calculates the minimal overlap between a forward and reverse label.
 ///
-/// If there exists an overlap, `Some(weight, index_forward, index_reverse)` is returned, where
-/// `weight` is the weight of the shortest path from the source vertex represented by the forward label to the target
-/// vertex represented by the reverse label. `index_forward` is the index of the entry that
-/// represents the shortest path from the source to the meeting vertex, and `index_reverse` is the index of the
-/// entry that represents the shortest path from the meeting vertex to the target.
+/// If there exists an overlap, `Some(weight, index_forward, index_reverse)` is
+/// returned, where `weight` is the weight of the shortest path from the source
+/// vertex represented by the forward label to the target vertex represented by
+/// the reverse label. `index_forward` is the index of the entry that represents
+/// the shortest path from the source to the meeting vertex, and `index_reverse`
+/// is the index of the entry that represents the shortest path from the meeting
+/// vertex to the target.
 pub fn overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
     let mut index_forward = 0;
     let mut index_reverse = 0;

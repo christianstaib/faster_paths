@@ -40,4 +40,5 @@ fn main() {
     for path in paths {
         writeln!(writer, "{}", path.vertices.iter().join(" ")).unwrap();
     }
+    writer.flush().unwrap();
 }
