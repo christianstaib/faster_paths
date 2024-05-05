@@ -1,13 +1,19 @@
 use std::usize;
 
 use ahash::{HashMap, HashMapExt};
+use indicatif::ParallelProgressIterator;
+use rayon::prelude::*;
 
 use crate::{
     dijkstra_data::{
         dijkstra_data_vec::{DijkstraDataVec, DijsktraEntry},
         DijkstraData,
     },
-    graphs::{Graph, VertexId},
+    graphs::{
+        graph_functions::{hitting_set, random_paths, shortests_path_tree},
+        path::PathFinding,
+        Graph, VertexId,
+    },
     queue::DijkstraQueueElement,
 };
 
@@ -21,6 +27,39 @@ impl<'a> CacheDijkstra<'a> {
     pub fn new(graph: &dyn Graph) -> CacheDijkstra {
         let cache = HashMap::new();
         CacheDijkstra { cache, graph }
+    }
+
+    pub fn with_pathfinder(
+        graph: &'a dyn Graph,
+        number_of_random_pairs: u32,
+        path_finder: &dyn PathFinding,
+    ) -> CacheDijkstra<'a> {
+        println!("Generating {} random paths", number_of_random_pairs);
+        let paths = random_paths(
+            number_of_random_pairs,
+            graph.number_of_vertices(),
+            path_finder,
+        );
+
+        println!("generating hitting set");
+        let (hitting_setx, _) = hitting_set(&paths, graph.number_of_vertices());
+
+        println!("generating random pair test");
+
+        println!("generating cache");
+        let mut cache_dijkstra = CacheDijkstra::new(graph);
+        cache_dijkstra.cache = hitting_setx
+            .par_iter()
+            .progress()
+            .map(|&vertex| {
+                let data = cache_dijkstra.single_source(vertex);
+                let tree = shortests_path_tree(&data);
+                let data = data.vertices;
+                (vertex, (data, tree))
+            })
+            .collect();
+
+        cache_dijkstra
     }
 
     pub fn get_data(&self, source: VertexId, target: VertexId) -> DijkstraDataVec {
