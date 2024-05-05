@@ -43,6 +43,16 @@ fn main() {
             / hub_graph.labels.len()
     );
 
+    println!("11111");
+    println!(
+        "{:?}",
+        hub_graph.labels[11_111]
+            .entries
+            .iter()
+            .map(|entry| entry.vertex)
+            .collect_vec()
+    );
+
     println!("Generating paths");
     let path_finder = HLPathFinder::new(&hub_graph);
     let path_finder = SlowShortcutReplacer::new(&shortcuts, &path_finder);
