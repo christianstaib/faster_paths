@@ -6,19 +6,21 @@ use std::{
     time::{Duration, Instant},
 };
 
-use ahash::{HashSet, HashSetExt};
+use ahash::{HashMap, HashSet, HashSetExt};
 use clap::Parser;
 use faster_paths::{
     classical_search::dijkstra::Dijkstra,
     graphs::{
+        edge::DirectedEdge,
         graph_factory::GraphFactory,
         graph_functions::{hitting_set, random_paths, validate_and_time},
-        path::ShortestPathTestCase,
+        path::{PathFinding, ShortestPathTestCase},
         reversible_vec_graph::ReversibleVecGraph,
-        Graph,
+        Graph, VertexId,
     },
     hl::{
         hl_path_finding::HLPathFinder,
+        hub_graph::HubGraph,
         top_down_hl::{generate_hub_graph, predict_average_label_size},
     },
     shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
@@ -52,8 +54,17 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
+    println!("Loading graph");
+    let reader = BufReader::new(File::open("hl_test.bincode").unwrap());
+    let (hub_graph, shortcuts): (HubGraph, HashMap<DirectedEdge, VertexId>) =
+        bincode::deserialize_from(reader).unwrap();
+
+    println!("Generating paths");
+    let path_finder = HLPathFinder::new(&hub_graph);
+    let path_finder = SlowShortcutReplacer::new(&shortcuts, &path_finder);
+
     let number_of_random_pairs = 5_000;
-    let order = generate_hiting_set_order(number_of_random_pairs, &graph);
+    let order = generate_hiting_set_order(number_of_random_pairs, &path_finder, &graph);
 
     let number_of_vertices_with_labels = 1_000;
     println!(
@@ -96,13 +107,16 @@ fn main() {
     );
 }
 
-fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
+fn generate_hiting_set_order(
+    number_of_random_pairs: u32,
+    path_finder: &dyn PathFinding,
+    graph: &dyn Graph,
+) -> Vec<u32> {
     println!("Generating {} random paths", number_of_random_pairs);
-    let dijkstra = Dijkstra::new(graph);
     let paths = random_paths(
         number_of_random_pairs,
         graph.number_of_vertices(),
-        &dijkstra,
+        path_finder,
     );
 
     println!("generating hitting set");
