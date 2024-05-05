@@ -126,7 +126,7 @@ pub fn is_bidirectional(graph: &dyn Graph) -> bool {
 
 pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, Vec<u32>) {
     let mut hitting_set = Vec::new();
-    let mut active_paths: HashSet<usize> = (0..paths.len()).collect();
+    let mut active_paths: Vec<usize> = (0..paths.len()).collect();
 
     let mut all_hits = vec![0; number_of_vertices as usize];
 
@@ -155,7 +155,6 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, V
                 .vertices
                 .contains(&(max_hitting_vertex as VertexId))
         });
-        active_paths.shrink_to_fit();
 
         pb.set_position((paths.len() - active_paths.len()) as u64);
     }
