@@ -1,25 +1,22 @@
 use std::{
     fs::File,
-    io::{BufReader, BufWriter, Write},
+    io::{BufWriter, Write},
     path::PathBuf,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use clap::Parser;
 use faster_paths::{
-    classical_search::{cache_dijkstra::CacheDijkstra, dijkstra::Dijkstra},
+    classical_search::dijkstra::Dijkstra,
     dijkstra_data::DijkstraData,
     graphs::{
         graph_factory::GraphFactory,
-        graph_functions::{
-            generate_random_pair_testcases, hitting_set, random_paths, shortests_path_tree,
-        },
         path::{ShortestPathRequest, ShortestPathTestCase},
         Graph,
     },
 };
-use indicatif::{ParallelProgressIterator, ProgressIterator};
-use rand::{thread_rng, Rng};
+use indicatif::ProgressIterator;
+use rand::Rng;
 use rayon::prelude::*;
 
 /// Generates `number_of_tests` many random pair test cases for the graph
@@ -45,79 +42,45 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    println!("Loading graph");
     let graph = GraphFactory::from_file(&args.graph);
-
-    println!("Loading test cases");
-    let reader = BufReader::new(File::open(&args.random_pairs).unwrap());
-    let random_pairs: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();
-
     let dijkstra = Dijkstra::new(&graph);
 
-    let number_of_random_pairs = 50_000;
-    println!("Generating {} random paths", number_of_random_pairs);
-    let paths = random_paths(
-        number_of_random_pairs,
-        graph.number_of_vertices(),
-        &dijkstra,
-    );
-
-    println!("generating hitting set");
-    let (hitting_setx, _) = hitting_set(&paths, graph.number_of_vertices());
-
     println!("generating random pair test");
-
-    println!("generating cache");
-    let graph: &dyn Graph = &graph;
-    let mut dijkstra = CacheDijkstra::new(graph);
-    dijkstra.cache = hitting_setx
-        .par_iter()
+    let start = Instant::now();
+    let random_pairs: Vec<_> = (0..args.number_of_tests)
         .progress()
-        .map(|&vertex| {
-            let data = dijkstra.single_source(vertex);
-            let tree = shortests_path_tree(&data);
-            let data = data.vertices;
-            (vertex, (data, tree))
-        })
+        .par_bridge()
+        .map_init(
+            rand::thread_rng, // get the thread-local RNG
+            |rng, _| {
+                // guarantee that source != tatget.
+                let source = rng.gen_range(0..graph.number_of_vertices());
+                let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
+                if target >= source {
+                    target += 1;
+                }
+
+                let request = ShortestPathRequest::new(source, target).unwrap();
+
+                let data = dijkstra.get_data(request.source(), request.target());
+                let path = data.get_path(target);
+
+                let mut weight = None;
+                if let Some(path) = path {
+                    weight = Some(path.weight);
+                }
+
+                ShortestPathTestCase {
+                    request,
+                    weight,
+                    dijkstra_rank: data.dijkstra_rank(),
+                }
+            },
+        )
         .collect();
+    println!("took {:?}", start.elapsed());
 
-    let mut times = Vec::new();
-    // to beat
-    // ny 43.580883ms
-    //
-    // aegeis average query time with cache 187.731216ms
-    // without 453.373613ms
-    random_pairs
-        .iter()
-        .take(2_000)
-        .progress()
-        .for_each(|test_case| {
-            let source = test_case.request.source();
-            let target = test_case.request.target();
-
-            let request = ShortestPathRequest::new(source, target).unwrap();
-
-            let start = Instant::now();
-            let data = dijkstra.single_source(request.source());
-            times.push(start.elapsed());
-
-            let path = data.get_path(target);
-
-            let mut weight = None;
-            if let Some(path) = path {
-                weight = Some(path.weight);
-            }
-
-            assert_eq!(weight, test_case.weight);
-        });
-
-    println!(
-        "average query time {:?}",
-        times.iter().sum::<Duration>() / times.len() as u32
-    );
-
-    // let mut writer =
-    // BufWriter::new(File::create(&args.random_pairs).unwrap());
-    // serde_json::to_writer_pretty(&mut writer, &random_pairs).unwrap();
-    // writer.flush().unwrap();
+    let mut writer = BufWriter::new(File::create(&args.random_pairs).unwrap());
+    serde_json::to_writer_pretty(&mut writer, &random_pairs).unwrap();
+    writer.flush().unwrap();
 }
