@@ -155,6 +155,7 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, V
                 .vertices
                 .contains(&(max_hitting_vertex as VertexId))
         });
+        active_paths.shrink_to_fit();
 
         pb.set_position((paths.len() - active_paths.len()) as u64);
     }
