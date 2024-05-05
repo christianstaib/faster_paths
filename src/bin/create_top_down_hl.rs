@@ -52,6 +52,13 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
+    println!(
+        "there are {} true vertices",
+        (0..graph.number_of_vertices())
+            .filter(|&vertex| graph.out_edges(vertex).len() + graph.in_edges(vertex).len() > 0)
+            .count()
+    );
+
     let number_of_random_pairs = 5_000;
     let order = generate_hiting_set_order(number_of_random_pairs, &graph);
 
@@ -88,11 +95,11 @@ fn main() {
     let path_finder = HLPathFinder::new(&hub_graph);
     let path_finder = SlowShortcutReplacer::new(&shortcuts, &path_finder);
 
-    let times = validate_and_time(&test_cases, &path_finder, &graph);
+    let average_time = validate_and_time(&test_cases, &path_finder, &graph);
     println!(
         "All tests passed. Average query time over {} test cases was {:?}.",
         test_cases.len(),
-        times.iter().sum::<Duration>() / times.len() as u32
+        average_time
     );
 }
 

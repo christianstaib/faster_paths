@@ -33,6 +33,16 @@ fn main() {
     let (hub_graph, shortcuts): (HubGraph, HashMap<DirectedEdge, VertexId>) =
         bincode::deserialize_from(reader).unwrap();
 
+    println!(
+        "avg label size is {}",
+        hub_graph
+            .labels
+            .iter()
+            .map(|l| l.entries.len())
+            .sum::<usize>()
+            / hub_graph.labels.len()
+    );
+
     println!("Generating paths");
     let path_finder = HLPathFinder::new(&hub_graph);
     let path_finder = SlowShortcutReplacer::new(&shortcuts, &path_finder);

@@ -9,16 +9,13 @@ use clap::Parser;
 use faster_paths::{
     ch::{
         ch_dijkstra::ChDijkstra,
-        contraction_adaptive_non_simulated::contract_adaptive_non_simulated_all_in,
+        contraction_adaptive_simulated::contract_adaptive_simulated_with_witness,
     },
     graphs::{
-        graph_factory::GraphFactory,
-        graph_functions::validate_path,
-        path::{PathFinding, ShortestPathTestCase},
+        graph_factory::GraphFactory, graph_functions::validate_and_time, path::ShortestPathTestCase,
     },
     shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
 };
-use indicatif::ProgressIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -46,7 +43,7 @@ fn main() {
     let graph = GraphFactory::from_file(&args.infile);
 
     let start = Instant::now();
-    let ch_and_shortctus = contract_adaptive_non_simulated_all_in(&graph);
+    let ch_and_shortctus = contract_adaptive_simulated_with_witness(&graph);
     println!("it took {:?} to contract the graph", start.elapsed());
 
     println!("writing contracted graph to file");
@@ -59,13 +56,11 @@ fn main() {
     let ch_dijkstra = ChDijkstra::new(&contracted_graph);
     let path_finder = SlowShortcutReplacer::new(&shortcuts, &ch_dijkstra);
 
-    println!("running {} tests", test_cases.len());
-    for test_case in test_cases.iter().progress() {
-        let path = path_finder.shortest_path(&test_case.request);
+    let average_query_time = validate_and_time(&test_cases, &path_finder, &graph);
 
-        if let Err(err) = validate_path(&graph, test_case, &path) {
-            panic!("ch wrong: {}", err);
-        }
-    }
-    println!("all {} tests passed", test_cases.len());
+    println!(
+        "All {} tests passed. Average query time was {:?}",
+        test_cases.len(),
+        average_query_time
+    );
 }

@@ -271,7 +271,7 @@ pub fn validate_and_time(
     test_cases: &Vec<ShortestPathTestCase>,
     path_finder: &dyn PathFinding,
     graph: &dyn Graph,
-) -> Vec<Duration> {
+) -> Duration {
     let mut times = Vec::new();
 
     test_cases.iter().progress().for_each(|test_case| {
@@ -284,5 +284,5 @@ pub fn validate_and_time(
         }
     });
 
-    times
+    times.iter().sum::<Duration>() / times.len() as u32
 }

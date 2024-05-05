@@ -15,7 +15,8 @@ use crate::{
     ch::contracted_graph::DirectedContractedGraph,
     graphs::{
         edge::{DirectedEdge, DirectedWeightedEdge},
-        graph_functions::to_vec_graph,
+        graph_functions::{all_edges, to_vec_graph},
+        reversible_vec_graph::ReversibleVecGraph,
         vec_graph::VecGraph,
         Graph, VertexId,
     },
@@ -23,9 +24,10 @@ use crate::{
 };
 
 pub fn contract_adaptive_simulated_with_witness(
-    graph: Box<dyn Graph>,
+    graph: &dyn Graph,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
-    let base_graph = to_vec_graph(&*graph);
+    let base_graph = to_vec_graph(graph);
+    let graph = Box::new(ReversibleVecGraph::from_edges(&all_edges(graph)));
     let priority_terms = decode_function("E:1_D:1_C:1");
 
     let shortcut_generator = ShortcutGeneratorWithWittnessSearch { max_hops: 16 };

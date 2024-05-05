@@ -18,7 +18,8 @@ pub struct SerialWitnessSearchContractor {
 }
 
 impl Contractor for SerialWitnessSearchContractor {
-    /// Generates contraction hierarchy where one vertex at a time is contracted.
+    /// Generates contraction hierarchy where one vertex at a time is
+    /// contracted.
     fn contract(&mut self, mut graph: Box<dyn Graph>) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
         println!("initalizing queue");
         self.initialize(&graph);
@@ -29,8 +30,8 @@ impl Contractor for SerialWitnessSearchContractor {
         // let mut writer = BufWriter::new(File::create("reasons_slow.csv").unwrap());
         // writeln!(
         //     writer,
-        //     "pop(ns),add_edge(ns),add_shortcuts(ns),remove_vertex(ns),num_edges,num_shortcuts,num_new_shortcuts"
-        // )
+        //     "pop(ns),add_edge(ns),add_shortcuts(ns),remove_vertex(ns),num_edges,
+        // num_shortcuts,num_new_shortcuts" )
         // .unwrap();
 
         println!("start contracting");
@@ -46,8 +47,8 @@ impl Contractor for SerialWitnessSearchContractor {
             // // check parallel which shortcuts to insert
             // let shortcuts_to_add_to_shortcuts: Vec<_> = vertex_shortcuts
             //     .into_par_iter()
-            //     // only add shortcuts that are either not present or weigh less than a current
-            //     // shortcut
+            //     // only add shortcuts that are either not present or weigh less than a
+            // current     // shortcut
             //     .filter(|shortcut| {
             //         let this_key = (
             //             shortcut.edge.unweighted().tail,
@@ -131,8 +132,8 @@ impl SerialWitnessSearchContractor {
     // Lazy poping the vertex with minimum priority.
     pub fn pop(&mut self, graph: &Box<dyn Graph>) -> Option<(VertexId, Vec<Shortcut>)> {
         while let Some(mut state) = self.queue.pop() {
-            // If current priority is greater than minimum priority, then repush state with updated
-            // priority.
+            // If current priority is greater than minimum priority, then repush state with
+            // updated priority.
             let (priority, shortcuts) = self.priority_and_shortcuts(state.vertex, graph);
             if priority > state.priority {
                 state.priority = priority;
@@ -140,8 +141,8 @@ impl SerialWitnessSearchContractor {
                 continue;
             }
 
-            // Gets called just before a vertex is contracted. Gives priority terms the oppernunity to updated
-            // neighboring nodes priorities.
+            // Gets called just before a vertex is contracted. Gives priority terms the
+            // oppernunity to updated neighboring nodes priorities.
             self.priority_terms
                 .iter_mut()
                 .for_each(|(_, priority_function)| priority_function.update(state.vertex, graph));
