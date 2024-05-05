@@ -130,17 +130,13 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, V
     let mut hitting_set = Vec::new();
     let mut active_paths: Vec<usize> = (0..paths.len()).collect();
 
-    let mut all_hits = (0..number_of_vertices)
-        .map(|_| AtomicU32::new(0))
-        .collect_vec();
-
-    let mut number_of_hits_clone = (0..number_of_vertices)
+    let all_hits = (0..number_of_vertices)
         .map(|_| AtomicU32::new(0))
         .collect_vec();
 
     let pb = ProgressBar::new(active_paths.len() as u64);
     while !active_paths.is_empty() {
-        let mut number_of_hits = (0..number_of_vertices)
+        let number_of_hits = (0..number_of_vertices)
             .map(|_| AtomicU32::new(0))
             .collect_vec();
 
@@ -155,7 +151,7 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, V
         let max_hitting_vertex = number_of_hits
             .iter()
             .enumerate()
-            .max_by_key(|(_, &hits)| hits.load(Ordering::Acquire))
+            .max_by_key(|(_, hits)| hits.load(Ordering::Acquire))
             .unwrap()
             .0;
         hitting_set.push(max_hitting_vertex as VertexId);
@@ -173,7 +169,13 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, V
     }
     pb.finish();
 
-    (hitting_set, all_hits)
+    (
+        hitting_set,
+        all_hits
+            .iter()
+            .map(|hits| hits.load(Ordering::Acquire))
+            .collect(),
+    )
 }
 
 pub fn generate_random_pair_testcases(
