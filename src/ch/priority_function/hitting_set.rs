@@ -25,16 +25,16 @@ impl HittingSet {
 }
 
 impl PriorityFunction for HittingSet {
-    fn priority(&self, vertex: u32, _graph: &Box<dyn Graph>, _shortcuts: &Vec<Shortcut>) -> i32 {
+    fn priority(&self, vertex: u32, _graph: &dyn Graph, _shortcuts: &Vec<Shortcut>) -> i32 {
         if self.hitting_set.contains(&vertex) {
             return i32::MAX / 2;
         }
         0
     }
 
-    fn update(&mut self, _vertex: u32, _graph: &Box<dyn Graph>) {}
+    fn update(&mut self, _vertex: u32, _graph: &dyn Graph) {}
 
-    fn initialize(&mut self, _graph: &Box<dyn Graph>) {
+    fn initialize(&mut self, _graph: &dyn Graph) {
         todo!()
     }
 }

@@ -22,7 +22,7 @@ impl Contractor for SerialWitnessSearchContractor {
     /// contracted.
     fn contract(&mut self, mut graph: Box<dyn Graph>) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
         println!("initalizing queue");
-        self.initialize(&graph);
+        self.initialize(&*graph);
 
         let mut shortcuts: HashMap<(VertexId, VertexId), Shortcut> = HashMap::new();
         let mut levels = Vec::new();
@@ -38,7 +38,7 @@ impl Contractor for SerialWitnessSearchContractor {
         let bar = ProgressBar::new(graph.number_of_vertices() as u64);
 
         let mut start = Instant::now();
-        while let Some((vertex, vertex_shortcuts)) = self.pop(&graph) {
+        while let Some((vertex, vertex_shortcuts)) = self.pop(&*graph) {
             let _duration_pop = start.elapsed();
 
             // let duration_add_edge = start.elapsed();
@@ -130,7 +130,7 @@ impl Contractor for SerialWitnessSearchContractor {
 
 impl SerialWitnessSearchContractor {
     // Lazy poping the vertex with minimum priority.
-    pub fn pop(&mut self, graph: &Box<dyn Graph>) -> Option<(VertexId, Vec<Shortcut>)> {
+    pub fn pop(&mut self, graph: &dyn Graph) -> Option<(VertexId, Vec<Shortcut>)> {
         while let Some(mut state) = self.queue.pop() {
             // If current priority is greater than minimum priority, then repush state with
             // updated priority.
@@ -145,7 +145,7 @@ impl SerialWitnessSearchContractor {
             // oppernunity to updated neighboring nodes priorities.
             self.priority_terms
                 .iter_mut()
-                .for_each(|(_, priority_function)| priority_function.update(state.vertex, graph));
+                .for_each(|(_, priority_function)| priority_function.update(state.vertex, &*graph));
 
             return Some((state.vertex, shortcuts));
         }
@@ -155,7 +155,7 @@ impl SerialWitnessSearchContractor {
     pub fn priority_and_shortcuts(
         &self,
         vertex: VertexId,
-        graph: &Box<dyn Graph>,
+        graph: &dyn Graph,
     ) -> (i32, Vec<Shortcut>) {
         let shortcuts = self.shortcut_generator.get_shortcuts(graph, vertex);
         let priority = self
@@ -169,7 +169,7 @@ impl SerialWitnessSearchContractor {
         (priority, shortcuts)
     }
 
-    fn initialize(&mut self, graph: &Box<dyn Graph>) {
+    fn initialize(&mut self, graph: &dyn Graph) {
         let mut vertices: Vec<u32> = (0..graph.number_of_vertices()).collect();
         vertices.shuffle(&mut rand::thread_rng());
 

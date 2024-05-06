@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub trait ShortcutGenerator: Send + Sync {
-    fn get_shortcuts(&self, graph: &Box<dyn Graph>, vertex: VertexId) -> Vec<Shortcut>;
+    fn get_shortcuts(&self, graph: &dyn Graph, vertex: VertexId) -> Vec<Shortcut>;
 }
 
 pub struct ShortcutGeneratorWithWittnessSearch {
@@ -20,7 +20,7 @@ pub struct ShortcutGeneratorWithWittnessSearch {
 }
 
 impl ShortcutGenerator for ShortcutGeneratorWithWittnessSearch {
-    fn get_shortcuts(&self, graph: &Box<dyn Graph>, vertex: VertexId) -> Vec<Shortcut> {
+    fn get_shortcuts(&self, graph: &dyn Graph, vertex: VertexId) -> Vec<Shortcut> {
         let max_out_edge_weight = graph
             .in_edges(vertex)
             .map(|edge| edge.weight())
@@ -69,7 +69,7 @@ pub struct ShortcutGeneratorWithHeuristic {
 }
 
 impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
-    fn get_shortcuts(&self, graph: &Box<dyn Graph>, vertex: VertexId) -> Vec<Shortcut> {
+    fn get_shortcuts(&self, graph: &dyn Graph, vertex: VertexId) -> Vec<Shortcut> {
         graph
             .in_edges(vertex)
             .par_bridge()
@@ -100,7 +100,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
 }
 
 pub fn witness_search(
-    graph: &Box<dyn Graph>,
+    graph: &dyn Graph,
     source: VertexId,
     without: VertexId,
     max_weight: Weight,

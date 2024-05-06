@@ -11,14 +11,14 @@ pub mod edge_difference;
 pub mod hitting_set;
 
 pub trait PriorityFunction {
-    fn initialize(&mut self, graph: &Box<dyn Graph>);
+    fn initialize(&mut self, graph: &dyn Graph);
 
     /// Gets the priority of node v in the graph
-    fn priority(&self, vertex: VertexId, graph: &Box<dyn Graph>, shortcuts: &Vec<Shortcut>) -> i32;
+    fn priority(&self, vertex: VertexId, graph: &dyn Graph, shortcuts: &Vec<Shortcut>) -> i32;
 
-    /// Gets called just ERFORE a vertex is contracted. Gives priority terms the oppernunity to updated
-    /// neighboring nodes priorities.
-    fn update(&mut self, vertex: VertexId, graph: &Box<dyn Graph>);
+    /// Gets called just ERFORE a vertex is contracted. Gives priority terms the
+    /// oppernunity to updated neighboring nodes priorities.
+    fn update(&mut self, vertex: VertexId, graph: &dyn Graph);
 }
 
 pub fn decode_function(
