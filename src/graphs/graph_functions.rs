@@ -1,11 +1,13 @@
 use std::{
+    cmp::Reverse,
     time::{Duration, Instant},
     usize,
 };
 
 use ahash::{HashSet, HashSetExt};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
-use rand::{rngs::ThreadRng, Rng};
+use itertools::Itertools;
+use rand::prelude::*;
 use rayon::prelude::*;
 
 use super::{
@@ -285,4 +287,74 @@ pub fn validate_and_time(
     });
 
     times.iter().sum::<Duration>() / times.len() as u32
+}
+
+pub fn generate_random_pair_test_cases(
+    graph: &dyn Graph,
+    number_of_testcases: u32,
+) -> Vec<ShortestPathTestCase> {
+    let dijkstra = Dijkstra::new(graph);
+    (0..number_of_testcases)
+        .progress()
+        .par_bridge()
+        .map_init(
+            rand::thread_rng, // get the thread-local RNG
+            |rng, _| {
+                // guarantee that source != tatget.
+                let source = rng.gen_range(0..graph.number_of_vertices());
+                let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
+                if target >= source {
+                    target += 1;
+                }
+
+                let request = ShortestPathRequest::new(source, target).unwrap();
+
+                let data = dijkstra.get_data(request.source(), request.target());
+                let path = data.get_path(target);
+
+                let mut weight = None;
+                if let Some(path) = path {
+                    weight = Some(path.weight);
+                }
+
+                ShortestPathTestCase {
+                    request,
+                    weight,
+                    dijkstra_rank: data.dijkstra_rank(),
+                }
+            },
+        )
+        .collect()
+}
+
+pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
+    println!("Generating {} random paths", number_of_random_pairs);
+    let dijkstra = Dijkstra::new(graph);
+    let paths = random_paths(
+        number_of_random_pairs,
+        graph.number_of_vertices(),
+        &dijkstra,
+    );
+
+    println!("generating hitting set");
+    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
+
+    println!("generating vertex order");
+    let mut not_hitting_set = (0..graph.number_of_vertices())
+        .into_iter()
+        .filter(|vertex| !hitting_setx.contains(&vertex))
+        .collect_vec();
+
+    // shuffle to break neighboring ties
+    not_hitting_set.shuffle(&mut thread_rng());
+    not_hitting_set.sort_unstable_by_key(|&vertex| Reverse(num_hits[vertex as usize]));
+
+    hitting_setx.extend(not_hitting_set);
+    hitting_setx.reverse();
+
+    let order: Vec<_> = (0..graph.number_of_vertices())
+        .into_par_iter()
+        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
+        .collect();
+    order
 }
