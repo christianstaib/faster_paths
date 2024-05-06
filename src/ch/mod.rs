@@ -29,6 +29,4 @@ pub trait ContractedGraphTrait: Send + Sync {
     ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_>;
 
     fn number_of_vertices(&self) -> u32;
-
-    fn number_of_edges(&self) -> u32;
 }

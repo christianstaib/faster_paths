@@ -26,8 +26,7 @@ use crate::{
 pub fn contract_adaptive_simulated_with_witness(
     graph: &dyn Graph,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
-    let base_graph = to_vec_graph(graph);
-    let graph = Box::new(ReversibleVecGraph::from_edges(&all_edges(graph)));
+    let vec_graph = to_vec_graph(graph);
     let priority_terms = decode_function("E:1_D:1_C:1");
 
     let shortcut_generator = ShortcutGeneratorWithWittnessSearch { max_hops: 16 };
@@ -35,13 +34,13 @@ pub fn contract_adaptive_simulated_with_witness(
     let mut contractor = SerialWitnessSearchContractor::new(priority_terms, shortcut_generator);
 
     let (shortcuts, levels) = contractor.contract(graph);
-    get_ch_stateless(base_graph, &shortcuts, &levels)
+    get_ch_stateless(vec_graph, &shortcuts, &levels)
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(
-    graph: Box<dyn Graph>,
+    graph: &dyn Graph,
 ) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
-    let base_graph = to_vec_graph(&*graph);
+    let vec_graph = to_vec_graph(&*graph);
     let priority_terms = decode_function("E:1_D:1_C:1");
 
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, &*graph));
@@ -51,7 +50,7 @@ pub fn contract_adaptive_simulated_with_landmarks(
     let mut contractor = SerialWitnessSearchContractor::new(priority_terms, shortcut_generator);
 
     let (shortcuts, levels) = contractor.contract(graph);
-    get_ch_stateless(base_graph, &shortcuts, &levels)
+    get_ch_stateless(vec_graph, &shortcuts, &levels)
 }
 
 pub fn get_ch_stateless(

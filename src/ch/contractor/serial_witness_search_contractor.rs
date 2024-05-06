@@ -8,7 +8,9 @@ use rayon::prelude::*;
 use super::{contraction_helper::ShortcutGenerator, Contractor};
 use crate::{
     ch::{ch_priority_element::ChPriorityElement, priority_function::PriorityFunction, Shortcut},
-    graphs::{Graph, VertexId},
+    graphs::{
+        graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph, Graph, VertexId,
+    },
 };
 
 pub struct SerialWitnessSearchContractor {
@@ -20,7 +22,9 @@ pub struct SerialWitnessSearchContractor {
 impl Contractor for SerialWitnessSearchContractor {
     /// Generates contraction hierarchy where one vertex at a time is
     /// contracted.
-    fn contract(&mut self, mut graph: Box<dyn Graph>) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
+    fn contract(&mut self, graph: &dyn Graph) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
+        let mut graph = Box::new(ReversibleVecGraph::from_edges(&all_edges(graph)));
+
         println!("initalizing queue");
         self.initialize(&*graph);
 

@@ -40,10 +40,6 @@ impl ContractedGraphTrait for DirectedContractedGraph {
             self.downward_graph.number_of_vertices(),
         )
     }
-
-    fn number_of_edges(&self) -> u32 {
-        self.upward_graph.number_of_edges() + self.downward_graph.number_of_edges()
-    }
 }
 
 impl DirectedContractedGraph {
