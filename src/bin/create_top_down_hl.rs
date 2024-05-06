@@ -3,10 +3,9 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
-use ahash::{HashSet, HashSetExt};
 use clap::Parser;
 use faster_paths::{
     classical_search::dijkstra::Dijkstra,
@@ -14,7 +13,6 @@ use faster_paths::{
         graph_factory::GraphFactory,
         graph_functions::{hitting_set, random_paths, validate_and_time},
         path::ShortestPathTestCase,
-        reversible_vec_graph::ReversibleVecGraph,
         Graph,
     },
     hl::{
