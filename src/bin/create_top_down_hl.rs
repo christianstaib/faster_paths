@@ -52,13 +52,6 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.infile);
 
-    println!(
-        "there are {} true vertices",
-        (0..graph.number_of_vertices())
-            .filter(|&vertex| graph.out_edges(vertex).len() + graph.in_edges(vertex).len() > 0)
-            .count()
-    );
-
     let number_of_random_pairs = 5_000;
     let order = generate_hiting_set_order(number_of_random_pairs, &graph);
 

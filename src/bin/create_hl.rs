@@ -5,13 +5,12 @@ use std::{
     time::Instant,
 };
 
+use ahash::HashMap;
 use clap::Parser;
 use faster_paths::{
     ch::contracted_graph::DirectedContractedGraph,
-    hl::{
-        hl_from_ch::directed_hub_graph_from_directed_contracted_graph,
-        hub_graph_investigator::get_avg_label_size,
-    },
+    graphs::{edge::DirectedEdge, VertexId},
+    hl::hl_from_ch::directed_hub_graph_from_directed_contracted_graph,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -20,47 +19,26 @@ use faster_paths::{
 struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
-    ch_graph: String,
+    contracted_graph: PathBuf,
     /// Path of .fmi file
     #[arg(short, long)]
-    tests: PathBuf,
-    /// Path of .fmi file
-    #[arg(short, long)]
-    hl_graph: String,
+    hub_graph: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let reader = BufReader::new(File::open(args.ch_graph).unwrap());
-    let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
+    println!("Loading contracted graph");
+    let reader = BufReader::new(File::open(args.contracted_graph).unwrap());
+    let (contracted_graph, shortcuts): (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) =
+        bincode::deserialize_from(reader).unwrap();
 
-    // // optimize levels
-    // println!("{}", contracted_graph.levels.len());
-    // let mut new_levels = vec![Vec::new()];
-    // let mut current_neighbors = HashSet::new();
-
-    // let vertices: Vec<_> =
-    // contracted_graph.levels.iter().flatten().cloned().collect();
-
-    // for &vertex in vertices.iter().progress() {
-    //     if current_neighbors.contains(&vertex) {
-    //         new_levels.push(Vec::new());
-    //         current_neighbors.clear();
-    //     }
-    //     new_levels.last_mut().unwrap().push(vertex);
-    //     current_neighbors.extend(contracted_graph.graph.open_neighborhood(vertex,
-    // 1)); }
-
-    // contracted_graph.levels = new_levels;
-    println!("{}", contracted_graph.levels.len());
-
+    println!("Start hub graph geneation");
     let start = Instant::now();
     let hub_graph = directed_hub_graph_from_directed_contracted_graph(&contracted_graph);
-    println!("Generating hl took {:?}", start.elapsed());
+    println!("Generating hub graph took {:?}", start.elapsed());
 
-    let writer = BufWriter::new(File::create(args.hl_graph).unwrap());
-    bincode::serialize_into(writer, &hub_graph).unwrap();
-
-    println!("average label size is {}", get_avg_label_size(&hub_graph));
+    println!("Writing hub graph to file");
+    let writer = BufWriter::new(File::create(args.hub_graph).unwrap());
+    bincode::serialize_into(writer, &(&hub_graph, &shortcuts)).unwrap();
 }

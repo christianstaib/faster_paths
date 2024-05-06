@@ -1,20 +1,9 @@
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
-    path::PathBuf,
-    time::Instant,
-};
+use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
-    ch::{
-        ch_dijkstra::ChDijkstra,
-        contraction_adaptive_simulated::contract_adaptive_simulated_with_witness,
-    },
-    graphs::{
-        graph_factory::GraphFactory, graph_functions::validate_and_time, path::ShortestPathTestCase,
-    },
-    shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
+    ch::contraction_adaptive_simulated::contract_adaptive_simulated_with_witness,
+    graphs::graph_factory::GraphFactory,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -23,44 +12,24 @@ use faster_paths::{
 struct Args {
     /// Infile in .gr or .fmi format
     #[arg(short, long)]
-    infile: PathBuf,
-    /// Testcase file
-    #[arg(short, long)]
-    tests: PathBuf,
+    graph: PathBuf,
     /// Outfile in .bincode format
     #[arg(short, long)]
-    outfile: PathBuf,
+    contracted_graph: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
 
-    println!("loading test cases");
-    let reader = BufReader::new(File::open(&args.tests).unwrap());
-    let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();
+    println!("Loading graph");
+    let graph = GraphFactory::from_file(&args.graph);
 
-    println!("loading graph");
-    let graph = GraphFactory::from_file(&args.infile);
-
+    println!("Starting contracted graph generation");
     let start = Instant::now();
-    let ch_and_shortctus = contract_adaptive_simulated_with_witness(&graph);
-    println!("it took {:?} to contract the graph", start.elapsed());
+    let (contracted_graph, shortcuts) = contract_adaptive_simulated_with_witness(&graph);
+    println!("Generating contracted graph took {:?}", start.elapsed());
 
-    println!("writing contracted graph to file");
-    let writer = BufWriter::new(File::create(args.outfile).unwrap());
-    bincode::serialize_into(writer, &ch_and_shortctus).unwrap();
-
-    let (contracted_graph, shortcuts) = ch_and_shortctus;
-
-    // setting up path finder
-    let ch_dijkstra = ChDijkstra::new(&contracted_graph);
-    let path_finder = SlowShortcutReplacer::new(&shortcuts, &ch_dijkstra);
-
-    let average_query_time = validate_and_time(&test_cases, &path_finder, &graph);
-
-    println!(
-        "All {} tests passed. Average query time was {:?}",
-        test_cases.len(),
-        average_query_time
-    );
+    println!("Writing contracted graph to file");
+    let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
+    bincode::serialize_into(writer, &(&contracted_graph, &shortcuts)).unwrap();
 }
