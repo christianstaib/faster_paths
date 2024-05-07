@@ -10,7 +10,7 @@ NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS_RANDOM := $(NETWORK_GRAPH).tests_random.json
 NETWORK_TESTS_DIJKSTRA_RANK := $(NETWORK_GRAPH).tests_dijkstra_rank.json
 
-NY_GRAPH := $(FMI_DIR)/USA-road-d.FLA.gr
+NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
 # NY_GRAPH := $(FMI_DIR)/bremen_dist.gr
 NY_CH := $(NY_GRAPH).ch.bincode
 NY_HL := $(NY_GRAPH).hl.bincode
@@ -51,29 +51,25 @@ create_tests:
 
 create_ch_ny:
 	cargo run --bin create_ch --release --\
-		--infile $(NY_GRAPH)\
-		--tests $(NY_TESTS_RANDOM)\
-		--outfile $(NY_CH)
+		--graph $(NY_GRAPH)\
+		--contracted-graph  $(NY_CH)
 
 create_ch:
 	cargo run --bin create_ch --release --\
-		--infile $(NETWORK_GRAPH)\
-		--tests $(NETWORK_TESTS_RANDOM)\
-		--outfile $(NETWORK_CH)
+		--graph $(NETWORK_GRAPH)\
+		--contracted-graph $(NETWORK_CH)
 
 
 
 create_tphl_ny:
 	cargo run --bin create_top_down_hl --release --\
-		--infile $(NY_GRAPH)\
-		--tests $(NY_TESTS_RANDOM)\
-		--outfile $(NY_HL)
+		--graph $(NY_GRAPH)\
+		--hub_graph $(NY_HL)
 
 create_tphl:
 	cargo run --bin create_top_down_hl  --release --\
-		--infile $(NETWORK_GRAPH)\
-		--tests $(NETWORK_TESTS_RANDOM)\
-		--outfile $(NETWORK_HL)
+		--graph $(NETWORK_GRAPH)\
+		--hub_graph $(NETWORK_HL)
 
 
 

@@ -19,16 +19,13 @@ use crate::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::{all_edges, hitting_set, random_paths},
         hash_graph::HashGraph,
-        path::ShortestPathRequest,
         reversible_hash_graph::ReversibleHashGraph,
         Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
 };
 
-pub fn contract_adaptive_non_simulated_all_in(
-    graph: &dyn Graph,
-) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
+pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedContractedGraph {
     let dijkstra = Dijkstra::new(graph);
     let paths = random_paths(5_000, graph.number_of_vertices(), &dijkstra);
     let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
@@ -129,10 +126,11 @@ pub fn contract_adaptive_non_simulated_all_in(
     let directed_contracted_graph = DirectedContractedGraph {
         upward_graph,
         downward_graph,
+        shortcuts,
         levels,
     };
 
-    (directed_contracted_graph, shortcuts)
+    directed_contracted_graph
 }
 
 fn generate_all_shortcuts(

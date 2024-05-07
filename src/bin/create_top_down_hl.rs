@@ -32,12 +32,7 @@ fn main() {
     let hub_graph_and_shortcuts = generate_hub_graph(&graph, &order);
     println!("Generating all labels took {:?}", start.elapsed());
 
-    println!("Saving hub graph as bincode");
+    println!("Saving hub graph as json");
     let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
-    bincode::serialize_into(writer, &hub_graph_and_shortcuts).unwrap();
-
-    // TODO this throws an error as the shortcut hasmap use non string keys.
-    // println!("Saving hub graph as json");
-    // let writer = BufWriter::new(File::create("hl_test.json").unwrap());
-    // serde_json::to_writer(writer, &hub_graph_and_shortcuts).unwrap();
+    serde_json::to_writer(writer, &hub_graph_and_shortcuts).unwrap();
 }

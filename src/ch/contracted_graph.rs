@@ -5,17 +5,23 @@ use std::{
     usize,
 };
 
+use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressIterator;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use super::ContractedGraphTrait;
-use crate::graphs::{edge::DirectedWeightedEdge, vec_graph::VecGraph, Graph, VertexId};
+use crate::graphs::{
+    edge::{DirectedEdge, DirectedWeightedEdge},
+    vec_graph::VecGraph,
+    Graph, VertexId,
+};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct DirectedContractedGraph {
     pub upward_graph: VecGraph,
     pub downward_graph: VecGraph,
+    pub shortcuts: HashMap<DirectedEdge, VertexId>,
     pub levels: Vec<Vec<u32>>,
 }
 
@@ -134,9 +140,12 @@ impl DirectedContractedGraph {
             .collect_vec();
         let downward_graph = VecGraph::from_edges(&downward_edges);
 
+        let shortcuts = HashMap::new();
+
         DirectedContractedGraph {
             upward_graph,
             downward_graph,
+            shortcuts,
             levels: Vec::new(),
         }
     }

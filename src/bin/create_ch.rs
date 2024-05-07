@@ -26,10 +26,10 @@ fn main() {
 
     println!("Starting contracted graph generation");
     let start = Instant::now();
-    let (contracted_graph, shortcuts) = contract_adaptive_simulated_with_witness(&graph);
+    let contracted_graph = contract_adaptive_simulated_with_witness(&graph);
     println!("Generating contracted graph took {:?}", start.elapsed());
 
     println!("Writing contracted graph to file");
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
-    bincode::serialize_into(writer, &(&contracted_graph, &shortcuts)).unwrap();
+    serde_json::to_writer(writer, &contracted_graph).unwrap();
 }

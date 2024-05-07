@@ -20,13 +20,11 @@ use crate::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::{hitting_set, random_paths},
         hash_graph::HashGraph,
-        Graph, VertexId,
+        Graph,
     },
 };
 
-pub fn contract_non_adaptive(
-    mut graph: Box<dyn Graph>,
-) -> (DirectedContractedGraph, HashMap<DirectedEdge, VertexId>) {
+pub fn contract_non_adaptive(mut graph: Box<dyn Graph>) -> DirectedContractedGraph {
     println!("copying graph");
     let mut base_graph = HashGraph::from_graph(&*graph);
 
@@ -152,8 +150,9 @@ pub fn contract_non_adaptive(
     let directed_contracted_graph = DirectedContractedGraph {
         upward_graph,
         downward_graph,
+        shortcuts,
         levels,
     };
 
-    (directed_contracted_graph, shortcuts)
+    directed_contracted_graph
 }
