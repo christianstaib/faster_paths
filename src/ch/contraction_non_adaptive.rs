@@ -13,7 +13,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use crate::{
     ch::{
         contracted_graph::DirectedContractedGraph,
-        contraction_adaptive_simulated::partition_by_levels, Shortcut,
+        contractor::contraction_helper::partition_by_levels, Shortcut,
     },
     classical_search::dijkstra::Dijkstra,
     graphs::{

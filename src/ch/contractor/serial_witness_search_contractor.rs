@@ -5,78 +5,57 @@ use indicatif::{ParallelProgressIterator, ProgressBar};
 use rand::prelude::SliceRandom;
 use rayon::prelude::*;
 
-use super::{contraction_helper::ShortcutGenerator, Contractor};
+use super::contraction_helper::ShortcutGenerator;
 use crate::{
     ch::{ch_priority_element::ChPriorityElement, priority_function::PriorityFunction, Shortcut},
     graphs::{
-        graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph, Graph, VertexId,
+        edge::DirectedEdge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
+        Graph, VertexId,
     },
 };
 
-pub struct SerialWitnessSearchContractor {
+pub struct SerialAdaptiveSimulatedContractor {
     queue: BinaryHeap<ChPriorityElement>,
     priority_terms: Vec<(i32, Box<dyn PriorityFunction + Sync>)>,
     shortcut_generator: Box<dyn ShortcutGenerator>,
 }
 
-impl Contractor for SerialWitnessSearchContractor {
+impl SerialAdaptiveSimulatedContractor {
     /// Generates contraction hierarchy where one vertex at a time is
     /// contracted.
-    fn contract(&mut self, graph: &dyn Graph) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
-        let mut graph = Box::new(ReversibleVecGraph::from_edges(&all_edges(graph)));
+    pub fn contract(&mut self, graph: &dyn Graph) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
+        let mut graph = ReversibleVecGraph::from_edges(&all_edges(graph));
 
         println!("initalizing queue");
-        self.initialize(&*graph);
+        self.initialize(&graph);
 
-        let mut shortcuts: HashMap<(VertexId, VertexId), Shortcut> = HashMap::new();
+        let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
         let mut levels = Vec::new();
 
         println!("start contracting");
         let bar = ProgressBar::new(graph.number_of_vertices() as u64);
 
-        let mut start = Instant::now();
-        while let Some((vertex, vertex_shortcuts)) = self.pop(&*graph) {
-            let _duration_pop = start.elapsed();
-
-            let _vertex_shortcut_len = vertex_shortcuts.len();
-
-            let shortcuts_to_add_to_graph: Vec<_> = vertex_shortcuts
-                .par_iter()
-                .filter(|&shortcut| {
-                    let current_weight = graph
-                        .get_edge_weight(&shortcut.edge.unweighted())
-                        .unwrap_or(u32::MAX);
-                    shortcut.edge.weight() < current_weight
-                })
-                .cloned()
-                .collect();
-
-            shortcuts_to_add_to_graph.iter().for_each(|shortcut| {
-                graph.set_edge(&shortcut.edge);
+        while let Some((vertex, vertex_shortcuts)) = self.pop(&graph) {
+            vertex_shortcuts.into_iter().for_each(|shortcut| {
+                let current_weight = graph
+                    .get_edge_weight(&shortcut.edge.unweighted())
+                    .unwrap_or(u32::MAX);
+                if shortcut.edge.weight() < current_weight {
+                    graph.set_edge(&shortcut.edge);
+                    shortcuts.insert(shortcut.edge.unweighted(), shortcut);
+                }
             });
-
-            // insert serial
-            for shortcut in shortcuts_to_add_to_graph {
-                let this_key = (
-                    shortcut.edge.unweighted().tail(),
-                    shortcut.edge.unweighted().head(),
-                );
-                shortcuts.insert(this_key, shortcut);
-            }
 
             graph.remove_vertex(vertex);
 
             levels.push(vec![vertex]);
             bar.inc(1);
-            start = Instant::now();
         }
         bar.finish();
 
         (shortcuts.into_values().collect(), levels)
     }
-}
 
-impl SerialWitnessSearchContractor {
     // Lazy poping the vertex with minimum priority.
     pub fn pop(&mut self, graph: &dyn Graph) -> Option<(VertexId, Vec<Shortcut>)> {
         while let Some(mut state) = self.queue.pop() {
@@ -139,7 +118,7 @@ impl SerialWitnessSearchContractor {
         priority_terms: Vec<(i32, Box<dyn PriorityFunction + Sync>)>,
         shortcut_generator: Box<dyn ShortcutGenerator>,
     ) -> Self {
-        SerialWitnessSearchContractor {
+        SerialAdaptiveSimulatedContractor {
             priority_terms,
             queue: BinaryHeap::new(),
             shortcut_generator,

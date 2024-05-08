@@ -6,7 +6,10 @@ use rayon::prelude::*;
 
 use super::Shortcut;
 use crate::{
-    graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, VertexId, Weight},
+    graphs::{
+        edge::DirectedWeightedEdge, path::ShortestPathRequest, vec_graph::VecGraph, Graph,
+        VertexId, Weight,
+    },
     heuristics::Heuristic,
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
@@ -140,4 +143,39 @@ pub fn witness_search(
     }
 
     weight
+}
+
+pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph, VecGraph) {
+    let mut vertex_to_level = vec![0; graph.number_of_vertices() as usize];
+    for (level, level_list) in levels.iter().enumerate() {
+        for &vertex in level_list.iter() {
+            vertex_to_level[vertex as usize] = level;
+        }
+    }
+
+    let edges: Vec<_> = (0..graph.number_of_vertices())
+        .flat_map(|vertex| graph.out_edges(vertex))
+        .collect();
+
+    println!("creating upward graph");
+    let upward_edges: Vec<_> = edges
+        .iter()
+        .filter(|edge| {
+            vertex_to_level[edge.tail() as usize] <= vertex_to_level[edge.head() as usize]
+        })
+        .cloned()
+        .collect();
+    let upward_graph = VecGraph::from_edges(&upward_edges);
+
+    println!("creating downward graph");
+    let downward_edges: Vec<_> = edges
+        .iter()
+        .map(DirectedWeightedEdge::reversed)
+        .filter(|edge| {
+            vertex_to_level[edge.tail() as usize] <= vertex_to_level[edge.head() as usize]
+        })
+        .collect();
+    let downard_graph = VecGraph::from_edges(&downward_edges);
+
+    (upward_graph, downard_graph)
 }
