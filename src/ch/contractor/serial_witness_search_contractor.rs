@@ -14,13 +14,13 @@ use crate::{
     },
 };
 
-pub struct SerialAdaptiveSimulatedContractor {
+pub struct SerialAdaptiveSimulatedContractor<'a> {
     queue: BinaryHeap<ChPriorityElement>,
     priority_terms: Vec<(i32, Box<dyn PriorityFunction + Sync>)>,
-    shortcut_generator: Box<dyn ShortcutGenerator>,
+    shortcut_generator: &'a dyn ShortcutGenerator,
 }
 
-impl SerialAdaptiveSimulatedContractor {
+impl<'a> SerialAdaptiveSimulatedContractor<'a> {
     /// Generates contraction hierarchy where one vertex at a time is
     /// contracted.
     pub fn contract(&mut self, graph: &dyn Graph) -> (Vec<Shortcut>, Vec<Vec<VertexId>>) {
@@ -116,7 +116,7 @@ impl SerialAdaptiveSimulatedContractor {
 
     pub fn new(
         priority_terms: Vec<(i32, Box<dyn PriorityFunction + Sync>)>,
-        shortcut_generator: Box<dyn ShortcutGenerator>,
+        shortcut_generator: &'a dyn ShortcutGenerator,
     ) -> Self {
         SerialAdaptiveSimulatedContractor {
             priority_terms,

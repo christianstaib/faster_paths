@@ -20,8 +20,8 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
     let priority_terms = decode_function("E:1_D:1_C:1");
 
     let shortcut_generator = ShortcutGeneratorWithWittnessSearch { max_hops: 16 };
-    let shortcut_generator = Box::new(shortcut_generator);
-    let mut contractor = SerialAdaptiveSimulatedContractor::new(priority_terms, shortcut_generator);
+    let mut contractor =
+        SerialAdaptiveSimulatedContractor::new(priority_terms, &shortcut_generator);
 
     let (shortcuts, levels) = contractor.contract(graph);
     get_ch_stateless(vec_graph, &shortcuts, &levels)
@@ -33,9 +33,8 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
 
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, &*graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
-    let shortcut_generator = Box::new(shortcut_generator);
-
-    let mut contractor = SerialAdaptiveSimulatedContractor::new(priority_terms, shortcut_generator);
+    let mut contractor =
+        SerialAdaptiveSimulatedContractor::new(priority_terms, &shortcut_generator);
 
     let (shortcuts, levels) = contractor.contract(graph);
     get_ch_stateless(vec_graph, &shortcuts, &levels)
