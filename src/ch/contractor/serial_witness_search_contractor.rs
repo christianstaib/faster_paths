@@ -31,13 +31,6 @@ impl Contractor for SerialWitnessSearchContractor {
         let mut shortcuts: HashMap<(VertexId, VertexId), Shortcut> = HashMap::new();
         let mut levels = Vec::new();
 
-        // let mut writer = BufWriter::new(File::create("reasons_slow.csv").unwrap());
-        // writeln!(
-        //     writer,
-        //     "pop(ns),add_edge(ns),add_shortcuts(ns),remove_vertex(ns),num_edges,
-        // num_shortcuts,num_new_shortcuts" )
-        // .unwrap();
-
         println!("start contracting");
         let bar = ProgressBar::new(graph.number_of_vertices() as u64);
 
@@ -45,27 +38,7 @@ impl Contractor for SerialWitnessSearchContractor {
         while let Some((vertex, vertex_shortcuts)) = self.pop(&*graph) {
             let _duration_pop = start.elapsed();
 
-            // let duration_add_edge = start.elapsed();
             let _vertex_shortcut_len = vertex_shortcuts.len();
-
-            // // check parallel which shortcuts to insert
-            // let shortcuts_to_add_to_shortcuts: Vec<_> = vertex_shortcuts
-            //     .into_par_iter()
-            //     // only add shortcuts that are either not present or weigh less than a
-            // current     // shortcut
-            //     .filter(|shortcut| {
-            //         let this_key = (
-            //             shortcut.edge.unweighted().tail,
-            //             shortcut.edge.unweighted().head,
-            //         );
-            //         if let Some(current_shortcut) = shortcuts.get(&this_key) {
-            //             if shortcut.edge.weight >= current_shortcut.edge.weight {
-            //                 return false;
-            //             }
-            //         }
-            //         true
-            //     })
-            //     .collect();
 
             let shortcuts_to_add_to_graph: Vec<_> = vertex_shortcuts
                 .par_iter()
@@ -77,16 +50,6 @@ impl Contractor for SerialWitnessSearchContractor {
                 })
                 .cloned()
                 .collect();
-
-            // println!(
-            //     "{:>9}  {:>9} {:>9} {:>9} {:?}",
-            //     vertex_shortcut_len,
-            //     // shortcuts_to_add_to_shortcuts.len(),
-            //     shortcuts_to_add_to_graph.len(),
-            //     shortcuts.len(),
-            //     graph.number_of_edges(),
-            //     duration_pop
-            // );
 
             shortcuts_to_add_to_graph.iter().for_each(|shortcut| {
                 graph.set_edge(&shortcut.edge);
@@ -101,32 +64,13 @@ impl Contractor for SerialWitnessSearchContractor {
                 shortcuts.insert(this_key, shortcut);
             }
 
-            // let duration_add_shortcuts = start.elapsed();
-
             graph.remove_vertex(vertex);
-
-            // let duration_remove_vertex = start.elapsed();
-
-            // writeln!(
-            //     writer,
-            //     "{},{},{},{},{},{},{}",
-            //     duration_pop.as_nanos(),
-            //     duration_add_edge.as_nanos() - duration_pop.as_nanos(),
-            //     duration_add_shortcuts.as_nanos() - duration_add_edge.as_nanos(),
-            //     duration_remove_vertex.as_nanos() - duration_add_shortcuts.as_nanos(),
-            //     number_of_edges(&*graph),
-            //     shortcuts.len(),
-            //     vertex_shortcut_len
-            // )
-            // .unwrap();
 
             levels.push(vec![vertex]);
             bar.inc(1);
             start = Instant::now();
         }
         bar.finish();
-
-        // writer.flush().unwrap();
 
         (shortcuts.into_values().collect(), levels)
     }

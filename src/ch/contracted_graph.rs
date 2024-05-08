@@ -5,7 +5,6 @@ use std::{
     usize,
 };
 
-use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressIterator;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -21,7 +20,7 @@ use crate::graphs::{
 pub struct DirectedContractedGraph {
     pub upward_graph: VecGraph,
     pub downward_graph: VecGraph,
-    pub shortcuts: HashMap<DirectedEdge, VertexId>,
+    pub shortcuts: Vec<(DirectedEdge, VertexId)>,
     pub levels: Vec<Vec<u32>>,
 }
 
@@ -140,7 +139,7 @@ impl DirectedContractedGraph {
             .collect_vec();
         let downward_graph = VecGraph::from_edges(&downward_edges);
 
-        let shortcuts = HashMap::new();
+        let shortcuts = Vec::new();
 
         DirectedContractedGraph {
             upward_graph,
