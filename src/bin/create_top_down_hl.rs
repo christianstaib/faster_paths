@@ -27,7 +27,7 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let number_of_random_pairs = 5_000;
+    let number_of_random_pairs = 4_000;
     let order = generate_hiting_set_order_with_hub_labels(number_of_random_pairs, &graph);
 
     println!("Generating hub graph");

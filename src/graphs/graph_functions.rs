@@ -1,6 +1,9 @@
 use std::{
     cmp::Reverse,
-    sync::{Arc, RwLock},
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc, RwLock,
+    },
     time::{Duration, Instant},
     usize,
 };
@@ -136,41 +139,54 @@ pub fn is_bidirectional(graph: &dyn Graph) -> bool {
 
 pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, Vec<u32>) {
     let mut hitting_set = Vec::new();
-    let mut active_paths: HashSet<usize> = (0..paths.len()).collect();
+    let mut active_paths: Vec<usize> = (0..paths.len()).collect();
 
-    let mut all_hits = vec![0; number_of_vertices as usize];
+    let all_hits = (0..number_of_vertices)
+        .map(|_| AtomicU32::new(0))
+        .collect_vec();
 
     let pb = ProgressBar::new(active_paths.len() as u64);
     while !active_paths.is_empty() {
-        let mut number_of_hits = vec![0; number_of_vertices as usize];
+        let number_of_hits = (0..number_of_vertices)
+            .map(|_| AtomicU32::new(0))
+            .collect_vec();
 
-        for &path_idx in active_paths.iter() {
+        active_paths.par_iter().for_each(|&path_idx| {
             let path = &paths[path_idx];
             for &vertex in path.vertices.iter() {
-                number_of_hits[vertex as usize] += 1;
-                all_hits[vertex as usize] += 1;
+                number_of_hits[vertex as usize].fetch_add(1, Ordering::Relaxed);
+                all_hits[vertex as usize].fetch_add(1, Ordering::Relaxed);
             }
-        }
+        });
 
         let max_hitting_vertex = number_of_hits
             .iter()
             .enumerate()
-            .max_by_key(|(_, &hits)| hits)
+            .max_by_key(|(_, hits)| hits.load(Ordering::Acquire))
             .unwrap()
             .0;
         hitting_set.push(max_hitting_vertex as VertexId);
 
-        active_paths.retain(|&paths_idx| {
-            !paths[paths_idx]
-                .vertices
-                .contains(&(max_hitting_vertex as VertexId))
-        });
+        active_paths = active_paths
+            .into_par_iter()
+            .filter(|&paths_idx| {
+                !paths[paths_idx]
+                    .vertices
+                    .contains(&(max_hitting_vertex as VertexId))
+            })
+            .collect();
 
         pb.set_position((paths.len() - active_paths.len()) as u64);
     }
     pb.finish();
 
-    (hitting_set, all_hits)
+    (
+        hitting_set,
+        all_hits
+            .iter()
+            .map(|hits| hits.load(Ordering::Acquire))
+            .collect(),
+    )
 }
 
 pub fn generate_random_pair_testcases(
