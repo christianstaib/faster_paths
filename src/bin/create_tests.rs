@@ -28,6 +28,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    println!("Loading Graph");
     let graph = GraphFactory::from_file(&args.graph);
 
     println!("Generating random pair test cases");

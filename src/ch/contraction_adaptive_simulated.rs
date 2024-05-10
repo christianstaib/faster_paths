@@ -24,7 +24,7 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
         SerialAdaptiveSimulatedContractor::new(priority_terms, &shortcut_generator);
 
     let (shortcuts, levels) = contractor.contract(graph);
-    get_ch_stateless(vec_graph, &shortcuts, &levels)
+    generate_directed_contracted_graph(vec_graph, &shortcuts, &levels)
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> DirectedContractedGraph {
@@ -37,10 +37,10 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         SerialAdaptiveSimulatedContractor::new(priority_terms, &shortcut_generator);
 
     let (shortcuts, levels) = contractor.contract(graph);
-    get_ch_stateless(vec_graph, &shortcuts, &levels)
+    generate_directed_contracted_graph(vec_graph, &shortcuts, &levels)
 }
 
-pub fn get_ch_stateless(
+pub fn generate_directed_contracted_graph(
     mut base_graph: VecGraph,
     shortcuts: &[Shortcut],
     levels: &[Vec<u32>],

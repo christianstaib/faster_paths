@@ -22,7 +22,9 @@ fn main() {
     let args = Args::parse();
 
     println!("Loading graph");
+    let start = Instant::now();
     let graph = GraphFactory::from_file(&args.graph);
+    println!("it took {:?} to load graph", start.elapsed());
 
     println!("Starting contracted graph generation");
     let start = Instant::now();
