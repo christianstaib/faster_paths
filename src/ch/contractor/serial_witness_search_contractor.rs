@@ -1,4 +1,4 @@
-use std::{collections::BinaryHeap, time::Instant};
+use std::collections::BinaryHeap;
 
 use ahash::{HashMap, HashMapExt};
 use indicatif::{ParallelProgressIterator, ProgressBar};

@@ -351,6 +351,7 @@ pub fn generate_random_pair_test_cases(
         .collect()
 }
 
+/// Retruns a vec where \[v\] is the level of a vertex v
 pub fn generate_hiting_set_order_with_hub_labels(
     number_of_hubs: u32,
     graph: &dyn Graph,
@@ -437,6 +438,7 @@ pub fn generate_hiting_set_order_with_hub_labels(
     order
 }
 
+/// Retruns a vec where \[v\] is the level of a vertex v
 pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
     println!("Generating {} random paths", number_of_random_pairs);
     let dijkstra = Dijkstra::new(graph);

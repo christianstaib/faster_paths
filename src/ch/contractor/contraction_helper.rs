@@ -41,7 +41,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithWittnessSearch {
                 let witness_cost = witness_search(
                     graph,
                     tail,
-                    vertex,
+                    u32::MAX, //vertex,
                     max_search_weight,
                     self.max_hops,
                     &heads,
