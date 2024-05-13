@@ -33,4 +33,8 @@ impl DijkstaQueue for HeapQueue {
     fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
+
+    fn clear(&mut self) {
+        self.queue.clear();
+    }
 }

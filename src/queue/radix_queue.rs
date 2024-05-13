@@ -36,4 +36,8 @@ impl DijkstaQueue for RadixQueue {
     fn is_empty(&self) -> bool {
         self.heap.is_empty()
     }
+
+    fn clear(&mut self) {
+        self.heap.clear();
+    }
 }

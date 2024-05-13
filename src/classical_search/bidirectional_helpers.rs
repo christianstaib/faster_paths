@@ -5,8 +5,8 @@ use crate::{
 
 pub fn path_from_bidirectional_search(
     contact_node: VertexId,
-    forward_data: &Box<dyn DijkstraData>,
-    backward_data: &Box<dyn DijkstraData>,
+    forward_data: &dyn DijkstraData,
+    backward_data: &dyn DijkstraData,
 ) -> Option<Path> {
     let mut forward_route = forward_data.get_path(contact_node)?;
     let mut backward_route = backward_data.get_path(contact_node)?;

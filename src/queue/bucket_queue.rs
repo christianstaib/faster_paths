@@ -39,4 +39,10 @@ impl DijkstaQueue for BucketQueue {
     fn is_empty(&self) -> bool {
         self.num_elements == 0
     }
+
+    fn clear(&mut self) {
+        self.current_index = 0;
+        self.num_elements = 0;
+        self.buckets.clear();
+    }
 }

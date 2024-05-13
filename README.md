@@ -24,3 +24,7 @@ Hub Labels involve calculating a label for each vertex, representing the shortes
 - Vertices must be continuously numbered starting from zero and are represented as `u32`.
 - Edge weights are also `u32` and non-negative.
 - Self-edges are not allowed.
+
+## Pathfinding
+
+A path is list of vertices where each consecutive pair of vertices is connected by an edge in the graph. Therefore, in the logic of the crate, a shortest path from `v` to `v` does not exists.

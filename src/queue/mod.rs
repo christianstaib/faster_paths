@@ -45,4 +45,5 @@ pub trait DijkstaQueue {
     fn push(&mut self, state: DijkstraQueueElement);
     fn pop(&mut self) -> Option<DijkstraQueueElement>;
     fn is_empty(&self) -> bool;
+    fn clear(&mut self);
 }

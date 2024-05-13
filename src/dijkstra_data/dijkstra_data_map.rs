@@ -22,6 +22,14 @@ impl DijkstraDataHashMap {
 
         data
     }
+
+    pub fn clear(&mut self, source: VertexId) {
+        self.queue.clear();
+        self.vertices.clear();
+
+        self.vertices.entry(source).or_default().weight = Some(0);
+        self.queue.push(DijkstraQueueElement::new(0, source));
+    }
 }
 
 impl DijkstraData for DijkstraDataHashMap {

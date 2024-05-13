@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::graphs::{edge::DirectedWeightedEdge, VertexId};
 
 pub mod ch_dijkstra;
+pub mod ch_dijkstra_state;
 pub mod ch_priority_element;
 pub mod contracted_graph;
 pub mod contraction_adaptive_non_simulated;
