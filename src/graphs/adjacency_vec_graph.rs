@@ -21,18 +21,22 @@ impl AdjacencyVecGraph {
             .iter()
             .map(|edge| (edge.tail(), edge.tailless()))
             .into_group_map();
+
         let mut edges = Vec::new();
-        let mut indices = Vec::new();
+        let mut indices = vec![(0, 0); order.len()];
+
         for vertex in order {
             let start_index = edges.len() as u32;
             let mut end_index = edges.len() as u32;
+
             if let Some(edges_from_map) = edges_map.remove(vertex) {
                 end_index += edges_from_map.len() as u32;
                 edges.extend(edges_from_map);
             }
 
-            indices.push((start_index, end_index));
+            indices[*vertex as usize] = (start_index, end_index);
         }
+
         Self { edges, indices }
     }
 }
