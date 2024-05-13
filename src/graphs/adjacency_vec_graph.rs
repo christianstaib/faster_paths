@@ -24,15 +24,14 @@ impl AdjacencyVecGraph {
         let mut edges = Vec::new();
         let mut indices = Vec::new();
         for vertex in order {
+            let start_index = edges.len() as u32;
+            let mut end_index = edges.len() as u32;
             if let Some(edges_from_map) = edges_map.remove(vertex) {
-                indices.push((
-                    indices.len() as u32,
-                    (indices.len() + edges_from_map.len()) as u32,
-                ));
+                end_index += edges_from_map.len() as u32;
                 edges.extend(edges_from_map);
-            } else {
-                indices.push((indices.len() as u32, indices.len() as u32));
             }
+
+            indices.push((start_index, end_index));
         }
         Self { edges, indices }
     }
