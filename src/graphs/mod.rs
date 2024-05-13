@@ -1,5 +1,6 @@
 use self::edge::{DirectedEdge, DirectedWeightedEdge};
 
+pub mod adjacency_vec_graph;
 pub mod edge;
 pub mod graph_factory;
 pub mod graph_functions;
