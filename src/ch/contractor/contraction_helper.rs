@@ -7,8 +7,8 @@ use rayon::prelude::*;
 use super::Shortcut;
 use crate::{
     graphs::{
-        edge::DirectedWeightedEdge, path::ShortestPathRequest, vec_graph::VecGraph, Graph,
-        VertexId, Weight,
+        adjacency_vec_graph::AdjacencyVecGraph, edge::DirectedWeightedEdge,
+        path::ShortestPathRequest, vec_graph::VecGraph, Graph, VertexId, Weight,
     },
     heuristics::Heuristic,
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
@@ -145,7 +145,10 @@ pub fn witness_search(
     weight
 }
 
-pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph, VecGraph) {
+pub fn partition_by_levels(
+    graph: &dyn Graph,
+    levels: &[Vec<u32>],
+) -> (AdjacencyVecGraph, AdjacencyVecGraph) {
     let mut vertex_to_level = vec![0; graph.number_of_vertices() as usize];
     for (level, level_list) in levels.iter().enumerate() {
         for &vertex in level_list.iter() {
@@ -157,6 +160,8 @@ pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph,
         .flat_map(|vertex| graph.out_edges(vertex))
         .collect();
 
+    let order = levels.iter().flatten().cloned().collect_vec();
+
     println!("creating upward graph");
     let upward_edges: Vec<_> = edges
         .iter()
@@ -165,7 +170,7 @@ pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph,
         })
         .cloned()
         .collect();
-    let upward_graph = VecGraph::from_edges(&upward_edges);
+    let upward_graph = AdjacencyVecGraph::new(&upward_edges, &order);
 
     println!("creating downward graph");
     let downward_edges: Vec<_> = edges
@@ -175,7 +180,7 @@ pub fn partition_by_levels(graph: &dyn Graph, levels: &[Vec<u32>]) -> (VecGraph,
             vertex_to_level[edge.tail() as usize] <= vertex_to_level[edge.head() as usize]
         })
         .collect();
-    let downard_graph = VecGraph::from_edges(&downward_edges);
+    let downard_graph = AdjacencyVecGraph::new(&downward_edges, &order);
 
     (upward_graph, downard_graph)
 }

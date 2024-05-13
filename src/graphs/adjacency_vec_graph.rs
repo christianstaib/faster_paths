@@ -1,6 +1,7 @@
 use std::slice::Iter;
 
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 use super::{
     edge::{DirectedTaillessWeightedEdge, DirectedWeightedEdge},
@@ -8,6 +9,7 @@ use super::{
 };
 
 /// Graph that is optimized for cache efficency
+#[derive(Serialize, Deserialize, Clone)]
 pub struct AdjacencyVecGraph {
     edges: Vec<DirectedTaillessWeightedEdge>,
     indices: Vec<(u32, u32)>, // (start, end)

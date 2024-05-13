@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use super::ContractedGraphTrait;
 use crate::graphs::{
+    adjacency_vec_graph::AdjacencyVecGraph,
     edge::{DirectedEdge, DirectedWeightedEdge},
     vec_graph::VecGraph,
     Graph, VertexId,
@@ -18,8 +19,8 @@ use crate::graphs::{
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct DirectedContractedGraph {
-    pub upward_graph: VecGraph,
-    pub downward_graph: VecGraph,
+    pub upward_graph: AdjacencyVecGraph,
+    pub downward_graph: AdjacencyVecGraph,
     pub shortcuts: Vec<(DirectedEdge, VertexId)>,
     pub levels: Vec<Vec<u32>>,
 }
@@ -67,7 +68,7 @@ impl DirectedContractedGraph {
         let number_of_vertices: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
         let number_of_edges: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
 
-        let mut levels = vec![0; number_of_vertices];
+        let mut levels = Vec::new();
 
         let _: Vec<_> = lines
             .by_ref()
@@ -92,7 +93,10 @@ impl DirectedContractedGraph {
                     .parse()
                     .unwrap_or_else(|_| panic!("unable to parse vertex in line {}", line));
 
-                levels[vertex as usize] = level;
+                if level <= levels.len() as u32 {
+                    levels.resize(level as usize + 1, Vec::new());
+                }
+                levels[level as usize].push(vertex);
             })
             .collect();
 
@@ -125,19 +129,21 @@ impl DirectedContractedGraph {
             })
             .collect();
 
+        let order = levels.iter().flatten().cloned().collect_vec();
+
         let upward_edges = edges
             .iter()
             .filter(|edge| levels[edge.tail() as usize] <= levels[edge.head() as usize])
             .cloned()
             .collect_vec();
-        let upward_graph = VecGraph::from_edges(&upward_edges);
+        let upward_graph = AdjacencyVecGraph::new(&upward_edges, &order);
 
         let downward_edges = edges
             .iter()
             .map(DirectedWeightedEdge::reversed)
             .filter(|edge| levels[edge.tail() as usize] <= levels[edge.head() as usize])
             .collect_vec();
-        let downward_graph = VecGraph::from_edges(&downward_edges);
+        let downward_graph = AdjacencyVecGraph::new(&downward_edges, &order);
 
         let shortcuts = Vec::new();
 
@@ -145,7 +151,7 @@ impl DirectedContractedGraph {
             upward_graph,
             downward_graph,
             shortcuts,
-            levels: Vec::new(),
+            levels,
         }
     }
 }
