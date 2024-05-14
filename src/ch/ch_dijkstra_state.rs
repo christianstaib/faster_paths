@@ -13,6 +13,10 @@ pub struct ChDijkstraState<'a> {
     ch: &'a dyn ContractedGraphTrait,
     forward_data: DijkstraDataHashMap,
     backward_data: DijkstraDataHashMap,
+    meeting_vertex: VertexId,
+    meeting_weight: Weight,
+    forward_search_limit: Weight,
+    backward_search_limit: Weight,
 }
 
 impl<'a> PathFindingWithInternalState for ChDijkstraState<'a> {
@@ -41,7 +45,25 @@ impl<'a> ChDijkstraState<'a> {
             ch,
             forward_data: DijkstraDataHashMap::new(number_of_vertices, 0),
             backward_data: DijkstraDataHashMap::new(number_of_vertices, 0),
+            meeting_vertex: u32::MAX,
+            meeting_weight: u32::MAX,
+            forward_search_limit: 0,
+            backward_search_limit: 0,
         }
+    }
+
+    fn clear(&mut self, request: &ShortestPathRequest) {
+        // Clear the forward and backward data for the source and target vertices
+        self.forward_data.clear(request.source());
+        self.backward_data.clear(request.target());
+
+        // Initialize the meeting weight and vertex to the maximum possible value
+        self.meeting_weight = u32::MAX;
+        self.meeting_vertex = u32::MAX;
+
+        // Initialize the forward and backward search limits
+        self.forward_search_limit = 0;
+        self.backward_search_limit = 0;
     }
 
     pub fn get_data(
@@ -53,64 +75,44 @@ impl<'a> ChDijkstraState<'a> {
         &'_ DijkstraDataHashMap,
         &'_ DijkstraDataHashMap,
     ) {
-        // Clear the forward and backward data for the source and target vertices
-        self.forward_data.clear(request.source());
-        self.backward_data.clear(request.target());
-
-        // Initialize the meeting weight and vertex to the maximum possible value
-        let mut meeting_weight = u32::MAX;
-        let mut meeting_vertex = u32::MAX;
-
-        // Initialize the forward and backward search limits
-        let mut forward_search_limit = 0;
-        let mut backward_search_limit = 0;
+        self.clear(request);
 
         // Run the bidirectional search
-        while (!self.forward_data.is_empty() && (forward_search_limit < meeting_weight))
-            || (!self.backward_data.is_empty() && (backward_search_limit < meeting_weight))
+        while (!self.forward_data.is_empty() && (self.forward_search_limit < self.meeting_weight))
+            || (!self.backward_data.is_empty()
+                && (self.backward_search_limit < self.meeting_weight))
         {
             // Perform the forward search step
-            if forward_search_limit < meeting_weight {
-                self.process_forward_step(
-                    &mut forward_search_limit,
-                    &mut meeting_weight,
-                    &mut meeting_vertex,
-                );
+            if self.forward_search_limit < self.meeting_weight {
+                self.process_forward_step();
             }
 
             // Perform the backward search step
-            if backward_search_limit < meeting_weight {
-                self.process_backward_step(
-                    &mut backward_search_limit,
-                    &mut meeting_weight,
-                    &mut meeting_vertex,
-                );
+            if self.backward_search_limit < self.meeting_weight {
+                self.process_backward_step();
             }
 
             // Break if both search limits have reached or exceeded the meeting weight
-            if forward_search_limit >= meeting_weight && backward_search_limit >= meeting_weight {
+            if self.forward_search_limit >= self.meeting_weight
+                && self.backward_search_limit >= self.meeting_weight
+            {
                 break;
             }
         }
 
         // Return the meeting vertex, weight, and the forward and backward data
         (
-            meeting_vertex,
-            meeting_weight,
+            self.meeting_vertex,
+            self.meeting_weight,
             &self.forward_data,
             &self.backward_data,
         )
     }
 
-    fn process_forward_step(
-        &mut self,
-        forward_search_limit: &mut u32,
-        meeting_weight: &mut u32,
-        meeting_vertex: &mut u32,
-    ) {
+    fn process_forward_step(&mut self) {
         if let Some(DijkstraQueueElement { vertex, .. }) = self.forward_data.pop() {
             let forward_weight = self.forward_data.get_vertex_entry(vertex).weight.unwrap();
-            *forward_search_limit = std::cmp::max(*forward_search_limit, forward_weight);
+            self.forward_search_limit = std::cmp::max(self.forward_search_limit, forward_weight);
 
             if self.is_forward_stalled(vertex, forward_weight) {
                 return;
@@ -118,9 +120,9 @@ impl<'a> ChDijkstraState<'a> {
 
             if let Some(backward_weight) = self.backward_data.get_vertex_entry(vertex).weight {
                 let total_weight = forward_weight + backward_weight;
-                if total_weight < *meeting_weight {
-                    *meeting_weight = total_weight;
-                    *meeting_vertex = vertex;
+                if total_weight < self.meeting_weight {
+                    self.meeting_weight = total_weight;
+                    self.meeting_vertex = vertex;
                 }
             }
             self.ch
@@ -129,15 +131,10 @@ impl<'a> ChDijkstraState<'a> {
         }
     }
 
-    fn process_backward_step(
-        &mut self,
-        backward_search_limit: &mut u32,
-        meeting_weight: &mut u32,
-        meeting_vertex: &mut u32,
-    ) {
+    fn process_backward_step(&mut self) {
         if let Some(DijkstraQueueElement { vertex, .. }) = self.backward_data.pop() {
             let backward_weight = self.backward_data.get_vertex_entry(vertex).weight.unwrap();
-            *backward_search_limit = std::cmp::max(*backward_search_limit, backward_weight);
+            self.backward_search_limit = std::cmp::max(self.backward_search_limit, backward_weight);
 
             if self.is_backward_stalled(vertex, backward_weight) {
                 return;
@@ -145,9 +142,9 @@ impl<'a> ChDijkstraState<'a> {
 
             if let Some(forward_weight) = self.forward_data.get_vertex_entry(vertex).weight {
                 let total_weight = forward_weight + backward_weight;
-                if total_weight < *meeting_weight {
-                    *meeting_weight = total_weight;
-                    *meeting_vertex = vertex;
+                if total_weight < self.meeting_weight {
+                    self.meeting_weight = total_weight;
+                    self.meeting_vertex = vertex;
                 }
             }
             self.ch.downard_edges(vertex).for_each(|edge| {
