@@ -102,9 +102,8 @@ pub fn number_of_edges(graph: &dyn Graph) -> u32 {
         .sum::<u32>()
 }
 
-pub fn to_vec_graph(graph: &dyn Graph) -> VecGraph {
-    VecGraph::from_edges(&all_edges(graph))
-}
+// pub fn to_vec_graph(graph: &dyn Graph) -> VecGraph {
+// }
 
 pub fn neighbors(vertex: VertexId, graph: &dyn Graph) -> HashSet<VertexId> {
     let mut neighbors = HashSet::new();

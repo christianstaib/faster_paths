@@ -5,6 +5,7 @@ use itertools::Itertools;
 use crate::{
     ch::{
         contracted_graph::DirectedContractedGraph,
+        contraction_adaptive_simulated::generate_directed_contracted_graph,
         contractor::{
             contraction_helper::{ShortcutGenerator, ShortcutGeneratorWithWittnessSearch},
             helpers::partition_by_levels,
@@ -13,12 +14,13 @@ use crate::{
     },
     graphs::{
         edge::DirectedEdge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
-        Graph, VertexId,
+        vec_graph::VecGraph, Graph, VertexId,
     },
 };
 
 pub fn contract_non_adaptive(graph: &dyn Graph, order: &[VertexId]) -> DirectedContractedGraph {
-    let mut base_graph = ReversibleVecGraph::from_edges(&all_edges(graph));
+    let vec_graph = VecGraph::from_edges(&all_edges(graph));
+    let mut base_graph = VecGraph::from_edges(&all_edges(graph));
 
     let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
     let mut levels = Vec::new();
@@ -46,26 +48,6 @@ pub fn contract_non_adaptive(graph: &dyn Graph, order: &[VertexId]) -> DirectedC
         bar.inc(1);
     }
 
-    println!("assing shortcuts to base graph");
-    let edges = shortcuts
-        .values()
-        .map(|shortcut| shortcut.edge.clone())
-        .collect_vec();
-    base_graph.set_edges(&edges);
-
-    println!("creating upward and downward_graph");
-    let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
-
-    println!("generatin shortcut lookup map");
-    let shortcuts = shortcuts
-        .values()
-        .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
-        .collect();
-
-    DirectedContractedGraph {
-        upward_graph,
-        downward_graph,
-        shortcuts,
-        levels,
-    }
+    let shortcuts = shortcuts.into_values().collect_vec();
+    generate_directed_contracted_graph(vec_graph, &shortcuts, levels)
 }

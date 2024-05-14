@@ -5,8 +5,9 @@ use rayon::prelude::*;
 
 use crate::{
     ch::{
-        contracted_graph::DirectedContractedGraph, contractor::helpers::partition_by_levels,
-        Shortcut,
+        contracted_graph::DirectedContractedGraph,
+        contraction_adaptive_simulated::generate_directed_contracted_graph,
+        contractor::helpers::partition_by_levels, Shortcut,
     },
     classical_search::dijkstra::Dijkstra,
     graphs::{
@@ -14,6 +15,7 @@ use crate::{
         graph_functions::{all_edges, hitting_set, random_paths},
         hash_graph::HashGraph,
         reversible_hash_graph::ReversibleHashGraph,
+        vec_graph::VecGraph,
         Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
@@ -26,7 +28,7 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
     let landmarks = Landmarks::for_vertices(&hitting_set, graph);
 
     println!("copying base graph");
-    let mut base_graph = HashGraph::from_graph(graph);
+    let base_graph = VecGraph::from_edges(&all_edges(graph));
 
     println!("switching graph represenation");
     let mut graph = ReversibleHashGraph::from_edges(&all_edges(graph));
@@ -37,11 +39,6 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
     let mut all_shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
 
     let mut remaining_vertices: HashSet<VertexId> = (0..graph.number_of_vertices()).collect();
-    remaining_vertices.retain(|&vertex| {
-        let out_degree = graph.out_edges(vertex).len();
-        let in_degree = graph.in_edges(vertex).len();
-        out_degree + in_degree > 0
-    });
     let bar = ProgressBar::new(remaining_vertices.len() as u64);
 
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
@@ -66,31 +63,9 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
     }
     bar.finish();
 
-    println!("Building edge vec");
-    let edges = all_shortcuts
-        .values()
-        .progress()
-        .map(|shortcut| shortcut.edge.clone())
-        .collect_vec();
+    let all_shortcuts = all_shortcuts.into_values().collect_vec();
 
-    println!("Adding {} shortcuts to base graph", all_shortcuts.len());
-    base_graph.set_edges(&edges);
-
-    println!("creating upward and downward_graph");
-    let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
-
-    println!("generatin shortcut lookup map");
-    let shortcuts = all_shortcuts
-        .values()
-        .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
-        .collect();
-
-    DirectedContractedGraph {
-        upward_graph,
-        downward_graph,
-        shortcuts,
-        levels,
-    }
+    generate_directed_contracted_graph(base_graph, &all_shortcuts, levels)
 }
 
 fn generate_all_shortcuts(
