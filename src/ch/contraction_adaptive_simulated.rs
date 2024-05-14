@@ -1,9 +1,7 @@
 use super::{
     contractor::{
-        contraction_helper::{
-            partition_by_levels, ShortcutGeneratorWithHeuristic,
-            ShortcutGeneratorWithWittnessSearch,
-        },
+        contraction_helper::{ShortcutGeneratorWithHeuristic, ShortcutGeneratorWithWittnessSearch},
+        helpers::partition_by_levels,
         serial_witness_search_contractor::SerialAdaptiveSimulatedContractor,
     },
     priority_function::decode_function,
@@ -55,8 +53,6 @@ pub fn generate_directed_contracted_graph(
         .iter()
         .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
         .collect();
-
-    
 
     DirectedContractedGraph {
         upward_graph,

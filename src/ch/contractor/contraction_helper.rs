@@ -1,17 +1,14 @@
-use std::collections::HashMap;
-
-use ahash::HashSet;
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use super::Shortcut;
 use crate::{
+    ch::contractor::witness_search::witness_search,
     graphs::{
         adjacency_vec_graph::AdjacencyVecGraph, edge::DirectedWeightedEdge,
-        path::ShortestPathRequest, Graph, VertexId, Weight,
+        path::ShortestPathRequest, Graph, VertexId,
     },
     heuristics::Heuristic,
-    queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},
 };
 
 pub trait ShortcutGenerator: Send + Sync {
@@ -100,87 +97,4 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
             })
             .collect()
     }
-}
-
-pub fn witness_search(
-    graph: &dyn Graph,
-    source: VertexId,
-    without: VertexId,
-    max_weight: Weight,
-    max_hops: u32,
-    targets: &HashSet<VertexId>,
-) -> HashMap<VertexId, Weight> {
-    let mut queue = RadixQueue::new();
-    let mut weight = HashMap::new();
-    let mut hops = HashMap::new();
-
-    let mut targets = targets.clone();
-
-    queue.push(DijkstraQueueElement::new(0, source));
-    weight.insert(source, 0);
-    hops.insert(source, 0);
-
-    while let Some(DijkstraQueueElement { vertex, .. }) = queue.pop() {
-        if targets.remove(&vertex) && targets.is_empty() {
-            break;
-        }
-
-        for edge in graph.out_edges(vertex) {
-            let alternative_weight = weight[&vertex] + edge.weight();
-            let alternative_hops = hops[&vertex] + 1;
-            if (edge.head() != without)
-                && (alternative_weight <= max_weight)
-                && (alternative_hops <= max_hops)
-            {
-                let current_cost = *weight.get(&edge.head()).unwrap_or(&u32::MAX);
-                if alternative_weight < current_cost {
-                    queue.push(DijkstraQueueElement::new(alternative_weight, edge.head()));
-                    weight.insert(edge.head(), alternative_weight);
-                    hops.insert(edge.head(), alternative_hops);
-                }
-            }
-        }
-    }
-
-    weight
-}
-
-pub fn partition_by_levels(
-    graph: &dyn Graph,
-    levels: &[Vec<u32>],
-) -> (AdjacencyVecGraph, AdjacencyVecGraph) {
-    let mut vertex_to_level = vec![0; graph.number_of_vertices() as usize];
-    for (level, level_list) in levels.iter().enumerate() {
-        for &vertex in level_list.iter() {
-            vertex_to_level[vertex as usize] = level;
-        }
-    }
-
-    let edges: Vec<_> = (0..graph.number_of_vertices())
-        .flat_map(|vertex| graph.out_edges(vertex))
-        .collect();
-
-    let order = levels.iter().flatten().cloned().collect_vec();
-
-    println!("creating upward graph");
-    let upward_edges: Vec<_> = edges
-        .iter()
-        .filter(|edge| {
-            vertex_to_level[edge.tail() as usize] <= vertex_to_level[edge.head() as usize]
-        })
-        .cloned()
-        .collect();
-    let upward_graph = AdjacencyVecGraph::new(&upward_edges, &order);
-
-    println!("creating downward graph");
-    let downward_edges: Vec<_> = edges
-        .iter()
-        .map(DirectedWeightedEdge::reversed)
-        .filter(|edge| {
-            vertex_to_level[edge.tail() as usize] <= vertex_to_level[edge.head() as usize]
-        })
-        .collect();
-    let downard_graph = AdjacencyVecGraph::new(&downward_edges, &order);
-
-    (upward_graph, downard_graph)
 }

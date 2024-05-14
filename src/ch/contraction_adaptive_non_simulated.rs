@@ -11,8 +11,8 @@ use rayon::prelude::*;
 
 use crate::{
     ch::{
-        contracted_graph::DirectedContractedGraph,
-        contractor::contraction_helper::partition_by_levels, Shortcut,
+        contracted_graph::DirectedContractedGraph, contractor::helpers::partition_by_levels,
+        Shortcut,
     },
     classical_search::dijkstra::Dijkstra,
     graphs::{
@@ -122,8 +122,6 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
         .values()
         .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
         .collect();
-
-    
 
     DirectedContractedGraph {
         upward_graph,

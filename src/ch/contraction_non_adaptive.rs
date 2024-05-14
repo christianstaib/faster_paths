@@ -5,8 +5,9 @@ use itertools::Itertools;
 use crate::{
     ch::{
         contracted_graph::DirectedContractedGraph,
-        contractor::contraction_helper::{
-            partition_by_levels, ShortcutGenerator, ShortcutGeneratorWithWittnessSearch,
+        contractor::{
+            contraction_helper::{ShortcutGenerator, ShortcutGeneratorWithWittnessSearch},
+            helpers::partition_by_levels,
         },
         Shortcut,
     },
@@ -60,8 +61,6 @@ pub fn contract_non_adaptive(graph: &dyn Graph, order: &[VertexId]) -> DirectedC
         .values()
         .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
         .collect();
-
-    
 
     DirectedContractedGraph {
         upward_graph,
