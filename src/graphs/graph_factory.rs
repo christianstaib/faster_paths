@@ -6,7 +6,7 @@ use std::{
 };
 
 use indicatif::ProgressIterator;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::iter::{ParallelIterator};
 
 use super::{edge::DirectedWeightedEdge, reversible_vec_graph::ReversibleVecGraph};
 

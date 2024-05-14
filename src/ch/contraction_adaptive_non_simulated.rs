@@ -32,10 +32,10 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
     let landmarks = Landmarks::for_vertices(&hitting_set, graph);
 
     println!("copying base graph");
-    let mut base_graph = HashGraph::from_graph(&*graph);
+    let mut base_graph = HashGraph::from_graph(graph);
 
     println!("switching graph represenation");
-    let mut graph = ReversibleHashGraph::from_edges(&all_edges(&*graph));
+    let mut graph = ReversibleHashGraph::from_edges(&all_edges(graph));
 
     let mut levels = Vec::new();
 
@@ -123,14 +123,14 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
         .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
         .collect();
 
-    let directed_contracted_graph = DirectedContractedGraph {
+    
+
+    DirectedContractedGraph {
         upward_graph,
         downward_graph,
         shortcuts,
         levels,
-    };
-
-    directed_contracted_graph
+    }
 }
 
 fn generate_all_shortcuts(

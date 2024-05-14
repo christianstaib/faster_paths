@@ -61,12 +61,12 @@ pub fn contract_non_adaptive(graph: &dyn Graph, order: &[VertexId]) -> DirectedC
         .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
         .collect();
 
-    let directed_contracted_graph = DirectedContractedGraph {
+    
+
+    DirectedContractedGraph {
         upward_graph,
         downward_graph,
         shortcuts,
         levels,
-    };
-
-    directed_contracted_graph
+    }
 }

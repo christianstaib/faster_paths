@@ -2,13 +2,13 @@ use std::{
     cmp::Reverse,
     sync::{
         atomic::{AtomicU32, Ordering},
-        Arc, RwLock,
+        Arc,
     },
     time::{Duration, Instant},
     usize,
 };
 
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+use ahash::{HashMapExt, HashSet, HashSetExt};
 use dashmap::DashMap;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
@@ -134,7 +134,7 @@ pub fn is_bidirectional(graph: &dyn Graph) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, Vec<u32>) {
@@ -404,7 +404,7 @@ pub fn generate_hiting_set_order_with_hub_labels(
                 .filter(|(reverse_vertex, _)| reverse_vertex != vertex)
                 .filter_map(|(_, reverse_label)| {
                     pb.inc(1);
-                    if let Some(mut path) = shortest_path(&forward_label, &reverse_label) {
+                    if let Some(mut path) = shortest_path(forward_label, reverse_label) {
                         replace_shortcuts_slow(&mut path.vertices, &shortcuts);
                         return Some(path);
                     }
@@ -420,8 +420,7 @@ pub fn generate_hiting_set_order_with_hub_labels(
 
     println!("generating vertex order");
     let mut not_hitting_set = (0..graph.number_of_vertices())
-        .into_iter()
-        .filter(|vertex| !hitting_setx.contains(&vertex))
+        .filter(|vertex| !hitting_setx.contains(vertex))
         .collect_vec();
 
     // shuffle to break neighboring ties
@@ -453,8 +452,7 @@ pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph)
 
     println!("generating vertex order");
     let mut not_hitting_set = (0..graph.number_of_vertices())
-        .into_iter()
-        .filter(|vertex| !hitting_setx.contains(&vertex))
+        .filter(|vertex| !hitting_setx.contains(vertex))
         .collect_vec();
 
     // shuffle to break neighboring ties

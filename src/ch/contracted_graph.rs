@@ -13,7 +13,6 @@ use super::ContractedGraphTrait;
 use crate::graphs::{
     adjacency_vec_graph::AdjacencyVecGraph,
     edge::{DirectedEdge, DirectedWeightedEdge},
-    vec_graph::VecGraph,
     Graph, VertexId,
 };
 

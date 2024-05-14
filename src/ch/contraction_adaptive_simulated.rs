@@ -28,10 +28,10 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> DirectedContractedGraph {
-    let vec_graph = to_vec_graph(&*graph);
+    let vec_graph = to_vec_graph(graph);
     let priority_terms = decode_function("E:1_D:1_C:1");
 
-    let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, &*graph));
+    let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
     let mut contractor =
         SerialAdaptiveSimulatedContractor::new(priority_terms, &shortcut_generator);
@@ -56,12 +56,12 @@ pub fn generate_directed_contracted_graph(
         .map(|shortcut| (shortcut.edge.unweighted(), shortcut.vertex))
         .collect();
 
-    let directed_contracted_graph = DirectedContractedGraph {
+    
+
+    DirectedContractedGraph {
         upward_graph,
         downward_graph,
         shortcuts,
         levels: levels.to_vec(),
-    };
-
-    directed_contracted_graph
+    }
 }

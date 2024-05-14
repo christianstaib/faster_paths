@@ -12,11 +12,11 @@ pub struct DirectedHubGraph {
 }
 
 impl HubGraphTrait for DirectedHubGraph {
-    fn forward_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+    fn forward_label(&self, vertex: VertexId) -> Option<&Label> {
         self.forward_labels.get(vertex as usize)
     }
 
-    fn reverse_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+    fn reverse_label(&self, vertex: VertexId) -> Option<&Label> {
         self.reverse_labels.get(vertex as usize)
     }
 }
@@ -27,11 +27,11 @@ pub struct HubGraph {
 }
 
 impl HubGraphTrait for HubGraph {
-    fn forward_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+    fn forward_label(&self, vertex: VertexId) -> Option<&Label> {
         self.labels.get(vertex as usize)
     }
 
-    fn reverse_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label> {
+    fn reverse_label(&self, vertex: VertexId) -> Option<&Label> {
         self.labels.get(vertex as usize)
     }
 }

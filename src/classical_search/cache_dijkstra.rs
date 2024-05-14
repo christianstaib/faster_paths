@@ -97,7 +97,7 @@ impl<'a> CacheDijkstra<'a> {
                         if cached_weight < this_entry.weight.unwrap_or(u32::MAX) {
                             this_entry.weight = Some(cached_weight);
                             this_entry.predecessor = cached_entry.predecessor;
-                            stack.extend(tree.get(i as usize).unwrap());
+                            stack.extend(tree.get(i).unwrap());
                         }
                     }
                 }

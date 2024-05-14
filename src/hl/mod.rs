@@ -9,7 +9,7 @@ pub mod label;
 pub mod top_down_hl;
 
 pub trait HubGraphTrait: Send + Sync {
-    fn forward_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label>;
+    fn forward_label(&self, vertex: VertexId) -> Option<&Label>;
 
-    fn reverse_label<'a>(&'a self, vertex: VertexId) -> Option<&'a Label>;
+    fn reverse_label(&self, vertex: VertexId) -> Option<&Label>;
 }

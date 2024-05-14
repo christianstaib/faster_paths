@@ -90,7 +90,7 @@ pub fn generate_directed_hub_graph(
                 if elapsed > 1.0 {
                     println!("waited {}s for read lock", elapsed);
                 }
-                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
+                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(edge));
             }
 
             if !label_shortcuts.is_empty() {
@@ -116,7 +116,7 @@ pub fn generate_directed_hub_graph(
             let (label, mut label_shortcuts) = generate_reverse_label(vertex, graph, order);
 
             if let Ok(readable_shortcuts) = shortcuts.read() {
-                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(&edge));
+                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(edge));
             }
 
             if !label_shortcuts.is_empty() {

@@ -8,7 +8,7 @@ use super::Shortcut;
 use crate::{
     graphs::{
         adjacency_vec_graph::AdjacencyVecGraph, edge::DirectedWeightedEdge,
-        path::ShortestPathRequest, vec_graph::VecGraph, Graph, VertexId, Weight,
+        path::ShortestPathRequest, Graph, VertexId, Weight,
     },
     heuristics::Heuristic,
     queue::{radix_queue::RadixQueue, DijkstaQueue, DijkstraQueueElement},

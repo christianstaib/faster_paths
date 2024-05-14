@@ -8,7 +8,7 @@ use std::{
 
 use ahash::{HashMap, HashMapExt};
 use rayon::iter::{
-    IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
+    IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
 use serde::{Deserialize, Serialize};
 

@@ -72,7 +72,7 @@ impl<'a> SerialAdaptiveSimulatedContractor<'a> {
             // oppernunity to updated neighboring nodes priorities.
             self.priority_terms
                 .iter_mut()
-                .for_each(|(_, priority_function)| priority_function.update(state.vertex, &*graph));
+                .for_each(|(_, priority_function)| priority_function.update(state.vertex, graph));
 
             return Some((state.vertex, shortcuts));
         }
