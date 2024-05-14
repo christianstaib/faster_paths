@@ -5,16 +5,12 @@ use itertools::Itertools;
 use crate::{
     ch::{
         contracted_graph::DirectedContractedGraph,
-        contraction_adaptive_simulated::generate_directed_contracted_graph,
-        contractor::{
-            contraction_helper::{ShortcutGenerator, ShortcutGeneratorWithWittnessSearch},
-            helpers::partition_by_levels,
-        },
+        contractor::contraction_helper::{ShortcutGenerator, ShortcutGeneratorWithWittnessSearch},
+        helpers::generate_directed_contracted_graph,
         Shortcut,
     },
     graphs::{
-        edge::DirectedEdge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
-        vec_graph::VecGraph, Graph, VertexId,
+        edge::DirectedEdge, graph_functions::all_edges, vec_graph::VecGraph, Graph, VertexId,
     },
 };
 

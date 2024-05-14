@@ -1,19 +1,17 @@
 use ahash::{HashMap, HashMapExt, HashSet};
-use indicatif::{ProgressBar, ProgressIterator};
+use indicatif::ProgressBar;
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use crate::{
     ch::{
-        contracted_graph::DirectedContractedGraph,
-        contraction_adaptive_simulated::generate_directed_contracted_graph,
-        contractor::helpers::partition_by_levels, Shortcut,
+        contracted_graph::DirectedContractedGraph, helpers::generate_directed_contracted_graph,
+        Shortcut,
     },
     classical_search::dijkstra::Dijkstra,
     graphs::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::{all_edges, hitting_set, random_paths},
-        hash_graph::HashGraph,
         reversible_hash_graph::ReversibleHashGraph,
         vec_graph::VecGraph,
         Graph, VertexId,
@@ -64,7 +62,6 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
     bar.finish();
 
     let all_shortcuts = all_shortcuts.into_values().collect_vec();
-
     generate_directed_contracted_graph(base_graph, &all_shortcuts, levels)
 }
 
