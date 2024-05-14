@@ -4,10 +4,7 @@ use rayon::prelude::*;
 use super::Shortcut;
 use crate::{
     ch::contractor::witness_search::witness_search,
-    graphs::{
-        adjacency_vec_graph::AdjacencyVecGraph, edge::DirectedWeightedEdge,
-        path::ShortestPathRequest, Graph, VertexId,
-    },
+    graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, VertexId},
     heuristics::Heuristic,
 };
 

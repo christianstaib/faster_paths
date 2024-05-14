@@ -1,9 +1,3 @@
-use std::{
-    fs::File,
-    io::{BufWriter, Write},
-    time::Instant,
-};
-
 use ahash::{HashMap, HashMapExt, HashSet};
 use indicatif::{ProgressBar, ProgressIterator};
 use itertools::Itertools;
@@ -39,13 +33,6 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
 
     let mut levels = Vec::new();
 
-    let mut writer = BufWriter::new(File::create("reasons_slow.csv").unwrap());
-    writeln!(
-            writer,
-            "duration_create_shortcuts,duration_add_edges,duration_add_shortcuts,duration_remove_vertex,number_of_edges,number_of_shortcuts,number_of_vertices"
-        )
-        .unwrap();
-
     println!("starting actual contraction");
     let mut all_shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
 
@@ -59,50 +46,25 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
 
     while let Some(vertex) = get_next_vertex(&graph, &mut remaining_vertices) {
         // generating shortcuts
-        let start = Instant::now();
         let shortcuts = generate_all_shortcuts(&graph, &landmarks, vertex, &all_shortcuts);
-        let duration_create_shortcuts = start.elapsed();
 
         // adding shortcuts to graph and all_shortcuts
-        let start = Instant::now();
         shortcuts.iter().for_each(|shortcut| {
             graph.set_edge(&shortcut.edge);
         });
-        let duration_add_edges = start.elapsed();
 
-        let start = Instant::now();
         shortcuts.into_iter().for_each(|shortcut| {
             all_shortcuts.insert(shortcut.edge.unweighted(), shortcut);
         });
-        let duration_add_shortcuts = start.elapsed();
 
         // removing graph
-        let start = Instant::now();
         graph.remove_vertex(vertex);
-        let duration_remove_vertex = start.elapsed();
 
         levels.push(vec![vertex]);
-        writeln!(
-            writer,
-            "{},{},{},{},{},{},{}",
-            duration_create_shortcuts.as_nanos(),
-            duration_add_edges.as_nanos(),
-            duration_add_shortcuts.as_nanos(),
-            duration_remove_vertex.as_nanos(),
-            graph.number_of_edges(),
-            all_shortcuts.len(),
-            remaining_vertices.len()
-        )
-        .unwrap();
-        writer.flush().unwrap();
 
         bar.inc(1);
     }
     bar.finish();
-
-    println!("writing base_grap and shortcuts to file");
-    let writer = BufWriter::new(File::create("all_in.bincode").unwrap());
-    bincode::serialize_into(writer, &(&base_graph, &all_shortcuts)).unwrap();
 
     println!("Building edge vec");
     let edges = all_shortcuts
