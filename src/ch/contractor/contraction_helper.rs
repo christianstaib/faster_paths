@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 use super::Shortcut;
 use crate::{
-    ch::contractor::witness_search::witness_search,
+    ch::contractor::witness_search::optimal_witness_search,
     graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, VertexId},
     heuristics::Heuristic,
 };
@@ -32,7 +32,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithWittnessSearch {
             .flat_map(|in_edge| {
                 let tail = in_edge.tail();
                 let max_search_weight = in_edge.weight() + max_out_edge_weight;
-                let witness_cost = witness_search(
+                let witness_cost = optimal_witness_search(
                     graph,
                     tail,
                     vertex,

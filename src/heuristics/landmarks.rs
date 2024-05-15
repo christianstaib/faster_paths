@@ -1,14 +1,18 @@
-use std::usize;
+use std::{collections::VecDeque, usize};
 
-use indicatif::ParallelProgressIterator;
+use ahash::{HashSet, HashSetExt};
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
-use rand::Rng;
+use rand::{thread_rng, Rng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::Heuristic;
 use crate::{
     classical_search::dijkstra::Dijkstra,
-    graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, VertexId, Weight},
+    graphs::{
+        edge::DirectedWeightedEdge, graph_functions::shortests_path_tree,
+        path::ShortestPathRequest, Graph, VertexId, Weight,
+    },
 };
 
 pub struct Landmark {
@@ -62,6 +66,59 @@ impl Landmarks {
     pub fn new(num_landmarks: u32, graph: &dyn Graph) -> Landmarks {
         let vertices = (0..num_landmarks).collect_vec();
         Self::for_vertices(&vertices, graph)
+    }
+
+    pub fn avoid(num_landmarks: u32, graph: &dyn Graph) -> Landmarks {
+        let landmarks_heuristic = Landmarks {
+            landmarks: Vec::new(),
+        };
+
+        let landmarks_vertices: HashSet<VertexId> = HashSet::new();
+
+        let dijkstra = Dijkstra::new(graph);
+        for _ in (0..num_landmarks).progress() {
+            let source = thread_rng().gen_range(0..graph.number_of_vertices());
+            let data = dijkstra.single_source(source);
+            let tree = shortests_path_tree(&data);
+
+            let mut level_order = Vec::new();
+            {
+                let mut stack = VecDeque::from([source]);
+                while let Some(vertex) = stack.pop_front() {
+                    stack.extend(tree[vertex as usize].iter());
+                    level_order.push(vertex);
+                }
+            }
+
+            let weight = (0..graph.number_of_vertices())
+                .map(|target| {
+                    let mut lower_bound = 0;
+                    if let Some(request) = ShortestPathRequest::new(source, target) {
+                        lower_bound = landmarks_heuristic.lower_bound(&request).unwrap_or(0);
+                    }
+                    data.vertices[target as usize].weight.unwrap_or(u32::MAX) - lower_bound
+                })
+                .collect_vec();
+
+            let mut size = (0..graph.number_of_vertices())
+                .map(|target| Some(weight[target as usize]))
+                .collect_vec();
+
+            for &vertex in level_order.iter().rev() {
+                let mut children = Vec::from([vertex]);
+                children.extend(tree[vertex as usize].iter());
+                if landmarks_vertices.contains(&vertex)
+                    || children.iter().any(|&child| size[child as usize].is_none())
+                {
+                    size[vertex as usize] = None;
+                } else {
+                    size[vertex as usize] =
+                        children.into_iter().map(|child| size[child as usize]).sum();
+                }
+            }
+        }
+
+        todo!()
     }
 
     pub fn for_vertices(vertices: &[VertexId], graph: &dyn Graph) -> Landmarks {
