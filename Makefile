@@ -4,14 +4,14 @@ FMI_DIR := $(DATA_DIR)
 # NETWORK_GRAPH := $(FMI_DIR)/stgtregbz.fmi
 # NETWORK_GRAPH := $(FMI_DIR)/network.fmi
 # NETWORK_GRAPH := $(FMI_DIR)/aegaeis10-visibility-small.fmi
-NETWORK_GRAPH := $(FMI_DIR)/aegaeis10-ref-visibility-mercator.fmi
+NETWORK_GRAPH := $(FMI_DIR)/coastlines-mercator-ref.graph.fmi
 # NETWORK_GRAPH := $(FMI_DIR)/medi-ref-visibility.fmi
 NETWORK_CH := $(NETWORK_GRAPH).ch.bincode
 NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS_RANDOM := $(NETWORK_GRAPH).tests_random.json
 NETWORK_TESTS_DIJKSTRA_RANK := $(NETWORK_GRAPH).tests_dijkstra_rank.json
 
-NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
+NY_GRAPH := $(FMI_DIR)/stgtregbz.fmi
 # NY_GRAPH := $(FMI_DIR)/bremen_dist.gr
 NY_CH := $(NY_GRAPH).ch.bincode
 NY_HL := $(NY_GRAPH).hl.bincode
