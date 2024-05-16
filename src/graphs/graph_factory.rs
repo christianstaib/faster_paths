@@ -6,7 +6,7 @@ use std::{
 };
 
 use indicatif::ProgressIterator;
-use rayon::iter::{ParallelIterator};
+use rayon::iter::ParallelIterator;
 
 use super::{edge::DirectedWeightedEdge, reversible_vec_graph::ReversibleVecGraph};
 
@@ -77,12 +77,13 @@ impl GraphFactory {
                     .unwrap_or_else(|| panic!("no head found in line {}", line))
                     .parse()
                     .unwrap_or_else(|_| panic!("unable to parse head in line {}", line));
-                let weight: u32 = values
+                let weight: u32 = (values
                     .next()
                     .unwrap_or_else(|| panic!("no weight found in line {}", line))
                     .parse::<f32>()
                     .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line))
-                    .round() as u32;
+                    .round()
+                    / 10.0) as u32;
                 values.next();
                 values.next();
                 DirectedWeightedEdge::new(tail, head, weight)

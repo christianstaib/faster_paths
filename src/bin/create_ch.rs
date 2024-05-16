@@ -6,7 +6,7 @@ use faster_paths::{
     graphs::{
         graph_factory::GraphFactory,
         graph_functions::{
-            generate_hiting_set_order_with_hub_labels, generate_random_pair_testcases,
+            all_edges, generate_hiting_set_order_with_hub_labels, generate_random_pair_testcases,
         },
     },
     heuristics::{landmarks::Landmarks, Heuristic},
@@ -32,7 +32,15 @@ fn main() {
     println!("Loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let test_cases = generate_random_pair_testcases(1_00, &graph);
+    println!(
+        "{:?}",
+        all_edges(&graph)
+            .iter()
+            .max_by_key(|edge| edge.weight())
+            .unwrap()
+    );
+
+    let test_cases = generate_random_pair_testcases(10_000, &graph);
 
     let n = 10;
     let landmarks_avoid = Landmarks::avoid(n, &graph);
@@ -51,14 +59,13 @@ fn main() {
             .iter()
             .map(|test_case| {
                 let lower_bound = landmarks_avoid.lower_bound(&test_case.request).unwrap_or(0);
-                println!("xxx {:?} {}", test_case.weight, lower_bound);
                 test_case
                     .weight
                     .unwrap_or(0)
                     .checked_sub(lower_bound)
-                    .unwrap()
+                    .unwrap() as u64
             })
-            .sum::<u32>();
+            .sum::<u64>();
 
         let avg_random = test_cases
             .iter()
@@ -66,9 +73,13 @@ fn main() {
                 let lower_bound = landmarks_random
                     .lower_bound(&test_case.request)
                     .unwrap_or(0);
-                test_case.weight.unwrap_or(0) - lower_bound
+                test_case
+                    .weight
+                    .unwrap_or(0)
+                    .checked_sub(lower_bound)
+                    .unwrap() as u64
             })
-            .sum::<u32>();
+            .sum::<u64>();
 
         println!("{} {} {}", i, avg_avoid, avg_random);
     }
