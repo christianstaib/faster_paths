@@ -19,6 +19,8 @@ use faster_paths::{
     heuristics::{landmarks::Landmarks, Heuristic},
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
+use itertools::Itertools;
+use rand::{thread_rng, Rng};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
@@ -39,13 +41,13 @@ fn main() {
     println!("Loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let n = 1000;
+    let n = 10_000;
     let dijkstra = Dijkstra::new(&graph);
     let start = Instant::now();
     let paths = random_paths(n, graph.number_of_vertices(), &dijkstra);
     println!(
         "avg path len {}. took {:?} path path",
-        paths.iter().map(|path| path.vertices.len()).sum::<usize>(),
+        paths.iter().map(|path| path.vertices.len()).sum::<usize>() / n as usize,
         start.elapsed() / n
     );
     let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
@@ -70,13 +72,25 @@ fn main() {
         })
         .collect();
 
+    let sources = (0..n)
+        .map(|_| thread_rng().gen_range(0..graph.number_of_vertices()))
+        .collect_vec();
+
     let start = Instant::now();
-    let paths = random_paths(n, graph.number_of_vertices(), &cache_dijkstra);
-    println!(
-        "avg path len {}. took {:?} path path",
-        paths.iter().map(|path| path.vertices.len()).sum::<usize>(),
-        start.elapsed() / n
-    );
+    sources
+        .par_iter()
+        .progress()
+        .map(|&source| dijkstra.single_source(source).vertices.len())
+        .collect::<Vec<_>>();
+    println!("dijkstra. took {:?} per path", start.elapsed() / n);
+
+    let start = Instant::now();
+    sources
+        .par_iter()
+        .progress()
+        .map(|&source| cache_dijkstra.single_source(source).vertices.len())
+        .collect::<Vec<_>>();
+    println!("cache dijkstra. took {:?} per path", start.elapsed() / n);
 
     let test_cases = generate_random_pair_testcases(10_000, &graph);
 
