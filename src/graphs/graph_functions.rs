@@ -8,7 +8,7 @@ use std::{
     usize,
 };
 
-use ahash::{HashMapExt, HashSet, HashSetExt};
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use dashmap::DashMap;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
@@ -417,7 +417,7 @@ pub fn generate_hiting_set_order_with_hub_labels(
     println!("generating hitting set");
     let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
 
-    println!("generating vertex order");
+    println!("prepare vertex order");
     let mut not_hitting_set = (0..graph.number_of_vertices())
         .filter(|vertex| !hitting_setx.contains(vertex))
         .collect_vec();
@@ -429,9 +429,26 @@ pub fn generate_hiting_set_order_with_hub_labels(
     hitting_setx.extend(not_hitting_set);
     hitting_setx.reverse();
 
-    let order: Vec<_> = (0..graph.number_of_vertices())
+    // hitting_setx maps (order -> vertex)
+    // order maps (vertex -> order)
+
+    println!("generate vertex order");
+    // Create a HashMap for quick lookup of positions in hitting_setx
+    let position_map: HashMap<u32, usize> = hitting_setx
+        .iter()
+        .enumerate()
+        .map(|(idx, &vertex)| (vertex, idx))
+        .collect();
+
+    let order: Vec<u32> = (0..graph.number_of_vertices())
         .into_par_iter()
-        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
+        .progress()
+        .map(|vertex| {
+            // Use expect to handle the case where vertex is not found
+            *position_map
+                .get(&vertex)
+                .expect("Vertex not found in hitting_setx") as u32
+        })
         .collect();
     order
 }

@@ -35,7 +35,7 @@ fn main() {
             .unwrap()
     );
 
-    let number_of_random_pairs = 1_000;
+    let number_of_random_pairs = 10;
     let order = generate_hiting_set_order_with_hub_labels(number_of_random_pairs, &graph);
 
     println!("Generating hub graph");
