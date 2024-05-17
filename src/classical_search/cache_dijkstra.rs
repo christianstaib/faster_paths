@@ -11,8 +11,8 @@ use crate::{
     },
     graphs::{
         graph_functions::{hitting_set, random_paths, shortests_path_tree},
-        path::PathFinding,
-        Graph, VertexId,
+        path::{Path, PathFinding, ShortestPathRequest},
+        Graph, VertexId, Weight,
     },
     queue::DijkstraQueueElement,
 };
@@ -21,6 +21,18 @@ use crate::{
 pub struct CacheDijkstra<'a> {
     pub cache: HashMap<VertexId, (Vec<DijsktraEntry>, Vec<Vec<VertexId>>)>,
     graph: &'a dyn Graph,
+}
+
+impl<'a> PathFinding for CacheDijkstra<'a> {
+    fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
+        let data = self.get_data(path_request.source(), path_request.target());
+        data.get_path(path_request.target())
+    }
+
+    fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
+        let data = self.shortest_path(path_request)?;
+        Some(data.weight)
+    }
 }
 
 impl<'a> CacheDijkstra<'a> {

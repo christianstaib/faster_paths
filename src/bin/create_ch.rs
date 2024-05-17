@@ -3,15 +3,22 @@ use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant, usize};
 use clap::Parser;
 use faster_paths::{
     ch::contraction_non_adaptive::contract_non_adaptive,
+    classical_search::{
+        cache_dijkstra::CacheDijkstra,
+        dijkstra::{self, Dijkstra},
+    },
     graphs::{
         graph_factory::GraphFactory,
         graph_functions::{
             all_edges, generate_hiting_set_order_with_hub_labels, generate_random_pair_testcases,
+            hitting_set, random_paths, shortests_path_tree,
         },
+        path::Path,
+        Graph,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
 };
-use indicatif::ProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
@@ -32,12 +39,43 @@ fn main() {
     println!("Loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
+    let n = 1000;
+    let dijkstra = Dijkstra::new(&graph);
+    let start = Instant::now();
+    let paths = random_paths(n, graph.number_of_vertices(), &dijkstra);
+    println!(
+        "avg path len {}. took {:?} path path",
+        paths.iter().map(|path| path.vertices.len()).sum::<usize>(),
+        start.elapsed() / n
+    );
+    let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
+    println!("hitting set len {}", hitting_set.len());
+
     println!(
         "{:?}",
         all_edges(&graph)
             .iter()
             .max_by_key(|edge| edge.weight())
             .unwrap()
+    );
+    let mut cache_dijkstra = CacheDijkstra::new(&graph);
+    cache_dijkstra.cache = hitting_set
+        .par_iter()
+        .progress()
+        .map(|&vertex| {
+            let data = cache_dijkstra.single_source(vertex);
+            let tree = shortests_path_tree(&data);
+            let data = data.vertices;
+            (vertex, (data, tree))
+        })
+        .collect();
+
+    let start = Instant::now();
+    let paths = random_paths(n, graph.number_of_vertices(), &cache_dijkstra);
+    println!(
+        "avg path len {}. took {:?} path path",
+        paths.iter().map(|path| path.vertices.len()).sum::<usize>(),
+        start.elapsed() / n
     );
 
     let test_cases = generate_random_pair_testcases(10_000, &graph);
