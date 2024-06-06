@@ -151,5 +151,5 @@ fn main() {
 
     println!("Writing contracted graph to file");
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
-    serde_json::to_writer(writer, &contracted_graph).unwrap();
+    bincode::serialize_into(writer, &contracted_graph).unwrap();
 }

@@ -45,5 +45,5 @@ fn main() {
 
     println!("Saving hub graph as json");
     let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
-    serde_json::to_writer(writer, &hub_graph_and_shortcuts).unwrap();
+    bincode::serialize_into(writer, &hub_graph_and_shortcuts).unwrap();
 }
