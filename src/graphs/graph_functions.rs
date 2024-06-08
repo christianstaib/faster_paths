@@ -293,7 +293,7 @@ pub fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
 }
 
 pub fn validate_and_time(
-    test_cases: &Vec<ShortestPathTestCase>,
+    test_cases: &[ShortestPathTestCase],
     path_finder: &dyn PathFinding,
     graph: &dyn Graph,
 ) -> Duration {
