@@ -2,9 +2,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{
-        graph_factory::GraphFactory, graph_functions::generate_hiting_set_order_with_hub_labels,
-    },
+    graphs::{graph_factory::GraphFactory, graph_functions::generate_hiting_set_order},
     hl::top_down_hl::generate_hub_graph,
 };
 
@@ -26,8 +24,8 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let number_of_random_pairs = 100;
-    let order = generate_hiting_set_order_with_hub_labels(number_of_random_pairs, &graph);
+    let number_of_paths = 10_000;
+    let order = generate_hiting_set_order(number_of_paths, &graph);
 
     println!("Generating hub graph");
     let start = Instant::now();
