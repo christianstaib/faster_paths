@@ -8,7 +8,7 @@ use ahash::HashMap;
 use clap::Parser;
 use faster_paths::{
     graphs::{edge::DirectedEdge, graph_functions::random_paths, VertexId},
-    hl::{hl_path_finding::HLPathFinder, hub_graph::HubGraph},
+    hl::{hl_path_finding::HLPathFinder, hub_graph::DirectedHubGraph},
     shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
 };
 use indicatif::ProgressIterator;
@@ -33,7 +33,7 @@ fn main() {
 
     println!("Loading hub graph");
     let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
-    let (hub_graph, shortcuts): (HubGraph, HashMap<DirectedEdge, VertexId>) =
+    let (hub_graph, shortcuts): (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) =
         bincode::deserialize_from(reader).unwrap();
 
     println!("Generating random pair paths");
@@ -42,7 +42,7 @@ fn main() {
 
     let paths = random_paths(
         args.number_of_paths,
-        hub_graph.labels.len() as u32,
+        hub_graph.forward_labels.len() as u32,
         &path_finder,
     );
 

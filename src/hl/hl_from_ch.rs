@@ -3,7 +3,7 @@ use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use super::{
-    hub_graph::{overlap, DirectedHubGraph, HubGraph},
+    hub_graph::{overlap, DirectedHubGraph},
     label::Label,
 };
 use crate::{
@@ -62,48 +62,51 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
     }
 }
 
-pub fn hub_graph_from_directed_contracted_graph(
-    ch_information: &DirectedContractedGraph,
-) -> HubGraph {
-    let mut forward_labels: Vec<_> = (0..ch_information.upward_graph.number_of_vertices())
-        .map(Label::new)
-        .collect();
-
-    let mut reverse_labels = forward_labels.clone();
-
-    let pb = ProgressBar::new(ch_information.upward_graph.number_of_vertices() as u64);
-    for level_list in ch_information.levels.iter().rev() {
-        let labels: Vec<_> = level_list
-            .par_iter()
-            .map(|&vertex| {
-                let forward_label = generate_forward_label(
-                    ch_information,
-                    vertex,
-                    &forward_labels,
-                    &reverse_labels,
-                );
-
-                (vertex, forward_label)
-            })
-            .collect();
-        for (vertex, forward_label) in labels {
-            forward_labels[vertex as usize] = forward_label;
-        }
-        pb.inc(level_list.len() as u64);
-    }
-    pb.finish();
-
-    // Needs to be called after all labels are creates as replacing the predecessor
-    // VertexId with the index of predecessor in label makes merging impossible.
-    forward_labels
-        .iter_mut()
-        .chain(reverse_labels.iter_mut())
-        .for_each(set_predecessor);
-
-    HubGraph {
-        labels: forward_labels,
-    }
-}
+// TODO
+// pub fn hub_graph_from_directed_contracted_graph(
+//     ch_information: &DirectedContractedGraph,
+// ) -> HubGraph {
+//     let mut forward_labels: Vec<_> =
+// (0..ch_information.upward_graph.number_of_vertices())
+//         .map(Label::new)
+//         .collect();
+//
+//     let mut reverse_labels = forward_labels.clone();
+//
+//     let pb =
+// ProgressBar::new(ch_information.upward_graph.number_of_vertices() as u64);
+//     for level_list in ch_information.levels.iter().rev() {
+//         let labels: Vec<_> = level_list
+//             .par_iter()
+//             .map(|&vertex| {
+//                 let forward_label = generate_forward_label(
+//                     ch_information,
+//                     vertex,
+//                     &forward_labels,
+//                     &reverse_labels,
+//                 );
+//
+//                 (vertex, forward_label)
+//             })
+//             .collect();
+//         for (vertex, forward_label) in labels {
+//             forward_labels[vertex as usize] = forward_label;
+//         }
+//         pb.inc(level_list.len() as u64);
+//     }
+//     pb.finish();
+//
+//     // Needs to be called after all labels are creates as replacing the
+// predecessor     // VertexId with the index of predecessor in label makes
+// merging impossible.     forward_labels
+//         .iter_mut()
+//         .chain(reverse_labels.iter_mut())
+//         .for_each(set_predecessor);
+//
+//     HubGraph {
+//         labels: forward_labels,
+//     }
+// }
 
 /// Generates a forward label for a given vertex.
 ///

@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 use clap::Parser;
 use faster_paths::{
     graphs::{graph_factory::GraphFactory, graph_functions::generate_hiting_set_order},
-    hl::top_down_hl::generate_hub_graph,
+    hl::top_down_hl::generate_directed_hub_graph,
 };
 
 /// Creates a hub graph top down.
@@ -29,7 +29,7 @@ fn main() {
 
     println!("Generating hub graph");
     let start = Instant::now();
-    let hub_graph_and_shortcuts = generate_hub_graph(&graph, &order);
+    let hub_graph_and_shortcuts = generate_directed_hub_graph(&graph, &order);
     println!("Generating all labels took {:?}", start.elapsed());
 
     println!("Saving hub graph as json");

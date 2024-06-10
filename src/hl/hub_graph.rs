@@ -21,20 +21,21 @@ impl HubGraphTrait for DirectedHubGraph {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct HubGraph {
-    pub labels: Vec<Label>,
-}
-
-impl HubGraphTrait for HubGraph {
-    fn forward_label(&self, vertex: VertexId) -> Option<&Label> {
-        self.labels.get(vertex as usize)
-    }
-
-    fn reverse_label(&self, vertex: VertexId) -> Option<&Label> {
-        self.labels.get(vertex as usize)
-    }
-}
+// TODO
+// #[derive(Serialize, Deserialize)]
+// pub struct HubGraph {
+//     pub labels: Vec<Label>,
+// }
+//
+// impl HubGraphTrait for HubGraph {
+//     fn forward_label(&self, vertex: VertexId) -> Option<&Label> {
+//         self.labels.get(vertex as usize)
+//     }
+//
+//     fn reverse_label(&self, vertex: VertexId) -> Option<&Label> {
+//         self.labels.get(vertex as usize)
+//     }
+// }
 
 /// Calculates the minimal overlap between a forward and reverse label.
 ///
