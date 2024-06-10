@@ -11,16 +11,34 @@ use crate::{
 
 impl PathFinding for DirectedContractedGraph {
     fn shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        let (meeting_vertex, weight, forward, backward) = self.get_data(route_request);
+        let number_of_vertices = self.number_of_vertices() as usize;
+        let forward_data: DijkstraDataHashMap =
+            DijkstraDataHashMap::new(number_of_vertices, route_request.source());
+        let backward_data: DijkstraDataHashMap =
+            DijkstraDataHashMap::new(number_of_vertices, route_request.target());
+
+        let mut forward_data: Box<dyn DijkstraData> = Box::new(forward_data);
+        let mut backward_data: Box<dyn DijkstraData> = Box::new(backward_data);
+
+        let (meeting_vertex, weight) = get_data(self, &mut forward_data, &mut backward_data);
         if weight == u32::MAX {
             return None;
         }
-        let path = path_from_bidirectional_search(meeting_vertex, &*forward, &*backward)?;
+        let path = path_from_bidirectional_search(meeting_vertex, &*forward_data, &*backward_data)?;
         Some(path)
     }
 
-    fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        let (_, weight, _, _) = self.get_data(path_request);
+    fn shortest_path_weight(&self, route_request: &ShortestPathRequest) -> Option<Weight> {
+        let number_of_vertices = self.number_of_vertices() as usize;
+        let forward_data: DijkstraDataHashMap =
+            DijkstraDataHashMap::new(number_of_vertices, route_request.source());
+        let backward_data: DijkstraDataHashMap =
+            DijkstraDataHashMap::new(number_of_vertices, route_request.target());
+
+        let mut forward_data: Box<dyn DijkstraData> = Box::new(forward_data);
+        let mut backward_data: Box<dyn DijkstraData> = Box::new(backward_data);
+
+        let (_, weight) = get_data(self, &mut forward_data, &mut backward_data);
         if weight == u32::MAX {
             return None;
         }
@@ -29,20 +47,10 @@ impl PathFinding for DirectedContractedGraph {
 }
 
 fn get_data(
-    request: &ShortestPathRequest,
-) -> (
-    VertexId,
-    Weight,
-    Box<dyn DijkstraData>,
-    Box<dyn DijkstraData>,
-) {
-    let number_of_vertices = self.ch.number_of_vertices() as usize;
-    let forward_data = DijkstraDataHashMap::new(number_of_vertices, request.source());
-    let backward_data = DijkstraDataHashMap::new(number_of_vertices, request.target());
-
-    let mut forward_data: Box<dyn DijkstraData> = Box::new(forward_data);
-    let mut backward_data: Box<dyn DijkstraData> = Box::new(backward_data);
-
+    graph: &DirectedContractedGraph,
+    forward_data: &mut Box<dyn DijkstraData>,
+    backward_data: &mut Box<dyn DijkstraData>,
+) -> (VertexId, Weight) {
     let mut meeting_weight = u32::MAX;
     let mut meeting_vertex = u32::MAX;
 
@@ -58,7 +66,7 @@ fn get_data(
                 f = std::cmp::max(f, forward_weight);
 
                 let mut stall = false;
-                for in_edge in self.ch.downard_edges(vertex) {
+                for in_edge in graph.downard_edges(vertex) {
                     if let Some(predecessor_weight) =
                         forward_data.get_vertex_entry(in_edge.head()).weight
                     {
@@ -77,7 +85,7 @@ fn get_data(
                             meeting_vertex = vertex;
                         }
                     }
-                    self.ch
+                    graph
                         .upward_edges(vertex)
                         .for_each(|edge| forward_data.update(vertex, edge.head(), edge.weight()));
                 }
@@ -90,7 +98,7 @@ fn get_data(
                 b = std::cmp::max(b, backward_weight);
 
                 let mut stall = false;
-                for out_edge in self.ch.upward_edges(vertex) {
+                for out_edge in graph.upward_edges(vertex) {
                     if let Some(predecessor_weight) =
                         backward_data.get_vertex_entry(out_edge.head()).weight
                     {
@@ -109,7 +117,7 @@ fn get_data(
                             meeting_vertex = vertex;
                         }
                     }
-                    self.ch.downard_edges(vertex).for_each(|edge| {
+                    graph.downard_edges(vertex).for_each(|edge| {
                         backward_data.update(vertex, edge.head(), edge.weight());
                     });
                 }
@@ -121,5 +129,5 @@ fn get_data(
         }
     }
 
-    (meeting_vertex, meeting_weight, forward_data, backward_data)
+    (meeting_vertex, meeting_weight)
 }
