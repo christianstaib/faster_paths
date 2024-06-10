@@ -1,31 +1,34 @@
-use super::{hub_graph::overlap, label::Label, HubGraphTrait};
-use crate::graphs::{
-    path::{Path, PathFinding, ShortestPathRequest},
-    Weight,
+use super::{
+    hub_graph::{overlap, DirectedHubGraph},
+    label::Label,
+    HubGraphTrait,
+};
+use crate::{
+    graphs::{
+        path::{Path, PathFinding, ShortestPathRequest},
+        Weight,
+    },
+    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
 
-pub struct HLPathFinder<'a> {
-    hub_graph: &'a dyn HubGraphTrait,
-}
-
-impl<'a> HLPathFinder<'a> {
-    pub fn new(hub_graph: &'a dyn HubGraphTrait) -> Self {
-        HLPathFinder { hub_graph }
-    }
-}
-
-impl<'a> PathFinding for HLPathFinder<'a> {
+impl PathFinding for DirectedHubGraph {
     fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
         // wanted: source -> target
-        let forward_label = self.hub_graph.forward_label(path_request.source())?;
-        let backward_label = self.hub_graph.reverse_label(path_request.target())?;
+        let forward_label = self.forward_label(path_request.source())?;
+        let backward_label = self.reverse_label(path_request.target())?;
 
-        shortest_path(forward_label, backward_label)
+        let mut path = shortest_path(forward_label, backward_label);
+
+        if let Some(path) = path.as_mut() {
+            replace_shortcuts_slow(&mut path.vertices, &self.shortcuts);
+        }
+
+        path
     }
 
     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        let forward_label = self.hub_graph.forward_label(path_request.source())?;
-        let backward_label = self.hub_graph.reverse_label(path_request.target())?;
+        let forward_label = self.forward_label(path_request.source())?;
+        let backward_label = self.reverse_label(path_request.target())?;
 
         shortest_path_weight(forward_label, backward_label)
     }

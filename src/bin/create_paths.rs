@@ -8,7 +8,7 @@ use ahash::HashMap;
 use clap::Parser;
 use faster_paths::{
     graphs::{edge::DirectedEdge, graph_functions::random_paths, VertexId},
-    hl::{hl_path_finding::HLPathFinder, hub_graph::DirectedHubGraph},
+    hl::hub_graph::DirectedHubGraph,
     shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
 };
 use indicatif::ProgressIterator;

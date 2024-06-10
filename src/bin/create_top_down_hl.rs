@@ -29,10 +29,10 @@ fn main() {
 
     println!("Generating hub graph");
     let start = Instant::now();
-    let hub_graph_and_shortcuts = generate_directed_hub_graph(&graph, &order);
+    let hub_graph = generate_directed_hub_graph(&graph, &order);
     println!("Generating all labels took {:?}", start.elapsed());
 
     println!("Saving hub graph as json");
     let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
-    bincode::serialize_into(writer, &hub_graph_and_shortcuts).unwrap();
+    bincode::serialize_into(writer, &hub_graph).unwrap();
 }
