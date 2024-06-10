@@ -69,10 +69,7 @@ use crate::{
 //     (hub_graph, shortcuts)
 // }
 
-pub fn generate_directed_hub_graph(
-    graph: &dyn Graph,
-    order: &[u32],
-) -> (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) {
+pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {
     let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(RwLock::new(HashMap::new()));
 
@@ -137,9 +134,10 @@ pub fn generate_directed_hub_graph(
     let directed_hub_graph = DirectedHubGraph {
         forward_labels,
         reverse_labels,
+        shortcuts,
     };
 
-    (directed_hub_graph, shortcuts)
+    directed_hub_graph
 }
 
 pub fn generate_forward_label(

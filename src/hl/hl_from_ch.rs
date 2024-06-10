@@ -56,9 +56,12 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
         .chain(reverse_labels.iter_mut())
         .for_each(set_predecessor);
 
+    let shortcuts = ch_information.shortcuts.iter().cloned().collect();
+
     DirectedHubGraph {
         forward_labels,
         reverse_labels,
+        shortcuts,
     }
 }
 

@@ -1,14 +1,16 @@
 use std::usize;
 
+use ahash::HashMap;
 use serde::{Deserialize, Serialize};
 
 use super::{label::Label, HubGraphTrait};
-use crate::graphs::{VertexId, Weight};
+use crate::graphs::{edge::DirectedEdge, VertexId, Weight};
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectedHubGraph {
     pub forward_labels: Vec<Label>,
     pub reverse_labels: Vec<Label>,
+    pub shortcuts: HashMap<DirectedEdge, VertexId>,
 }
 
 impl HubGraphTrait for DirectedHubGraph {
