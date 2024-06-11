@@ -7,7 +7,7 @@ use super::{
     priority_function::decode_function,
 };
 use crate::{
-    ch::contracted_graph::DirectedContractedGraph,
+    ch::directed_contracted_graph::DirectedContractedGraph,
     graphs::{graph_functions::all_edges, vec_graph::VecGraph, Graph},
     heuristics::{landmarks::Landmarks, Heuristic},
 };

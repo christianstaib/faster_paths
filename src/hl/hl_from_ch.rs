@@ -2,12 +2,9 @@ use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use super::{
-    hub_graph::{overlap, DirectedHubGraph},
-    label::Label,
-};
+use super::{hub_graph::DirectedHubGraph, label::Label, pathfinding::overlap};
 use crate::{
-    ch::contracted_graph::DirectedContractedGraph,
+    ch::directed_contracted_graph::DirectedContractedGraph,
     graphs::{Graph, VertexId},
 };
 

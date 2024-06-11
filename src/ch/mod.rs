@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 use crate::graphs::{edge::DirectedWeightedEdge, VertexId};
 
 pub mod ch_priority_element;
-pub mod contracted_graph;
 pub mod contraction_adaptive_non_simulated;
 pub mod contraction_adaptive_simulated;
 pub mod contraction_non_adaptive;
 pub mod contractor;
+pub mod directed_contracted_graph;
 pub mod helpers;
 pub mod pathfinding;
 pub mod priority_function;

@@ -1,5 +1,5 @@
 use crate::{
-    ch::contracted_graph::DirectedContractedGraph,
+    ch::directed_contracted_graph::DirectedContractedGraph,
     dijkstra_data::DijkstraData,
     graphs::{VertexId, Weight},
     queue::DijkstraQueueElement,

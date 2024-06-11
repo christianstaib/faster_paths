@@ -4,8 +4,8 @@ use itertools::Itertools;
 
 use crate::{
     ch::{
-        contracted_graph::DirectedContractedGraph,
         contractor::contraction_helper::{ShortcutGenerator, ShortcutGeneratorWithWittnessSearch},
+        directed_contracted_graph::DirectedContractedGraph,
         helpers::generate_directed_contracted_graph,
         Shortcut,
     },

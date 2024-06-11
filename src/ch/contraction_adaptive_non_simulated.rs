@@ -5,8 +5,8 @@ use rayon::prelude::*;
 
 use crate::{
     ch::{
-        contracted_graph::DirectedContractedGraph, helpers::generate_directed_contracted_graph,
-        Shortcut,
+        directed_contracted_graph::DirectedContractedGraph,
+        helpers::generate_directed_contracted_graph, Shortcut,
     },
     classical_search::dijkstra::Dijkstra,
     graphs::{

@@ -1,6 +1,6 @@
 use super::helpers::get_data;
 use crate::{
-    ch::contracted_graph::DirectedContractedGraph,
+    ch::directed_contracted_graph::DirectedContractedGraph,
     classical_search::bidirectional_helpers::path_from_bidirectional_search,
     dijkstra_data::dijkstra_data_map::DijkstraDataHashMap,
     graphs::{

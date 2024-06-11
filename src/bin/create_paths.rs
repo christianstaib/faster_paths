@@ -7,7 +7,7 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    ch::contracted_graph::DirectedContractedGraph,
+    ch::directed_contracted_graph::DirectedContractedGraph,
     graphs::{graph_functions::random_paths, path::PathFinding},
 };
 use indicatif::ProgressIterator;
@@ -36,11 +36,6 @@ fn main() {
     println!("Generating random pair paths");
     let path_finder: Box<dyn PathFinding>;
     let number_of_vertices: u32;
-
-    print!(
-        "xxxxxx {}",
-        args.hub_graph.to_str().unwrap().ends_with(".di.ch.bincode")
-    );
 
     if args.hub_graph.to_str().unwrap().ends_with(".di.ch.bincode") {
         let hub_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();

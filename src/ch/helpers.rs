@@ -1,5 +1,6 @@
 use super::{
-    contracted_graph::DirectedContractedGraph, contractor::helpers::partition_by_levels, Shortcut,
+    contractor::helpers::partition_by_levels, directed_contracted_graph::DirectedContractedGraph,
+    Shortcut,
 };
 use crate::graphs::{vec_graph::VecGraph, Graph};
 

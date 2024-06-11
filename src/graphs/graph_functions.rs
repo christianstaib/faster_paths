@@ -26,7 +26,7 @@ use crate::{
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::edge::DirectedEdge,
     hl::{
-        hl_path_finding::shortest_path,
+        pathfinding::shortest_path,
         top_down_hl::{generate_forward_label, generate_reverse_label},
     },
     shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,

@@ -22,7 +22,7 @@ use crate::{
         path::ShortestPathTestCase,
         Graph, VertexId,
     },
-    hl::hl_path_finding::shortest_path,
+    hl::pathfinding::shortest_path,
     shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
 
