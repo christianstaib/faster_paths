@@ -32,6 +32,10 @@ impl PathFinding for DirectedHubGraph {
 
         shortest_path_weight(forward_label, backward_label)
     }
+
+    fn number_of_vertices(&self) -> u32 {
+        self.forward_labels.len() as u32
+    }
 }
 
 pub fn shortest_path(forward_label: &Label, backward_label: &Label) -> Option<Path> {

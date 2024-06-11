@@ -9,7 +9,6 @@ use indicatif::ProgressIterator;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use super::ContractedGraphTrait;
 use crate::graphs::{
     adjacency_vec_graph::AdjacencyVecGraph,
     edge::{DirectedEdge, DirectedWeightedEdge},
@@ -24,30 +23,21 @@ pub struct DirectedContractedGraph {
     pub levels: Vec<Vec<u32>>,
 }
 
-impl ContractedGraphTrait for DirectedContractedGraph {
-    fn upward_edges(
+impl DirectedContractedGraph {
+    pub fn upward_edges(
         &self,
         source: VertexId,
     ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
         self.upward_graph.out_edges(source)
     }
 
-    fn downard_edges(
+    pub fn downard_edges(
         &self,
         source: VertexId,
     ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
         self.downward_graph.out_edges(source)
     }
 
-    fn number_of_vertices(&self) -> u32 {
-        std::cmp::max(
-            self.upward_graph.number_of_vertices(),
-            self.downward_graph.number_of_vertices(),
-        )
-    }
-}
-
-impl DirectedContractedGraph {
     pub fn from_fmi_file(path: &PathBuf) -> DirectedContractedGraph {
         let file = File::open(path).unwrap();
         let reader = BufReader::new(file);

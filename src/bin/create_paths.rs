@@ -1,15 +1,14 @@
+use core::panic;
 use std::{
     fs::File,
     io::{BufReader, BufWriter, Write},
     path::PathBuf,
 };
 
-use ahash::HashMap;
 use clap::Parser;
 use faster_paths::{
-    graphs::{edge::DirectedEdge, graph_functions::random_paths, VertexId},
-    hl::hub_graph::DirectedHubGraph,
-    shortcut_replacer::slow_shortcut_replacer::SlowShortcutReplacer,
+    ch::contracted_graph::DirectedContractedGraph,
+    graphs::{graph_functions::random_paths, path::PathFinding},
 };
 use indicatif::ProgressIterator;
 use itertools::Itertools;
@@ -33,18 +32,25 @@ fn main() {
 
     println!("Loading hub graph");
     let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
-    let (hub_graph, shortcuts): (DirectedHubGraph, HashMap<DirectedEdge, VertexId>) =
-        bincode::deserialize_from(reader).unwrap();
 
     println!("Generating random pair paths");
-    let path_finder = HLPathFinder::new(&hub_graph);
-    let path_finder = SlowShortcutReplacer::new(&shortcuts, &path_finder);
+    let path_finder: Box<dyn PathFinding>;
+    let number_of_vertices: u32;
 
-    let paths = random_paths(
-        args.number_of_paths,
-        hub_graph.forward_labels.len() as u32,
-        &path_finder,
+    print!(
+        "xxxxxx {}",
+        args.hub_graph.to_str().unwrap().ends_with(".di.ch.bincode")
     );
+
+    if args.hub_graph.to_str().unwrap().ends_with(".di.ch.bincode") {
+        let hub_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
+        number_of_vertices = hub_graph.number_of_vertices();
+        path_finder = Box::new(hub_graph);
+    } else {
+        panic!("cant read file \"{}\"", args.hub_graph.to_str().unwrap());
+    }
+
+    let paths = random_paths(args.number_of_paths, number_of_vertices, &*path_finder);
 
     println!("Writing paths to file");
     let mut writer = BufWriter::new(File::create(&args.paths).unwrap());

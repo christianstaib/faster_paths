@@ -18,17 +18,3 @@ pub struct Shortcut {
     pub edge: DirectedWeightedEdge,
     pub vertex: VertexId,
 }
-
-pub trait ContractedGraphTrait: Send + Sync {
-    fn upward_edges(
-        &self,
-        source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_>;
-
-    fn downard_edges(
-        &self,
-        source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_>;
-
-    fn number_of_vertices(&self) -> u32;
-}

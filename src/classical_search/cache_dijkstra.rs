@@ -33,6 +33,10 @@ impl<'a> PathFinding for CacheDijkstra<'a> {
         let data = self.shortest_path(path_request)?;
         Some(data.weight)
     }
+
+    fn number_of_vertices(&self) -> u32 {
+        self.graph.number_of_vertices()
+    }
 }
 
 impl<'a> CacheDijkstra<'a> {

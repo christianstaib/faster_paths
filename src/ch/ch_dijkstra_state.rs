@@ -1,16 +1,16 @@
-use super::ContractedGraphTrait;
+use super::contracted_graph::DirectedContractedGraph;
 use crate::{
     classical_search::bidirectional_helpers::path_from_bidirectional_search,
     dijkstra_data::{dijkstra_data_map::DijkstraDataHashMap, DijkstraData},
     graphs::{
-        path::{Path, PathFindingWithInternalState, ShortestPathRequest},
+        path::{Path, PathFinding, PathFindingWithInternalState, ShortestPathRequest},
         VertexId, Weight,
     },
     queue::DijkstraQueueElement,
 };
 
 pub struct ChDijkstraState<'a> {
-    ch: &'a dyn ContractedGraphTrait,
+    ch: &'a DirectedContractedGraph,
     forward_data: DijkstraDataHashMap,
     backward_data: DijkstraDataHashMap,
     meeting_vertex: VertexId,
@@ -36,10 +36,14 @@ impl<'a> PathFindingWithInternalState for ChDijkstraState<'a> {
         }
         Some(weight)
     }
+
+    fn number_of_vertices(&self) -> u32 {
+        self.ch.number_of_vertices()
+    }
 }
 
 impl<'a> ChDijkstraState<'a> {
-    pub fn new(ch: &'a dyn ContractedGraphTrait) -> ChDijkstraState<'_> {
+    pub fn new(ch: &'a DirectedContractedGraph) -> ChDijkstraState<'_> {
         let number_of_vertices = ch.number_of_vertices() as usize;
         ChDijkstraState {
             ch,

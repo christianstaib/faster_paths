@@ -24,6 +24,10 @@ impl<'a> PathFinding for FastShortcutReplacer<'a> {
     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
         self.path_finder.shortest_path_weight(path_request)
     }
+
+    fn number_of_vertices(&self) -> u32 {
+        self.path_finder.number_of_vertices()
+    }
 }
 
 impl<'a> FastShortcutReplacer<'a> {

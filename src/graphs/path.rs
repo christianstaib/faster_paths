@@ -32,8 +32,8 @@ impl ShortestPathRequest {
 
 /// Represents a path in a graph.
 ///
-/// This struct encapsulates the vertices that form a path in the graph and the total weight
-/// associated with traversing this path.
+/// This struct encapsulates the vertices that form a path in the graph and the
+/// total weight associated with traversing this path.
 #[derive(Clone)]
 pub struct Path {
     pub vertices: Vec<VertexId>,
@@ -42,8 +42,8 @@ pub struct Path {
 
 /// Represents a request for validating a shortest path in a graph.
 ///
-/// This struct is used to encapsulate a shortest path request along with the weight of a shortest
-/// path, if there exists one.
+/// This struct is used to encapsulate a shortest path request along with the
+/// weight of a shortest path, if there exists one.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ShortestPathTestCase {
     pub request: ShortestPathRequest,
@@ -55,10 +55,14 @@ pub trait PathFinding: Send + Sync {
     fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path>;
 
     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight>;
+
+    fn number_of_vertices(&self) -> u32;
 }
 
 pub trait PathFindingWithInternalState {
     fn shortest_path(&mut self, path_request: &ShortestPathRequest) -> Option<Path>;
 
     fn shortest_path_weight(&mut self, path_request: &ShortestPathRequest) -> Option<Weight>;
+
+    fn number_of_vertices(&self) -> u32;
 }

@@ -1,10 +1,10 @@
-use super::{contracted_graph::DirectedContractedGraph, ContractedGraphTrait};
+use super::contracted_graph::DirectedContractedGraph;
 use crate::{
     classical_search::bidirectional_helpers::path_from_bidirectional_search,
     dijkstra_data::{dijkstra_data_map::DijkstraDataHashMap, DijkstraData},
     graphs::{
         path::{Path, PathFinding, ShortestPathRequest},
-        VertexId, Weight,
+        Graph, VertexId, Weight,
     },
     queue::DijkstraQueueElement,
 };
@@ -43,6 +43,10 @@ impl PathFinding for DirectedContractedGraph {
             return None;
         }
         Some(weight)
+    }
+
+    fn number_of_vertices(&self) -> u32 {
+        self.upward_graph.number_of_vertices()
     }
 }
 

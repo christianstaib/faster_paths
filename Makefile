@@ -1,6 +1,9 @@
 DATA_DIR := tests/data
 FMI_DIR := $(DATA_DIR)
 
+DIRECTED_CH_EXTENSION := .di.ch.bincode
+DIRECTED_HL_EXTENSION := .di.hl.bincode
+
 # NETWORK_GRAPH := $(FMI_DIR)/stgtregbz.fmi
 # NETWORK_GRAPH := $(FMI_DIR)/network.fmi
 # NETWORK_GRAPH := $(FMI_DIR)/aegaeis10-visibility-small.fmi
@@ -13,8 +16,8 @@ NETWORK_TESTS_DIJKSTRA_RANK := $(NETWORK_GRAPH).tests_dijkstra_rank.json
 
 NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
 # NY_GRAPH := $(FMI_DIR)/bremen_dist.gr
-NY_CH := $(NY_GRAPH).ch.bincode
-NY_HL := $(NY_GRAPH).hl.bincode
+NY_CH := $(NY_GRAPH)$(DIRECTED_CH_EXTENSION)
+NY_HL := $(NY_GRAPH)$(DIRECTED_HL_EXTENSION)
 NY_TESTS_RANDOM := $(NY_GRAPH).tests_random.json
 NY_TESTS_DIJKSTRA_RANK := $(NY_GRAPH).tests_dijkstra_rank.json
 
