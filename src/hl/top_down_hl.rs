@@ -84,19 +84,19 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
         .map(|vertex| {
             let (label, mut label_shortcuts) = generate_forward_label(vertex, graph, order);
 
-            // // Spend as little time as possible in a locked shortcuts state, therefore
-            // // remove label_shortcuts already present in shortcuts in readmode.
-            // // Important to put readable_shortcuts into its own scope as it would
-            // otherwise // block write access
-            // if let Ok(readable_shortcuts) = shortcuts.read() {
-            //     label_shortcuts.retain(|(edge, _)|
-            // !readable_shortcuts.contains_key(edge)); }
+            // Spend as little time as possible in a locked shortcuts state, therefore
+            // remove label_shortcuts already present in shortcuts in readmode.
+            // Important to put readable_shortcuts into its own scope as it would otherwise
+            // block write access
+            if let Ok(readable_shortcuts) = shortcuts.read() {
+                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(edge));
+            }
 
-            // if !label_shortcuts.is_empty() {
-            //     if let Ok(ref mut shortcuts) = shortcuts.write() {
-            //         shortcuts.extend(label_shortcuts);
-            //     }
-            // }
+            if !label_shortcuts.is_empty() {
+                if let Ok(ref mut shortcuts) = shortcuts.write() {
+                    shortcuts.extend(label_shortcuts);
+                }
+            }
 
             label
         })
