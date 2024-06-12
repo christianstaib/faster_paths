@@ -5,7 +5,7 @@ use std::{
 
 use ahash::{HashMap, HashMapExt};
 use dashmap::DashMap;
-use indicatif::ParallelProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressStyle};
 use rayon::prelude::*;
 
 use super::{
@@ -73,36 +73,30 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
     let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(RwLock::new(HashMap::new()));
 
+    let style = ProgressStyle::with_template("{wide_bar} {per_sec} {eta_precise} {pos}/{len}")
+        .unwrap()
+        .progress_chars("##-");
+
     println!("generating forward labels");
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
-        .progress()
+        .progress_with_style(style)
         .map(|vertex| {
             let (label, mut label_shortcuts) = generate_forward_label(vertex, graph, order);
 
-            // Spend as little time as possible in a locked shortcuts state, therefore
-            // remove label_shortcuts already present in shortcuts in readmode.
-            // Important to put readable_shortcuts into its own scope as it would otherwise
-            // block write access
-            let start = Instant::now();
-            if let Ok(readable_shortcuts) = shortcuts.read() {
-                let elapsed = start.elapsed().as_secs_f32();
-                if elapsed > 1.0 {
-                    println!("waited {}s for read lock", elapsed);
-                }
-                label_shortcuts.retain(|(edge, _)| !readable_shortcuts.contains_key(edge));
-            }
+            // // Spend as little time as possible in a locked shortcuts state, therefore
+            // // remove label_shortcuts already present in shortcuts in readmode.
+            // // Important to put readable_shortcuts into its own scope as it would
+            // otherwise // block write access
+            // if let Ok(readable_shortcuts) = shortcuts.read() {
+            //     label_shortcuts.retain(|(edge, _)|
+            // !readable_shortcuts.contains_key(edge)); }
 
-            if !label_shortcuts.is_empty() {
-                let start = Instant::now();
-                if let Ok(ref mut shortcuts) = shortcuts.write() {
-                    let elapsed = start.elapsed().as_secs_f32();
-                    if elapsed > 1.0 {
-                        println!("waited {}s for write lock", elapsed);
-                    }
-                    shortcuts.extend(label_shortcuts);
-                }
-            }
+            // if !label_shortcuts.is_empty() {
+            //     if let Ok(ref mut shortcuts) = shortcuts.write() {
+            //         shortcuts.extend(label_shortcuts);
+            //     }
+            // }
 
             label
         })

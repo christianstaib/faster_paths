@@ -38,8 +38,8 @@ pub trait Graph: Send + Sync {
 
     fn number_of_edges(&self) -> u32;
 
-    // insert edge if not pressent or updated edge weight if new edge weight is smaller than
-    // currents.
+    // insert edge if not pressent or updated edge weight if new edge weight is
+    // smaller than currents.
     fn set_edge(&mut self, edge: &DirectedWeightedEdge);
 
     // set OR updates eges. may be faster than update edges

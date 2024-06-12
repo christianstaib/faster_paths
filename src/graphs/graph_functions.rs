@@ -439,14 +439,16 @@ pub fn generate_hiting_set_order_with_hub_labels(
     // hitting_setx maps (order -> vertex)
     // order maps (vertex -> order)
 
-    println!("generate vertex order");
+    println!("generate position map");
     // Create a HashMap for quick lookup of positions in hitting_setx
     let position_map: HashMap<u32, usize> = hitting_setx
         .iter()
+        .progress()
         .enumerate()
         .map(|(idx, &vertex)| (vertex, idx))
         .collect();
 
+    println!("generate order");
     let order: Vec<u32> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
