@@ -9,8 +9,8 @@ use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 
 use super::{
+    directed_hub_graph::DirectedHubGraph,
     hl_from_ch::set_predecessor,
-    hub_graph::DirectedHubGraph,
     label::{Label, LabelEntry},
 };
 use crate::{

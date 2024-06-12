@@ -299,15 +299,22 @@ pub fn validate_and_time(
 ) -> Duration {
     let mut times = Vec::new();
 
+    let mut paths = Vec::new();
+    println!("Timing");
     test_cases.iter().progress().for_each(|test_case| {
         let start = Instant::now();
         let path = path_finder.shortest_path(&test_case.request);
         times.push(start.elapsed());
 
-        if let Err(err) = validate_path(graph, test_case, &path) {
+        paths.push(path);
+    });
+
+    println!("Validating");
+    for i in (0..test_cases.len()).progress() {
+        if let Err(err) = validate_path(graph, &test_cases[i], &paths[i]) {
             panic!("top down hl wrong: {}", err);
         }
-    });
+    }
 
     times.iter().sum::<Duration>() / times.len() as u32
 }

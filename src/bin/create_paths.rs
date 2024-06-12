@@ -30,12 +30,11 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    println!("Loading hub graph");
-    let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
-
-    println!("Generating random pair paths");
     let path_finder: Box<dyn PathFinding>;
     let number_of_vertices: u32;
+
+    println!("Loading hub graph");
+    let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
 
     if args.hub_graph.to_str().unwrap().ends_with(".di.ch.bincode") {
         let hub_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
@@ -45,6 +44,7 @@ fn main() {
         panic!("cant read file \"{}\"", args.hub_graph.to_str().unwrap());
     }
 
+    println!("Generating random pair paths");
     let paths = random_paths(args.number_of_paths, number_of_vertices, &*path_finder);
 
     println!("Writing paths to file");

@@ -27,10 +27,17 @@ dirs:
 	mkdir $(FMI_DIR)
 
 
-test_ny:
-	cargo run --bin test --release --\
-		--graph-path $(NY_GRAPH)\
-		--random-pairs $(NY_TESTS_RANDOM)
+test_ch_ny:
+	cargo r -r --bin test --\
+		-p $(NY_CH)\
+		-g $(NY_GRAPH)\
+		-r $(NY_TESTS_RANDOM)
+
+test_hl_ny:
+	cargo r -r --bin test --\
+		-p $(NY_HL)\
+		-g $(NY_GRAPH)\
+		-r $(NY_TESTS_RANDOM)
 
 test:
 	cargo run --bin test --release --\
@@ -95,13 +102,10 @@ hitting_set:
 create_hl_ny:
 	cargo run --bin create_hl --release --\
 		--contracted-graph $(NY_CH)\
-		--tests $(NY_TESTS_RANDOM)\
 		--hub-graph $(NY_HL)
 
 create_hl:
 	cargo run --bin create_hl --release --\
 		--contracted-graph $(NETWORK_CH)\
-		--tests $(NETWORK_TESTS_RANDOM)\
 		--hub-graph $(NETWORK_HL)
-
 

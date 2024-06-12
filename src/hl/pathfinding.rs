@@ -1,4 +1,4 @@
-use super::{hub_graph::DirectedHubGraph, label::Label, HubGraphTrait};
+use super::{directed_hub_graph::DirectedHubGraph, label::Label, HubGraphTrait};
 use crate::{
     graphs::{
         path::{Path, PathFinding, ShortestPathRequest},

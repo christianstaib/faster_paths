@@ -7,6 +7,7 @@ use crate::{
         path::{Path, PathFinding, ShortestPathRequest},
         Graph, Weight,
     },
+    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
 
 impl PathFinding for DirectedContractedGraph {
@@ -20,7 +21,11 @@ impl PathFinding for DirectedContractedGraph {
         if weight == u32::MAX {
             return None;
         }
-        let path = path_from_bidirectional_search(meeting_vertex, &forward_data, &backward_data)?;
+        let mut path =
+            path_from_bidirectional_search(meeting_vertex, &forward_data, &backward_data)?;
+
+        replace_shortcuts_slow(&mut path.vertices, &self.shortcuts);
+
         Some(path)
     }
 

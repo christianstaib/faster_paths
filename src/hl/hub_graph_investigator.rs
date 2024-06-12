@@ -1,4 +1,4 @@
-use super::hub_graph::DirectedHubGraph;
+use super::directed_hub_graph::DirectedHubGraph;
 
 pub fn get_avg_label_size(hub_graph: &DirectedHubGraph) -> f32 {
     let summed_label_size: u64 = hub_graph

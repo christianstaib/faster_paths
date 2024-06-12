@@ -2,7 +2,7 @@ use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use super::{hub_graph::DirectedHubGraph, label::Label, pathfinding::overlap};
+use super::{directed_hub_graph::DirectedHubGraph, label::Label, pathfinding::overlap};
 use crate::{
     ch::directed_contracted_graph::DirectedContractedGraph,
     graphs::{Graph, VertexId},
@@ -53,7 +53,7 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
         .chain(reverse_labels.iter_mut())
         .for_each(set_predecessor);
 
-    let shortcuts = ch_information.shortcuts.iter().cloned().collect();
+    let shortcuts = ch_information.shortcuts.clone();
 
     DirectedHubGraph {
         forward_labels,

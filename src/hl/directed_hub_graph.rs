@@ -4,7 +4,7 @@ use ahash::HashMap;
 use serde::{Deserialize, Serialize};
 
 use super::{label::Label, HubGraphTrait};
-use crate::graphs::{edge::DirectedEdge, VertexId, Weight};
+use crate::graphs::{edge::DirectedEdge, VertexId};
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectedHubGraph {
