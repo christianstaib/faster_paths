@@ -24,7 +24,7 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let number_of_paths = 100;
+    let number_of_paths = 10_000;
     let order = generate_hiting_set_order(number_of_paths, &graph);
 
     println!("Generating hub graph");

@@ -153,7 +153,7 @@ pub fn generate_reverse_label(
     graph: &dyn Graph,
     order: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
-    let data = Dijkstra::new(graph).single_source(vertex);
+    let data = Dijkstra::new(graph).single_target(vertex);
     get_label_from_data(vertex, &data, order)
 }
 
