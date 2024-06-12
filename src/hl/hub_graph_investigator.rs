@@ -25,7 +25,7 @@ pub fn get_label_hits(hub_graph: &DirectedHubGraph) -> Vec<u32> {
         label
             .entries
             .iter()
-            .map(|x| x.vertex)
+            .map(|label_entry| label_entry.vertex)
             .for_each(|vertex| hits[vertex as usize] += 1);
     }
 

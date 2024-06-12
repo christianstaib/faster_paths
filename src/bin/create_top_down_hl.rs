@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 use clap::Parser;
 use faster_paths::{
     graphs::{graph_factory::GraphFactory, graph_functions::generate_hiting_set_order},
-    hl::top_down_hl::generate_directed_hub_graph,
+    hl::hl_from_top_down::generate_directed_hub_graph,
 };
 
 /// Creates a hub graph top down.

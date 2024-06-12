@@ -6,6 +6,8 @@ use std::{
 use ahash::{HashMap, HashMapExt};
 use dashmap::DashMap;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
+use itertools::Itertools;
+use rand::{seq::SliceRandom, thread_rng};
 use rayon::prelude::*;
 
 use super::{
@@ -78,6 +80,9 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
         .progress_chars("##-");
 
     println!("generating forward labels");
+    let mut vertices = (0..graph.number_of_vertices()).collect_vec();
+    vertices.shuffle(&mut thread_rng());
+
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress_with_style(style)
