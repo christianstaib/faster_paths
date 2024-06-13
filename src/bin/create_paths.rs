@@ -28,10 +28,10 @@ fn main() {
 
     println!("Generating random pair paths");
     let paths = random_paths(
+        &*path_finder,
         args.number_of_paths,
         path_finder.number_of_vertices() as u32,
         args.max_seconds,
-        &*path_finder,
     );
 
     println!("Writing paths to file");
