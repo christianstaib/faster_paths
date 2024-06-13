@@ -1,6 +1,12 @@
+use std::{fs::File, io::BufReader, path::PathBuf};
+
 use serde::{Deserialize, Serialize};
 
 use super::{VertexId, Weight};
+use crate::{
+    ch::directed_contracted_graph::DirectedContractedGraph,
+    hl::directed_hub_graph::DirectedHubGraph,
+};
 
 /// Represents a request for finding a shortest path in a graph.
 ///
@@ -65,4 +71,21 @@ pub trait PathFindingWithInternalState {
     fn shortest_path_weight(&mut self, path_request: &ShortestPathRequest) -> Option<Weight>;
 
     fn number_of_vertices(&self) -> u32;
+}
+
+fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
+    let reader = BufReader::new(File::open(file).unwrap());
+
+    let pathfinder_string = file.to_str().unwrap();
+    if pathfinder_string.ends_with(".di.ch.bincode") {
+        let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
+        return Some(Box::new(contracted_graph));
+    }
+
+    if pathfinder_string.ends_with(".di.hl.bincode") {
+        let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).unwrap();
+        Some(Box::new(hub_graph));
+    }
+
+    None
 }
