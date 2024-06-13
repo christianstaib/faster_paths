@@ -8,7 +8,10 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     ch::directed_contracted_graph::DirectedContractedGraph,
-    graphs::{graph_functions::random_paths, path::PathFinding},
+    graphs::{
+        graph_factory::GraphFactory, graph_functions::random_paths, path::PathFinding, Graph,
+    },
+    hl::directed_hub_graph::DirectedHubGraph,
 };
 use indicatif::ProgressIterator;
 use itertools::Itertools;
@@ -35,9 +38,16 @@ fn main() {
     println!("Loading hub graph");
     let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
 
-    if args.hub_graph.to_str().unwrap().ends_with(".di.ch.bincode") {
-        let hub_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
+    let pathfinder_string = args.hub_graph.to_str().unwrap();
+    if pathfinder_string.ends_with(".di.ch.bincode") {
+        let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
+        path_finder = Box::new(contracted_graph);
+    } else if pathfinder_string.ends_with(".di.hl.bincode") {
+        let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).unwrap();
         path_finder = Box::new(hub_graph);
+    } else if pathfinder_string.ends_with(".gr") {
+        let graph = GraphFactory::from_file(&args.hub_graph);
+        path_finder = Box::new(graph);
     } else {
         panic!("cant read file \"{}\"", args.hub_graph.to_str().unwrap());
     }

@@ -1,4 +1,8 @@
-use self::edge::{DirectedEdge, DirectedWeightedEdge};
+use self::{
+    edge::{DirectedEdge, DirectedWeightedEdge},
+    path::{PathFinding, ShortestPathRequest},
+};
+use crate::classical_search::dijkstra::Dijkstra;
 
 pub mod adjacency_vec_graph;
 pub mod edge;
@@ -50,4 +54,20 @@ pub trait Graph: Send + Sync {
     }
 
     fn remove_vertex(&mut self, vertex: VertexId);
+}
+
+impl PathFinding for dyn Graph {
+    fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<path::Path> {
+        let dijkstra = Dijkstra::new(self);
+        dijkstra.shortest_path(path_request)
+    }
+
+    fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
+        let dijkstra = Dijkstra::new(self);
+        dijkstra.shortest_path_weight(path_request)
+    }
+
+    fn number_of_vertices(&self) -> u32 {
+        todo!()
+    }
 }

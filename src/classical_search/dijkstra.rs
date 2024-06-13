@@ -1,3 +1,7 @@
+use std::usize;
+
+use itertools::sorted;
+
 use crate::{
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
@@ -52,6 +56,21 @@ impl<'a> Dijkstra<'a> {
         let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, source);
 
         while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+            self.graph
+                .out_edges(vertex)
+                .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
+        }
+
+        data
+    }
+
+    pub fn single_source_with_order(&self, source: VertexId, order: &[u32]) -> DijkstraDataVec {
+        let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, source);
+
+        while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+            if order[vertex as usize] <= order[source as usize] {
+                continue;
+            }
             self.graph
                 .out_edges(vertex)
                 .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
