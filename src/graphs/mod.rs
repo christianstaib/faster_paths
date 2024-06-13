@@ -56,18 +56,16 @@ pub trait Graph: Send + Sync {
     fn remove_vertex(&mut self, vertex: VertexId);
 }
 
-impl PathFinding for dyn Graph {
-    fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<path::Path> {
-        let dijkstra = Dijkstra::new(self);
-        dijkstra.shortest_path(path_request)
-    }
-
-    fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        let dijkstra = Dijkstra::new(self);
-        dijkstra.shortest_path_weight(path_request)
-    }
-
-    fn number_of_vertices(&self) -> u32 {
-        todo!()
-    }
-}
+// impl PathFinding for dyn Graph {
+//     fn shortest_path(&self, path_request: &ShortestPathRequest) ->
+// Option<path::Path> {         shortest_path(self, path_request)
+//     }
+//
+//     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) ->
+// Option<Weight> {         shortest_path_weight(self, path_request)
+//     }
+//
+//     fn number_of_vertices(&self) -> u32 {
+//         todo!()
+//     }
+// }

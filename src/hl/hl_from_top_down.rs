@@ -16,7 +16,7 @@ use super::{
     label::{Label, LabelEntry},
 };
 use crate::{
-    classical_search::dijkstra::Dijkstra,
+    classical_search::dijkstra::{single_source, single_target, Dijkstra},
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
         edge::DirectedEdge,
@@ -144,7 +144,7 @@ pub fn generate_forward_label(
     graph: &dyn Graph,
     order: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
-    let data = Dijkstra::new(graph).single_source(vertex);
+    let data = single_source(graph, vertex);
     get_label_from_data(vertex, &data, order)
 }
 
@@ -153,7 +153,7 @@ pub fn generate_reverse_label(
     graph: &dyn Graph,
     order: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
-    let data = Dijkstra::new(graph).single_target(vertex);
+    let data = single_target(graph, vertex);
     get_label_from_data(vertex, &data, order)
 }
 

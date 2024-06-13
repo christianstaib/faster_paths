@@ -13,12 +13,12 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Dijkstra<'a> {
-    graph: &'a dyn Graph,
+    pub graph: &'a dyn Graph,
 }
 
 impl<'a> PathFinding for Dijkstra<'a> {
     fn shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        let data = self.get_data(route_request.source(), route_request.target());
+        let data = get_data(self.graph, route_request.source(), route_request.target());
         data.get_path(route_request.target())
     }
 
@@ -32,81 +32,79 @@ impl<'a> PathFinding for Dijkstra<'a> {
     }
 }
 
-impl<'a> Dijkstra<'a> {
-    pub fn new(graph: &dyn Graph) -> Dijkstra {
-        Dijkstra { graph }
-    }
+pub fn get_data(graph: &dyn Graph, source: VertexId, target: VertexId) -> DijkstraDataVec {
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
 
-    pub fn get_data(&self, source: VertexId, target: VertexId) -> DijkstraDataVec {
-        let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, source);
-
-        while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
-            if vertex == target {
-                return data;
-            }
-            self.graph
-                .out_edges(vertex)
-                .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        if vertex == target {
+            return data;
         }
-
-        data
+        graph
+            .out_edges(vertex)
+            .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
     }
 
-    pub fn single_source(&self, source: VertexId) -> DijkstraDataVec {
-        let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, source);
+    data
+}
 
-        while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
-            self.graph
-                .out_edges(vertex)
-                .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
+pub fn single_source(graph: &dyn Graph, source: VertexId) -> DijkstraDataVec {
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
+
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        graph
+            .out_edges(vertex)
+            .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
+    }
+
+    data
+}
+
+pub fn single_source_with_order(
+    graph: &dyn Graph,
+    source: VertexId,
+    order: &[u32],
+) -> DijkstraDataVec {
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
+
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        if order[vertex as usize] <= order[source as usize] {
+            continue;
         }
-
-        data
+        graph
+            .out_edges(vertex)
+            .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
     }
 
-    pub fn single_source_with_order(&self, source: VertexId, order: &[u32]) -> DijkstraDataVec {
-        let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, source);
+    data
+}
 
-        while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
-            if order[vertex as usize] <= order[source as usize] {
-                continue;
-            }
-            self.graph
-                .out_edges(vertex)
-                .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
-        }
+pub fn single_source_dijkstra_rank(
+    graph: &dyn Graph,
+    source: VertexId,
+) -> (Vec<Option<u32>>, DijkstraDataVec) {
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
+    let mut dijkstra_rank = vec![None; graph.number_of_vertices() as usize];
 
-        data
+    let mut current_dijkstra_rank = 0;
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        current_dijkstra_rank += 1;
+        dijkstra_rank[vertex as usize] = Some(current_dijkstra_rank);
+        graph
+            .out_edges(vertex)
+            .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
     }
 
-    pub fn single_source_dijkstra_rank(
-        &self,
-        source: VertexId,
-    ) -> (Vec<Option<u32>>, DijkstraDataVec) {
-        let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, source);
-        let mut dijkstra_rank = vec![None; self.graph.number_of_vertices() as usize];
+    (dijkstra_rank, data)
+}
 
-        let mut current_dijkstra_rank = 0;
-        while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
-            current_dijkstra_rank += 1;
-            dijkstra_rank[vertex as usize] = Some(current_dijkstra_rank);
-            self.graph
-                .out_edges(vertex)
-                .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
-        }
+pub fn single_target(graph: &dyn Graph, target: VertexId) -> DijkstraDataVec {
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, target);
 
-        (dijkstra_rank, data)
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        graph
+            .in_edges(vertex)
+            .for_each(|edge| data.update(vertex, edge.tail(), edge.weight()));
     }
 
-    pub fn single_target(&self, target: VertexId) -> DijkstraDataVec {
-        let mut data = DijkstraDataVec::new(self.graph.number_of_vertices() as usize, target);
-
-        while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
-            self.graph
-                .in_edges(vertex)
-                .for_each(|edge| data.update(vertex, edge.tail(), edge.weight()));
-        }
-
-        data
-    }
+    data
 }

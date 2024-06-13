@@ -22,7 +22,7 @@ use super::{
     Graph, VertexId,
 };
 use crate::{
-    classical_search::dijkstra::Dijkstra,
+    classical_search::dijkstra::{get_data, Dijkstra},
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::edge::DirectedEdge,
     hl::{
@@ -192,8 +192,6 @@ pub fn generate_random_pair_testcases(
     number_of_paths: u32,
     graph: &dyn Graph,
 ) -> Vec<ShortestPathTestCase> {
-    let dijkstra = Dijkstra::new(graph);
-
     (0..number_of_paths)
         .into_par_iter()
         .progress()
@@ -209,7 +207,7 @@ pub fn generate_random_pair_testcases(
 
                 let request = ShortestPathRequest::new(source, target).unwrap();
 
-                let data = dijkstra.get_data(request.source(), request.target());
+                let data = get_data(graph, request.source(), request.target());
                 let path = data.get_path(target);
 
                 let mut weight = None;
@@ -228,10 +226,10 @@ pub fn generate_random_pair_testcases(
 }
 
 pub fn random_paths(
+    path_finder: &dyn PathFinding,
     number_of_paths: u32,
     number_of_vertices: u32,
     max_seconds: u64,
-    path_finder: &dyn PathFinding,
 ) -> Vec<Path> {
     let start = Instant::now();
     (0..u32::MAX)
@@ -326,7 +324,6 @@ pub fn generate_random_pair_test_cases(
     graph: &dyn Graph,
     number_of_testcases: u32,
 ) -> Vec<ShortestPathTestCase> {
-    let dijkstra = Dijkstra::new(graph);
     (0..number_of_testcases)
         .progress()
         .par_bridge()
@@ -342,7 +339,7 @@ pub fn generate_random_pair_test_cases(
 
                 let request = ShortestPathRequest::new(source, target).unwrap();
 
-                let data = dijkstra.get_data(request.source(), request.target());
+                let data = get_data(graph, request.source(), request.target());
                 let path = data.get_path(target);
 
                 let mut weight = None;
@@ -468,12 +465,12 @@ pub fn generate_hiting_set_order_with_hub_labels(
 /// Retruns a vec where \[v\] is the level of a vertex v
 pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
     println!("Generating {} random paths", number_of_random_pairs);
-    let dijkstra = Dijkstra::new(graph);
+    let dijkstra = Dijkstra { graph };
     let paths = random_paths(
+        &dijkstra,
         number_of_random_pairs,
         graph.number_of_vertices(),
         u64::MAX,
-        &dijkstra,
     );
 
     println!("generating hitting set");

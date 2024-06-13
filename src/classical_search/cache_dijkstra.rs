@@ -5,6 +5,7 @@ use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 
 use crate::{
+    classical_search::dijkstra::Dijkstra,
     dijkstra_data::{
         dijkstra_data_vec::{DijkstraDataVec, DijsktraEntry},
         DijkstraData,
@@ -35,11 +36,12 @@ impl<'a> CacheDijkstra<'a> {
         path_finder: &dyn PathFinding,
     ) -> CacheDijkstra<'a> {
         println!("Generating {} random paths", number_of_random_pairs);
+        let dijkstra = Dijkstra { graph };
         let paths = random_paths(
+            &dijkstra,
             number_of_random_pairs,
             graph.number_of_vertices(),
             u64::MAX,
-            path_finder,
         );
 
         println!("generating hitting set");

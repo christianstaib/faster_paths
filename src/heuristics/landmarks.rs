@@ -8,7 +8,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::Heuristic;
 use crate::{
-    classical_search::dijkstra::Dijkstra,
+    classical_search::dijkstra::{single_source, single_target, Dijkstra},
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
         edge::DirectedWeightedEdge, graph_functions::shortests_path_tree,
@@ -23,9 +23,9 @@ pub struct Landmark {
 }
 
 impl Landmark {
-    fn generate_landmark(dijkstra: &Dijkstra, source: VertexId) -> Landmark {
-        let data_source = dijkstra.single_source(source);
-        let data_target = dijkstra.single_target(source);
+    fn generate_landmark(graph: &dyn Graph, source: VertexId) -> Landmark {
+        let data_source = single_source(graph, source);
+        let data_target = single_target(graph, source);
         Landmark {
             to_weight: data_source
                 .vertices
@@ -100,10 +100,9 @@ impl Landmarks {
 
         let mut landmarks_vertices: HashSet<VertexId> = HashSet::new();
 
-        let dijkstra = Dijkstra::new(graph);
         for _ in (0..num_landmarks).progress() {
             let source = thread_rng().gen_range(0..graph.number_of_vertices());
-            let data = dijkstra.single_source(source);
+            let data = single_source(graph, source);
             let tree = shortests_path_tree(&data);
 
             let mut size = get_size_avoid(graph, source, &landmarks_heuristic, &data);
@@ -127,7 +126,7 @@ impl Landmarks {
             let landmark_vertex = select_landmark_avoid(&size, &tree);
 
             landmarks_vertices.insert(landmark_vertex);
-            let landmark = Landmark::generate_landmark(&dijkstra, landmark_vertex);
+            let landmark = Landmark::generate_landmark(graph, landmark_vertex);
             landmarks_heuristic.landmarks.push(landmark);
         }
 
@@ -137,13 +136,12 @@ impl Landmarks {
     }
 
     pub fn for_vertices(vertices: &[VertexId], graph: &dyn Graph) -> Landmarks {
-        let dijkstra = Dijkstra::new(graph);
         let landmarks = vertices
             .into_par_iter()
             .progress()
             .map_init(rand::thread_rng, |rng, _| {
                 let source = rng.gen_range(0..graph.number_of_vertices());
-                Landmark::generate_landmark(&dijkstra, source)
+                Landmark::generate_landmark(graph, source)
             })
             .collect();
 
