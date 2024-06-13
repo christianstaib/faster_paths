@@ -21,7 +21,7 @@ use crate::{
 
 pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedContractedGraph {
     let dijkstra = Dijkstra::new(graph);
-    let paths = random_paths(5_000, graph.number_of_vertices(), &dijkstra);
+    let paths = random_paths(5_000, graph.number_of_vertices(), u64::MAX, &dijkstra);
     let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
     let landmarks = Landmarks::for_vertices(&hitting_set, graph);
 

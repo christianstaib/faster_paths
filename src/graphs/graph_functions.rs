@@ -230,10 +230,13 @@ pub fn generate_random_pair_testcases(
 pub fn random_paths(
     number_of_paths: u32,
     number_of_vertices: u32,
+    max_seconds: u64,
     path_finder: &dyn PathFinding,
 ) -> Vec<Path> {
+    let start = Instant::now();
     (0..u32::MAX)
-        .into_par_iter()
+        .take_while(|_| start.elapsed().as_secs() < max_seconds)
+        .par_bridge()
         .map_init(
             rand::thread_rng, // get the thread-local RNG
             |rng, _| {
@@ -469,6 +472,7 @@ pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph)
     let paths = random_paths(
         number_of_random_pairs,
         graph.number_of_vertices(),
+        u64::MAX,
         &dijkstra,
     );
 

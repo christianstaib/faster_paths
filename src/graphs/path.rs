@@ -40,7 +40,7 @@ impl ShortestPathRequest {
 ///
 /// This struct encapsulates the vertices that form a path in the graph and the
 /// total weight associated with traversing this path.
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Path {
     pub vertices: Vec<VertexId>,
     pub weight: Weight,
@@ -77,11 +77,11 @@ pub fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
     let pathfinder_string = file.to_str().unwrap();
     if pathfinder_string.ends_with(".gr") {
         let graph = GraphFactory::from_gr_file(file);
-        Some(Box::new(graph));
+        return Some(Box::new(graph));
     }
     if pathfinder_string.ends_with(".fmi") {
         let graph = GraphFactory::from_fmi_file(file);
-        Some(Box::new(graph));
+        return Some(Box::new(graph));
     }
 
     let reader = BufReader::new(File::open(file).unwrap());

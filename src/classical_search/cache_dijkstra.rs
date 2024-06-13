@@ -38,6 +38,7 @@ impl<'a> CacheDijkstra<'a> {
         let paths = random_paths(
             number_of_random_pairs,
             graph.number_of_vertices(),
+            u64::MAX,
             path_finder,
         );
 
