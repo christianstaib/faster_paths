@@ -1,14 +1,10 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::Parser;
-use faster_paths::{
-    ch::directed_contracted_graph::DirectedContractedGraph,
-    graphs::{
-        graph_factory::GraphFactory,
-        graph_functions::validate_and_time,
-        path::{PathFinding, ShortestPathTestCase},
-    },
-    hl::directed_hub_graph::DirectedHubGraph,
+use faster_paths::graphs::{
+    graph_factory::GraphFactory,
+    graph_functions::validate_and_time,
+    path::{read_pathfinder, ShortestPathTestCase},
 };
 
 /// Generates `number_of_tests` many random pair test cases for the graph
@@ -39,19 +35,7 @@ fn main() {
     let graph = GraphFactory::from_file(&args.graph);
 
     println!("Reading pathfinder");
-    let path_finder: Box<dyn PathFinding>;
-    let reader = BufReader::new(File::open(&args.pathfinder).unwrap());
-
-    let pathfinder_string = args.pathfinder.to_str().unwrap();
-    if pathfinder_string.ends_with(".di.ch.bincode") {
-        let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
-        path_finder = Box::new(contracted_graph);
-    } else if pathfinder_string.ends_with(".di.hl.bincode") {
-        let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).unwrap();
-        path_finder = Box::new(hub_graph);
-    } else {
-        panic!("cant read file \"{}\"", args.pathfinder.to_str().unwrap());
-    }
+    let path_finder = read_pathfinder(&args.pathfinder).unwrap();
 
     println!("Generating random pair test cases");
     let average_time = validate_and_time(&test_cases, &*path_finder, &graph);

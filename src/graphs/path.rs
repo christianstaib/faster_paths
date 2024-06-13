@@ -2,7 +2,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use super::{VertexId, Weight};
+use super::{graph_factory::GraphFactory, VertexId, Weight};
 use crate::{
     ch::directed_contracted_graph::DirectedContractedGraph,
     hl::directed_hub_graph::DirectedHubGraph,
@@ -73,10 +73,18 @@ pub trait PathFindingWithInternalState {
     fn number_of_vertices(&self) -> u32;
 }
 
-fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
-    let reader = BufReader::new(File::open(file).unwrap());
-
+pub fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
     let pathfinder_string = file.to_str().unwrap();
+    if pathfinder_string.ends_with(".gr") {
+        let graph = GraphFactory::from_gr_file(file);
+        Some(Box::new(graph));
+    }
+    if pathfinder_string.ends_with(".fmi") {
+        let graph = GraphFactory::from_fmi_file(file);
+        Some(Box::new(graph));
+    }
+
+    let reader = BufReader::new(File::open(file).unwrap());
     if pathfinder_string.ends_with(".di.ch.bincode") {
         let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
         return Some(Box::new(contracted_graph));
