@@ -20,7 +20,6 @@ use crate::graphs::{
 pub struct DirectedContractedGraph {
     pub upward_graph: AdjacencyVecGraph,
     pub downward_graph: AdjacencyVecGraph,
-    // pub shortcuts: Vec<(DirectedEdge, VertexId)>,
     pub shortcuts: HashMap<DirectedEdge, VertexId>,
     pub levels: Vec<Vec<u32>>,
 }

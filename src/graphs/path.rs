@@ -2,9 +2,9 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use super::{graph_factory::GraphFactory, VertexId, Weight};
+use super::{graph_factory::GraphFactory, Graph, VertexId, Weight};
 use crate::{
-    ch::directed_contracted_graph::DirectedContractedGraph,
+    ch::directed_contracted_graph::DirectedContractedGraph, classical_search::dijkstra::Dijkstra,
     hl::directed_hub_graph::DirectedHubGraph,
 };
 
@@ -75,14 +75,20 @@ pub trait PathFindingWithInternalState {
 
 pub fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
     let pathfinder_string = file.to_str().unwrap();
-    // if pathfinder_string.ends_with(".gr") {
-    //     let graph = GraphFactory::from_gr_file(file);
-    //     return Some(Box::new(graph));
-    // }
-    // if pathfinder_string.ends_with(".fmi") {
-    //     let graph = GraphFactory::from_fmi_file(file);
-    //     return Some(Box::new(graph));
-    // }
+    if pathfinder_string.ends_with(".gr") {
+        let graph = GraphFactory::from_gr_file(file);
+        let dijkstra = Dijkstra {
+            graph: Box::new(graph),
+        };
+        return Some(Box::new(dijkstra));
+    }
+    if pathfinder_string.ends_with(".fmi") {
+        let graph = GraphFactory::from_fmi_file(file);
+        let dijkstra = Dijkstra {
+            graph: Box::new(graph),
+        };
+        return Some(Box::new(dijkstra));
+    }
 
     let reader = BufReader::new(File::open(file).unwrap());
     if pathfinder_string.ends_with(".di.ch.bincode") {
