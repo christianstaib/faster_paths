@@ -11,8 +11,9 @@ use crate::{
         DijkstraData,
     },
     graphs::{
-        graph_functions::{hitting_set, random_paths, shortests_path_tree},
+        graph_functions::{all_edges, hitting_set, random_paths, shortests_path_tree},
         path::PathFinding,
+        reversible_vec_graph::ReversibleVecGraph,
         Graph, VertexId,
     },
     queue::DijkstraQueueElement,
@@ -36,7 +37,10 @@ impl<'a> CacheDijkstra<'a> {
         path_finder: &dyn PathFinding,
     ) -> CacheDijkstra<'a> {
         println!("Generating {} random paths", number_of_random_pairs);
-        let dijkstra = Dijkstra { graph };
+        let graph_copy = ReversibleVecGraph::from_edges(&all_edges(graph));
+        let dijkstra = Dijkstra {
+            graph: Box::new(graph_copy),
+        };
         let paths = random_paths(
             &dijkstra,
             number_of_random_pairs,

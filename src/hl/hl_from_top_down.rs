@@ -16,7 +16,7 @@ use super::{
     label::{Label, LabelEntry},
 };
 use crate::{
-    classical_search::dijkstra::{single_source, single_target, Dijkstra},
+    classical_search::dijkstra::{single_source, single_target},
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
         edge::DirectedEdge,

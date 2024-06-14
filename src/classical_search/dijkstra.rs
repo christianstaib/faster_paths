@@ -1,7 +1,5 @@
 use std::usize;
 
-use itertools::sorted;
-
 use crate::{
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
@@ -11,14 +9,13 @@ use crate::{
     queue::DijkstraQueueElement,
 };
 
-#[derive(Clone)]
-pub struct Dijkstra<'a> {
-    pub graph: &'a dyn Graph,
+pub struct Dijkstra {
+    pub graph: Box<dyn Graph>,
 }
 
-impl<'a> PathFinding for Dijkstra<'a> {
+impl PathFinding for Dijkstra {
     fn shortest_path(&self, route_request: &ShortestPathRequest) -> Option<Path> {
-        let data = get_data(self.graph, route_request.source(), route_request.target());
+        let data = get_data(&*self.graph, route_request.source(), route_request.target());
         data.get_path(route_request.target())
     }
 
@@ -30,6 +27,18 @@ impl<'a> PathFinding for Dijkstra<'a> {
     fn number_of_vertices(&self) -> u32 {
         self.graph.number_of_vertices()
     }
+}
+
+pub fn shortest_path(graph: &dyn Graph, route_request: &ShortestPathRequest) -> Option<Path> {
+    let data = get_data(graph, route_request.source(), route_request.target());
+    data.get_path(route_request.target())
+}
+
+pub fn shortest_path_weight(
+    graph: &dyn Graph,
+    path_request: &ShortestPathRequest,
+) -> Option<Weight> {
+    shortest_path(graph, path_request).map(|path| path.weight)
 }
 
 pub fn get_data(graph: &dyn Graph, source: VertexId, target: VertexId) -> DijkstraDataVec {

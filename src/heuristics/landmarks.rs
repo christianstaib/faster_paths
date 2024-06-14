@@ -8,7 +8,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::Heuristic;
 use crate::{
-    classical_search::dijkstra::{single_source, single_target, Dijkstra},
+    classical_search::dijkstra::{single_source, single_target},
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
         edge::DirectedWeightedEdge, graph_functions::shortests_path_tree,

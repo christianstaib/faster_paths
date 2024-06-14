@@ -13,6 +13,7 @@ use crate::{
         edge::{DirectedEdge, DirectedWeightedEdge},
         graph_functions::{all_edges, hitting_set, random_paths},
         reversible_hash_graph::ReversibleHashGraph,
+        reversible_vec_graph::ReversibleVecGraph,
         vec_graph::VecGraph,
         Graph, VertexId,
     },
@@ -20,7 +21,10 @@ use crate::{
 };
 
 pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedContractedGraph {
-    let dijkstra = Dijkstra { graph };
+    let graph_copy = ReversibleVecGraph::from_edges(&all_edges(graph));
+    let dijkstra = Dijkstra {
+        graph: Box::new(graph_copy),
+    };
     let paths = random_paths(&dijkstra, 5_000, graph.number_of_vertices(), u64::MAX);
     let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
     let landmarks = Landmarks::for_vertices(&hitting_set, graph);

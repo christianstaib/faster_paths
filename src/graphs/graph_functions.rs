@@ -24,7 +24,7 @@ use super::{
 use crate::{
     classical_search::dijkstra::{get_data, Dijkstra},
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
-    graphs::edge::DirectedEdge,
+    graphs::{edge::DirectedEdge, reversible_vec_graph::ReversibleVecGraph},
     hl::{
         hl_from_top_down::{generate_forward_label, generate_reverse_label},
         pathfinding::shortest_path,
@@ -465,19 +465,23 @@ pub fn generate_hiting_set_order_with_hub_labels(
 /// Retruns a vec where \[v\] is the level of a vertex v
 pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
     println!("Generating {} random paths", number_of_random_pairs);
-    let dijkstra = Dijkstra { graph };
+    let number_of_vertices = graph.number_of_vertices();
+    let graph = ReversibleVecGraph::from_edges(&all_edges(graph));
+    let dijkstra = Dijkstra {
+        graph: Box::new(graph),
+    };
     let paths = random_paths(
         &dijkstra,
         number_of_random_pairs,
-        graph.number_of_vertices(),
+        number_of_vertices,
         u64::MAX,
     );
 
     println!("generating hitting set");
-    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
+    let (mut hitting_setx, num_hits) = hitting_set(&paths, number_of_vertices);
 
     println!("generating vertex order");
-    let mut not_hitting_set = (0..graph.number_of_vertices())
+    let mut not_hitting_set = (0..number_of_vertices)
         .filter(|vertex| !hitting_setx.contains(vertex))
         .collect_vec();
 
@@ -488,7 +492,7 @@ pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph)
     hitting_setx.extend(not_hitting_set);
     hitting_setx.reverse();
 
-    let order: Vec<_> = (0..graph.number_of_vertices())
+    let order: Vec<_> = (0..number_of_vertices)
         .into_par_iter()
         .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
         .collect();
