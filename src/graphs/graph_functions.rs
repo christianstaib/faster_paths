@@ -95,6 +95,21 @@ pub fn all_edges(graph: &dyn Graph) -> Vec<DirectedWeightedEdge> {
         .collect()
 }
 
+pub fn change_representation<T>(graph: &dyn Graph) -> T
+where
+    T: Graph + Default,
+{
+    let mut new_graph = T::default();
+
+    for vertex in 0..graph.number_of_vertices() {
+        for edge in graph.out_edges(vertex) {
+            new_graph.set_edge(&edge);
+        }
+    }
+
+    new_graph
+}
+
 pub fn number_of_edges(graph: &dyn Graph) -> u32 {
     (0..graph.number_of_vertices())
         .map(|vertex| graph.out_edges(vertex).len() as u32)
