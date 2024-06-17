@@ -13,6 +13,7 @@ NETWORK_CH := $(NETWORK_GRAPH).ch.bincode
 NETWORK_HL := $(NETWORK_GRAPH).hl.bincode
 NETWORK_TESTS_RANDOM := $(NETWORK_GRAPH).tests_random.json
 NETWORK_TESTS_DIJKSTRA_RANK := $(NETWORK_GRAPH).tests_dijkstra_rank.json
+NETWROK_PATHS := $(NETWORK_GRAPH).paths.json
 
 NY_GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
 # NY_GRAPH := $(FMI_DIR)/bremen_dist.gr
@@ -20,6 +21,7 @@ NY_CH := $(NY_GRAPH)$(DIRECTED_CH_EXTENSION)
 NY_HL := $(NY_GRAPH)$(DIRECTED_HL_EXTENSION)
 NY_TESTS_RANDOM := $(NY_GRAPH).tests_random.json
 NY_TESTS_DIJKSTRA_RANK := $(NY_GRAPH).tests_dijkstra_rank.json
+NY_PATHS := $(NY_GRAPH).paths.json
 
 NUM_TESTS := 10000
 
@@ -51,13 +53,21 @@ create_tests_ny:
 		--random-pairs $(NY_TESTS_RANDOM)\
 		--dijkstra-rank-pairs $(NY_TESTS_DIJKSTRA_RANK)\
 		--number-of-tests $(NUM_TESTS)
-
 create_tests:
 	cargo run --bin create_tests --release --\
 		--graph $(NETWORK_GRAPH)\
 		--random-pairs  $(NETWORK_TESTS_RANDOM)\
 		--dijkstra-rank-pairs $(NETWORK_TESTS_DIJKSTRA_RANK)\
 		--number-of-tests $(NUM_TESTS)
+
+create_paths_ny:
+	cargo run --bin create_paths --release --\
+		--hub-graph $(NY_GRAPH)\
+		--paths $(NY_PATHS)
+create_paths:
+	cargo run --bin create_paths --release --\
+		--hub-graph $(NETWORK_GRAPH)\
+		--paths $(NETWROK_PATHS)
 
 
 create_ch_ny:
@@ -81,22 +91,6 @@ create_tphl:
 	cargo run --bin create_top_down_hl  --release --\
 		--graph $(NETWORK_GRAPH)\
 		--hub-graph $(NETWORK_HL)
-
-
-
-hitting_set_ny:
-	cargo run --bin hitting_set --release --\
-		--graph-path $(NY_GRAPH)\
-		--ch-path $(NY_CH)\
-		--hl-path $(NY_HL)\
-		--tests-path $(NY_TESTS)
-
-hitting_set:
-	cargo run --bin hitting_set --release --\
-		--graph-path $(NETWORK_GRAPH)\
-		--ch-path $(NETWORK_CH)\
-		--hl-path $(NETWORK_HL)\
-		--tests-path $(NETWORK_TESTS)
 
 
 create_hl_ny:
