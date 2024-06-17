@@ -18,7 +18,6 @@ use rayon::prelude::*;
 use super::{
     edge::DirectedWeightedEdge,
     path::{Path, PathFinding, ShortestPathRequest, ShortestPathTestCase},
-    vec_graph::VecGraph,
     Graph, VertexId,
 };
 use crate::{
