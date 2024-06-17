@@ -8,7 +8,6 @@ pub mod adjacency_vec_graph;
 pub mod edge;
 pub mod graph_factory;
 pub mod graph_functions;
-pub mod hash_graph;
 pub mod path;
 pub mod reversible_hash_graph;
 pub mod reversible_vec_graph;
