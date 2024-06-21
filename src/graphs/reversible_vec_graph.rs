@@ -12,6 +12,7 @@ use super::{
 pub struct ReversibleVecGraph {
     pub out_edges: Vec<Vec<DirectedTaillessWeightedEdge>>,
     pub in_edges: Vec<Vec<DirectedHeadlessWeightedEdge>>,
+    pub number_of_vertices: u32,
 }
 
 impl Default for ReversibleVecGraph {
@@ -60,7 +61,7 @@ impl Graph for ReversibleVecGraph {
     }
 
     fn number_of_vertices(&self) -> u32 {
-        self.out_edges.len() as u32
+        self.number_of_vertices
     }
 
     fn number_of_edges(&self) -> u32 {
@@ -106,6 +107,10 @@ impl Graph for ReversibleVecGraph {
     }
 
     fn set_edge(&mut self, edge: &DirectedWeightedEdge) {
+        self.number_of_vertices = *[edge.tail() + 1, edge.head() + 1, self.number_of_vertices]
+            .iter()
+            .max()
+            .unwrap();
         self.add_out_edge(edge);
         self.add_in_edge(edge);
     }
@@ -136,6 +141,7 @@ impl ReversibleVecGraph {
         ReversibleVecGraph {
             out_edges: Vec::new(),
             in_edges: Vec::new(),
+            number_of_vertices: 0,
         }
     }
 
