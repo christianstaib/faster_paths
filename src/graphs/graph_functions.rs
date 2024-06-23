@@ -18,7 +18,6 @@ use rayon::prelude::*;
 use super::{
     edge::DirectedWeightedEdge,
     path::{Path, PathFinding, ShortestPathRequest, ShortestPathTestCase},
-    vec_graph::VecGraph,
     Graph, VertexId,
 };
 use crate::{
@@ -94,6 +93,21 @@ pub fn all_edges(graph: &dyn Graph) -> Vec<DirectedWeightedEdge> {
     (0..graph.number_of_vertices())
         .flat_map(|vertex| graph.out_edges(vertex))
         .collect()
+}
+
+pub fn change_representation<T>(graph: &dyn Graph) -> T
+where
+    T: Graph + Default,
+{
+    let mut new_graph = T::default();
+
+    for vertex in 0..graph.number_of_vertices() {
+        for edge in graph.out_edges(vertex) {
+            new_graph.set_edge(&edge);
+        }
+    }
+
+    new_graph
 }
 
 pub fn number_of_edges(graph: &dyn Graph) -> u32 {

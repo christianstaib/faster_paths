@@ -1,15 +1,11 @@
-use self::{
-    edge::{DirectedEdge, DirectedWeightedEdge},
-    path::{Path, PathFinding, ShortestPathRequest},
-};
-use crate::classical_search::dijkstra::{shortest_path, shortest_path_weight};
+use self::edge::{DirectedEdge, DirectedWeightedEdge};
 
 pub mod adjacency_vec_graph;
 pub mod edge;
 pub mod graph_factory;
 pub mod graph_functions;
-pub mod hash_graph;
 pub mod path;
+pub mod reversible_graph;
 pub mod reversible_hash_graph;
 pub mod reversible_vec_graph;
 pub mod vec_graph;
@@ -53,18 +49,4 @@ pub trait Graph: Send + Sync {
     }
 
     fn remove_vertex(&mut self, vertex: VertexId);
-}
-
-impl PathFinding for dyn Graph {
-    fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
-        shortest_path(self, path_request)
-    }
-
-    fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        shortest_path_weight(self, path_request)
-    }
-
-    fn number_of_vertices(&self) -> u32 {
-        todo!()
-    }
 }
