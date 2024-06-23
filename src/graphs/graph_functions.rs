@@ -17,7 +17,9 @@ use rayon::prelude::*;
 
 use super::{
     edge::DirectedWeightedEdge,
-    path::{Path, PathFinding, ShortestPathRequest, ShortestPathTestCase},
+    path::{
+        Path, PathFinding, ShortestPathRequest, ShortestPathTestCase, ShortestPathTestTimingResult,
+    },
     Graph, VertexId,
 };
 use crate::{
@@ -311,7 +313,7 @@ pub fn validate_and_time(
     test_cases: &[ShortestPathTestCase],
     path_finder: &dyn PathFinding,
     graph: &dyn Graph,
-) -> Duration {
+) -> (Duration, Vec<ShortestPathTestTimingResult>) {
     let mut times = Vec::new();
 
     let mut paths = Vec::new();
@@ -319,7 +321,12 @@ pub fn validate_and_time(
     test_cases.iter().progress().for_each(|test_case| {
         let start = Instant::now();
         let path = path_finder.shortest_path(&test_case.request);
-        times.push(start.elapsed());
+        let duration = start.elapsed();
+        let timing_result = ShortestPathTestTimingResult {
+            test_case: test_case.clone(),
+            timing_in_seconds: duration.as_secs_f64(),
+        };
+        times.push(timing_result);
 
         paths.push(path);
     });
@@ -331,7 +338,13 @@ pub fn validate_and_time(
         }
     }
 
-    times.iter().sum::<Duration>() / times.len() as u32
+    let average: f64 = times
+        .iter()
+        .map(|result| result.timing_in_seconds)
+        .sum::<f64>()
+        / times.len() as f64;
+
+    (Duration::from_secs_f64(average), times)
 }
 
 pub fn generate_random_pair_test_cases(
