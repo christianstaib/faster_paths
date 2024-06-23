@@ -57,6 +57,12 @@ pub struct ShortestPathTestCase {
     pub dijkstra_rank: u32,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ShortestPathTestTimingResult {
+    pub test_case: ShortestPathTestCase,
+    pub timing_in_seconds: f64,
+}
+
 pub trait PathFinding: Send + Sync {
     fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path>;
 
