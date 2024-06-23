@@ -33,13 +33,13 @@ validate_time_ch_ny:
 	cargo r -r --bin validate_and_time --\
 		-p $(NY_CH)\
 		-g $(NY_GRAPH)\
-		-r $(NY_TESTS_RANDOM)
+		-t $(NY_TESTS_RANDOM)
 
 validate_time_hl_ny:
 	cargo r -r --bin validate_and_time --\
 		-p $(NY_HL)\
 		-g $(NY_GRAPH)\
-		-r $(NY_TESTS_RANDOM)
+		-t $(NY_TESTS_RANDOM)
 
 test:
 	cargo run --bin test --release --\

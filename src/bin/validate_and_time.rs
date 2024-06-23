@@ -13,7 +13,7 @@ use faster_paths::graphs::{
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Graph in `.fmi` of `.gr` format
+    /// Graph, CH, or HL
     #[arg(short, long)]
     pathfinder: PathBuf,
     /// Graph in `.fmi` of `.gr` format
@@ -21,14 +21,14 @@ struct Args {
     graph: PathBuf,
     /// Path where the test cases will be saved
     #[arg(short, long)]
-    random_pairs: PathBuf,
+    test_cases: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
 
     println!("Reading test cases");
-    let mut reader = BufReader::new(File::open(&args.random_pairs).unwrap());
+    let mut reader = BufReader::new(File::open(&args.test_cases).unwrap());
     let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(&mut reader).unwrap();
 
     println!("Reading graph");
@@ -37,10 +37,10 @@ fn main() {
     println!("Reading pathfinder");
     let path_finder = read_pathfinder(&args.pathfinder).unwrap();
 
-    println!("Generating random pair test cases");
+    println!("Testing & validating");
     let average_time = validate_and_time(&test_cases, &*path_finder, &graph);
     println!(
-        "took {:?} per query averaged over {} queries",
+        "All correct. Took {:?} per query averaged over {} queries",
         average_time,
         test_cases.len()
     );
