@@ -484,20 +484,7 @@ pub fn generate_hiting_set_order_with_hub_labels(
 }
 
 /// Retruns a vec where \[v\] is the level of a vertex v
-pub fn generate_hiting_set_order(number_of_random_pairs: u32, graph: &dyn Graph) -> Vec<u32> {
-    println!("Generating {} random paths", number_of_random_pairs);
-    let number_of_vertices = graph.number_of_vertices();
-    let graph = ReversibleVecGraph::from_edges(&all_edges(graph));
-    let dijkstra = Dijkstra {
-        graph: Box::new(graph),
-    };
-    let paths = random_paths(
-        &dijkstra,
-        number_of_random_pairs,
-        number_of_vertices,
-        u64::MAX,
-    );
-
+pub fn generate_hiting_set_order(paths: Vec<Path>, number_of_vertices: u32) -> Vec<u32> {
     println!("generating hitting set");
     let (mut hitting_setx, num_hits) = hitting_set(&paths, number_of_vertices);
 

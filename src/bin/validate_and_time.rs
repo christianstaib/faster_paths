@@ -1,4 +1,9 @@
-use std::{fs::File, io::BufReader, path::PathBuf, time::Duration};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::PathBuf,
+    time::Duration,
+};
 
 use clap::Parser;
 use faster_paths::graphs::{
@@ -19,9 +24,12 @@ struct Args {
     /// Graph in `.fmi` of `.gr` format
     #[arg(short, long)]
     graph: PathBuf,
-    /// Path where the test cases will be saved
+    /// Path of the test cases
     #[arg(short, long)]
     test_cases: PathBuf,
+    /// Path where the results shall be saved
+    #[arg(short, long)]
+    timing_results: Option<PathBuf>,
 }
 
 fn main() {
@@ -51,4 +59,10 @@ fn main() {
         average,
         test_cases.len()
     );
+
+    if let Some(timing_results) = args.timing_results {
+        println!("Writing tmining results");
+        let writer = BufWriter::new(File::create(timing_results).unwrap());
+        serde_json::to_writer(writer, &results).unwrap();
+    }
 }

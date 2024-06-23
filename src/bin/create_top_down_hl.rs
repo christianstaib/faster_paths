@@ -1,8 +1,13 @@
-use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::PathBuf,
+    time::Instant,
+};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{graph_factory::GraphFactory, graph_functions::generate_hiting_set_order},
+    graphs::{graph_factory::GraphFactory, graph_functions::generate_hiting_set_order, path::Path},
     hl::hl_from_top_down::generate_directed_hub_graph,
 };
 
@@ -13,6 +18,9 @@ struct Args {
     /// Infile in .gr or .fmi format
     #[arg(short, long)]
     graph: PathBuf,
+    /// Path of .fmi file
+    #[arg(short, long)]
+    paths: PathBuf,
     /// Outfile in .bincode format
     #[arg(short, long)]
     hub_graph: PathBuf,
@@ -21,11 +29,14 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    println!("loading paths");
+    let reader = BufReader::new(File::open(&args.paths).unwrap());
+    let paths: Vec<Path> = serde_json::from_reader(reader).unwrap();
+
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let number_of_paths = 10_000;
-    let order = generate_hiting_set_order(number_of_paths, &graph);
+    let order = generate_hiting_set_order(paths, graph.number_of_vertices);
 
     println!("Generating hub graph");
     let start = Instant::now();

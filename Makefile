@@ -65,6 +65,7 @@ create_ch:
 create_tphl:
 	cargo run --bin create_top_down_hl  --release --\
 		--graph $(GRAPH)\
+		--paths $(PATHS)\
 		--hub-graph $(HL)
 
 
