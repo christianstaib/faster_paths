@@ -8,7 +8,7 @@ use faster_paths::graphs::{graph_functions::random_paths, path::read_pathfinder}
 struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
-    hub_graph: PathBuf,
+    pathfinder: PathBuf,
     /// Path of .fmi file
     #[arg(short, long, default_value = "1000")]
     number_of_paths: u32,
@@ -24,13 +24,13 @@ fn main() {
     let args = Args::parse();
 
     println!("Loading hub graph");
-    let path_finder = read_pathfinder(&args.hub_graph).unwrap();
+    let pathfinder = read_pathfinder(&args.pathfinder).unwrap();
 
     println!("Generating random pair paths");
     let paths = random_paths(
-        &*path_finder,
+        &*pathfinder,
         args.number_of_paths,
-        path_finder.number_of_vertices() as u32,
+        pathfinder.number_of_vertices() as u32,
         args.max_seconds,
     );
 
