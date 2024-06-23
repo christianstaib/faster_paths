@@ -313,7 +313,7 @@ pub fn validate_and_time(
     test_cases: &[ShortestPathTestCase],
     path_finder: &dyn PathFinding,
     graph: &dyn Graph,
-) -> (Duration, Vec<ShortestPathTestTimingResult>) {
+) -> Vec<ShortestPathTestTimingResult> {
     let mut times = Vec::new();
 
     let mut paths = Vec::new();
@@ -338,13 +338,7 @@ pub fn validate_and_time(
         }
     }
 
-    let average: f64 = times
-        .iter()
-        .map(|result| result.timing_in_seconds)
-        .sum::<f64>()
-        / times.len() as f64;
-
-    (Duration::from_secs_f64(average), times)
+    times
 }
 
 pub fn generate_random_pair_test_cases(

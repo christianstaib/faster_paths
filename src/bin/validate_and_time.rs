@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::{fs::File, io::BufReader, path::PathBuf, time::Duration};
 
 use clap::Parser;
 use faster_paths::graphs::{
@@ -38,10 +38,17 @@ fn main() {
     let path_finder = read_pathfinder(&args.pathfinder).unwrap();
 
     println!("Testing & validating");
-    let average_time = validate_and_time(&test_cases, &*path_finder, &graph);
+    let results = validate_and_time(&test_cases, &*path_finder, &graph);
+    let average: f64 = results
+        .iter()
+        .map(|result| result.timing_in_seconds)
+        .sum::<f64>()
+        / results.len() as f64;
+    let average = Duration::from_secs_f64(average);
+
     println!(
         "All correct. Took {:?} per query averaged over {} queries",
-        average_time,
+        average,
         test_cases.len()
     );
 }
