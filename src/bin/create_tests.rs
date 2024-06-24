@@ -16,10 +16,7 @@ struct Args {
     graph: PathBuf,
     /// Path where the test cases will be saved
     #[arg(short, long)]
-    random_pairs: PathBuf,
-    /// TODO
-    #[arg(short, long)]
-    dijkstra_rank_pairs: PathBuf,
+    test_cases: PathBuf,
     /// Number of tests to be generated
     #[arg(short, long)]
     number_of_tests: u32,
@@ -37,6 +34,6 @@ fn main() {
     println!("took {:?}", start.elapsed());
 
     println!("Writing test cases to file");
-    let mut writer = BufWriter::new(File::create(&args.random_pairs).unwrap());
+    let mut writer = BufWriter::new(File::create(&args.test_cases).unwrap());
     serde_json::to_writer(&mut writer, &random_pairs).unwrap();
 }

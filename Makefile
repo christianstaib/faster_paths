@@ -12,7 +12,7 @@ GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
 # GRAPH := $(FMI_DIR)/medi-ref-visibility.fmi
 CH := $(GRAPH).ch.bincode
 HL := $(GRAPH).hl.bincode
-TESTS_RANDOM := $(GRAPH).tests_random.json
+ESTS_RANDOM := $(GRAPH).tests_random.json
 TESTS_DIJKSTRA_RANK := $(GRAPH).tests_dijkstra_rank.json
 PATHS := $(GRAPH).paths.json
 
@@ -43,8 +43,7 @@ test:
 create_tests:
 	cargo run --bin create_tests --release --\
 		--graph $(GRAPH)\
-		--random-pairs  $(TESTS_RANDOM)\
-		--dijkstra-rank-pairs $(TESTS_DIJKSTRA_RANK)\
+		--test-cases $(TESTS_RANDOM)\
 		--number-of-tests $(NUM_TESTS)
 
 

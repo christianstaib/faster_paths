@@ -5,11 +5,9 @@ use std::{
     time::Instant,
 };
 
-use ahash::HashMap;
 use clap::Parser;
 use faster_paths::{
     ch::directed_contracted_graph::DirectedContractedGraph,
-    graphs::{edge::DirectedEdge, VertexId},
     hl::hl_from_ch::directed_hub_graph_from_directed_contracted_graph,
 };
 
