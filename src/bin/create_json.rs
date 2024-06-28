@@ -23,5 +23,5 @@ fn main() {
 
     println!("Writing graph");
     let writer = BufWriter::new(File::create(args.out_graph).unwrap());
-    bincode::serialize_into(writer, &graph).unwrap();
+    serde_json::to_writer(writer, &graph).unwrap();
 }
