@@ -12,7 +12,7 @@ GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
 # GRAPH := $(FMI_DIR)/medi-ref-visibility.fmi
 CH := $(GRAPH).ch.bincode
 HL := $(GRAPH).hl.bincode
-ESTS_RANDOM := $(GRAPH).tests_random.json
+TESTS_RANDOM := $(GRAPH).tests_random.json
 TESTS_DIJKSTRA_RANK := $(GRAPH).tests_dijkstra_rank.json
 PATHS := $(GRAPH).paths.json
 
