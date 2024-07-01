@@ -1,8 +1,9 @@
-use std::usize;
+use std::{collections::HashSet, usize};
 
 use crate::{
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
+        self,
         path::{Path, PathFinding, ShortestPathRequest},
         Graph, VertexId, Weight,
     },
@@ -113,6 +114,51 @@ pub fn single_target(graph: &dyn Graph, target: VertexId) -> DijkstraDataVec {
         graph
             .in_edges(vertex)
             .for_each(|edge| data.update(vertex, edge.tail(), edge.weight()));
+    }
+
+    data
+}
+
+pub fn top_down_ch(graph: &dyn Graph, source: VertexId, levels: &[u32]) -> DijkstraDataVec {
+    let mut alive = HashSet::new();
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
+
+    let mut ch_edges = Vec::new();
+
+    alive.insert(source);
+
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        if alive.is_empty() {
+            break;
+        }
+
+        graph.out_edges(vertex).for_each(|edge| {
+            let alt_weight = data.vertices[vertex as usize].weight.unwrap() + edge.weight();
+            let cur_weight = data.vertices[edge.head() as usize]
+                .weight
+                .unwrap_or(u32::MAX);
+            if alt_weight < cur_weight {
+                if alive.contains(&vertex) && levels[edge.head() as usize] > levels[source as usize]
+                {
+                    ch_edges.push(edge.head());
+                }
+
+                if !alive.contains(&vertex)
+                    || levels[edge.head() as usize] > levels[source as usize]
+                {
+                    alive.remove(&edge.head());
+                } else {
+                    alive.insert(edge.head());
+                }
+
+                data.vertices[edge.head() as usize].predecessor = Some(vertex);
+                data.vertices[edge.head() as usize].weight = Some(alt_weight);
+                data.queue
+                    .push(DijkstraQueueElement::new(alt_weight, edge.head()));
+            }
+        });
+
+        alive.remove(&vertex);
     }
 
     data
