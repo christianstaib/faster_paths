@@ -231,11 +231,7 @@ pub fn generate_random_pair_testcases(
                     weight = Some(path.weight);
                 }
 
-                ShortestPathTestCase {
-                    request,
-                    weight,
-                    dijkstra_rank: data.dijkstra_rank(),
-                }
+                ShortestPathTestCase { request, weight }
             },
         )
         .collect()
@@ -368,11 +364,7 @@ pub fn generate_random_pair_test_cases(
                     weight = Some(path.weight);
                 }
 
-                ShortestPathTestCase {
-                    request,
-                    weight,
-                    dijkstra_rank: data.dijkstra_rank(),
-                }
+                ShortestPathTestCase { request, weight }
             },
         )
         .collect()

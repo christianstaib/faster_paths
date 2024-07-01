@@ -54,7 +54,17 @@ pub struct Path {
 pub struct ShortestPathTestCase {
     pub request: ShortestPathRequest,
     pub weight: Option<Weight>,
-    pub dijkstra_rank: u32,
+}
+
+/// Represents a request for validating a shortest path in a graph.
+///
+/// This struct is used to encapsulate a shortest path request along with the
+/// weight of a shortest path, if there exists one.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ShortestPathTestCaseC {
+    pub source: u32,
+    pub target: u32,
+    pub weight: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
