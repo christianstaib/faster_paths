@@ -21,5 +21,5 @@ mkdir -p $data_path
 
 set -x
 sbatch -p fat -n 80 -t 72:00:00 --job-name=${filename} \
-	--output=ba_data/${filename}_${job_type}.txt --wrap="create_top_down_hl -g graphs/$graph -p $tests_path" -h ${hub_graph}
+	--output=ba_data/${filename}_${job_type}.txt --wrap="create_top_down_hl -g graphs/$graph -p $tests_path -h ${hub_graph}"
 set +x
