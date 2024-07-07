@@ -30,7 +30,7 @@ impl<'a> SerialAdaptiveSimulatedContractor<'a> {
         self.initialize(&graph);
 
         let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
-        let mut levels = Vec::new();
+        let mut level_to_verticies_map = Vec::new();
 
         println!("start contracting");
         let bar = ProgressBar::new(graph.number_of_vertices() as u64);
@@ -48,12 +48,12 @@ impl<'a> SerialAdaptiveSimulatedContractor<'a> {
 
             graph.remove_vertex(vertex);
 
-            levels.push(vec![vertex]);
+            level_to_verticies_map.push(vec![vertex]);
             bar.inc(1);
         }
         bar.finish();
 
-        (shortcuts.into_values().collect(), levels)
+        (shortcuts.into_values().collect(), level_to_verticies_map)
     }
 
     // Lazy poping the vertex with minimum priority.

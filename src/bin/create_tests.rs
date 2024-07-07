@@ -35,15 +35,6 @@ fn main() {
     let random_pairs = generate_random_pair_test_cases(&graph, args.number_of_tests);
     println!("took {:?}", start.elapsed());
 
-    let random_pairs = random_pairs
-        .into_iter()
-        .map(|test_case| ShortestPathTestCaseC {
-            source: test_case.request.source(),
-            target: test_case.request.target(),
-            weight: test_case.weight.unwrap_or(u32::MAX),
-        })
-        .collect_vec();
-
     println!("Writing test cases to file");
     let mut writer = BufWriter::new(File::create(&args.test_cases).unwrap());
     serde_json::to_writer(&mut writer, &random_pairs).unwrap();

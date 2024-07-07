@@ -305,7 +305,7 @@ pub fn shortests_path_tree(data: &DijkstraDataVec) -> Vec<Vec<VertexId>> {
     search_tree
 }
 
-pub fn validate_and_time(
+pub fn validate_path_and_time(
     test_cases: &[ShortestPathTestCase],
     path_finder: &dyn PathFinding,
     graph: &dyn Graph,
@@ -331,6 +331,37 @@ pub fn validate_and_time(
     for i in (0..test_cases.len()).progress() {
         if let Err(err) = validate_path(graph, &test_cases[i], &paths[i]) {
             panic!("top down hl wrong: {}", err);
+        }
+    }
+
+    times
+}
+
+pub fn validate_weight_and_time(
+    test_cases: &[ShortestPathTestCase],
+    path_finder: &dyn PathFinding,
+) -> Vec<ShortestPathTestTimingResult> {
+    let mut times = Vec::new();
+
+    let mut paths = Vec::new();
+    println!("Timing");
+    test_cases.iter().progress().for_each(|test_case| {
+        let start = Instant::now();
+        let weight = path_finder.shortest_path_weight(&test_case.request);
+        let duration = start.elapsed();
+        let timing_result = ShortestPathTestTimingResult {
+            test_case: test_case.clone(),
+            timing_in_seconds: duration.as_secs_f64(),
+        };
+        times.push(timing_result);
+
+        paths.push(weight);
+    });
+
+    println!("Validating");
+    for i in (0..test_cases.len()).progress() {
+        if paths[i] != test_cases[i].weight {
+            panic!("top down hl wrong: {}", 0);
         }
     }
 
@@ -476,7 +507,7 @@ pub fn generate_hiting_set_order_with_hub_labels(
 }
 
 /// Retruns a vec where \[v\] is the level of a vertex v
-pub fn generate_hiting_set_order(paths: Vec<Path>, number_of_vertices: u32) -> Vec<u32> {
+pub fn generate_vertex_to_level_map(paths: Vec<Path>, number_of_vertices: u32) -> Vec<u32> {
     println!("generating hitting set");
     let (mut hitting_setx, num_hits) = hitting_set(&paths, number_of_vertices);
 
@@ -492,9 +523,10 @@ pub fn generate_hiting_set_order(paths: Vec<Path>, number_of_vertices: u32) -> V
     hitting_setx.extend(not_hitting_set);
     hitting_setx.reverse();
 
-    let order: Vec<_> = (0..number_of_vertices)
+    let vertex_to_level_map: Vec<_> = (0..number_of_vertices)
         .into_par_iter()
         .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
         .collect();
-    order
+
+    vertex_to_level_map
 }

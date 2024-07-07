@@ -8,7 +8,7 @@ use std::{
 use clap::Parser;
 use faster_paths::graphs::{
     graph_factory::GraphFactory,
-    graph_functions::validate_and_time,
+    graph_functions::validate_weight_and_time,
     path::{read_pathfinder, ShortestPathTestCase},
 };
 
@@ -40,13 +40,13 @@ fn main() {
     let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(&mut reader).unwrap();
 
     println!("Reading graph");
-    let graph = GraphFactory::from_file(&args.graph);
+    let _graph = GraphFactory::from_file(&args.graph);
 
     println!("Reading pathfinder");
     let path_finder = read_pathfinder(&args.pathfinder).unwrap();
 
     println!("Testing & validating");
-    let results = validate_and_time(&test_cases, &*path_finder, &graph);
+    let results = validate_weight_and_time(&test_cases, &*path_finder);
     let average: f64 = results
         .iter()
         .map(|result| result.timing_in_seconds)

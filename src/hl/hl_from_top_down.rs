@@ -142,25 +142,25 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
 pub fn generate_forward_label(
     vertex: VertexId,
     graph: &dyn Graph,
-    order: &[u32],
+    vertex_to_level_map: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
     let data = single_source(graph, vertex);
-    get_label_from_data(vertex, &data, order)
+    get_label_from_data(vertex, &data, vertex_to_level_map)
 }
 
 pub fn generate_reverse_label(
     vertex: VertexId,
     graph: &dyn Graph,
-    order: &[u32],
+    vertex_to_level_map: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
     let data = single_target(graph, vertex);
-    get_label_from_data(vertex, &data, order)
+    get_label_from_data(vertex, &data, vertex_to_level_map)
 }
 
 pub fn get_label_from_data(
     vertex: VertexId,
     data: &DijkstraDataVec,
-    order: &[u32],
+    vertex_to_level_map: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
     let mut shortest_path_tree = shortests_path_tree(data);
     let mut shortcuts = Vec::new();
@@ -172,7 +172,7 @@ pub fn get_label_from_data(
         let mut heads = std::mem::take(&mut shortest_path_tree[tail]);
 
         while let Some(head) = heads.pop() {
-            if order[head as usize] > order[tail] {
+            if vertex_to_level_map[head as usize] > vertex_to_level_map[tail] {
                 stack.push(head as usize);
                 label.entries.push(LabelEntry {
                     vertex: head,

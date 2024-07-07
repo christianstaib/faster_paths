@@ -7,7 +7,9 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{graph_factory::GraphFactory, graph_functions::generate_hiting_set_order, path::Path},
+    graphs::{
+        graph_factory::GraphFactory, graph_functions::generate_vertex_to_level_map, path::Path,
+    },
     hl::hl_from_top_down::generate_directed_hub_graph,
 };
 
@@ -36,11 +38,11 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let order = generate_hiting_set_order(paths, graph.number_of_vertices);
+    let vertex_to_level_map = generate_vertex_to_level_map(paths, graph.number_of_vertices);
 
     println!("Generating hub graph");
     let start = Instant::now();
-    let hub_graph = generate_directed_hub_graph(&graph, &order);
+    let hub_graph = generate_directed_hub_graph(&graph, &vertex_to_level_map);
     println!("Generating all labels took {:?}", start.elapsed());
 
     println!("Saving hub graph as json");

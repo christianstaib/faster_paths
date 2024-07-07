@@ -10,10 +10,9 @@ DIRECTED_HL_EXTENSION := .di.hl.bincode
 # GRAPH := $(FMI_DIR)/pata-ref-visibility.fmi
 GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
 # GRAPH := $(FMI_DIR)/medi-ref-visibility.fmi
-CH := $(GRAPH).ch.bincode
-HL := $(GRAPH).hl.bincode
+CH := $(GRAPH).di_ch_bincode
+HL := $(GRAPH).di_hl_bincode
 TESTS_RANDOM := $(GRAPH).tests_random.json
-TESTS_DIJKSTRA_RANK := $(GRAPH).tests_dijkstra_rank.json
 PATHS := $(GRAPH).paths.json
 
 NUM_TESTS := 10000
@@ -21,13 +20,16 @@ NUM_TESTS := 10000
 dirs:
 	mkdir $(FMI_DIR)
 
-
+validate_time_dijkstra:
+	cargo r -r --bin validate_and_time --\
+		-p $(GRAPH)\
+		-g $(GRAPH)\
+		-t $(TESTS_RANDOM)
 validate_time_ch:
 	cargo r -r --bin validate_and_time --\
-		-p $(GRAPH_CH)\
-		-g $(GRAPH_GRAPH)\
-		-t $(GRAPH_TESTS_RANDOM)
-
+		-p $(CH)\
+		-g $(GRAPH)\
+		-t $(TESTS_RANDOM)
 validate_time_hl:
 	cargo r -r --bin validate_and_time --\
 		-p $(GRAPH_HL)\
@@ -66,6 +68,12 @@ create_tphl:
 		--graph $(GRAPH)\
 		--paths $(PATHS)\
 		--hub-graph $(HL)
+
+create_tpch:
+	cargo run --bin create_top_down_ch  --release --\
+		--graph $(GRAPH)\
+		--paths $(PATHS)\
+		--contracted-graph $(CH)
 
 
 create_hl:

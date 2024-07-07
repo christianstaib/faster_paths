@@ -11,7 +11,7 @@ use crate::{
         DijkstraData,
     },
     graphs::{
-        graph_functions::{all_edges, hitting_set, random_paths, shortests_path_tree},
+        graph_functions::{all_edges, hitting_set, random_paths},
         path::PathFinding,
         reversible_vec_graph::ReversibleVecGraph,
         Graph, VertexId,

@@ -1,9 +1,11 @@
 use std::{collections::HashSet, usize};
 
 use crate::{
+    ch::Shortcut,
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
         self,
+        edge::DirectedWeightedEdge,
         path::{Path, PathFinding, ShortestPathRequest},
         Graph, VertexId, Weight,
     },
@@ -119,7 +121,11 @@ pub fn single_target(graph: &dyn Graph, target: VertexId) -> DijkstraDataVec {
     data
 }
 
-pub fn top_down_ch(graph: &dyn Graph, source: VertexId, levels: &[u32]) -> DijkstraDataVec {
+pub fn top_down_ch(
+    graph: &dyn Graph,
+    source: VertexId,
+    vertex_to_level_map: &[u32],
+) -> Vec<Shortcut> {
     let mut alive = HashSet::new();
     let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
 
@@ -128,6 +134,24 @@ pub fn top_down_ch(graph: &dyn Graph, source: VertexId, levels: &[u32]) -> Dijks
     alive.insert(source);
 
     while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        if alive.contains(&vertex)
+            && vertex_to_level_map[vertex as usize] > vertex_to_level_map[source as usize]
+        {
+            alive.remove(&vertex);
+            let edge = DirectedWeightedEdge::new(
+                source,
+                vertex,
+                data.vertices[vertex as usize].weight.unwrap(),
+            )
+            .unwrap();
+            let predecessor = data.vertices[vertex as usize].predecessor.unwrap();
+            let shortcut = Shortcut {
+                edge,
+                vertex: predecessor,
+            };
+            ch_edges.push(shortcut);
+        }
+
         if alive.is_empty() {
             break;
         }
@@ -138,17 +162,10 @@ pub fn top_down_ch(graph: &dyn Graph, source: VertexId, levels: &[u32]) -> Dijks
                 .weight
                 .unwrap_or(u32::MAX);
             if alt_weight < cur_weight {
-                if alive.contains(&vertex) && levels[edge.head() as usize] > levels[source as usize]
-                {
-                    ch_edges.push(edge.head());
-                }
-
-                if !alive.contains(&vertex)
-                    || levels[edge.head() as usize] > levels[source as usize]
-                {
-                    alive.remove(&edge.head());
-                } else {
+                if alive.contains(&vertex) {
                     alive.insert(edge.head());
+                } else {
+                    alive.remove(&edge.head());
                 }
 
                 data.vertices[edge.head() as usize].predecessor = Some(vertex);
@@ -161,5 +178,5 @@ pub fn top_down_ch(graph: &dyn Graph, source: VertexId, levels: &[u32]) -> Dijks
         alive.remove(&vertex);
     }
 
-    data
+    ch_edges
 }
