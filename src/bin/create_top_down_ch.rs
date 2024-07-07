@@ -69,34 +69,6 @@ fn main() {
             for shortcut in shortcuts.iter() {
                 ch_neighbors_ch.push(shortcut.edge.head());
             }
-            ch_neighbors_ch.sort();
-
-            // test, can be commented out
-            if false {
-                let (forward_label, _) =
-                    generate_forward_label(vertex, &graph, &vertex_to_level_map);
-                let mut ch_neighbors_f_hl = Vec::new();
-                for entry in forward_label.entries.iter() {
-                    if let Some(predecessor) = entry.predecessor {
-                        if forward_label.entries[predecessor as usize].vertex == vertex {
-                            ch_neighbors_f_hl.push(entry.vertex);
-                        }
-                    }
-                }
-                assert_eq!(ch_neighbors_f_hl, ch_neighbors_ch);
-
-                let (backward_label, _) =
-                    generate_reverse_label(vertex, &graph, &vertex_to_level_map);
-                let mut ch_neighbors_b_hl = Vec::new();
-                for entry in backward_label.entries.iter() {
-                    if let Some(predecessor) = entry.predecessor {
-                        if backward_label.entries[predecessor as usize].vertex == vertex {
-                            ch_neighbors_b_hl.push(entry.vertex);
-                        }
-                    }
-                }
-                assert_eq!(ch_neighbors_b_hl, ch_neighbors_ch);
-            }
 
             shortcuts
         })
