@@ -1,11 +1,9 @@
-use std::{env::temp_dir, fs::File, io::BufWriter, path::PathBuf, time::Instant};
+use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::graphs::{
     graph_factory::GraphFactory, graph_functions::generate_random_pair_test_cases,
-    path::ShortestPathTestCaseC,
 };
-use itertools::Itertools;
 
 /// Generates `number_of_tests` many random pair test cases for the graph
 /// specified at `graph`. The test cases will be saved at `random_pairs`. For

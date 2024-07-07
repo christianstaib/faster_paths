@@ -4,11 +4,11 @@ use std::{
         atomic::{AtomicU32, Ordering},
         Arc,
     },
-    time::{Duration, Instant},
+    time::Instant,
     usize,
 };
 
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+use ahash::{HashMap, HashSet, HashSetExt};
 use dashmap::DashMap;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
@@ -23,9 +23,9 @@ use super::{
     Graph, VertexId,
 };
 use crate::{
-    classical_search::dijkstra::{get_data, Dijkstra},
+    classical_search::dijkstra::get_data,
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
-    graphs::{edge::DirectedEdge, reversible_vec_graph::ReversibleVecGraph},
+    graphs::edge::DirectedEdge,
     hl::{
         hl_from_top_down::{generate_forward_label, generate_reverse_label},
         pathfinding::shortest_path,

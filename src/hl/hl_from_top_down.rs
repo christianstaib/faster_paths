@@ -1,10 +1,6 @@
-use std::{
-    sync::{Arc, RwLock},
-    time::Instant,
-};
+use std::sync::{Arc, RwLock};
 
 use ahash::{HashMap, HashMapExt};
-use dashmap::DashMap;
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use rand::{seq::SliceRandom, thread_rng};

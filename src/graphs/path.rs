@@ -2,7 +2,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use super::{graph_factory::GraphFactory, Graph, VertexId, Weight};
+use super::{graph_factory::GraphFactory, VertexId, Weight};
 use crate::{
     ch::directed_contracted_graph::DirectedContractedGraph, classical_search::dijkstra::Dijkstra,
     hl::directed_hub_graph::DirectedHubGraph,
