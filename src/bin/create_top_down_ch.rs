@@ -14,12 +14,11 @@ use faster_paths::{
         adjacency_vec_graph::AdjacencyVecGraph, graph_factory::GraphFactory,
         graph_functions::generate_vertex_to_level_map, path::Path, Graph,
     },
-    hl::hl_from_top_down::{generate_forward_label, generate_reverse_label},
 };
 use indicatif::{ParallelProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use rand::prelude::*;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::prelude::*;
 
 /// Creates a hub graph top down.
 #[derive(Parser, Debug)]
@@ -60,37 +59,34 @@ fn main() {
         ProgressStyle::with_template("{wide_bar} {eta_precise}/{duration_precise}").unwrap();
 
     let start = Instant::now();
-    let forward_shortcuts: Vec<_> = vertices
+
+    let forward_shortcuts_and_edges: Vec<_> = vertices
         .into_par_iter()
+        .with_min_len(100)
         .progress_with_style(style)
-        .map(|vertex| {
-            let shortcuts = top_down_ch(&graph, vertex, &vertex_to_level_map);
-            let mut ch_neighbors_ch = Vec::new();
-            for shortcut in shortcuts.iter() {
-                ch_neighbors_ch.push(shortcut.edge.head());
-            }
+        .map(|vertex| top_down_ch(&graph, vertex, &vertex_to_level_map))
+        .collect();
 
+    let mut forward_edges = Vec::new();
+    let mut forward_shortcuts = HashMap::new();
+    for (shortcuts, edges) in forward_shortcuts_and_edges.into_iter() {
+        forward_edges.extend(edges);
+        forward_shortcuts.extend(
             shortcuts
-        })
-        .flatten()
-        .collect();
-    println!("took {:?}", start.elapsed());
-    println!(
-        "there are {} ch edges and {} normal ones",
-        forward_shortcuts.len(),
-        graph.number_of_edges()
-    );
+                .iter()
+                .map(|(edge, vertex)| (edge.reversed(), *vertex)),
+        );
+        forward_shortcuts.extend(shortcuts);
+    }
 
-    let upward_edges: Vec<_> = forward_shortcuts
-        .iter()
-        .map(|shortcut| shortcut.edge.clone())
-        .collect();
-    let upward_graph = AdjacencyVecGraph::new(&upward_edges, &vertex_to_level_map);
+    println!("took {:?}", start.elapsed());
+
+    let upward_graph = AdjacencyVecGraph::new(&forward_edges, &vertex_to_level_map);
     let downward_graph = upward_graph.clone();
     let contracted_graph = DirectedContractedGraph {
         upward_graph,
         downward_graph,
-        shortcuts: HashMap::new(),
+        shortcuts: forward_shortcuts,
         levels: Vec::new(),
     };
 

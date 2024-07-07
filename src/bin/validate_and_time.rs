@@ -8,7 +8,7 @@ use std::{
 use clap::Parser;
 use faster_paths::graphs::{
     graph_factory::GraphFactory,
-    graph_functions::validate_weight_and_time,
+    graph_functions::validate_path_and_time,
     path::{read_pathfinder, ShortestPathTestCase},
 };
 
@@ -46,7 +46,7 @@ fn main() {
     let path_finder = read_pathfinder(&args.pathfinder).unwrap();
 
     println!("Testing & validating");
-    let results = validate_weight_and_time(&test_cases, &*path_finder);
+    let results = validate_path_and_time(&test_cases, &*path_finder, &_graph);
     let average: f64 = results
         .iter()
         .map(|result| result.timing_in_seconds)

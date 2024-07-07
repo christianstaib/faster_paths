@@ -1,11 +1,9 @@
 use std::{collections::HashSet, usize};
 
 use crate::{
-    ch::Shortcut,
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
-        self,
-        edge::DirectedWeightedEdge,
+        edge::{DirectedEdge, DirectedWeightedEdge},
         path::{Path, PathFinding, ShortestPathRequest},
         Graph, VertexId, Weight,
     },
@@ -125,11 +123,12 @@ pub fn top_down_ch(
     graph: &dyn Graph,
     source: VertexId,
     vertex_to_level_map: &[u32],
-) -> Vec<Shortcut> {
+) -> (Vec<(DirectedEdge, VertexId)>, Vec<DirectedWeightedEdge>) {
     let mut alive = HashSet::new();
     let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
 
-    let mut ch_edges = Vec::new();
+    let mut shortcuts = Vec::new();
+    let mut edges = Vec::new();
 
     alive.insert(source);
 
@@ -138,18 +137,32 @@ pub fn top_down_ch(
             && vertex_to_level_map[vertex as usize] > vertex_to_level_map[source as usize]
         {
             alive.remove(&vertex);
+
             let edge = DirectedWeightedEdge::new(
                 source,
                 vertex,
                 data.vertices[vertex as usize].weight.unwrap(),
             )
             .unwrap();
-            let predecessor = data.vertices[vertex as usize].predecessor.unwrap();
-            let shortcut = Shortcut {
-                edge,
-                vertex: predecessor,
-            };
-            ch_edges.push(shortcut);
+            edges.push(edge.clone());
+
+            let mut new_vertex = vertex;
+            let mut predecessor = data.vertices[vertex as usize].predecessor.unwrap();
+            if predecessor != source {
+                loop {
+                    let new_predecessor = data.vertices[predecessor as usize]
+                        .predecessor
+                        .unwrap_or(source);
+
+                    let edge = DirectedEdge::new(source, new_vertex).unwrap();
+                    shortcuts.push((edge, predecessor));
+                    new_vertex = predecessor;
+                    predecessor = new_predecessor;
+                    if new_predecessor == source {
+                        break;
+                    }
+                }
+            }
         }
 
         if alive.is_empty() {
@@ -178,5 +191,5 @@ pub fn top_down_ch(
         alive.remove(&vertex);
     }
 
-    ch_edges
+    (shortcuts, edges)
 }
