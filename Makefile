@@ -4,12 +4,8 @@ FMI_DIR := $(DATA_DIR)
 DIRECTED_CH_EXTENSION := .di.ch.bincode
 DIRECTED_HL_EXTENSION := .di.hl.bincode
 
-# GRAPH := $(FMI_DIR)/stgtregbz.fmi
-# GRAPH := $(FMI_DIR)/network.fmi
-# GRAPH := $(FMI_DIR)/aegaeis10-visibility-small.fmi
-# GRAPH := $(FMI_DIR)/pata-ref-visibility.fmi
-GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
-# GRAPH := $(FMI_DIR)/medi-ref-visibility.fmi
+$ GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
+GRAPH := $(FMI_DIR)/aegaeis-ref-visibility.fmi
 CH := $(GRAPH).di_ch_bincode
 HL := $(GRAPH).di_hl_bincode
 TESTS_RANDOM := $(GRAPH).tests_random.json

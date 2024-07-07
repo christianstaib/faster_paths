@@ -23,7 +23,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    println!("Loading hub graph");
+    println!("Loading pathfinder");
     let pathfinder = read_pathfinder(&args.pathfinder).unwrap();
 
     println!("Generating random pair paths");
