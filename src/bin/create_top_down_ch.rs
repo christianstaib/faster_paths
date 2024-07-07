@@ -7,29 +7,16 @@ use std::{
 
 use ahash::{HashMap, HashMapExt};
 use clap::Parser;
-use dashmap::mapref::entry;
 use faster_paths::{
-    ch::{
-        directed_contracted_graph::DirectedContractedGraph,
-        helpers::generate_directed_contracted_graph, Shortcut,
-    },
+    ch::directed_contracted_graph::DirectedContractedGraph,
     classical_search::dijkstra::top_down_ch,
     graphs::{
-        adjacency_vec_graph::AdjacencyVecGraph,
-        edge::DirectedWeightedEdge,
-        graph_factory::GraphFactory,
-        graph_functions::{add_edge_bidrectional, all_edges, generate_vertex_to_level_map},
-        path::Path,
-        reversible_vec_graph::ReversibleVecGraph,
-        vec_graph::VecGraph,
-        Graph,
+        adjacency_vec_graph::AdjacencyVecGraph, graph_factory::GraphFactory,
+        graph_functions::generate_vertex_to_level_map, path::Path, Graph,
     },
-    hl::hl_from_top_down::{
-        generate_directed_hub_graph, generate_forward_label, generate_reverse_label,
-    },
+    hl::hl_from_top_down::{generate_forward_label, generate_reverse_label},
 };
 use indicatif::ParallelProgressIterator;
-use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 /// Creates a hub graph top down.
