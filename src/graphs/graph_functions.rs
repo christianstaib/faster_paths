@@ -1,15 +1,10 @@
 use std::{
     cmp::Reverse,
-    sync::{
-        atomic::{AtomicU32, Ordering},
-        Arc,
-    },
+    sync::atomic::{AtomicU32, Ordering},
     time::Instant,
-    usize,
 };
 
-use ahash::{HashMap, HashSet, HashSetExt};
-use dashmap::DashMap;
+use ahash::{HashSet, HashSetExt};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
@@ -25,12 +20,6 @@ use super::{
 use crate::{
     classical_search::dijkstra::get_data,
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
-    graphs::edge::DirectedEdge,
-    hl::{
-        hl_from_top_down::{generate_forward_label, generate_reverse_label},
-        pathfinding::shortest_path,
-    },
-    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
 
 /// Check if a route is correct for a given request. Panics if not.
@@ -399,111 +388,6 @@ pub fn generate_random_pair_test_cases(
             },
         )
         .collect()
-}
-
-/// Retruns a vec where \[v\] is the level of a vertex v
-pub fn generate_hiting_set_order_with_hub_labels(
-    number_of_hubs: u32,
-    graph: &dyn Graph,
-) -> Vec<u32> {
-    let mut order = (0..graph.number_of_vertices()).collect_vec();
-    order.shuffle(&mut thread_rng());
-
-    let shortcuts: Arc<DashMap<DirectedEdge, VertexId>> = Arc::new(DashMap::new());
-
-    let vertices =
-        (0..graph.number_of_vertices()).choose_multiple(&mut thread_rng(), number_of_hubs as usize);
-    let forward: Vec<_> = vertices
-        .par_iter()
-        .progress()
-        .map(|&vertex| {
-            let (label, label_shortcuts) = generate_forward_label(vertex, graph, &order);
-
-            for (edge, vertex_id) in label_shortcuts {
-                // DashMap's entry API can be used to efficiently check and update the map
-                shortcuts.entry(edge).or_insert(vertex_id);
-            }
-
-            (vertex, label)
-        })
-        .collect();
-
-    let reverse: Vec<_> = vertices
-        .par_iter()
-        .progress()
-        .map(|&vertex| {
-            let (label, label_shortcuts) = generate_reverse_label(vertex, graph, &order);
-
-            for (edge, vertex_id) in label_shortcuts {
-                // DashMap's entry API can be used to efficiently check and update the map
-                shortcuts.entry(edge).or_insert(vertex_id);
-            }
-
-            (vertex, label)
-        })
-        .collect();
-
-    let shortcuts = Arc::into_inner(shortcuts).unwrap().into_iter().collect();
-
-    let pb = ProgressBar::new((vertices.len().pow(2) - vertices.len()) as u64);
-    let paths: Vec<_> = forward
-        .par_iter()
-        .flat_map(|(vertex, forward_label)| {
-            reverse
-                .iter()
-                .filter(|(reverse_vertex, _)| reverse_vertex != vertex)
-                .filter_map(|(_, reverse_label)| {
-                    pb.inc(1);
-                    if let Some(mut path) = shortest_path(forward_label, reverse_label) {
-                        replace_shortcuts_slow(&mut path.vertices, &shortcuts);
-                        return Some(path);
-                    }
-                    None
-                })
-                .collect_vec()
-        })
-        .collect();
-    pb.finish();
-
-    println!("generating hitting set");
-    let (mut hitting_setx, num_hits) = hitting_set(&paths, graph.number_of_vertices());
-
-    println!("prepare vertex order");
-    let mut not_hitting_set = (0..graph.number_of_vertices())
-        .filter(|vertex| !hitting_setx.contains(vertex))
-        .collect_vec();
-
-    // shuffle to break neighboring ties
-    not_hitting_set.shuffle(&mut thread_rng());
-    not_hitting_set.sort_unstable_by_key(|&vertex| Reverse(num_hits[vertex as usize]));
-
-    hitting_setx.extend(not_hitting_set);
-    hitting_setx.reverse();
-
-    // hitting_setx maps (order -> vertex)
-    // order maps (vertex -> order)
-
-    println!("generate position map");
-    // Create a HashMap for quick lookup of positions in hitting_setx
-    let position_map: HashMap<u32, usize> = hitting_setx
-        .iter()
-        .progress()
-        .enumerate()
-        .map(|(idx, &vertex)| (vertex, idx))
-        .collect();
-
-    println!("generate order");
-    let order: Vec<u32> = (0..graph.number_of_vertices())
-        .into_par_iter()
-        .progress()
-        .map(|vertex| {
-            // Use expect to handle the case where vertex is not found
-            *position_map
-                .get(&vertex)
-                .expect("Vertex not found in hitting_setx") as u32
-        })
-        .collect();
-    order
 }
 
 /// Retruns a vec where \[v\] is the level of a vertex v
