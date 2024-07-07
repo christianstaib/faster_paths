@@ -16,7 +16,9 @@ use faster_paths::{
     },
     hl::hl_from_top_down::{generate_forward_label, generate_reverse_label},
 };
-use indicatif::ParallelProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressStyle};
+use itertools::Itertools;
+use rand::prelude::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 /// Creates a hub graph top down.
@@ -51,10 +53,16 @@ fn main() {
         level_to_verticies_map[level as usize].push(vertex as u32);
     }
 
+    let mut vertices = (0..graph.number_of_vertices()).collect_vec();
+    vertices.shuffle(&mut thread_rng());
+
+    let style =
+        ProgressStyle::with_template("{wide_bar} {eta_precise}/{duration_precise}").unwrap();
+
     let start = Instant::now();
-    let forward_shortcuts: Vec<_> = (0..graph.number_of_vertices())
+    let forward_shortcuts: Vec<_> = vertices
         .into_par_iter()
-        .progress()
+        .progress_with_style(style)
         .map(|vertex| {
             let shortcuts = top_down_ch(&graph, vertex, &vertex_to_level_map);
             let mut ch_neighbors_ch = Vec::new();
