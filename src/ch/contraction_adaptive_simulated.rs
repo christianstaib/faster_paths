@@ -1,4 +1,5 @@
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 
 use super::{
     contractor::{
@@ -34,11 +35,24 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
 
     println!("start predicting");
     for vertex in (0..graph.number_of_vertices()).progress() {
-        let mut range = Vec::new();
+        let mut predicted = Vec::new();
         for _ in 0..10 {
-            range.push(shortcut_generator.get_shortcuts_predicited(graph, vertex));
+            predicted.push(shortcut_generator.get_shortcuts_predicited(graph, vertex));
         }
-        println!(" {:?}", range);
+        let actual = shortcut_generator.get_shortcuts(graph, vertex).len() as usize;
+
+        let diff_percent = predicted
+            .into_iter()
+            .map(|x| ((actual as i32 - x as i32).abs() as f32 / actual as f32) * 100.0)
+            .collect_vec();
+
+        let mut diff = diff_percent.iter().sum::<f32>() / diff_percent.len() as f32;
+
+        if diff.is_nan() {
+            diff = 0.0;
+        }
+
+        println!("avg diff {:?}", diff);
     }
 
     let vec_graph = VecGraph::from_edges(&all_edges(graph));
