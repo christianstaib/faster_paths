@@ -74,6 +74,10 @@ fn sample_pairs(
     vec2: &Vec<DirectedWeightedEdge>,
     n: usize,
 ) -> Vec<(DirectedWeightedEdge, DirectedWeightedEdge)> {
+    if vec1.is_empty() || vec2.is_empty() {
+        return Vec::new();
+    }
+
     let mut rng = thread_rng();
 
     let mut pairs = Vec::with_capacity(n);
