@@ -23,10 +23,10 @@ pub fn generate_directed_contracted_graph(
 
     let mut shortcuts = HashMap::new();
 
-    // upward graph
-
     let style =
         ProgressStyle::with_template("{wide_bar} {percent_precise}% eta: {eta_precise}").unwrap();
+
+    // upward graph
     let upward_shortcuts_and_edges: Vec<_> = vertices
         .par_iter()
         .progress_with_style(style.clone())
