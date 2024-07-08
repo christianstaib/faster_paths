@@ -2,7 +2,6 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
-    time::Instant,
 };
 
 use clap::Parser;
@@ -40,16 +39,7 @@ fn main() {
 
     let vertex_to_level_map = generate_vertex_to_level_map(paths, graph.number_of_vertices);
 
-    let mut level_to_verticies_map = vec![Vec::new(); vertex_to_level_map.len()];
-    for (vertex, &level) in vertex_to_level_map.iter().enumerate() {
-        level_to_verticies_map[level as usize].push(vertex as u32);
-    }
-
-    let start = Instant::now();
-
     let contracted_graph = generate_directed_contracted_graph(graph, vertex_to_level_map);
-
-    println!("took {:?}", start.elapsed());
 
     println!("Writing contracted graph to file");
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
