@@ -32,7 +32,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let vec_graph = VecGraph::from_edges(&all_edges(graph));
     let priority_terms = decode_function("E:1_D:1_C:1");
 
-    let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, graph));
+    let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
 
     print!("start predicting");
