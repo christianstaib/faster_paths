@@ -5,20 +5,13 @@ use std::{
     time::Instant,
 };
 
-use ahash::{HashMap, HashMapExt};
 use clap::Parser;
 use faster_paths::{
-    ch::directed_contracted_graph::DirectedContractedGraph,
-    classical_search::dijkstra::top_down_ch,
+    ch::ch_from_top_down::generate_directed_contracted_graph,
     graphs::{
-        adjacency_vec_graph::AdjacencyVecGraph, graph_factory::GraphFactory,
-        graph_functions::generate_vertex_to_level_map, path::Path, Graph,
+        graph_factory::GraphFactory, graph_functions::generate_vertex_to_level_map, path::Path,
     },
 };
-use indicatif::{ParallelProgressIterator, ProgressStyle};
-use itertools::Itertools;
-use rand::prelude::*;
-use rayon::prelude::*;
 
 /// Creates a hub graph top down.
 #[derive(Parser, Debug)]
@@ -52,43 +45,11 @@ fn main() {
         level_to_verticies_map[level as usize].push(vertex as u32);
     }
 
-    let mut vertices = (0..graph.number_of_vertices()).collect_vec();
-    vertices.shuffle(&mut thread_rng());
-
-    let style =
-        ProgressStyle::with_template("{wide_bar} {eta_precise}/{duration_precise}").unwrap();
-
     let start = Instant::now();
 
-    let forward_shortcuts_and_edges: Vec<_> = vertices
-        .into_par_iter()
-        .with_min_len(100)
-        .progress_with_style(style)
-        .map(|vertex| top_down_ch(&graph, vertex, &vertex_to_level_map))
-        .collect();
-
-    let mut forward_edges = Vec::new();
-    let mut forward_shortcuts = HashMap::new();
-    for (shortcuts, edges) in forward_shortcuts_and_edges.into_iter() {
-        forward_edges.extend(edges);
-        forward_shortcuts.extend(
-            shortcuts
-                .iter()
-                .map(|(edge, vertex)| (edge.reversed(), *vertex)),
-        );
-        forward_shortcuts.extend(shortcuts);
-    }
+    let contracted_graph = generate_directed_contracted_graph(graph, vertex_to_level_map);
 
     println!("took {:?}", start.elapsed());
-
-    let upward_graph = AdjacencyVecGraph::new(&forward_edges, &vertex_to_level_map);
-    let downward_graph = upward_graph.clone();
-    let contracted_graph = DirectedContractedGraph {
-        upward_graph,
-        downward_graph,
-        shortcuts: forward_shortcuts,
-        levels: Vec::new(),
-    };
 
     println!("Writing contracted graph to file");
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());

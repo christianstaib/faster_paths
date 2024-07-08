@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::graphs::{edge::DirectedWeightedEdge, VertexId};
 
+pub mod ch_from_top_down;
 pub mod ch_priority_element;
 pub mod contraction_adaptive_non_simulated;
 pub mod contraction_adaptive_simulated;

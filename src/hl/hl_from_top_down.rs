@@ -24,49 +24,6 @@ use crate::{
     shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
 
-// TODO
-// pub fn generate_hub_graph(
-//     graph: &dyn Graph,
-//     order: &[u32],
-// ) -> (HubGraph, HashMap<DirectedEdge, VertexId>) {
-//     let shortcuts: Arc<DashMap<DirectedEdge, VertexId>> =
-// Arc::new(DashMap::new());
-//
-//     println!("generating labels");
-//     let labels: Vec<_> = (0..graph.number_of_vertices())
-//         .into_par_iter()
-//         .progress()
-//         .map(|vertex| {
-//             let (label, label_shortcuts) = generate_forward_label(vertex,
-// graph, order);
-//
-//             for (edge, vertex_id) in label_shortcuts {
-//                 // DashMap's entry API can be used to efficiently check and
-// update the map                 shortcuts.entry(edge).or_insert(vertex_id);
-//             }
-//
-//             label
-//         })
-//         .collect();
-//
-//     println!("generating shortcut map");
-//     let mut shortcuts: HashMap<DirectedEdge, VertexId> =
-//         Arc::into_inner(shortcuts).unwrap().into_iter().collect();
-//
-//     // the shortcuts for the reverse direction have not yet been
-//     // added.
-//     let reverse_shortcuts: Vec<_> = shortcuts
-//         .par_iter()
-//         .map(|(edge, &vertex)| (edge.reversed(), vertex))
-//         .filter(|(edge, _)| !shortcuts.contains_key(edge))
-//         .collect();
-//     shortcuts.extend(reverse_shortcuts);
-//
-//     let hub_graph = HubGraph { labels };
-//
-//     (hub_graph, shortcuts)
-// }
-
 pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {
     let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(RwLock::new(HashMap::new()));
