@@ -33,6 +33,8 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
 
+    let mut all_avg_dif = Vec::new();
+
     println!("start predicting");
     for vertex in (0..graph.number_of_vertices()).progress() {
         let mut predicted = Vec::new();
@@ -51,6 +53,8 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         if diff.is_nan() {
             diff = 0.0;
         }
+        all_avg_dif.push(diff);
+        let mut diff = all_avg_dif.iter().sum::<f32>() / all_avg_dif.len() as f32;
 
         println!("avg diff {:?}", diff);
     }
