@@ -95,7 +95,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
     fn get_shortcuts_predicited(&self, graph: &dyn Graph, vertex: VertexId) -> u32 {
         let n = 1_000;
 
-        let in_vertices = graph.out_edges(vertex).collect_vec();
+        let in_vertices = graph.in_edges(vertex).collect_vec();
         let out_vertices = graph.out_edges(vertex).collect_vec();
 
         let pairs = sample_pairs(&in_vertices, &out_vertices, n);

@@ -34,7 +34,11 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
 
     println!("start predicting");
     for vertex in (0..graph.number_of_vertices()).progress() {
-        shortcut_generator.get_shortcuts_predicited(graph, vertex);
+        let mut range = Vec::new();
+        for _ in 0..10 {
+            range.push(shortcut_generator.get_shortcuts_predicited(graph, vertex));
+        }
+        println!(" {:?}", range);
     }
 
     let vec_graph = VecGraph::from_edges(&all_edges(graph));
