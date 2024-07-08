@@ -32,7 +32,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
 
-    print!("start predicting");
+    println!("start predicting");
     for vertex in (0..graph.number_of_vertices()).progress() {
         shortcut_generator.get_shortcuts_predicited(graph, vertex);
     }
