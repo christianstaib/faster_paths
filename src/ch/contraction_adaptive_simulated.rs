@@ -1,6 +1,10 @@
+use indicatif::ProgressIterator;
+
 use super::{
     contractor::{
-        contraction_helper::{ShortcutGeneratorWithHeuristic, ShortcutGeneratorWithWittnessSearch},
+        contraction_helper::{
+            ShortcutGenerator, ShortcutGeneratorWithHeuristic, ShortcutGeneratorWithWittnessSearch,
+        },
         serial_witness_search_contractor::SerialAdaptiveSimulatedContractor,
     },
     helpers::generate_directed_contracted_graph,
@@ -30,6 +34,11 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
 
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(10, graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
+
+    for vertex in (0..graph.number_of_vertices()).progress() {
+        shortcut_generator.get_shortcuts_predicited(graph, vertex);
+    }
+
     let mut contractor =
         SerialAdaptiveSimulatedContractor::new(priority_terms, &shortcut_generator);
 
