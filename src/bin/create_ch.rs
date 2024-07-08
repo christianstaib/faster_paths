@@ -2,7 +2,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
-    ch::contraction_adaptive_simulated::contract_adaptive_simulated_with_witness,
+    ch::contraction_adaptive_simulated::contract_adaptive_simulated_with_landmarks,
     graphs::graph_factory::GraphFactory,
 };
 
@@ -27,7 +27,7 @@ fn main() {
     println!("Starting contracted graph generation");
     let start = Instant::now();
 
-    let contracted_graph = contract_adaptive_simulated_with_witness(&graph);
+    let contracted_graph = contract_adaptive_simulated_with_landmarks(&graph);
     println!("Generating contracted graph took {:?}", start.elapsed());
 
     println!("Writing contracted graph to file");

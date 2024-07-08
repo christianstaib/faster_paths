@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, usize};
 
-use ahash::{HashSet, HashSetExt};
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
 use rand::{thread_rng, Rng};
@@ -11,8 +11,10 @@ use crate::{
     classical_search::dijkstra::{single_source, single_target},
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
-        edge::DirectedWeightedEdge, graph_functions::shortests_path_tree,
-        path::ShortestPathRequest, Graph, VertexId, Weight,
+        edge::{DirectedEdge, DirectedWeightedEdge},
+        graph_functions::{all_edges, shortests_path_tree},
+        path::ShortestPathRequest,
+        Graph, VertexId, Weight,
     },
 };
 
@@ -63,6 +65,7 @@ impl Heuristic for Landmark {
 
 pub struct Landmarks {
     pub landmarks: Vec<Landmark>,
+    pub directed_edges: HashMap<DirectedEdge, Weight>,
 }
 
 impl Heuristic for Landmarks {
@@ -74,6 +77,11 @@ impl Heuristic for Landmarks {
     }
 
     fn upper_bound(&self, request: &ShortestPathRequest) -> Option<u32> {
+        let edge = DirectedEdge::new(request.source(), request.target()).unwrap();
+        if let Some(&weight) = self.directed_edges.get(&edge) {
+            return Some(weight);
+        }
+
         self.landmarks
             .iter()
             .flat_map(|landmark| landmark.upper_bound(request))
@@ -90,12 +98,21 @@ impl Heuristic for Landmarks {
 impl Landmarks {
     pub fn new(num_landmarks: u32, graph: &dyn Graph) -> Landmarks {
         let vertices = (0..num_landmarks).collect_vec();
-        Self::for_vertices(&vertices, graph)
+        let mut landmarks = Self::for_vertices(&vertices, graph);
+
+        for edge in all_edges(graph) {
+            landmarks
+                .directed_edges
+                .insert(edge.unweighted(), edge.weight());
+        }
+
+        landmarks
     }
 
     pub fn avoid(num_landmarks: u32, graph: &dyn Graph) -> Landmarks {
         let mut landmarks_heuristic = Landmarks {
             landmarks: Vec::new(),
+            directed_edges: HashMap::with_capacity(graph.number_of_edges() as usize),
         };
 
         let mut landmarks_vertices: HashSet<VertexId> = HashSet::new();
@@ -130,7 +147,11 @@ impl Landmarks {
             landmarks_heuristic.landmarks.push(landmark);
         }
 
-        println!("{:?}", landmarks_vertices);
+        for edge in all_edges(graph) {
+            landmarks_heuristic
+                .directed_edges
+                .insert(edge.unweighted(), edge.weight());
+        }
 
         landmarks_heuristic
     }
@@ -145,7 +166,10 @@ impl Landmarks {
             })
             .collect();
 
-        Landmarks { landmarks }
+        Landmarks {
+            landmarks,
+            directed_edges: HashMap::new(),
+        }
     }
 }
 
