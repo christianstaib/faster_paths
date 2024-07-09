@@ -1,5 +1,7 @@
 use indicatif::ProgressIterator;
+
 use itertools::Itertools;
+use rand::prelude::*;
 
 use super::{
     contractor::{
@@ -35,8 +37,12 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
 
     let mut all_avg_dif = Vec::new();
 
+    // shuffle vertices for smooth progress bar
+    let mut vertices = (0..graph.number_of_vertices()).collect_vec();
+    vertices.shuffle(&mut thread_rng());
+
     println!("start predicting");
-    for vertex in (0..graph.number_of_vertices()).progress() {
+    for vertex in vertices.into_iter().progress() {
         let mut predicted = Vec::new();
         for _ in 0..10 {
             predicted.push(shortcut_generator.get_shortcuts_predicited(graph, vertex));
