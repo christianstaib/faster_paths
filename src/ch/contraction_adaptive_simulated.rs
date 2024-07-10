@@ -69,7 +69,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         let new_predicted_edge_difference =
             shortcut_generator.get_edge_difference_predicited(&work_graph, state.vertex);
 
-        if new_predicted_edge_difference as f32 * 1.1 > state.priority as f32 {
+        if new_predicted_edge_difference as f32 * 1.25 > state.priority as f32 {
             state.priority = new_predicted_edge_difference;
             queue.push(state);
             continue;
