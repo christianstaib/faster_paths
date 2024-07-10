@@ -1,4 +1,9 @@
-use std::collections::BinaryHeap;
+use std::{
+    collections::BinaryHeap,
+    fs::File,
+    io::{BufWriter, Write},
+    time::Instant,
+};
 
 use ahash::{HashMap, HashMapExt};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
@@ -24,6 +29,7 @@ use crate::{
     graphs::{
         edge::DirectedEdge,
         graph_functions::{all_edges, neighbors},
+        reversible_hash_graph::ReversibleHashGraph,
         reversible_vec_graph::ReversibleVecGraph,
         vec_graph::VecGraph,
         Graph,
@@ -44,7 +50,7 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> DirectedContractedGraph {
-    let mut work_graph = ReversibleVecGraph::from_edges(&all_edges(graph));
+    let mut work_graph = ReversibleHashGraph::from_edges(&all_edges(graph));
 
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, &work_graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
@@ -66,8 +72,11 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let mut level_to_verticies_map = Vec::new();
     let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
 
+    let mut writer = BufWriter::new(File::create("time.csv").unwrap());
+
     println!("start contracting");
     let bar = ProgressBar::new(work_graph.number_of_vertices() as u64);
+    let mut start = Instant::now();
     while let Some(mut state) = queue.pop() {
         let new_predicted_edge_difference =
             shortcut_generator.get_edge_difference_predicited(&work_graph, state.vertex);
@@ -77,10 +86,14 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
             queue.push(state);
             continue;
         }
+        let duration_pop = start.elapsed();
+        start = Instant::now();
 
-        let neighbors = neighbors(state.vertex, &work_graph);
+        // let neighbors = neighbors(state.vertex, &work_graph);
 
         let vertex_shortcuts = shortcut_generator.get_shortcuts(&work_graph, state.vertex);
+        let duration_shortcuts = start.elapsed();
+        start = Instant::now();
 
         vertex_shortcuts.into_iter().for_each(|shortcut| {
             let current_weight = work_graph
@@ -91,8 +104,22 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
                 shortcuts.insert(shortcut.edge.unweighted(), shortcut);
             }
         });
+        let duration_add_shortcuts = start.elapsed();
+        start = Instant::now();
 
         work_graph.remove_vertex(state.vertex);
+
+        let duration_remove_vertex = start.elapsed();
+
+        writeln!(
+            writer,
+            "{} {} {} {}",
+            duration_pop.as_secs_f64(),
+            duration_shortcuts.as_secs_f64(),
+            duration_add_shortcuts.as_secs_f64(),
+            duration_remove_vertex.as_secs_f64()
+        );
+        start = Instant::now();
 
         //        queue = queue
         //            .into_par_iter()
@@ -110,6 +137,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         bar.inc(1);
     }
     bar.finish();
+    writer.flush();
 
     let (shortcuts, levels) = (
         shortcuts.into_values().collect_vec(),
