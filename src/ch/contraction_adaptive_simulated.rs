@@ -118,7 +118,8 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
             duration_shortcuts.as_secs_f64(),
             duration_add_shortcuts.as_secs_f64(),
             duration_remove_vertex.as_secs_f64()
-        );
+        )
+        .unwrap();
         start = Instant::now();
 
         //        queue = queue
