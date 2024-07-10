@@ -22,8 +22,11 @@ use crate::{
         Shortcut,
     },
     graphs::{
-        edge::DirectedEdge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
-        vec_graph::VecGraph, Graph,
+        edge::DirectedEdge,
+        graph_functions::{all_edges, neighbors},
+        reversible_vec_graph::ReversibleVecGraph,
+        vec_graph::VecGraph,
+        Graph,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
 };
@@ -69,11 +72,13 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         let new_predicted_edge_difference =
             shortcut_generator.get_edge_difference_predicited(&work_graph, state.vertex);
 
-        if new_predicted_edge_difference as f32 * 1.25 > state.priority as f32 {
-            state.priority = new_predicted_edge_difference;
-            queue.push(state);
-            continue;
-        }
+        // if new_predicted_edge_difference as f32 * 1.25 > state.priority as f32 {
+        //     state.priority = new_predicted_edge_difference;
+        //     queue.push(state);
+        //     continue;
+        // }
+
+        let neighbors = neighbors(state.vertex, &work_graph);
 
         let vertex_shortcuts = shortcut_generator.get_shortcuts(&work_graph, state.vertex);
 
@@ -88,6 +93,17 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         });
 
         work_graph.remove_vertex(state.vertex);
+
+        queue = queue
+            .into_par_iter()
+            .map(|mut state| {
+                if neighbors.contains(&state.vertex) {
+                    state.priority =
+                        shortcut_generator.get_edge_difference_predicited(graph, state.vertex);
+                }
+                state
+            })
+            .collect();
 
         level_to_verticies_map.push(vec![state.vertex]);
         bar.inc(1);
