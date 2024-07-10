@@ -69,7 +69,7 @@ pub struct ShortcutGeneratorWithHeuristic {
     pub heuristic: Box<dyn Heuristic>,
 }
 
-fn sample_pairs(
+fn sample_pairs_1(
     vec1: &Vec<DirectedWeightedEdge>,
     vec2: &Vec<DirectedWeightedEdge>,
     n: usize,
@@ -91,7 +91,7 @@ fn sample_pairs(
     pairs
 }
 
-fn sample_pairs_better(
+fn sample_pairs_2(
     vec1: &Vec<DirectedWeightedEdge>,
     vec2: &Vec<DirectedWeightedEdge>,
     n: usize,
@@ -124,7 +124,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
         let in_vertices = graph.in_edges(vertex).collect_vec();
         let out_vertices = graph.out_edges(vertex).collect_vec();
 
-        let pairs = sample_pairs_better(&in_vertices, &out_vertices, n);
+        let pairs = sample_pairs_2(&in_vertices, &out_vertices, n);
 
         let num_shortcuts_from_pairs = pairs
             .into_par_iter()
