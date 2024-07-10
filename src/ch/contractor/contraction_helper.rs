@@ -124,7 +124,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
         let in_vertices = graph.in_edges(vertex).collect_vec();
         let out_vertices = graph.out_edges(vertex).collect_vec();
 
-        let pairs = sample_pairs(&in_vertices, &out_vertices, n);
+        let pairs = sample_pairs_better(&in_vertices, &out_vertices, n);
 
         let num_shortcuts_from_pairs = pairs
             .into_par_iter()
