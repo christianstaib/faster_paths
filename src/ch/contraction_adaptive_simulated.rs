@@ -92,7 +92,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         // let neighbors = neighbors(state.vertex, &work_graph);
 
         let vertex_shortcuts = shortcut_generator.get_shortcuts(&work_graph, state.vertex);
-        let duration_shortcuts = start.elapsed();
+        let duration_gen_shortcuts = start.elapsed();
         start = Instant::now();
 
         vertex_shortcuts.into_iter().for_each(|shortcut| {
@@ -115,7 +115,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
             writer,
             "{} {} {} {}",
             duration_pop.as_secs_f64(),
-            duration_shortcuts.as_secs_f64(),
+            duration_gen_shortcuts.as_secs_f64(),
             duration_add_shortcuts.as_secs_f64(),
             duration_remove_vertex.as_secs_f64()
         )
