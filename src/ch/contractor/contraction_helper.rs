@@ -10,8 +10,10 @@ use crate::{
 };
 
 pub trait ShortcutGenerator: Send + Sync {
-    fn get_shortcuts_predicited(&self, graph: &dyn Graph, vertex: VertexId) -> u32 {
-        self.get_shortcuts(graph, vertex).len() as u32
+    fn get_edge_difference_predicited(&self, graph: &dyn Graph, vertex: VertexId) -> i32 {
+        self.get_shortcuts(graph, vertex).len() as i32
+            - graph.out_edges(vertex).len() as i32
+            - graph.in_edges(vertex).len() as i32
     }
     fn get_shortcuts(&self, graph: &dyn Graph, vertex: VertexId) -> Vec<Shortcut>;
 }
@@ -118,13 +120,13 @@ fn sample_pairs_2(
 }
 
 impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
-    fn get_shortcuts_predicited(&self, graph: &dyn Graph, vertex: VertexId) -> u32 {
+    fn get_edge_difference_predicited(&self, graph: &dyn Graph, vertex: VertexId) -> i32 {
         let n = 1_000;
 
         let in_vertices = graph.in_edges(vertex).collect_vec();
         let out_vertices = graph.out_edges(vertex).collect_vec();
 
-        let pairs = sample_pairs_2(&in_vertices, &out_vertices, n);
+        let pairs = sample_pairs_1(&in_vertices, &out_vertices, n);
 
         let num_shortcuts_from_pairs = pairs
             .into_par_iter()
@@ -149,8 +151,11 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
             .collect::<Vec<_>>()
             .len() as u32;
 
-        ((num_shortcuts_from_pairs as f32 / n as f32)
-            * (in_vertices.len() as f32 * out_vertices.len() as f32)) as u32
+        let num_shortcuts = ((num_shortcuts_from_pairs as f32 / n as f32)
+            * (in_vertices.len() as f32 * out_vertices.len() as f32))
+            as i32;
+
+        num_shortcuts - in_vertices.len() as i32 - out_vertices.len() as i32
     }
 
     fn get_shortcuts(&self, graph: &dyn Graph, vertex: VertexId) -> Vec<Shortcut> {
