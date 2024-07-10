@@ -80,7 +80,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let mut writer = BufWriter::new(File::create("time.csv").unwrap());
     writeln!(
         writer,
-        "pop, add shortcuts ,gen shortcuts, remove vertex, update neighbors"
+        "pop,add shortcuts,gen shortcuts,remove vertex,update neighbors"
     )
     .unwrap();
 
