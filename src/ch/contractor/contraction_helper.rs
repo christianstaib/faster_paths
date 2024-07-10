@@ -91,6 +91,32 @@ fn sample_pairs(
     pairs
 }
 
+fn sample_pairs_better(
+    vec1: &Vec<DirectedWeightedEdge>,
+    vec2: &Vec<DirectedWeightedEdge>,
+    n: usize,
+) -> Vec<(DirectedWeightedEdge, DirectedWeightedEdge)> {
+    if vec1.is_empty() || vec2.is_empty() {
+        return Vec::new();
+    }
+
+    let mut rng = thread_rng();
+
+    let mut pairs = Vec::with_capacity(n);
+
+    let mut shuffled_vec2 = vec2.clone();
+
+    let pairs_per_edge = n.div_ceil(vec1.len());
+    for edge1 in vec1.iter() {
+        shuffled_vec2.shuffle(&mut rng);
+        for edge2 in shuffled_vec2.iter().take(pairs_per_edge) {
+            pairs.push((edge1.clone(), edge2.clone()));
+        }
+    }
+
+    pairs
+}
+
 impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
     fn get_shortcuts_predicited(&self, graph: &dyn Graph, vertex: VertexId) -> u32 {
         let n = 1_000;
