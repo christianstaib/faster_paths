@@ -23,7 +23,11 @@ use super::{
 };
 use crate::{
     ch::{
-        ch_priority_element::ChPriorityElement, directed_contracted_graph::DirectedContractedGraph,
+        ch_priority_element::ChPriorityElement,
+        directed_contracted_graph::DirectedContractedGraph,
+        priority_function::{
+            cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors, PriorityFunction,
+        },
         Shortcut,
     },
     graphs::{
@@ -50,7 +54,7 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> DirectedContractedGraph {
-    let mut work_graph = ReversibleHashGraph::from_edges(&all_edges(graph));
+    let mut work_graph = ReversibleVecGraph::from_edges(&all_edges(graph));
 
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, &work_graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
@@ -74,36 +78,68 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
 
     let mut writer = BufWriter::new(File::create("time.csv").unwrap());
 
+    let mut priority_functions: Vec<Box<dyn PriorityFunction + Sync + Send>> = Vec::new();
+    priority_functions.push(Box::new(DeletedNeighbors::new()));
+    priority_functions.push(Box::new(CostOfQueries::new()));
+
+    priority_functions
+        .iter_mut()
+        .for_each(|f| f.initialize(graph));
+
     println!("start contracting");
     let bar = ProgressBar::new(work_graph.number_of_vertices() as u64);
     let mut start = Instant::now();
+    let mut x = 0;
     while let Some(mut state) = queue.pop() {
-        let new_predicted_edge_difference =
-            shortcut_generator.get_edge_difference_predicited(&work_graph, state.vertex);
+        // let mut new_predicted_edge_difference =
+        //     shortcut_generator.get_edge_difference_predicited(&work_graph,
+        // state.vertex);
 
-        if new_predicted_edge_difference as f32 * 1.3 > state.priority as f32 {
-            state.priority = new_predicted_edge_difference;
-            queue.push(state);
-            continue;
-        }
+        // new_predicted_edge_difference += priority_functions
+        //     .iter()
+        //     .map(|f| f.priority(state.vertex, graph, &Vec::new()))
+        //     .sum::<i32>();
+
+        // if new_predicted_edge_difference as f32 * 1.1 > state.priority as f32 {
+        //     state.priority = new_predicted_edge_difference;
+        //     queue.push(state);
+        //     x += 1;
+        //     println!("repush {}", x);
+        //     continue;
+        // }
+        // x = 0;
+
         let duration_pop = start.elapsed();
         start = Instant::now();
 
-        // let neighbors = neighbors(state.vertex, &work_graph);
+        priority_functions
+            .iter_mut()
+            .for_each(|f| f.update(state.vertex, graph));
 
-        let vertex_shortcuts = shortcut_generator.get_shortcuts(&work_graph, state.vertex);
+        let neighbors = neighbors(state.vertex, &work_graph);
+
+        let mut vertex_shortcuts = shortcut_generator.get_shortcuts(&work_graph, state.vertex);
         let duration_gen_shortcuts = start.elapsed();
         start = Instant::now();
 
+        vertex_shortcuts = vertex_shortcuts
+            .into_par_iter()
+            .flat_map(|shortcut| {
+                let current_weight = work_graph
+                    .get_edge_weight(&shortcut.edge.unweighted())
+                    .unwrap_or(u32::MAX);
+                if shortcut.edge.weight() >= current_weight {
+                    return None;
+                }
+                Some(shortcut)
+            })
+            .collect();
+
         vertex_shortcuts.into_iter().for_each(|shortcut| {
-            let current_weight = work_graph
-                .get_edge_weight(&shortcut.edge.unweighted())
-                .unwrap_or(u32::MAX);
-            if shortcut.edge.weight() < current_weight {
-                work_graph.set_edge(&shortcut.edge);
-                shortcuts.insert(shortcut.edge.unweighted(), shortcut);
-            }
+            work_graph.set_edge(&shortcut.edge);
+            shortcuts.insert(shortcut.edge.unweighted(), shortcut);
         });
+
         let duration_add_shortcuts = start.elapsed();
         start = Instant::now();
 
@@ -122,23 +158,26 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         .unwrap();
         start = Instant::now();
 
-        //        queue = queue
-        //            .into_par_iter()
-        //            .map(|mut state| {
-        //                if neighbors.contains(&state.vertex) {
-        //                    state.priority =
-        //
-        // shortcut_generator.get_edge_difference_predicited(graph, state.vertex);
-        //                }
-        //                state
-        //            })
-        //            .collect();
+        queue = queue
+            .into_par_iter()
+            .map(|mut state| {
+                if neighbors.contains(&state.vertex) {
+                    state.priority =
+                        shortcut_generator.get_edge_difference_predicited(graph, state.vertex);
+                    state.priority += priority_functions
+                        .iter()
+                        .map(|f| f.priority(state.vertex, graph, &Vec::new()))
+                        .sum::<i32>();
+                }
+                state
+            })
+            .collect();
 
         level_to_verticies_map.push(vec![state.vertex]);
         bar.inc(1);
     }
     bar.finish();
-    writer.flush();
+    writer.flush().unwrap();
 
     let (shortcuts, levels) = (
         shortcuts.into_values().collect_vec(),
