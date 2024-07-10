@@ -39,6 +39,7 @@ use crate::{
         Graph,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
+    queue,
 };
 
 pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedContractedGraph {
@@ -79,8 +80,8 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let mut writer = BufWriter::new(File::create("time.csv").unwrap());
 
     let mut priority_functions: Vec<Box<dyn PriorityFunction + Sync + Send>> = Vec::new();
-    priority_functions.push(Box::new(DeletedNeighbors::new()));
-    priority_functions.push(Box::new(CostOfQueries::new()));
+    // priority_functions.push(Box::new(DeletedNeighbors::new()));
+    // priority_functions.push(Box::new(CostOfQueries::new()));
 
     priority_functions
         .iter_mut()
@@ -89,32 +90,9 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     println!("start contracting");
     let bar = ProgressBar::new(work_graph.number_of_vertices() as u64);
     let mut start = Instant::now();
-    let mut x = 0;
-    while let Some(mut state) = queue.pop() {
-        // let mut new_predicted_edge_difference =
-        //     shortcut_generator.get_edge_difference_predicited(&work_graph,
-        // state.vertex);
-
-        // new_predicted_edge_difference += priority_functions
-        //     .iter()
-        //     .map(|f| f.priority(state.vertex, graph, &Vec::new()))
-        //     .sum::<i32>();
-
-        // if new_predicted_edge_difference as f32 * 1.1 > state.priority as f32 {
-        //     state.priority = new_predicted_edge_difference;
-        //     queue.push(state);
-        //     x += 1;
-        //     println!("repush {}", x);
-        //     continue;
-        // }
-        // x = 0;
-
+    while let Some(state) = queue.pop() {
         let duration_pop = start.elapsed();
         start = Instant::now();
-
-        priority_functions
-            .iter_mut()
-            .for_each(|f| f.update(state.vertex, graph));
 
         let neighbors = neighbors(state.vertex, &work_graph);
 
@@ -164,10 +142,6 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
                 if neighbors.contains(&state.vertex) {
                     state.priority =
                         shortcut_generator.get_edge_difference_predicited(graph, state.vertex);
-                    state.priority += priority_functions
-                        .iter()
-                        .map(|f| f.priority(state.vertex, graph, &Vec::new()))
-                        .sum::<i32>();
                 }
                 state
             })
