@@ -78,14 +78,11 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
 
     let mut writer = BufWriter::new(File::create("time.csv").unwrap());
-
-    let mut priority_functions: Vec<Box<dyn PriorityFunction + Sync + Send>> = Vec::new();
-    // priority_functions.push(Box::new(DeletedNeighbors::new()));
-    // priority_functions.push(Box::new(CostOfQueries::new()));
-
-    priority_functions
-        .iter_mut()
-        .for_each(|f| f.initialize(graph));
+    writeln!(
+        writer,
+        "pop, add shortcuts ,gen shortcuts, remove vertex, update neighbors"
+    )
+    .unwrap();
 
     println!("start contracting");
     let bar = ProgressBar::new(work_graph.number_of_vertices() as u64);
@@ -124,16 +121,6 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         work_graph.remove_vertex(state.vertex);
 
         let duration_remove_vertex = start.elapsed();
-
-        writeln!(
-            writer,
-            "{} {} {} {}",
-            duration_pop.as_secs_f64(),
-            duration_gen_shortcuts.as_secs_f64(),
-            duration_add_shortcuts.as_secs_f64(),
-            duration_remove_vertex.as_secs_f64()
-        )
-        .unwrap();
         start = Instant::now();
 
         queue = queue
@@ -146,6 +133,19 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
                 state
             })
             .collect();
+        let duration_update_neighbors = start.elapsed();
+
+        writeln!(
+            writer,
+            "{} {} {} {} {}",
+            duration_pop.as_secs_f64(),
+            duration_gen_shortcuts.as_secs_f64(),
+            duration_add_shortcuts.as_secs_f64(),
+            duration_remove_vertex.as_secs_f64(),
+            duration_update_neighbors.as_secs_f64()
+        )
+        .unwrap();
+        start = Instant::now();
 
         level_to_verticies_map.push(vec![state.vertex]);
         bar.inc(1);
