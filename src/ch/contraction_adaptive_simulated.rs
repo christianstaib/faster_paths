@@ -28,7 +28,7 @@ use crate::{
     },
     graphs::{
         edge::DirectedEdge, graph_functions::all_edges, reversible_hash_graph::ReversibleHashGraph,
-        vec_graph::VecGraph, Graph, VertexId,
+        reversible_vec_graph::ReversibleVecGraph, vec_graph::VecGraph, Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
 };
@@ -59,7 +59,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     // let hitting_set: HashSet<VertexId> = hitting_set.into_iter().collect();
     let hitting_set: HashSet<VertexId> = HashSet::new();
 
-    let mut work_graph = ReversibleHashGraph::from_edges(&all_edges(graph));
+    let mut work_graph = ReversibleVecGraph::from_edges(&all_edges(graph));
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, &work_graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
 
