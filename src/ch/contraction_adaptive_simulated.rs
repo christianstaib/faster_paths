@@ -5,7 +5,7 @@ use std::{
     time::Instant,
 };
 
-use ahash::{HashMap, HashMapExt};
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
@@ -23,23 +23,14 @@ use super::{
 };
 use crate::{
     ch::{
-        ch_priority_element::ChPriorityElement,
-        directed_contracted_graph::DirectedContractedGraph,
-        priority_function::{
-            cost_of_queries::CostOfQueries, deleted_neighbors::DeletedNeighbors, PriorityFunction,
-        },
+        ch_priority_element::ChPriorityElement, directed_contracted_graph::DirectedContractedGraph,
         Shortcut,
     },
     graphs::{
-        edge::DirectedEdge,
-        graph_functions::{all_edges, neighbors},
-        reversible_hash_graph::ReversibleHashGraph,
-        reversible_vec_graph::ReversibleVecGraph,
-        vec_graph::VecGraph,
-        Graph,
+        edge::DirectedEdge, graph_functions::all_edges, reversible_hash_graph::ReversibleHashGraph,
+        vec_graph::VecGraph, Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
-    queue,
 };
 
 pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedContractedGraph {
@@ -55,8 +46,20 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> DirectedContractedGraph {
-    let mut work_graph = ReversibleVecGraph::from_edges(&all_edges(graph));
+    // let mut work_graph = ReversibleHashGraph::from_edges(&all_edges(graph));
 
+    // let paths: Vec<Path>;
+    // {
+    //     let boxed_graph = Box::new(work_graph);
+    //     let dijkstra = Dijkstra { graph: boxed_graph };
+    //     paths = random_paths(&dijkstra, 10_000, graph.number_of_vertices() as
+    // u32, 3600); }
+
+    // let (hitting_set, _) = hitting_set(&paths, graph.number_of_vertices());
+    // let hitting_set: HashSet<VertexId> = hitting_set.into_iter().collect();
+    let hitting_set: HashSet<VertexId> = HashSet::new();
+
+    let mut work_graph = ReversibleHashGraph::from_edges(&all_edges(graph));
     let heuristic: Box<dyn Heuristic> = Box::new(Landmarks::new(100, &work_graph));
     let shortcut_generator = ShortcutGeneratorWithHeuristic { heuristic };
 
@@ -68,9 +71,13 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     let mut queue: BinaryHeap<_> = vertices
         .par_iter()
         .progress()
-        .map(|&vertex| ChPriorityElement {
-            vertex,
-            priority: shortcut_generator.get_edge_difference_predicited(&work_graph, vertex),
+        .map(|&vertex| {
+            let mut priority =
+                shortcut_generator.get_edge_difference_predicited(&work_graph, vertex);
+            if hitting_set.contains(&vertex) {
+                priority += i32::MAX / 2;
+            }
+            ChPriorityElement { vertex, priority }
         })
         .collect();
 
@@ -87,11 +94,13 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     println!("start contracting");
     let bar = ProgressBar::new(work_graph.number_of_vertices() as u64);
     let mut start = Instant::now();
+
+    let update_intervall = graph.number_of_vertices() / 10;
     while let Some(state) = queue.pop() {
         let duration_pop = start.elapsed();
         start = Instant::now();
 
-        let neighbors = neighbors(state.vertex, &work_graph);
+        // let neighbors = neighbors(state.vertex, &work_graph);
 
         let mut vertex_shortcuts = shortcut_generator.get_shortcuts(&work_graph, state.vertex);
         let duration_gen_shortcuts = start.elapsed();
@@ -123,21 +132,26 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         let duration_remove_vertex = start.elapsed();
         start = Instant::now();
 
-        queue = queue
-            .into_par_iter()
-            .map(|mut state| {
-                if neighbors.contains(&state.vertex) {
+        if bar.position() % update_intervall as u64 == 0 {
+            queue = queue
+                .into_par_iter()
+                .map(|mut state| {
+                    // if neighbors.contains(&state.vertex) {
                     state.priority =
                         shortcut_generator.get_edge_difference_predicited(graph, state.vertex);
-                }
-                state
-            })
-            .collect();
+                    if hitting_set.contains(&state.vertex) {
+                        state.priority += i32::MAX / 2;
+                    }
+                    // }
+                    state
+                })
+                .collect();
+        }
         let duration_update_neighbors = start.elapsed();
 
         writeln!(
             writer,
-            "{} {} {} {} {}",
+            "{},{},{},{},{}",
             duration_pop.as_secs_f64(),
             duration_gen_shortcuts.as_secs_f64(),
             duration_add_shortcuts.as_secs_f64(),
