@@ -46,17 +46,6 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> DirectedContractedGraph {
-    // let mut work_graph = ReversibleHashGraph::from_edges(&all_edges(graph));
-
-    // let paths: Vec<Path>;
-    // {
-    //     let boxed_graph = Box::new(work_graph);
-    //     let dijkstra = Dijkstra { graph: boxed_graph };
-    //     paths = random_paths(&dijkstra, 10_000, graph.number_of_vertices() as
-    // u32, 3600); }
-
-    // let (hitting_set, _) = hitting_set(&paths, graph.number_of_vertices());
-    // let hitting_set: HashSet<VertexId> = hitting_set.into_iter().collect();
     let hitting_set: HashSet<VertexId> = HashSet::new();
 
     let mut work_graph = ReversibleVecGraph::from_edges(&all_edges(graph));
