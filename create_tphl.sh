@@ -59,7 +59,7 @@ job_id_create_top_down_ch=$(
     --output=${graph_basename}/${graph_basename}_create_top_down_ch.txt \
     --dependency afterok:${job_id_create_paths} \
     --wrap=" \
-      create_top_down_hl \
+      create_top_down_ch \
       --graph ${graph_path} \
       --paths ${paths_path} \
       --contracted-graph ${ch_path}" |
