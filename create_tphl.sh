@@ -15,7 +15,6 @@ partition="single -n 40"
 graph_basename="$(basename -- "${graph_path}")"
 
 mkdir ${graph_basename}
-cp
 
 graph_path="${graph_basename}/${graph_basename}"
 paths="${graph_basename}/${graph_basename}_paths.json"
