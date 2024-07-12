@@ -8,8 +8,6 @@ while getopts :g: flag; do
   esac
 done
 
-set -x
-
 partition="dev_single -n 40"
 time="-t 30"
 
@@ -22,6 +20,7 @@ tests_path="${graph_basename}/${graph_basename}_tests.json"
 ch_path="${graph_basename}/${graph_basename}.di_ch_bincode"
 hl_path="${graph_basename}/${graph_basename}.di_hl_bincode"
 
+set -x
 job_id_create_paths=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_paths \
     --output=${graph_basename}/${graph_basename}_create_paths.txt \
@@ -40,4 +39,16 @@ job_id_create_tests=$(
       --number-of-tests 10000 \
       --test-cases ${tests_path}"
 )
+
+job_id_create_top_down_hl=$(
+  sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_top_down_hl \
+    --output=${graph_basename}/${graph_basename}_create_top_down_hl .txt \
+    --dependency afterok:${job_id_create_paths} \
+    --wrap=" \
+      create_top_down_hl \
+      --graph ${graph_path} \
+      --paths ${tests_path} \
+      --hub-graph ${hl_path}"
+)
+
 set +x
