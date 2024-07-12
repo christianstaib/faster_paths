@@ -27,8 +27,8 @@ use crate::{
         Shortcut,
     },
     graphs::{
-        edge::DirectedEdge, graph_functions::all_edges, reversible_hash_graph::ReversibleHashGraph,
-        reversible_vec_graph::ReversibleVecGraph, vec_graph::VecGraph, Graph, VertexId,
+        edge::DirectedEdge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
+        vec_graph::VecGraph, Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
 };

@@ -1,25 +1,44 @@
 #!/bin/bash
 
-unset graph
+unset graph_path
 
-while getopts :g:d: flag; do
-	case "${flag}" in
-	g) graph=${OPTARG} ;;
-	esac
+while getopts :g: flag; do
+  case "${flag}" in
+  g) graph_path=${OPTARG} ;;
+  esac
 done
 
-filename=$(basename -- "$graph")
-extension="${filename##*.}"
-filename="${filename%.*}"
-job_type="create_tphl"
-
-data_path=ba_data/$filename
-tests_path=${data_path}/${filename}.${extension}.json
-hub_graph=${data_path}/${filename}.${extension}.hl.bincode
-
-mkdir -p $data_path
-
 set -x
-sbatch -p fat -n 80 -t 72:00:00 --job-name=${filename} \
-	--output=ba_data/${filename}_${job_type}.txt --wrap="create_top_down_hl -g graphs/$graph -p $tests_path -h ${hub_graph}"
+
+partition="single -n 40"
+
+graph_basename="$(basename -- "${graph_path}")"
+
+mkdir ${graph_basename}
+cp
+
+graph_path="${graph_basename}/${graph_basename}"
+paths="${graph_basename}/${graph_basename}_paths.json"
+tests="${graph_basename}/${graph_basename}_pasts.json"
+ch_path="${graph_basename}/${graph_basename}.di_ch_bincode"
+hl_path="${graph_basename}/${graph_basename}.di_hl_bincode"
+
+job_id_create_paths=$(
+  sbatch -p ${partition} -t 72:00:00 --job-name=${graph_basename}_create_paths \
+    --output=${graph_basename}/${graph_basename}_create_paths.txt \
+    --wrap=" \
+      create_paths \
+      --pathfinder ${graph_path} \
+      --paths $tests_path"
+)
+
+job_id_create_tests=$(
+  sbatch -p ${partition} -t 72:00:00 --job-name=${graph_basename}_create_tests \
+    --output=${graph_basename}/${graph_basename}_create_tests.txt \
+    --wrap=" \
+      create_tests \
+      --graph ${graph_path} \
+      --number_of_tests 10000 \
+      --test_cases ${tests_path}"
+)
 set +x
