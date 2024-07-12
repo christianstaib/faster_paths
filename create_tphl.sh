@@ -37,7 +37,7 @@ job_id_create_tests=$(
     --wrap=" \
       create_tests \
       --graph ${graph_path} \
-      --number_of_tests 10000 \
-      --test_cases ${tests_path}"
+      --number-of-tests 10000 \
+      --test-cases ${tests_path}"
 )
 set +x
