@@ -74,7 +74,7 @@ job_id_validate_and_time_ch=$(
       _validate_and_time \
       --pathfinder ${ch_path} \
       --graph ${graph_path} \
-      --test_cases ${tests_path}" |
+      --test-cases ${tests_path}" |
     grep -o '[0-9]\+'
 )
 
@@ -86,7 +86,7 @@ job_id_validate_and_time_hl=$(
       _validate_and_time \
       --pathfinder ${hl_path} \
       --graph ${graph_path} \
-      --test_cases ${tests_path}" |
+      --test-cases ${tests_path}" |
     grep -o '[0-9]\+'
 )
 
