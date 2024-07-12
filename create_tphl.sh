@@ -18,7 +18,7 @@ graph_basename="$(basename -- "${graph_path}")"
 mkdir ${graph_basename}
 
 paths_path="${graph_basename}/${graph_basename}_paths.json"
-tests_path="${graph_basename}/${graph_basename}_pasts.json"
+tests_path="${graph_basename}/${graph_basename}_tests.json"
 ch_path="${graph_basename}/${graph_basename}.di_ch_bincode"
 hl_path="${graph_basename}/${graph_basename}.di_hl_bincode"
 
