@@ -71,7 +71,7 @@ job_id_validate_and_time_ch=$(
     --output=${graph_basename}/${graph_basename}_validate_and_time_ch.txt \
     --dependency afterok:${job_id_create_top_down_ch}:${job_id_create_tests} \
     --wrap=" \
-      _validate_and_time \
+      validate_and_time \
       --pathfinder ${ch_path} \
       --graph ${graph_path} \
       --test-cases ${tests_path}" |
@@ -83,7 +83,7 @@ job_id_validate_and_time_hl=$(
     --output=${graph_basename}/${graph_basename}_validate_and_time_hl.txt \
     --dependency afterok:${job_id_create_top_down_hl}:${job_id_create_tests} \
     --wrap=" \
-      _validate_and_time \
+      validate_and_time \
       --pathfinder ${hl_path} \
       --graph ${graph_path} \
       --test-cases ${tests_path}" |
