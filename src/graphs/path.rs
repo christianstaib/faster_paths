@@ -108,12 +108,17 @@ pub fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
 
     let reader = BufReader::new(File::open(file).unwrap());
     if pathfinder_string.ends_with(".di_ch_bincode") {
-        let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).unwrap();
+        let contracted_graph: DirectedContractedGraph = bincode::deserialize_from(reader).expect(
+            "Expected a directed contracted graph based on file extension but was unable to parse it",
+        );
+
         return Some(Box::new(contracted_graph));
     }
 
     if pathfinder_string.ends_with(".di_hl_bincode") {
-        let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).unwrap();
+        let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).expect(
+            "Expected a directed hub graph based on file extension but was unable to parse it",
+        );
         Some(Box::new(hub_graph));
     }
 
