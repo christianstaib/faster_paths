@@ -119,7 +119,8 @@ pub fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
         let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).expect(
             "Expected a directed hub graph based on file extension but was unable to parse it",
         );
-        Some(Box::new(hub_graph));
+
+        return Some(Box::new(hub_graph));
     }
 
     println!("was unable to match file {} ending", pathfinder_string);
