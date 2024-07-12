@@ -27,9 +27,9 @@ validate_time_ch:
 		-t $(TESTS_RANDOM)
 validate_time_hl:
 	cargo r -r --bin validate_and_time --\
-		-p $(GRAPH_HL)\
-		-g $(GRAPH_GRAPH)\
-		-t $(GRAPH_TESTS_RANDOM)
+		-p $(HL)\
+		-g $(GRAPH)\
+		-t $(TESTS_RANDOM)
 
 test:
 	cargo run --bin test --release --\
