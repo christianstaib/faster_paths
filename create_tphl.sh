@@ -10,7 +10,8 @@ done
 
 set -x
 
-partition="single -n 40"
+partition="dev_single -n 40"
+time=-t 30
 
 graph_basename="$(basename -- "${graph_path}")"
 
@@ -22,7 +23,7 @@ ch_path="${graph_basename}/${graph_basename}.di_ch_bincode"
 hl_path="${graph_basename}/${graph_basename}.di_hl_bincode"
 
 job_id_create_paths=$(
-  sbatch -p ${partition} -t 72:00:00 --job-name=${graph_basename}_create_paths \
+  sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_paths \
     --output=${graph_basename}/${graph_basename}_create_paths.txt \
     --wrap=" \
       create_paths \
@@ -31,7 +32,7 @@ job_id_create_paths=$(
 )
 
 job_id_create_tests=$(
-  sbatch -p ${partition} -t 72:00:00 --job-name=${graph_basename}_create_tests \
+  sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_tests \
     --output=${graph_basename}/${graph_basename}_create_tests.txt \
     --wrap=" \
       create_tests \
