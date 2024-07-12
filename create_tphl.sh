@@ -42,7 +42,7 @@ job_id_create_tests=$(
 
 job_id_create_top_down_hl=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_top_down_hl \
-    --output=${graph_basename}/${graph_basename}_create_top_down_hl .txt \
+    --output=${graph_basename}/${graph_basename}_create_top_down_hl.txt \
     --dependency afterok:${job_id_create_paths} \
     --wrap=" \
       create_top_down_hl \
