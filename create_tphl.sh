@@ -16,9 +16,8 @@ graph_basename="$(basename -- "${graph_path}")"
 
 mkdir ${graph_basename}
 
-graph_path="${graph_basename}/${graph_basename}"
-paths="${graph_basename}/${graph_basename}_paths.json"
-tests="${graph_basename}/${graph_basename}_pasts.json"
+paths_path="${graph_basename}/${graph_basename}_paths.json"
+tests_path="${graph_basename}/${graph_basename}_pasts.json"
 ch_path="${graph_basename}/${graph_basename}.di_ch_bincode"
 hl_path="${graph_basename}/${graph_basename}.di_hl_bincode"
 
@@ -28,7 +27,7 @@ job_id_create_paths=$(
     --wrap=" \
       create_paths \
       --pathfinder ${graph_path} \
-      --paths $tests_path"
+      --paths ${tests_path}"
 )
 
 job_id_create_tests=$(
