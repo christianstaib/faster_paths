@@ -27,7 +27,8 @@ job_id_create_paths=$(
     --wrap=" \
       create_paths \
       --pathfinder ${graph_path} \
-      --paths ${tests_path}"
+      --paths ${tests_path}" |
+    grep -o '[0-9]\+'
 )
 
 job_id_create_tests=$(
@@ -37,7 +38,8 @@ job_id_create_tests=$(
       create_tests \
       --graph ${graph_path} \
       --number-of-tests 10000 \
-      --test-cases ${tests_path}"
+      --test-cases ${tests_path}" |
+    grep -o '[0-9]\+'
 )
 
 job_id_create_top_down_hl=$(
@@ -48,7 +50,8 @@ job_id_create_top_down_hl=$(
       create_top_down_hl \
       --graph ${graph_path} \
       --paths ${tests_path} \
-      --hub-graph ${hl_path}"
+      --hub-graph ${hl_path}" |
+    grep -o '[0-9]\+'
 )
 
 set +x
