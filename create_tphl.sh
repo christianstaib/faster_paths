@@ -11,7 +11,7 @@ done
 set -x
 
 partition="dev_single -n 40"
-time=-t 30
+time="-t 30"
 
 graph_basename="$(basename -- "${graph_path}")"
 
