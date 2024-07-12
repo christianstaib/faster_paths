@@ -54,4 +54,16 @@ job_id_create_top_down_hl=$(
     grep -o '[0-9]\+'
 )
 
+job_id_create_top_down_ch=$(
+  sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_top_down_ch \
+    --output=${graph_basename}/${graph_basename}_create_top_down_ch.txt \
+    --dependency afterok:${job_id_create_paths} \
+    --wrap=" \
+      create_top_down_hl \
+      --graph ${graph_path} \
+      --paths ${tests_path} \
+      --contracted-graph ${ch_path}" |
+    grep -o '[0-9]\+'
+)
+
 set +x
