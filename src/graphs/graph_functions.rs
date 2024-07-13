@@ -230,11 +230,8 @@ pub fn random_paths(
     path_finder: &dyn PathFinding,
     number_of_paths: u32,
     number_of_vertices: u32,
-    max_seconds: u64,
 ) -> Vec<Path> {
-    let start = Instant::now();
     (0..u32::MAX)
-        .take_while(|_| start.elapsed().as_secs() < max_seconds)
         .par_bridge()
         .map_init(
             rand::thread_rng, // get the thread-local RNG

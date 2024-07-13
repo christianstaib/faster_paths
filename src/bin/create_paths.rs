@@ -10,11 +10,8 @@ struct Args {
     #[arg(short, long)]
     pathfinder: PathBuf,
     /// Path of .fmi file
-    #[arg(short, long, default_value = "1000")]
+    #[arg(short, long, default_value = "100000")]
     number_of_paths: u32,
-    /// Path of .fmi file
-    #[arg(short, long, default_value = "3600")]
-    max_seconds: u64,
     /// Path of .fmi file
     #[arg(short, long)]
     paths: PathBuf,
@@ -31,7 +28,6 @@ fn main() {
         &*pathfinder,
         args.number_of_paths,
         pathfinder.number_of_vertices() as u32,
-        args.max_seconds,
     );
 
     println!("Writing paths to file");

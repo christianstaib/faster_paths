@@ -25,7 +25,7 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
     let dijkstra = Dijkstra {
         graph: Box::new(graph_copy),
     };
-    let paths = random_paths(&dijkstra, 5_000, graph.number_of_vertices(), u64::MAX);
+    let paths = random_paths(&dijkstra, 5_000, graph.number_of_vertices());
     let hitting_set = hitting_set(&paths, graph.number_of_vertices()).0;
     let landmarks = Landmarks::for_vertices(&hitting_set, graph);
 

@@ -45,7 +45,6 @@ impl<'a> CacheDijkstra<'a> {
             &dijkstra,
             number_of_random_pairs,
             graph.number_of_vertices(),
-            u64::MAX,
         );
 
         println!("generating hitting set");
