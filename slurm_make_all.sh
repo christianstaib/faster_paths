@@ -49,7 +49,7 @@ job_id_create_tests=$(
 job_id_create_top_down_hl=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_top_down_hl \
     --output=${graph_basename}/create_top_down_hl.txt \
-    --dependency afterok:${job_id_create_paths} \
+    --dependency afterok:${job_id_create_random_paths} \
     --wrap=" \
       create_top_down_hl \
       --graph ${graph_path} \
@@ -61,7 +61,7 @@ job_id_create_top_down_hl=$(
 job_id_create_top_down_ch=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_top_down_ch \
     --output=${graph_basename}/create_top_down_ch.txt \
-    --dependency afterok:${job_id_create_paths} \
+    --dependency afterok:${job_id_create_random_paths} \
     --wrap=" \
       create_top_down_ch \
       --graph ${graph_path} \
