@@ -25,8 +25,8 @@ ch_path="${graph_basename}/graph.di_ch_bincode"
 hl_path="${graph_basename}/graph.di_hl_bincode"
 
 set -x
-job_id_create_paths=$(
-  sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_paths \
+job_id_create_random_paths=$(
+  sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_random_paths \
     --output=${graph_basename}/create_paths.txt \
     --wrap=" \
       create_paths \

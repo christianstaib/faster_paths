@@ -45,7 +45,7 @@ create_tests:
 
 
 create_paths:
-	cargo run --bin create_paths --release --\
+	cargo run --bin create_random_paths --release --\
 		--pathfinder $(GRAPH)\
 		--paths $(PATHS)
 
