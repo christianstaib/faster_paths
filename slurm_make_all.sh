@@ -94,7 +94,7 @@ job_id_validate_and_time_dijkstra=$(
 
 job_id_validate_and_time_random_ch=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_random_ch \
-    --output=${graph_basename}/validate_and_time_ch.txt \
+    --output=${graph_basename}/validate_and_time_random_ch.txt \
     --dependency afterok:${job_id_create_top_down_ch}:${job_id_create_tests} \
     --wrap=" \
       validate_and_time \
@@ -107,7 +107,7 @@ job_id_validate_and_time_random_ch=$(
 
 job_id_validate_and_time_random_hl=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_random_hl \
-    --output=${graph_basename}/validate_and_time_hl.txt \
+    --output=${graph_basename}/validate_and_time_random_hl.txt \
     --dependency afterok:${job_id_create_top_down_hl}:${job_id_create_tests} \
     --wrap=" \
       validate_and_time \
@@ -120,7 +120,7 @@ job_id_validate_and_time_random_hl=$(
 
 job_id_validate_and_time_rank_ch=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_rank_ch \
-    --output=${graph_basename}/validate_and_time_ch.txt \
+    --output=${graph_basename}/validate_and_time_rank_ch.txt \
     --dependency afterok:${job_id_create_top_down_ch}:${job_id_create_tests} \
     --wrap=" \
       validate_and_time \
@@ -133,7 +133,7 @@ job_id_validate_and_time_rank_ch=$(
 
 job_id_validate_and_time_rank_hl=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_rank_hl \
-    --output=${graph_basename}/validate_and_time_hl.txt \
+    --output=${graph_basename}/validate_and_time_rank_hl.txt \
     --dependency afterok:${job_id_create_top_down_hl}:${job_id_create_tests} \
     --wrap=" \
       validate_and_time \
