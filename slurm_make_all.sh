@@ -27,7 +27,7 @@ hl_path="${graph_basename}/graph.di_hl_bincode"
 set -x
 job_id_create_paths=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_paths \
-    --output=${graph_basename}/${graph_basename}_create_paths.txt \
+    --output=${graph_basename}/create_paths.txt \
     --wrap=" \
       create_paths \
       --pathfinder ${graph_path} \
@@ -37,7 +37,7 @@ job_id_create_paths=$(
 
 job_id_create_tests=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_tests \
-    --output=${graph_basename}/${graph_basename}_create_tests.txt \
+    --output=${graph_basename}/create_tests.txt \
     --wrap=" \
       create_tests \
       --graph ${graph_path} \
@@ -48,7 +48,7 @@ job_id_create_tests=$(
 
 job_id_create_top_down_hl=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_top_down_hl \
-    --output=${graph_basename}/${graph_basename}_create_top_down_hl.txt \
+    --output=${graph_basename}/create_top_down_hl.txt \
     --dependency afterok:${job_id_create_paths} \
     --wrap=" \
       create_top_down_hl \
@@ -60,7 +60,7 @@ job_id_create_top_down_hl=$(
 
 job_id_create_top_down_ch=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_create_top_down_ch \
-    --output=${graph_basename}/${graph_basename}_create_top_down_ch.txt \
+    --output=${graph_basename}/create_top_down_ch.txt \
     --dependency afterok:${job_id_create_paths} \
     --wrap=" \
       create_top_down_ch \
@@ -72,7 +72,7 @@ job_id_create_top_down_ch=$(
 
 job_id_validate_and_time_dijkstra=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_dijkstra \
-    --output=${graph_basename}/${graph_basename}_validate_and_time_dijkstra.txt \
+    --output=${graph_basename}/validate_and_time_dijkstra.txt \
     --wrap=" \
       validate_and_time \
       --pathfinder ${graph_path} \
@@ -85,7 +85,7 @@ job_id_validate_and_time_dijkstra=$(
 
 job_id_validate_and_time_ch=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_ch \
-    --output=${graph_basename}/${graph_basename}_validate_and_time_ch.txt \
+    --output=${graph_basename}/validate_and_time_ch.txt \
     --dependency afterok:${job_id_create_top_down_ch}:${job_id_create_tests} \
     --wrap=" \
       validate_and_time \
@@ -98,7 +98,7 @@ job_id_validate_and_time_ch=$(
 
 job_id_validate_and_time_hl=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_hl \
-    --output=${graph_basename}/${graph_basename}_validate_and_time_hl.txt \
+    --output=${graph_basename}/validate_and_time_hl.txt \
     --dependency afterok:${job_id_create_top_down_hl}:${job_id_create_tests} \
     --wrap=" \
       validate_and_time \
