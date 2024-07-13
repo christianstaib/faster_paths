@@ -38,7 +38,7 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
 
     let forward_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
-        .progress_with_style(style)
+        .progress_with_style(style.clone())
         .map(|vertex| {
             let (label, mut label_shortcuts) = generate_forward_label(vertex, graph, order);
 
@@ -63,7 +63,7 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
     println!("generating reverse labels");
     let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
         .into_par_iter()
-        .progress()
+        .progress_with_style(style.clone())
         .map(|vertex| {
             let (label, mut label_shortcuts) = generate_reverse_label(vertex, graph, order);
 

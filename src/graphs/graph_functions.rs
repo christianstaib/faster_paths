@@ -1,6 +1,9 @@
 use std::{
     cmp::Reverse,
-    sync::atomic::{AtomicU32, Ordering},
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc, Mutex,
+    },
     time::Instant,
 };
 
@@ -20,6 +23,7 @@ use super::{
 use crate::{
     classical_search::dijkstra::get_data,
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
+    queue::DijkstraQueueElement,
 };
 
 /// Check if a route is correct for a given request. Panics if not.
@@ -193,39 +197,6 @@ pub fn hitting_set(paths: &[Path], number_of_vertices: u32) -> (Vec<VertexId>, V
     )
 }
 
-pub fn generate_random_pair_testcases(
-    number_of_paths: u32,
-    graph: &dyn Graph,
-) -> Vec<ShortestPathTestCase> {
-    (0..number_of_paths)
-        .into_par_iter()
-        .progress()
-        .map_init(
-            rand::thread_rng, // get the thread-local RNG
-            |rng, _| {
-                // guarantee that source != tatget.
-                let source = rng.gen_range(0..graph.number_of_vertices());
-                let mut target = rng.gen_range(0..graph.number_of_vertices() - 1);
-                if target >= source {
-                    target += 1;
-                }
-
-                let request = ShortestPathRequest::new(source, target).unwrap();
-
-                let data = get_data(graph, request.source(), request.target());
-                let path = data.get_path(target);
-
-                let mut weight = None;
-                if let Some(path) = path {
-                    weight = Some(path.weight);
-                }
-
-                ShortestPathTestCase { request, weight }
-            },
-        )
-        .collect()
-}
-
 pub fn random_paths(
     path_finder: &dyn PathFinding,
     number_of_paths: u32,
@@ -354,6 +325,85 @@ pub fn validate_weight_and_time(
     times
 }
 
+pub fn single_source_dijkstra_rank(
+    graph: &dyn Graph,
+    source: VertexId,
+) -> (Vec<Option<u32>>, DijkstraDataVec) {
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
+    let mut dijkstra_rank = vec![None; graph.number_of_vertices() as usize];
+
+    let mut current_dijkstra_rank = 0;
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        current_dijkstra_rank += 1;
+        dijkstra_rank[vertex as usize] = Some(current_dijkstra_rank);
+        graph
+            .out_edges(vertex)
+            .for_each(|edge| data.update(vertex, edge.head(), edge.weight()));
+    }
+
+    (dijkstra_rank, data)
+}
+
+pub fn generate_dijkstra_rank_test_cases(
+    graph: &dyn Graph,
+    number_of_testcases: u32,
+    random_test_cases: &[ShortestPathTestCase],
+) -> Vec<ShortestPathTestCase> {
+    let max_rank = random_test_cases
+        .iter()
+        .max_by_key(|test_case| test_case.dijkstra_rank)
+        .unwrap()
+        .dijkstra_rank;
+
+    let max_rank_log = (max_rank as f32).log2() as u32;
+
+    let cases_per_slice = number_of_testcases / max_rank_log;
+
+    let mut cases: Vec<ShortestPathTestCase> = Vec::new();
+
+    let bar = Arc::new(Mutex::new(ProgressBar::new(number_of_testcases as u64)));
+    for power in 1..=max_rank_log {
+        cases.extend(
+            (0..u32::MAX)
+                .par_bridge()
+                .map_init(rand::thread_rng, |rng, _| {
+                    let source = rng.gen_range(0..graph.number_of_vertices());
+                    let (dijkstra_rank, data) = single_source_dijkstra_rank(graph, source);
+
+                    let possible_targets = (0..graph.number_of_vertices())
+                        .filter(|&vertex| {
+                            if let Some(vertex_dijkstra_rank) = dijkstra_rank[vertex as usize] {
+                                if (vertex_dijkstra_rank as f32).log2() as u32 == power {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        })
+                        .collect_vec();
+
+                    if let Some(&target) = possible_targets.choose(rng) {
+                        let case = ShortestPathTestCase {
+                            request: ShortestPathRequest::new(source, target).unwrap(),
+                            weight: data.vertices[target as usize].weight,
+                            dijkstra_rank: dijkstra_rank[target as usize].unwrap(),
+                        };
+
+                        bar.lock().unwrap().inc(1);
+                        return Some(case);
+                    }
+
+                    None
+                })
+                .flatten()
+                .take_any(cases_per_slice as usize)
+                .collect::<Vec<_>>(),
+        );
+    }
+    bar.lock().unwrap().finish();
+
+    cases
+}
+
 pub fn generate_random_pair_test_cases(
     graph: &dyn Graph,
     number_of_testcases: u32,
@@ -374,6 +424,11 @@ pub fn generate_random_pair_test_cases(
                 let request = ShortestPathRequest::new(source, target).unwrap();
 
                 let data = get_data(graph, request.source(), request.target());
+                let dijkstra_rank = data
+                    .vertices
+                    .iter()
+                    .filter(|&entry| entry.is_expanded)
+                    .count() as u32;
                 let path = data.get_path(target);
 
                 let mut weight = None;
@@ -381,7 +436,11 @@ pub fn generate_random_pair_test_cases(
                     weight = Some(path.weight);
                 }
 
-                ShortestPathTestCase { request, weight }
+                ShortestPathTestCase {
+                    request,
+                    weight,
+                    dijkstra_rank,
+                }
             },
         )
         .collect()

@@ -2,7 +2,8 @@ use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::graphs::{
-    graph_factory::GraphFactory, graph_functions::generate_random_pair_test_cases,
+    graph_factory::GraphFactory,
+    graph_functions::{generate_dijkstra_rank_test_cases, generate_random_pair_test_cases},
 };
 
 /// Generates `number_of_tests` many random pair test cases for the graph
@@ -16,7 +17,10 @@ struct Args {
     graph: PathBuf,
     /// Path where the test cases will be saved
     #[arg(short, long)]
-    test_cases: PathBuf,
+    random_test_cases: PathBuf,
+    /// Path where the test cases will be saved
+    #[arg(short, long)]
+    dijkstra_rank_test_cases: PathBuf,
     /// Number of tests to be generated
     #[arg(short, long, default_value = "1000")]
     number_of_tests: u32,
@@ -31,9 +35,14 @@ fn main() {
     println!("Generating random pair test cases");
     let start = Instant::now();
     let random_pairs = generate_random_pair_test_cases(&graph, args.number_of_tests);
+
+    let rank_pairs = generate_dijkstra_rank_test_cases(&graph, args.number_of_tests, &random_pairs);
     println!("took {:?}", start.elapsed());
 
     println!("Writing test cases to file");
-    let mut writer = BufWriter::new(File::create(&args.test_cases).unwrap());
+    let mut writer = BufWriter::new(File::create(&args.random_test_cases).unwrap());
     serde_json::to_writer(&mut writer, &random_pairs).unwrap();
+
+    let mut writer = BufWriter::new(File::create(&args.dijkstra_rank_test_cases).unwrap());
+    serde_json::to_writer(&mut writer, &rank_pairs).unwrap();
 }

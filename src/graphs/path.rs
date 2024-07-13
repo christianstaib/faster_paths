@@ -54,6 +54,7 @@ pub struct Path {
 pub struct ShortestPathTestCase {
     pub request: ShortestPathRequest,
     pub weight: Option<Weight>,
+    pub dijkstra_rank: u32,
 }
 
 /// Represents a request for validating a shortest path in a graph.
