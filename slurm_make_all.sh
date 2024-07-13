@@ -78,7 +78,7 @@ job_id_validate_and_time_dijkstra=$(
       --pathfinder ${graph_path} \
       --graph ${graph_path} \
       --test-cases ${random_tests_path} \
-      --timing-results = ${random_tests_dijkstra_timing_results_path} \
+      --timing-results ${random_tests_dijkstra_timing_results_path} \
       --maximum-number-of-tests 1000" |
     grep -o '[0-9]\+'
 )
@@ -91,7 +91,7 @@ job_id_validate_and_time_ch=$(
       validate_and_time \
       --pathfinder ${ch_path} \
       --graph ${graph_path} \
-      --timing-results = ${random_tests_ch_timing_results_path} \
+      --timing-results ${random_tests_ch_timing_results_path} \
       --test-cases ${random_tests_path}" |
     grep -o '[0-9]\+'
 )
@@ -104,7 +104,7 @@ job_id_validate_and_time_hl=$(
       validate_and_time \
       --pathfinder ${hl_path} \
       --graph ${graph_path} \
-      --timing-results = ${random_tests_hl_timing_results_path} \
+      --timing-results ${random_tests_hl_timing_results_path} \
       --test-cases ${random_tests_path}" |
     grep -o '[0-9]\+'
 )
