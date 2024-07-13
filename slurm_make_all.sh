@@ -73,6 +73,7 @@ job_id_create_top_down_ch=$(
 job_id_validate_and_time_dijkstra=$(
   sbatch -p ${partition} ${time} --job-name=${graph_basename}_validate_and_time_dijkstra \
     --output=${graph_basename}/validate_and_time_dijkstra.txt \
+    --dependency afterok:${job_id_create_tests} \
     --wrap=" \
       validate_and_time \
       --pathfinder ${graph_path} \
