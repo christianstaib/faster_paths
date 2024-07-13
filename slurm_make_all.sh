@@ -8,9 +8,8 @@ while getopts :g: flag; do
   esac
 done
 
-partition="dev_single -n 40"
-# time="-t 72:00:00"
-time="-t 30"
+partition="single -n 40"
+time="-t 72:00:00"
 
 graph_basename="$(basename -- "${graph_path}")"
 
