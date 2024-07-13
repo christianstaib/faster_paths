@@ -55,12 +55,12 @@ pub fn generate_directed_contracted_graph(
     let mut downward_edges = Vec::new();
     for (this_shortcuts, this_edges) in downward_shortcuts_and_edges.into_iter() {
         downward_edges.extend(this_edges);
-        // shortcuts.extend(
-        //     this_shortcuts
-        //         .iter()
-        //         .map(|(edge, vertex)| (edge.reversed(), *vertex)),
-        // );
-        shortcuts.extend(this_shortcuts);
+        shortcuts.extend(
+            this_shortcuts
+                .iter()
+                .map(|(edge, vertex)| (edge.reversed(), *vertex)),
+        );
+        // shortcuts.extend(this_shortcuts);
     }
 
     let downward_graph = AdjacencyVecGraph::new(&downward_edges, &vertex_to_level_map);
