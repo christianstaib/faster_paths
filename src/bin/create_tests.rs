@@ -18,7 +18,7 @@ struct Args {
     #[arg(short, long)]
     test_cases: PathBuf,
     /// Number of tests to be generated
-    #[arg(short, long)]
+    #[arg(short, long, default_value = "1000")]
     number_of_tests: u32,
 }
 

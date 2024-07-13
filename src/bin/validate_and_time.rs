@@ -30,6 +30,9 @@ struct Args {
     /// Path where the results shall be saved
     #[arg(short, long)]
     timing_results: Option<PathBuf>,
+    /// Maximum number of tests to be run;
+    #[arg(short, long)]
+    maximum_number_of_tests: Option<u32>,
 }
 
 fn main() {
@@ -37,7 +40,11 @@ fn main() {
 
     println!("Reading test cases");
     let mut reader = BufReader::new(File::open(&args.test_cases).unwrap());
-    let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(&mut reader).unwrap();
+    let mut test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(&mut reader).unwrap();
+
+    if let Some(maximum_number_of_tests) = args.maximum_number_of_tests {
+        test_cases.truncate(maximum_number_of_tests as usize);
+    }
 
     println!("Reading graph");
     let _graph = GraphFactory::from_file(&args.graph);

@@ -123,6 +123,5 @@ pub fn read_pathfinder(file: &PathBuf) -> Option<Box<dyn PathFinding>> {
         return Some(Box::new(hub_graph));
     }
 
-    println!("was unable to match file {} ending", pathfinder_string);
     None
 }
