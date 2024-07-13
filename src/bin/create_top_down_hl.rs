@@ -49,33 +49,7 @@ fn main() {
     println!("loading graph");
     let graph = GraphFactory::from_file(&args.graph);
 
-    let vertex_to_level_map = (0..graph.number_of_vertices()).collect_vec(); //generate_vertex_to_level_map(paths, graph.number_of_vertices);
-
-    let request = ShortestPathRequest::new(1234, 46360).unwrap();
-    let (f_label, f_shortcuts) =
-        generate_forward_label(request.source(), &graph, &vertex_to_level_map);
-    let (b_label, b_shortcuts) =
-        generate_reverse_label(request.target(), &graph, &vertex_to_level_map);
-
-    let mut shortcuts = HashMap::new();
-    shortcuts.extend(f_shortcuts);
-    shortcuts.extend(b_shortcuts);
-
-    let n = 254516;
-    for (edge, &vertex) in shortcuts.iter() {
-        if edge.tail() == n || edge.head() == n || vertex == n {
-            println!("{} (-> {}) -> {}", edge.tail(), vertex, edge.head());
-        }
-    }
-    let mut path = shortest_path(&f_label, &b_label).unwrap();
-    println!("path has len {}", path.vertices.len());
-    replace_shortcuts_slow(&mut path.vertices, &shortcuts);
-    println!("path has len {}", path.vertices.len());
-    let validation = ShortestPathTestCase {
-        request,
-        weight: Some(path.weight),
-    };
-    validate_path(&graph, &validation, &Some(path)).unwrap();
+    let vertex_to_level_map = generate_vertex_to_level_map(paths, graph.number_of_vertices);
 
     println!("Generating hub graph");
     let start = Instant::now();
