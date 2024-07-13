@@ -107,7 +107,14 @@ pub fn generate_reverse_label(
     vertex_to_level_map: &[u32],
 ) -> (Label, Vec<(DirectedEdge, VertexId)>) {
     let data = single_target(graph, vertex);
-    get_label_from_data(vertex, &data, vertex_to_level_map)
+    let (label, shortcuts) = get_label_from_data(vertex, &data, vertex_to_level_map);
+    (
+        label,
+        shortcuts
+            .into_iter()
+            .map(|(edge, vertex)| (edge.reversed(), vertex))
+            .collect_vec(),
+    )
 }
 
 pub fn get_label_from_data(

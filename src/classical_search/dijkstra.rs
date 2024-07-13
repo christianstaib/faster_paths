@@ -193,3 +193,78 @@ pub fn generate_upward_ch_edges(
 
     (shortcuts, edges)
 }
+
+pub fn generate_downward_ch_edges(
+    graph: &dyn Graph,
+    target: VertexId,
+    vertex_to_level_map: &[u32],
+) -> (Vec<(DirectedEdge, VertexId)>, Vec<DirectedWeightedEdge>) {
+    let mut alive = HashSet::new();
+    let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, target);
+
+    let mut shortcuts = Vec::new();
+    let mut edges = Vec::new();
+
+    alive.insert(target);
+
+    while let Some(DijkstraQueueElement { vertex, .. }) = data.pop() {
+        if alive.contains(&vertex)
+            && vertex_to_level_map[vertex as usize] > vertex_to_level_map[target as usize]
+        {
+            alive.remove(&vertex);
+
+            let edge = DirectedWeightedEdge::new(
+                target,
+                vertex,
+                data.vertices[vertex as usize].weight.unwrap(),
+            )
+            .unwrap();
+            edges.push(edge.clone());
+
+            let mut new_vertex = vertex;
+            let mut predecessor = data.vertices[vertex as usize].predecessor.unwrap();
+            if predecessor != target {
+                loop {
+                    let new_predecessor = data.vertices[predecessor as usize]
+                        .predecessor
+                        .unwrap_or(target);
+
+                    let edge = DirectedEdge::new(target, new_vertex).unwrap();
+                    shortcuts.push((edge, predecessor));
+                    new_vertex = predecessor;
+                    predecessor = new_predecessor;
+                    if new_predecessor == target {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if alive.is_empty() {
+            break;
+        }
+
+        graph.in_edges(vertex).for_each(|edge| {
+            let alt_weight = data.vertices[vertex as usize].weight.unwrap() + edge.weight();
+            let cur_weight = data.vertices[edge.tail() as usize]
+                .weight
+                .unwrap_or(u32::MAX);
+            if alt_weight < cur_weight {
+                if alive.contains(&vertex) {
+                    alive.insert(edge.tail());
+                } else {
+                    alive.remove(&edge.tail());
+                }
+
+                data.vertices[edge.tail() as usize].predecessor = Some(vertex);
+                data.vertices[edge.tail() as usize].weight = Some(alt_weight);
+                data.queue
+                    .push(DijkstraQueueElement::new(alt_weight, edge.tail()));
+            }
+        });
+
+        alive.remove(&vertex);
+    }
+
+    (shortcuts, edges)
+}

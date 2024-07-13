@@ -6,7 +6,7 @@ use rayon::prelude::*;
 
 use super::directed_contracted_graph::DirectedContractedGraph;
 use crate::{
-    classical_search::dijkstra::generate_upward_ch_edges,
+    classical_search::dijkstra::{generate_downward_ch_edges, generate_upward_ch_edges},
     graphs::{
         adjacency_vec_graph::AdjacencyVecGraph, reversible_vec_graph::ReversibleVecGraph, Graph,
     },
@@ -35,11 +35,11 @@ pub fn generate_directed_contracted_graph(
     let mut forward_edges = Vec::new();
     for (this_shortcuts, this_edges) in upward_shortcuts_and_edges.into_iter() {
         forward_edges.extend(this_edges);
-        shortcuts.extend(
-            this_shortcuts
-                .iter()
-                .map(|(edge, vertex)| (edge.reversed(), *vertex)),
-        );
+        // shortcuts.extend(
+        //     this_shortcuts
+        //         .iter()
+        //         .map(|(edge, vertex)| (edge.reversed(), *vertex)),
+        // );
         shortcuts.extend(this_shortcuts);
     }
 
@@ -49,17 +49,17 @@ pub fn generate_directed_contracted_graph(
     let downward_shortcuts_and_edges: Vec<_> = vertices
         .par_iter()
         .progress_with_style(style)
-        .map(|&vertex| generate_upward_ch_edges(&graph, vertex, &vertex_to_level_map))
+        .map(|&vertex| generate_downward_ch_edges(&graph, vertex, &vertex_to_level_map))
         .collect();
 
     let mut downward_edges = Vec::new();
     for (this_shortcuts, this_edges) in downward_shortcuts_and_edges.into_iter() {
         downward_edges.extend(this_edges);
-        shortcuts.extend(
-            this_shortcuts
-                .iter()
-                .map(|(edge, vertex)| (edge.reversed(), *vertex)),
-        );
+        // shortcuts.extend(
+        //     this_shortcuts
+        //         .iter()
+        //         .map(|(edge, vertex)| (edge.reversed(), *vertex)),
+        // );
         shortcuts.extend(this_shortcuts);
     }
 
