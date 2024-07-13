@@ -5,24 +5,13 @@ use std::{
     time::Instant,
 };
 
-use ahash::{HashMap, HashMapExt};
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        graph_factory::GraphFactory,
-        graph_functions::{generate_vertex_to_level_map, validate_path},
-        path::{Path, ShortestPathRequest, ShortestPathTestCase},
-        Graph,
+        graph_factory::GraphFactory, graph_functions::generate_vertex_to_level_map, path::Path,
     },
-    hl::{
-        hl_from_top_down::{
-            generate_directed_hub_graph, generate_forward_label, generate_reverse_label,
-        },
-        pathfinding::{shortest_path, shortest_path_weight},
-    },
-    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
+    hl::hl_from_top_down::generate_directed_hub_graph,
 };
-use itertools::Itertools;
 
 /// Creates a hub graph top down.
 #[derive(Parser, Debug)]
