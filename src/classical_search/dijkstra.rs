@@ -119,7 +119,7 @@ pub fn single_target(graph: &dyn Graph, target: VertexId) -> DijkstraDataVec {
     data
 }
 
-pub fn generate_forward_ch_edges(
+pub fn generate_upward_ch_edges(
     graph: &dyn Graph,
     source: VertexId,
     vertex_to_level_map: &[u32],

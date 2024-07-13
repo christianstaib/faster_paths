@@ -4,14 +4,13 @@ use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
 
+use super::directed_contracted_graph::DirectedContractedGraph;
 use crate::{
-    classical_search::dijkstra::generate_forward_ch_edges,
+    classical_search::dijkstra::generate_upward_ch_edges,
     graphs::{
         adjacency_vec_graph::AdjacencyVecGraph, reversible_vec_graph::ReversibleVecGraph, Graph,
     },
 };
-
-use super::directed_contracted_graph::DirectedContractedGraph;
 
 pub fn generate_directed_contracted_graph(
     graph: ReversibleVecGraph,
@@ -30,7 +29,7 @@ pub fn generate_directed_contracted_graph(
     let upward_shortcuts_and_edges: Vec<_> = vertices
         .par_iter()
         .progress_with_style(style.clone())
-        .map(|&vertex| generate_forward_ch_edges(&graph, vertex, &vertex_to_level_map))
+        .map(|&vertex| generate_upward_ch_edges(&graph, vertex, &vertex_to_level_map))
         .collect();
 
     let mut forward_edges = Vec::new();
@@ -50,7 +49,7 @@ pub fn generate_directed_contracted_graph(
     let downward_shortcuts_and_edges: Vec<_> = vertices
         .par_iter()
         .progress_with_style(style)
-        .map(|&vertex| generate_forward_ch_edges(&graph, vertex, &vertex_to_level_map))
+        .map(|&vertex| generate_upward_ch_edges(&graph, vertex, &vertex_to_level_map))
         .collect();
 
     let mut downward_edges = Vec::new();
