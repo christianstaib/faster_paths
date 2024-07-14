@@ -9,7 +9,7 @@ use rayon::prelude::*;
 use super::{
     directed_hub_graph::DirectedHubGraph,
     hl_from_ch::set_predecessor,
-    label::{Label, LabelEntry},
+    label::{new_label, LabelEntry},
 };
 use crate::{
     classical_search::dijkstra::{single_source, single_target},
@@ -83,11 +83,7 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
     let shortcuts: HashMap<DirectedEdge, VertexId> =
         shortcuts.read().unwrap().to_owned().into_iter().collect();
 
-    let directed_hub_graph = DirectedHubGraph {
-        forward_labels,
-        reverse_labels,
-        shortcuts,
-    };
+    let directed_hub_graph = DirectedHubGraph::new(forward_labels, reverse_labels, shortcuts);
 
     directed_hub_graph
 }
@@ -96,7 +92,7 @@ pub fn generate_forward_label(
     vertex: VertexId,
     graph: &dyn Graph,
     vertex_to_level_map: &[u32],
-) -> (Label, Vec<(DirectedEdge, VertexId)>) {
+) -> (Vec<LabelEntry>, Vec<(DirectedEdge, VertexId)>) {
     let data = single_source(graph, vertex);
     get_label_from_data(vertex, &data, vertex_to_level_map)
 }
@@ -105,7 +101,7 @@ pub fn generate_reverse_label(
     vertex: VertexId,
     graph: &dyn Graph,
     vertex_to_level_map: &[u32],
-) -> (Label, Vec<(DirectedEdge, VertexId)>) {
+) -> (Vec<LabelEntry>, Vec<(DirectedEdge, VertexId)>) {
     let data = single_target(graph, vertex);
     let (label, shortcuts) = get_label_from_data(vertex, &data, vertex_to_level_map);
     (
@@ -121,20 +117,20 @@ pub fn get_label_from_data(
     vertex: VertexId,
     data: &DijkstraDataVec,
     vertex_to_level_map: &[u32],
-) -> (Label, Vec<(DirectedEdge, VertexId)>) {
+) -> (Vec<LabelEntry>, Vec<(DirectedEdge, VertexId)>) {
     let mut shortest_path_tree = shortests_path_tree(data);
     let mut shortcuts = Vec::new();
 
     let mut stack = vec![vertex as usize];
 
-    let mut label = Label::new(vertex);
+    let mut label = new_label(vertex);
     while let Some(tail) = stack.pop() {
         let mut heads = std::mem::take(&mut shortest_path_tree[tail]);
 
         while let Some(head) = heads.pop() {
             if vertex_to_level_map[head as usize] > vertex_to_level_map[tail] {
                 stack.push(head as usize);
-                label.entries.push(LabelEntry {
+                label.push(LabelEntry {
                     vertex: head,
                     predecessor: Some(tail as VertexId),
                     weight: data.vertices[head as usize].weight.unwrap(),
@@ -149,8 +145,8 @@ pub fn get_label_from_data(
         }
     }
 
-    label.entries.sort_unstable_by_key(|entry| entry.vertex);
-    label.entries.shrink_to_fit();
+    label.sort_unstable_by_key(|entry| entry.vertex);
+    label.shrink_to_fit();
     set_predecessor(&mut label);
 
     (label, shortcuts)
@@ -198,6 +194,6 @@ pub fn predict_average_label_size(
         .collect();
 
     let average_label_size =
-        labels.iter().map(|l| l.entries.len()).sum::<usize>() as f64 / labels.len() as f64;
+        labels.iter().map(|l| l.len()).sum::<usize>() as f64 / labels.len() as f64;
     average_label_size
 }

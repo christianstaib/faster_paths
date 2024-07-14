@@ -1,4 +1,5 @@
-use self::label::Label;
+use label::LabelEntry;
+
 use crate::graphs::VertexId;
 
 pub mod directed_hub_graph;
@@ -9,7 +10,7 @@ pub mod label;
 pub mod pathfinding;
 
 pub trait HubGraphTrait: Send + Sync {
-    fn forward_label(&self, vertex: VertexId) -> Option<&Label>;
+    fn forward_label(&self, vertex: VertexId) -> &[LabelEntry];
 
-    fn reverse_label(&self, vertex: VertexId) -> Option<&Label>;
+    fn reverse_label(&self, vertex: VertexId) -> &[LabelEntry];
 }

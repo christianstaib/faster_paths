@@ -2,7 +2,11 @@ use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressBar;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use super::{directed_hub_graph::DirectedHubGraph, label::Label, pathfinding::overlap};
+use super::{
+    directed_hub_graph::DirectedHubGraph,
+    label::{new_label, LabelEntry},
+    pathfinding::overlap,
+};
 use crate::{
     ch::directed_contracted_graph::DirectedContractedGraph,
     graphs::{Graph, VertexId},
@@ -12,7 +16,7 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
     ch_information: &DirectedContractedGraph,
 ) -> DirectedHubGraph {
     let mut forward_labels: Vec<_> = (0..ch_information.upward_graph.number_of_vertices())
-        .map(Label::new)
+        .map(new_label)
         .collect();
 
     let mut reverse_labels = forward_labels.clone();
@@ -55,11 +59,7 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
 
     let shortcuts = ch_information.shortcuts.clone();
 
-    DirectedHubGraph {
-        forward_labels,
-        reverse_labels,
-        shortcuts,
-    }
+    DirectedHubGraph::new(forward_labels, reverse_labels, shortcuts)
 }
 
 // TODO
@@ -119,13 +119,13 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
 fn generate_forward_label(
     ch_information: &DirectedContractedGraph,
     vertex: VertexId,
-    forward_labels: &Vec<Label>,
-    reverse_labels: &Vec<Label>,
-) -> Label {
+    forward_labels: &Vec<Vec<LabelEntry>>,
+    reverse_labels: &Vec<Vec<LabelEntry>>,
+) -> Vec<LabelEntry> {
     let mut labels = Vec::new();
     for out_edge in ch_information.upward_graph.out_edges(vertex) {
         let mut label = forward_labels[out_edge.head() as usize].clone();
-        label.entries.iter_mut().for_each(|entry| {
+        label.iter_mut().for_each(|entry| {
             entry.predecessor.get_or_insert(vertex);
             entry.weight += out_edge.weight();
         });
@@ -147,13 +147,13 @@ fn generate_forward_label(
 fn generate_reverse_label(
     ch_information: &DirectedContractedGraph,
     vertex: VertexId,
-    forward_labels: &Vec<Label>,
-    reverse_labels: &Vec<Label>,
-) -> Label {
+    forward_labels: &Vec<Vec<LabelEntry>>,
+    reverse_labels: &Vec<Vec<LabelEntry>>,
+) -> Vec<LabelEntry> {
     let mut labels = Vec::new();
     for in_edge in ch_information.downward_graph.out_edges(vertex) {
         let mut label = reverse_labels[in_edge.head() as usize].clone();
-        label.entries.iter_mut().for_each(|entry| {
+        label.iter_mut().for_each(|entry| {
             entry.predecessor.get_or_insert(vertex);
             entry.weight += in_edge.weight();
         });
@@ -164,44 +164,44 @@ fn generate_reverse_label(
     label
 }
 
-pub fn set_predecessor(label: &mut Label) {
+pub fn set_predecessor(label: &mut Vec<LabelEntry>) {
     // maps vertex -> index
     let mut vertex_to_index = HashMap::new();
-    for idx in 0..label.entries.len() {
-        vertex_to_index.insert(label.entries[idx].vertex, idx as u32);
+    for idx in 0..label.len() {
+        vertex_to_index.insert(label[idx].vertex, idx as u32);
     }
 
     // replace predecessor VertexId with index of predecessor
-    for entry in label.entries.iter_mut() {
+    for entry in label.iter_mut() {
         if let Some(predecessor) = entry.predecessor {
             entry.predecessor = Some(*vertex_to_index.get(&predecessor).unwrap());
         }
     }
 }
 
-fn merge(mut labels: Vec<Label>, vertex: VertexId) -> Label {
+fn merge(mut labels: Vec<Vec<LabelEntry>>, vertex: VertexId) -> Vec<LabelEntry> {
     // poping from end of vec is faster as poping from beginning
-    labels.iter_mut().for_each(|label| label.entries.reverse());
+    labels.iter_mut().for_each(|label| label.reverse());
 
     let mut label_entries = Vec::new();
-    labels.push(Label::new(vertex));
+    labels.push(new_label(vertex));
 
     while !labels.is_empty() {
         let min_vertex = labels
             .iter()
-            .map(|label| label.entries.last().unwrap().vertex)
+            .map(|label| label.last().unwrap().vertex)
             .min()
             .unwrap();
         let entries: Vec<_> = labels
             .iter_mut()
             .filter_map(|label| {
-                if label.entries.last().unwrap().vertex == min_vertex {
-                    return label.entries.pop();
+                if label.last().unwrap().vertex == min_vertex {
+                    return label.pop();
                 }
                 None
             })
             .collect();
-        labels.retain(|label| !label.entries.is_empty());
+        labels.retain(|label| !label.is_empty());
         let min_entry = entries
             .into_iter()
             .min_by_key(|entry| entry.weight)
@@ -209,14 +209,11 @@ fn merge(mut labels: Vec<Label>, vertex: VertexId) -> Label {
         label_entries.push(min_entry);
     }
 
-    Label {
-        entries: label_entries,
-    }
+    label_entries
 }
 
-fn prune(direction1_label: &mut Label, direction2_labels_labels: &[Label]) {
-    direction1_label.entries = direction1_label
-        .entries
+fn prune(direction1_label: &mut Vec<LabelEntry>, direction2_labels_labels: &[Vec<LabelEntry>]) {
+    let mut new = direction1_label
         .par_iter()
         .filter(|entry| {
             let reverse_label = &direction2_labels_labels[entry.vertex as usize];
@@ -224,5 +221,7 @@ fn prune(direction1_label: &mut Label, direction2_labels_labels: &[Label]) {
             entry.weight == true_weight
         })
         .cloned()
-        .collect();
+        .collect::<Vec<_>>();
+
+    std::mem::swap(&mut new, direction1_label);
 }

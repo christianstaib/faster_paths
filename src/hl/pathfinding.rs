@@ -1,4 +1,8 @@
-use super::{directed_hub_graph::DirectedHubGraph, label::Label, HubGraphTrait};
+use super::{
+    directed_hub_graph::DirectedHubGraph,
+    label::{get_path, LabelEntry},
+    HubGraphTrait,
+};
 use crate::{
     graphs::{
         path::{Path, PathFinding, ShortestPathRequest},
@@ -10,8 +14,8 @@ use crate::{
 impl PathFinding for DirectedHubGraph {
     fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
         // wanted: source -> target
-        let forward_label = self.forward_label(path_request.source())?;
-        let backward_label = self.reverse_label(path_request.target())?;
+        let forward_label = self.forward_label(path_request.source());
+        let backward_label = self.reverse_label(path_request.target());
 
         let mut path = shortest_path(forward_label, backward_label);
 
@@ -23,24 +27,25 @@ impl PathFinding for DirectedHubGraph {
     }
 
     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
-        let forward_label = self.forward_label(path_request.source())?;
-        let backward_label = self.reverse_label(path_request.target())?;
+        let forward_label = self.forward_label(path_request.source());
+        let backward_label = self.reverse_label(path_request.target());
 
         shortest_path_weight(forward_label, backward_label)
     }
 
     fn number_of_vertices(&self) -> u32 {
-        self.forward_labels.len() as u32
+        0
+        // TODO self.forward_labels.len() as u32
     }
 }
 
-pub fn shortest_path(forward_label: &Label, backward_label: &Label) -> Option<Path> {
+pub fn shortest_path(forward_label: &[LabelEntry], backward_label: &[LabelEntry]) -> Option<Path> {
     // wanted: source -> target
     let (_, forward_index, reverse_index) = overlap(forward_label, backward_label)?;
 
     // unwrap can be called as be found overlapp and therefore path exists
-    let mut forward_path = forward_label.get_path(forward_index).unwrap();
-    let reverse_path = backward_label.get_path(reverse_index).unwrap();
+    let mut forward_path = get_path(forward_label, forward_index).unwrap();
+    let reverse_path = get_path(backward_label, reverse_index).unwrap();
 
     // now got: forward_path (meeting -> source) and reverse_reverse (meeting ->
     // target)
@@ -53,7 +58,10 @@ pub fn shortest_path(forward_label: &Label, backward_label: &Label) -> Option<Pa
     Some(forward_path)
 }
 
-pub fn shortest_path_weight(forward_label: &Label, backward_label: &Label) -> Option<Weight> {
+pub fn shortest_path_weight(
+    forward_label: &[LabelEntry],
+    backward_label: &[LabelEntry],
+) -> Option<Weight> {
     let (weight, _, _) = overlap(forward_label, backward_label)?;
 
     Some(weight)
@@ -68,15 +76,15 @@ pub fn shortest_path_weight(forward_label: &Label, backward_label: &Label) -> Op
 /// the shortest path from the source to the meeting vertex, and `index_reverse`
 /// is the index of the entry that represents the shortest path from the meeting
 /// vertex to the target.
-pub fn overlap(forward: &Label, reverse: &Label) -> Option<(Weight, u32, u32)> {
+pub fn overlap(forward: &[LabelEntry], reverse: &[LabelEntry]) -> Option<(Weight, u32, u32)> {
     let mut index_forward = 0;
     let mut index_reverse = 0;
 
     let mut overlap = None;
 
-    while index_forward < forward.entries.len() && index_reverse < reverse.entries.len() {
-        let forward_entry = &forward.entries.get(index_forward)?;
-        let reverse_entry = &reverse.entries.get(index_reverse)?;
+    while index_forward < forward.len() && index_reverse < reverse.len() {
+        let forward_entry = &forward.get(index_forward)?;
+        let reverse_entry = &reverse.get(index_reverse)?;
 
         match forward_entry.vertex.cmp(&reverse_entry.vertex) {
             std::cmp::Ordering::Less => index_forward += 1,
