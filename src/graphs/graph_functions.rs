@@ -373,7 +373,7 @@ pub fn generate_dijkstra_rank_test_cases(
                     let possible_targets = (0..graph.number_of_vertices())
                         .filter(|&vertex| {
                             if let Some(vertex_dijkstra_rank) = dijkstra_rank[vertex as usize] {
-                                if (vertex_dijkstra_rank as f32).log2() as u32 == power {
+                                if ((vertex_dijkstra_rank as f32).log2()).round() as u32 == power {
                                     return true;
                                 }
                             }
