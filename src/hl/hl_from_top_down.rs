@@ -1,9 +1,8 @@
 use std::sync::{Arc, RwLock};
 
 use ahash::{HashMap, HashMapExt};
-use indicatif::{ParallelProgressIterator, ProgressIterator, ProgressStyle};
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
-use rand::{seq::SliceRandom, thread_rng};
 use rayon::prelude::*;
 
 use super::{
@@ -25,8 +24,7 @@ use crate::{
 };
 
 pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {
-    let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
-        Arc::new(RwLock::new(HashMap::new()));
+    let shortcuts = Arc::new(RwLock::new(HashMap::new()));
 
     println!("generating forward labels");
     let forward_labels = (0..graph.number_of_vertices())
