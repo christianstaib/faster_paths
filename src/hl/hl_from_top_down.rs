@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use ahash::{HashMap, HashMapExt};
-use indicatif::{ParallelProgressIterator, ProgressStyle};
+use indicatif::{ParallelProgressIterator, ProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use rand::{seq::SliceRandom, thread_rng};
 use rayon::prelude::*;
@@ -79,11 +79,15 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
         .collect();
 
     println!("getting shortcuts vec");
-    let shortcuts = shortcuts.read().unwrap().to_owned().into_iter().collect();
+    let shortcuts = shortcuts
+        .read()
+        .unwrap()
+        .to_owned()
+        .into_iter()
+        .progress()
+        .collect();
 
-    let directed_hub_graph = DirectedHubGraph::new(forward_labels, reverse_labels, shortcuts);
-
-    directed_hub_graph
+    DirectedHubGraph::new(forward_labels, reverse_labels, shortcuts)
 }
 
 pub fn generate_forward_label(
