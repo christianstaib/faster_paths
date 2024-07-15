@@ -1,4 +1,4 @@
-use std::usize;
+use std::{cmp::max, usize};
 
 use ahash::HashMap;
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub struct DirectedHubGraph {
     reverse_labels: Vec<LabelEntry>,
     reverse_indices: Vec<u32>,
 
-    pub shortcuts: HashMap<DirectedEdge, VertexId>,
+    shortcuts: HashMap<DirectedEdge, VertexId>,
 }
 
 impl DirectedHubGraph {
@@ -47,7 +47,14 @@ impl DirectedHubGraph {
     }
 
     pub fn number_of_vertices(&self) -> u32 {
-        self.forward_indices.len() as u32 - 1
+        max(
+            self.forward_indices.len() as u32 - 1,
+            self.reverse_indices.len() as u32 - 1,
+        )
+    }
+
+    pub fn shortcuts(&self) -> &HashMap<DirectedEdge, VertexId> {
+        &self.shortcuts
     }
 }
 

@@ -20,7 +20,7 @@ impl PathFinding for DirectedHubGraph {
         let mut path = shortest_path(forward_label, backward_label);
 
         if let Some(path) = path.as_mut() {
-            replace_shortcuts_slow(&mut path.vertices, &self.shortcuts);
+            replace_shortcuts_slow(&mut path.vertices, self.shortcuts());
         }
 
         path
