@@ -28,17 +28,10 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
     let shortcuts: Arc<RwLock<HashMap<DirectedEdge, VertexId>>> =
         Arc::new(RwLock::new(HashMap::new()));
 
-    let style = ProgressStyle::with_template("{wide_bar} {per_sec} {eta_precise} {pos}/{len}")
-        .unwrap()
-        .progress_chars("##-");
-
     println!("generating forward labels");
-    let mut vertices = (0..graph.number_of_vertices()).collect_vec();
-    vertices.shuffle(&mut thread_rng());
-
-    let forward_labels: Vec<_> = (0..graph.number_of_vertices())
+    let forward_labels = (0..graph.number_of_vertices())
         .into_par_iter()
-        .progress_with_style(style.clone())
+        .progress()
         .map(|vertex| {
             let (label, mut label_shortcuts) = generate_forward_label(vertex, graph, order);
 
@@ -60,11 +53,11 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
         .collect();
 
     println!("generating reverse labels");
-    let reverse_labels: Vec<_> = (0..graph.number_of_vertices())
+    let backward_labels = (0..graph.number_of_vertices())
         .into_par_iter()
-        .progress_with_style(style.clone())
+        .progress()
         .map(|vertex| {
-            let (label, mut label_shortcuts) = generate_reverse_label(vertex, graph, order);
+            let (label, mut label_shortcuts) = generate_backward_label(vertex, graph, order);
 
             if let Ok(shortcuts) = shortcuts.read() {
                 label_shortcuts.retain(|(edge, _)| !shortcuts.contains_key(edge));
@@ -87,7 +80,7 @@ pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> Directed
         .progress()
         .collect();
 
-    DirectedHubGraph::new(forward_labels, reverse_labels, shortcuts)
+    DirectedHubGraph::new(forward_labels, backward_labels, shortcuts)
 }
 
 pub fn generate_forward_label(
@@ -99,7 +92,7 @@ pub fn generate_forward_label(
     get_label_from_data(vertex, &data, vertex_to_level_map)
 }
 
-pub fn generate_reverse_label(
+pub fn generate_backward_label(
     vertex: VertexId,
     graph: &dyn Graph,
     vertex_to_level_map: &[u32],
@@ -170,7 +163,7 @@ pub fn predict_average_label_size(
             let (forward_label, forward_shortcuts) =
                 generate_forward_label(test_case.request.source(), graph, order);
             let (reverse_label, reverse_shortcuts) =
-                generate_reverse_label(test_case.request.target(), graph, order);
+                generate_backward_label(test_case.request.target(), graph, order);
 
             shortcuts.extend(forward_shortcuts.iter().cloned());
             shortcuts.extend(
