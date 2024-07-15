@@ -24,23 +24,23 @@ impl DirectedHubGraph {
         shortcuts: HashMap<DirectedEdge, VertexId>,
     ) -> DirectedHubGraph {
         let mut forward_indices = vec![0];
-        let mut new_forward_labels = Vec::new();
+        let mut flattened_forward_labels = Vec::new();
         for label in forward_labels {
             forward_indices.push(forward_indices.last().unwrap() + label.len() as u32);
-            new_forward_labels.extend(label);
+            flattened_forward_labels.extend(label);
         }
 
         let mut reverse_indices = vec![0];
-        let mut new_reverse_labels = Vec::new();
+        let mut flattened_reverse_labels = Vec::new();
         for label in reverse_labels {
             reverse_indices.push(reverse_indices.last().unwrap() + label.len() as u32);
-            new_reverse_labels.extend(label);
+            flattened_reverse_labels.extend(label);
         }
 
         DirectedHubGraph {
-            forward_labels: new_forward_labels,
+            forward_labels: flattened_forward_labels,
             forward_indices,
-            reverse_labels: new_reverse_labels,
+            reverse_labels: flattened_reverse_labels,
             reverse_indices,
             shortcuts,
         }
