@@ -17,13 +17,11 @@ impl PathFinding for DirectedHubGraph {
         let forward_label = self.forward_label(path_request.source());
         let backward_label = self.backward_label(path_request.target());
 
-        let mut path = shortest_path(forward_label, backward_label);
+        let mut path = shortest_path(forward_label, backward_label)?;
 
-        if let Some(path) = path.as_mut() {
-            replace_shortcuts_slow(&mut path.vertices, self.shortcuts());
-        }
+        replace_shortcuts_slow(&mut path.vertices, self.shortcuts());
 
-        path
+        Some(path)
     }
 
     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {

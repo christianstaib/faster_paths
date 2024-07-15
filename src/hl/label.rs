@@ -9,29 +9,29 @@ pub fn new_label(vertex: VertexId) -> Vec<LabelEntry> {
 }
 
 pub fn get_path(label: &[LabelEntry], entry_index: u32) -> Option<Path> {
-    let mut path = Path {
-        vertices: Vec::new(),
-        weight: label.get(entry_index as usize)?.weight,
-    };
-    let mut current_index = entry_index;
+    let weight = label.get(entry_index as usize)?.weight;
+    let mut vertices = Vec::new();
 
-    while let Some(entry) = label.get(current_index as usize) {
-        path.vertices.push(entry.vertex);
+    let mut index_of_current_vertex = entry_index;
+    loop {
+        let entry = &label[index_of_current_vertex as usize];
+
+        vertices.push(entry.vertex);
 
         // cycle detection
-        if path.vertices.len() > label.len() {
+        if vertices.len() > label.len() {
             panic!("label is incorrect");
         }
 
         // exit the loop if there's no predecessor
         if entry.predecessor_index != u32::MAX {
-            current_index = entry.predecessor_index;
+            index_of_current_vertex = entry.predecessor_index;
         } else {
             break;
         }
     }
 
-    Some(path)
+    Some(Path { vertices, weight })
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
