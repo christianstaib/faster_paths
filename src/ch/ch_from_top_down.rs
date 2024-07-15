@@ -9,6 +9,7 @@ use crate::{
     classical_search::dijkstra::{generate_downward_ch_edges, generate_upward_ch_edges},
     graphs::{
         adjacency_vec_graph::AdjacencyVecGraph, reversible_vec_graph::ReversibleVecGraph, Graph,
+        VertexId,
     },
 };
 
@@ -65,12 +66,19 @@ pub fn generate_directed_contracted_graph(
 
     let downward_graph = AdjacencyVecGraph::new(&downward_edges, &vertex_to_level_map);
 
+    let max_level = *vertex_to_level_map.iter().max().unwrap();
+    let mut level_to_vertices = vec![Vec::new(); max_level as usize + 1];
+
+    for (vertex, &level) in vertex_to_level_map.iter().enumerate() {
+        level_to_vertices[level as usize].push(vertex as VertexId);
+    }
+
     // ch graph
     let contracted_graph = DirectedContractedGraph {
         upward_graph,
         downward_graph,
         shortcuts,
-        levels: Vec::new(),
+        levels: level_to_vertices,
     };
     contracted_graph
 }

@@ -24,8 +24,8 @@ pub fn get_path(label: &[LabelEntry], entry_index: u32) -> Option<Path> {
         }
 
         // exit the loop if there's no predecessor
-        if let Some(predecessor_index) = entry.predecessor {
-            current_index = predecessor_index;
+        if entry.predecessor_index != u32::MAX {
+            current_index = entry.predecessor_index;
         } else {
             break;
         }
@@ -37,7 +37,7 @@ pub fn get_path(label: &[LabelEntry], entry_index: u32) -> Option<Path> {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct LabelEntry {
     pub vertex: VertexId,
-    pub predecessor: Option<u32>,
+    pub predecessor_index: u32,
     pub weight: Weight,
 }
 
@@ -45,7 +45,7 @@ impl LabelEntry {
     pub fn new(vertex: VertexId) -> LabelEntry {
         LabelEntry {
             vertex,
-            predecessor: None,
+            predecessor_index: u32::MAX,
             weight: 0,
         }
     }

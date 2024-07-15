@@ -34,7 +34,7 @@ impl PathFinding for DirectedHubGraph {
     }
 
     fn number_of_vertices(&self) -> u32 {
-        0
+        self.number_of_vertices()
         // TODO self.forward_labels.len() as u32
     }
 }

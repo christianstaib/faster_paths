@@ -126,7 +126,9 @@ fn generate_forward_label(
     for out_edge in ch_information.upward_graph.out_edges(vertex) {
         let mut label = forward_labels[out_edge.head() as usize].clone();
         label.iter_mut().for_each(|entry| {
-            entry.predecessor.get_or_insert(vertex);
+            if entry.predecessor_index == u32::MAX {
+                entry.predecessor_index = vertex;
+            }
             entry.weight += out_edge.weight();
         });
         labels.push(label);
@@ -154,7 +156,9 @@ fn generate_reverse_label(
     for in_edge in ch_information.downward_graph.out_edges(vertex) {
         let mut label = reverse_labels[in_edge.head() as usize].clone();
         label.iter_mut().for_each(|entry| {
-            entry.predecessor.get_or_insert(vertex);
+            if entry.predecessor_index == u32::MAX {
+                entry.predecessor_index = vertex;
+            }
             entry.weight += in_edge.weight();
         });
         labels.push(label);
@@ -173,8 +177,8 @@ pub fn set_predecessor(label: &mut Vec<LabelEntry>) {
 
     // replace predecessor VertexId with index of predecessor
     for entry in label.iter_mut() {
-        if let Some(predecessor) = entry.predecessor {
-            entry.predecessor = Some(*vertex_to_index.get(&predecessor).unwrap());
+        if entry.predecessor_index != u32::MAX {
+            entry.predecessor_index = *vertex_to_index.get(&entry.predecessor_index).unwrap();
         }
     }
 }

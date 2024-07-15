@@ -10,8 +10,10 @@ use crate::graphs::{edge::DirectedEdge, VertexId};
 pub struct DirectedHubGraph {
     forward_labels: Vec<LabelEntry>,
     forward_indices: Vec<u32>,
+
     reverse_labels: Vec<LabelEntry>,
     reverse_indices: Vec<u32>,
+
     pub shortcuts: HashMap<DirectedEdge, VertexId>,
 }
 
@@ -42,6 +44,10 @@ impl DirectedHubGraph {
             reverse_indices,
             shortcuts,
         }
+    }
+
+    pub fn number_of_vertices(&self) -> u32 {
+        self.forward_indices.len() as u32 - 1
     }
 }
 

@@ -132,7 +132,7 @@ pub fn get_label_from_data(
                 stack.push(head as usize);
                 label.push(LabelEntry {
                     vertex: head,
-                    predecessor: Some(tail as VertexId),
+                    predecessor_index: tail as VertexId,
                     weight: data.vertices[head as usize].weight.unwrap(),
                 });
             } else {
