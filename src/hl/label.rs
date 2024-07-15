@@ -37,16 +37,16 @@ pub fn get_path(label: &[LabelEntry], entry_index: u32) -> Option<Path> {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct LabelEntry {
     pub vertex: VertexId,
-    pub predecessor_index: u32,
     pub weight: Weight,
+    pub predecessor_index: u32,
 }
 
 impl LabelEntry {
     pub fn new(vertex: VertexId) -> LabelEntry {
         LabelEntry {
             vertex,
-            predecessor_index: u32::MAX,
             weight: 0,
+            predecessor_index: u32::MAX,
         }
     }
 }
