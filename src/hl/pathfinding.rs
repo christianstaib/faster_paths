@@ -15,7 +15,7 @@ impl PathFinding for DirectedHubGraph {
     fn shortest_path(&self, path_request: &ShortestPathRequest) -> Option<Path> {
         // wanted: source -> target
         let forward_label = self.forward_label(path_request.source());
-        let backward_label = self.reverse_label(path_request.target());
+        let backward_label = self.backward_label(path_request.target());
 
         let mut path = shortest_path(forward_label, backward_label);
 
@@ -28,7 +28,7 @@ impl PathFinding for DirectedHubGraph {
 
     fn shortest_path_weight(&self, path_request: &ShortestPathRequest) -> Option<Weight> {
         let forward_label = self.forward_label(path_request.source());
-        let backward_label = self.reverse_label(path_request.target());
+        let backward_label = self.backward_label(path_request.target());
 
         shortest_path_weight(forward_label, backward_label)
     }

@@ -8,19 +8,22 @@ use crate::graphs::{edge::DirectedEdge, VertexId};
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectedHubGraph {
+    /// The forward label of vertex `v` is stored in `forward_labels[forward_indices[v]..forward_indices[v + 1]]`
     forward_labels: Vec<LabelEntry>,
     forward_indices: Vec<u32>,
 
-    reverse_labels: Vec<LabelEntry>,
-    reverse_indices: Vec<u32>,
+    /// The backward label of vertex `v` is stored in `backward_labels[backward_indices[v]..backward_indices[v + 1]]`
+    backward_labels: Vec<LabelEntry>,
+    backward_indices: Vec<u32>,
 
+    // Map of shortcuts represented by directed edges and their corresponding vertex IDs
     shortcuts: HashMap<DirectedEdge, VertexId>,
 }
 
 impl DirectedHubGraph {
     pub fn new(
         forward_labels: Vec<Vec<LabelEntry>>,
-        reverse_labels: Vec<Vec<LabelEntry>>,
+        backward_labels: Vec<Vec<LabelEntry>>,
         shortcuts: HashMap<DirectedEdge, VertexId>,
     ) -> DirectedHubGraph {
         let mut forward_indices = vec![0];
@@ -30,18 +33,18 @@ impl DirectedHubGraph {
             flattened_forward_labels.extend(label);
         }
 
-        let mut reverse_indices = vec![0];
-        let mut flattened_reverse_labels = Vec::new();
-        for label in reverse_labels {
-            reverse_indices.push(reverse_indices.last().unwrap() + label.len() as u32);
-            flattened_reverse_labels.extend(label);
+        let mut backward_indices = vec![0];
+        let mut flattened_backward_labels = Vec::new();
+        for label in backward_labels {
+            backward_indices.push(backward_indices.last().unwrap() + label.len() as u32);
+            flattened_backward_labels.extend(label);
         }
 
         DirectedHubGraph {
             forward_labels: flattened_forward_labels,
             forward_indices,
-            reverse_labels: flattened_reverse_labels,
-            reverse_indices,
+            backward_labels: flattened_backward_labels,
+            backward_indices,
             shortcuts,
         }
     }
@@ -49,7 +52,7 @@ impl DirectedHubGraph {
     pub fn number_of_vertices(&self) -> u32 {
         max(
             self.forward_indices.len() as u32 - 1,
-            self.reverse_indices.len() as u32 - 1,
+            self.backward_indices.len() as u32 - 1,
         )
     }
 
@@ -65,9 +68,9 @@ impl HubGraphTrait for DirectedHubGraph {
         &self.forward_labels[start_index..end_index]
     }
 
-    fn reverse_label(&self, vertex: VertexId) -> &[LabelEntry] {
-        let start_index = self.reverse_indices[vertex as usize] as usize;
-        let end_index = self.reverse_indices[vertex as usize + 1] as usize;
-        &self.reverse_labels[start_index..end_index]
+    fn backward_label(&self, vertex: VertexId) -> &[LabelEntry] {
+        let start_index = self.backward_indices[vertex as usize] as usize;
+        let end_index = self.backward_indices[vertex as usize + 1] as usize;
+        &self.backward_labels[start_index..end_index]
     }
 }

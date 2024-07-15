@@ -12,5 +12,5 @@ pub mod pathfinding;
 pub trait HubGraphTrait: Send + Sync {
     fn forward_label(&self, vertex: VertexId) -> &[LabelEntry];
 
-    fn reverse_label(&self, vertex: VertexId) -> &[LabelEntry];
+    fn backward_label(&self, vertex: VertexId) -> &[LabelEntry];
 }
