@@ -62,52 +62,6 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
     DirectedHubGraph::new(forward_labels, reverse_labels, shortcuts)
 }
 
-// TODO
-// pub fn hub_graph_from_directed_contracted_graph(
-//     ch_information: &DirectedContractedGraph,
-// ) -> HubGraph {
-//     let mut forward_labels: Vec<_> =
-// (0..ch_information.upward_graph.number_of_vertices())
-//         .map(Label::new)
-//         .collect();
-//
-//     let mut reverse_labels = forward_labels.clone();
-//
-//     let pb =
-// ProgressBar::new(ch_information.upward_graph.number_of_vertices() as u64);
-//     for level_list in ch_information.levels.iter().rev() {
-//         let labels: Vec<_> = level_list
-//             .par_iter()
-//             .map(|&vertex| {
-//                 let forward_label = generate_forward_label(
-//                     ch_information,
-//                     vertex,
-//                     &forward_labels,
-//                     &reverse_labels,
-//                 );
-//
-//                 (vertex, forward_label)
-//             })
-//             .collect();
-//         for (vertex, forward_label) in labels {
-//             forward_labels[vertex as usize] = forward_label;
-//         }
-//         pb.inc(level_list.len() as u64);
-//     }
-//     pb.finish();
-//
-//     // Needs to be called after all labels are creates as replacing the
-// predecessor     // VertexId with the index of predecessor in label makes
-// merging impossible.     forward_labels
-//         .iter_mut()
-//         .chain(reverse_labels.iter_mut())
-//         .for_each(set_predecessor);
-//
-//     HubGraph {
-//         labels: forward_labels,
-//     }
-// }
-
 /// Generates a forward label for a given vertex.
 ///
 /// This function constructs a forward label for the specified vertex by
@@ -170,15 +124,15 @@ fn generate_reverse_label(
 
 pub fn set_predecessor(label: &mut Vec<LabelEntry>) {
     // maps vertex -> index
-    let mut vertex_to_index = HashMap::new();
+    let mut vertex_to_index_map = HashMap::new();
     for idx in 0..label.len() {
-        vertex_to_index.insert(label[idx].vertex, idx as u32);
+        vertex_to_index_map.insert(label[idx].vertex, idx as u32);
     }
 
     // replace predecessor VertexId with index of predecessor
     for entry in label.iter_mut() {
         if entry.predecessor_index != u32::MAX {
-            entry.predecessor_index = *vertex_to_index.get(&entry.predecessor_index).unwrap();
+            entry.predecessor_index = *vertex_to_index_map.get(&entry.predecessor_index).unwrap();
         }
     }
 }
