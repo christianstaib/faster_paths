@@ -67,18 +67,18 @@ pub fn generate_directed_contracted_graph(
     let downward_graph = AdjacencyVecGraph::new(&downward_edges, &vertex_to_level_map);
 
     let max_level = *vertex_to_level_map.iter().max().unwrap();
-    let mut level_to_vertices = vec![Vec::new(); max_level as usize + 1];
+    let mut level_to_vertices_map = vec![Vec::new(); max_level as usize + 1];
 
     for (vertex, &level) in vertex_to_level_map.iter().enumerate() {
-        level_to_vertices[level as usize].push(vertex as VertexId);
+        level_to_vertices_map[level as usize].push(vertex as VertexId);
     }
 
     // ch graph
-    let contracted_graph = DirectedContractedGraph {
+
+    DirectedContractedGraph {
         upward_graph,
         downward_graph,
         shortcuts,
-        levels: level_to_vertices,
-    };
-    contracted_graph
+        level_to_vertices_map,
+    }
 }

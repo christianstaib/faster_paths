@@ -22,7 +22,7 @@ pub fn directed_hub_graph_from_directed_contracted_graph(
     let mut reverse_labels = forward_labels.clone();
 
     let pb = ProgressBar::new(ch_information.upward_graph.number_of_vertices() as u64);
-    for level_list in ch_information.levels.iter().rev() {
+    for level_list in ch_information.level_to_vertices_map.iter().rev() {
         let labels: Vec<_> = level_list
             .par_iter()
             .map(|&vertex| {

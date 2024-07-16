@@ -51,8 +51,8 @@ impl Heuristic for Landmark {
         let from_source = (*self.from_weight.get(request.source() as usize)?)?;
 
         Some(std::cmp::max(
-            to_target.checked_sub(to_source).unwrap_or(0),
-            from_source.checked_sub(from_target).unwrap_or(0),
+            to_target.saturating_sub(to_source),
+            from_source.saturating_sub(from_target),
         ))
     }
 

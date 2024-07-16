@@ -15,12 +15,9 @@ use crate::{
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
         edge::DirectedEdge,
-        graph_functions::{shortests_path_tree, validate_path},
-        path::ShortestPathTestCase,
+        graph_functions::{shortests_path_tree},
         Graph, VertexId,
     },
-    hl::pathfinding::shortest_path,
-    shortcut_replacer::slow_shortcut_replacer::replace_shortcuts_slow,
 };
 
 pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {

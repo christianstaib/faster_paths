@@ -14,7 +14,10 @@ use crate::{
     },
 };
 
-pub fn contract_non_adaptive(graph: &dyn Graph, order: &[VertexId]) -> DirectedContractedGraph {
+pub fn contract_non_adaptive(
+    graph: &dyn Graph,
+    level_to_vertices_mal: &[Vec<VertexId>],
+) -> DirectedContractedGraph {
     let vec_graph = VecGraph::from_edges(&all_edges(graph));
     let mut base_graph = VecGraph::from_edges(&all_edges(graph));
 
@@ -24,7 +27,7 @@ pub fn contract_non_adaptive(graph: &dyn Graph, order: &[VertexId]) -> DirectedC
     println!("start contracting");
     let bar = ProgressBar::new(base_graph.number_of_vertices() as u64);
 
-    for &vertex in order.iter().rev() {
+    for &vertex in level_to_vertices_mal.iter().flatten().rev() {
         let vertex_shortcuts =
             ShortcutGeneratorWithWittnessSearch { max_hops: 16 }.get_shortcuts(&base_graph, vertex);
 

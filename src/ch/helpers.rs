@@ -24,6 +24,6 @@ pub fn generate_directed_contracted_graph(
         upward_graph,
         downward_graph,
         shortcuts,
-        levels,
+        level_to_vertices_map: levels,
     }
 }

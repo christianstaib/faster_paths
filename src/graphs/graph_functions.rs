@@ -377,7 +377,7 @@ pub fn generate_dijkstra_rank_test_cases(
                                     return true;
                                 }
                             }
-                            return false;
+                            false
                         })
                         .collect_vec();
 

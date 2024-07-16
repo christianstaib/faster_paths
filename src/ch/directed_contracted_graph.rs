@@ -21,7 +21,7 @@ pub struct DirectedContractedGraph {
     pub upward_graph: AdjacencyVecGraph,
     pub downward_graph: AdjacencyVecGraph,
     pub shortcuts: HashMap<DirectedEdge, VertexId>,
-    pub levels: Vec<Vec<u32>>,
+    pub level_to_vertices_map: Vec<Vec<VertexId>>,
 }
 
 impl DirectedContractedGraph {
@@ -141,7 +141,7 @@ impl DirectedContractedGraph {
             upward_graph,
             downward_graph,
             shortcuts,
-            levels,
+            level_to_vertices_map: levels,
         }
     }
 }
