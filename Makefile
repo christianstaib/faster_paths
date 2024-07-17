@@ -24,11 +24,13 @@ validate_time_dijkstra:
 		-p $(GRAPH)\
 		-g $(GRAPH)\
 		-t $(TESTS_RANDOM)
+
 validate_time_ch:
 	cargo r -r --bin validate_and_time --\
-		-p $(CH)\
-		-g $(GRAPH)\
-		-t $(TESTS_RANDOM)
+		--pathfinder $(CH)\
+		--graph $(GRAPH)\
+		--test-cases $(TESTS_RANDOM)
+
 validate_time_hl:
 	cargo r -r --bin validate_and_time --\
 		-pathfinder $(HL)\
@@ -45,7 +47,7 @@ create_tests:
 	cargo run --bin create_tests --release --\
 		--graph $(GRAPH)\
 		--random-test-cases $(TESTS_RANDOM)\
-		--dijkstra-rank-test-cases $(TESTS_RANDOM)\
+		--dijkstra-rank-test-cases $(TESTS_RANK)\
 		--number-of-tests $(NUM_TESTS)
 
 
