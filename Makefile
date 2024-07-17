@@ -47,7 +47,7 @@ create_tests:
 	cargo run --bin create_tests --release --\
 		--graph $(GRAPH)\
 		--random-test-cases $(TESTS_RANDOM)\
-		--dijkstra-rank-test-cases $(TESTS_RANK)\
+		--rank-test-cases $(TESTS_RANK)\
 		--number-of-tests $(NUM_TESTS)
 
 
@@ -65,21 +65,21 @@ create_ch:
 
 
 
-create_tphl:
+create_top_down_hl:
 	cargo run --bin create_top_down_hl  --release --\
 		--graph $(GRAPH)\
 		--paths $(PATHS)\
 		--hub-graph $(HL)
 
-create_tpch:
+create_top_down_ch:
 	cargo run --bin create_top_down_ch  --release --\
 		--graph $(GRAPH)\
 		--paths $(PATHS)\
 		--contracted-graph $(CH)
 
 
-create_hl:
-	cargo run --bin create_hl --release --\
+create_hl_from_ch:
+	cargo run --bin create_hl_from_ch --release --\
 		--contracted-graph $(CH)\
 		--hub-graph $(HL)
 
