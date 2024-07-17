@@ -1,12 +1,15 @@
 DATA_DIR := tests/data
 FMI_DIR := $(DATA_DIR)
 
-DIRECTED_CH_EXTENSION := .di.ch.bincode
-DIRECTED_HL_EXTENSION := .di.hl.bincode
-# GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
-GRAPH := $(FMI_DIR)/aegaeis-ref-visibility.fmi
-CH := $(GRAPH).di_ch_bincode
-HL := $(GRAPH).di_hl_bincode
+CH_EXTENSION := di_ch_bincode
+HL_EXTENSION := di_hl_bincode
+
+GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
+# GRAPH := $(FMI_DIR)/aegaeis-ref-visibility.fmi
+
+CH := $(GRAPH).$(CH_EXTENSION)
+HL := $(GRAPH).$(HL_EXTENSION)
+
 TESTS_RANDOM := $(GRAPH)_tests_random.json
 TESTS_RANK := $(GRAPH)_tests_rank.json
 PATHS := $(GRAPH).paths.json
@@ -28,9 +31,9 @@ validate_time_ch:
 		-t $(TESTS_RANDOM)
 validate_time_hl:
 	cargo r -r --bin validate_and_time --\
-		-p $(HL)\
-		-g $(GRAPH)\
-		-t $(TESTS_RANDOM)
+		-pathfinder $(HL)\
+		-graph $(GRAPH)\
+		-test_cases $(TESTS_RANDOM)
 
 test:
 	cargo run --bin test --release --\
@@ -47,7 +50,7 @@ create_tests:
 
 
 create_paths:
-	cargo run --bin create_random_paths --release --\
+	cargo run --bin create_paths --release --\
 		--pathfinder $(GRAPH)\
 		--paths $(PATHS)
 
