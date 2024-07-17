@@ -3,11 +3,12 @@ FMI_DIR := $(DATA_DIR)
 
 DIRECTED_CH_EXTENSION := .di.ch.bincode
 DIRECTED_HL_EXTENSION := .di.hl.bincode
-GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
-# GRAPH := $(FMI_DIR)/aegaeis-ref-visibility.fmi
+# GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
+GRAPH := $(FMI_DIR)/aegaeis-ref-visibility.fmi
 CH := $(GRAPH).di_ch_bincode
 HL := $(GRAPH).di_hl_bincode
-TESTS_RANDOM := $(GRAPH).tests_random.json
+TESTS_RANDOM := $(GRAPH)_tests_random.json
+TESTS_RANK := $(GRAPH)_tests_rank.json
 PATHS := $(GRAPH).paths.json
 
 NUM_TESTS := 10000
@@ -34,13 +35,14 @@ validate_time_hl:
 test:
 	cargo run --bin test --release --\
 		--graph-path $(GRAPH)\
-		--random-pairs $(TESTS_RANDOM)
+		--random_test_cases $(TESTS_RANDOM)
 
 
 create_tests:
 	cargo run --bin create_tests --release --\
 		--graph $(GRAPH)\
-		--test-cases $(TESTS_RANDOM)\
+		--random-test-cases $(TESTS_RANDOM)\
+		--dijkstra-rank-test-cases $(TESTS_RANDOM)\
 		--number-of-tests $(NUM_TESTS)
 
 
