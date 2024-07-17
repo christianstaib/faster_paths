@@ -7,7 +7,7 @@ use std::{
 
 use indicatif::ProgressIterator;
 
-use super::{edge::DirectedWeightedEdge, reversible_vec_graph::ReversibleVecGraph};
+use super::{edge::WeightedEdge, reversible_vec_graph::ReversibleVecGraph};
 
 #[derive(Clone)]
 pub struct GraphFactory {}
@@ -83,7 +83,7 @@ impl GraphFactory {
                     .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line));
                 values.next();
                 values.next();
-                DirectedWeightedEdge::new(tail, head, weight)
+                WeightedEdge::new(tail, head, weight)
             })
             .collect();
 
@@ -107,7 +107,7 @@ impl GraphFactory {
                 let tail: u32 = values.next().unwrap().parse().unwrap();
                 let head: u32 = values.next().unwrap().parse().unwrap();
                 let cost: u32 = values.next().unwrap().parse().unwrap();
-                DirectedWeightedEdge::new(tail, head, cost)
+                WeightedEdge::new(tail, head, cost)
             })
             .collect();
 

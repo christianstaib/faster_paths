@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::graphs::{edge::DirectedWeightedEdge, VertexId};
+use crate::graphs::{edge::WeightedEdge, VertexId};
 
 pub mod ch_from_top_down;
 pub mod ch_priority_element;
@@ -15,6 +15,6 @@ pub mod priority_function;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Shortcut {
-    pub edge: DirectedWeightedEdge,
+    pub edge: WeightedEdge,
     pub vertex: VertexId,
 }

@@ -14,7 +14,7 @@ use rand::prelude::*;
 use rayon::prelude::*;
 
 use super::{
-    edge::DirectedWeightedEdge,
+    edge::WeightedEdge,
     path::{
         Path, PathFinding, ShortestPathRequest, ShortestPathTestCase, ShortestPathTestTimingResult,
     },
@@ -84,7 +84,7 @@ pub fn validate_path(
     Ok(())
 }
 
-pub fn all_edges(graph: &dyn Graph) -> Vec<DirectedWeightedEdge> {
+pub fn all_edges(graph: &dyn Graph) -> Vec<WeightedEdge> {
     (0..graph.number_of_vertices())
         .flat_map(|vertex| graph.out_edges(vertex))
         .collect()
@@ -128,7 +128,7 @@ pub fn neighbors(vertex: VertexId, graph: &dyn Graph) -> HashSet<VertexId> {
     neighbors
 }
 
-pub fn add_edge_bidrectional(graph: &mut dyn Graph, edge: &DirectedWeightedEdge) {
+pub fn add_edge_bidrectional(graph: &mut dyn Graph, edge: &WeightedEdge) {
     graph.set_edge(edge);
     graph.set_edge(&edge.reversed());
 }

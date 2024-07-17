@@ -27,7 +27,7 @@ use crate::{
         Shortcut,
     },
     graphs::{
-        edge::DirectedEdge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
+        edge::Edge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
         vec_graph::VecGraph, Graph, VertexId,
     },
     heuristics::{landmarks::Landmarks, Heuristic},
@@ -71,7 +71,7 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
         .collect();
 
     let mut level_to_verticies_map = Vec::new();
-    let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
+    let mut shortcuts: HashMap<Edge, Shortcut> = HashMap::new();
 
     let mut writer = BufWriter::new(File::create("time.csv").unwrap());
     writeln!(

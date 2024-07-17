@@ -3,13 +3,13 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use super::slow_shortcut_replacer::replace_shortcuts_slow;
 use crate::graphs::{
-    edge::DirectedEdge,
+    edge::Edge,
     path::{Path, PathFinding, ShortestPathRequest},
     VertexId, Weight,
 };
 
 pub struct FastShortcutReplacer<'a> {
-    shortcuts: &'a HashMap<DirectedEdge, Vec<VertexId>>,
+    shortcuts: &'a HashMap<Edge, Vec<VertexId>>,
     path_finder: &'a dyn PathFinding,
 }
 
@@ -32,7 +32,7 @@ impl<'a> PathFinding for FastShortcutReplacer<'a> {
 
 impl<'a> FastShortcutReplacer<'a> {
     pub fn new(
-        shortcuts: &'a HashMap<DirectedEdge, Vec<VertexId>>,
+        shortcuts: &'a HashMap<Edge, Vec<VertexId>>,
         path_finder: &'a dyn PathFinding,
     ) -> Self {
         FastShortcutReplacer {
@@ -42,9 +42,7 @@ impl<'a> FastShortcutReplacer<'a> {
     }
 }
 
-pub fn unfold_shortcuts(
-    shortcuts: &HashMap<DirectedEdge, VertexId>,
-) -> HashMap<DirectedEdge, Vec<VertexId>> {
+pub fn unfold_shortcuts(shortcuts: &HashMap<Edge, VertexId>) -> HashMap<Edge, Vec<VertexId>> {
     shortcuts
         .par_iter()
         .map(|(edge, &skiped_vertex)| {
@@ -56,16 +54,13 @@ pub fn unfold_shortcuts(
         .collect()
 }
 
-pub fn replace_shortcuts_fast(
-    path: &mut Vec<VertexId>,
-    shortcuts: &HashMap<DirectedEdge, Vec<VertexId>>,
-) {
+pub fn replace_shortcuts_fast(path: &mut Vec<VertexId>, shortcuts: &HashMap<Edge, Vec<VertexId>>) {
     let path_with_shortcuts = std::mem::take(path);
 
     path.push(path_with_shortcuts[0]);
 
     for windows in path_with_shortcuts.windows(2) {
-        let edge = DirectedEdge::new(windows[0], windows[1]).unwrap();
+        let edge = Edge::new(windows[0], windows[1]).unwrap();
         if let Some(x) = shortcuts.get(&edge) {
             path.extend(x);
         }

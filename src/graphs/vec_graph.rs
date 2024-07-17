@@ -4,13 +4,13 @@ use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    edge::{DirectedTaillessWeightedEdge, DirectedWeightedEdge},
+    edge::{TaillessWeightedEdge, WeightedEdge},
     Graph, VertexId,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct VecGraph {
-    pub edges: Vec<Vec<DirectedTaillessWeightedEdge>>,
+    pub edges: Vec<Vec<TaillessWeightedEdge>>,
 }
 
 impl Default for VecGraph {
@@ -23,14 +23,14 @@ impl Graph for VecGraph {
     fn out_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         struct OutEdgeIterator<'a> {
             source: VertexId,
-            tailless_edge_iterator: Iter<'a, DirectedTaillessWeightedEdge>,
+            tailless_edge_iterator: Iter<'a, TaillessWeightedEdge>,
         }
 
         impl<'a> Iterator for OutEdgeIterator<'a> {
-            type Item = DirectedWeightedEdge;
+            type Item = WeightedEdge;
 
             fn next(&mut self) -> Option<Self::Item> {
                 let edge = self.tailless_edge_iterator.next()?;
@@ -61,7 +61,7 @@ impl Graph for VecGraph {
     fn in_edges(
         &self,
         _source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         unimplemented!("this graph is not reversable");
     }
 
@@ -73,7 +73,7 @@ impl Graph for VecGraph {
         self.edges.iter().map(Vec::len).sum::<usize>() as u32
     }
 
-    fn set_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn set_edge(&mut self, edge: &WeightedEdge) {
         if (self.edges.len() as u32) <= edge.tail() {
             self.edges.resize((edge.tail() + 1) as usize, Vec::new());
         }
@@ -102,7 +102,7 @@ impl VecGraph {
         VecGraph { edges: Vec::new() }
     }
 
-    pub fn from_edges(edges: &[DirectedWeightedEdge]) -> VecGraph {
+    pub fn from_edges(edges: &[WeightedEdge]) -> VecGraph {
         let mut graph = VecGraph::new();
         edges.iter().progress().for_each(|edge| {
             graph.set_edge(edge);

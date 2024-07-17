@@ -13,11 +13,7 @@ use super::{
 use crate::{
     classical_search::dijkstra::{single_source, single_target},
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
-    graphs::{
-        edge::DirectedEdge,
-        graph_functions::{shortests_path_tree},
-        Graph, VertexId,
-    },
+    graphs::{edge::Edge, graph_functions::shortests_path_tree, Graph, VertexId},
 };
 
 pub fn generate_directed_hub_graph(graph: &dyn Graph, order: &[u32]) -> DirectedHubGraph {
@@ -82,7 +78,7 @@ pub fn generate_forward_label(
     vertex: VertexId,
     graph: &dyn Graph,
     vertex_to_level_map: &[u32],
-) -> (Vec<LabelEntry>, Vec<(DirectedEdge, VertexId)>) {
+) -> (Vec<LabelEntry>, Vec<(Edge, VertexId)>) {
     let data = single_source(graph, vertex);
     get_label_from_data(vertex, &data, vertex_to_level_map)
 }
@@ -91,7 +87,7 @@ pub fn generate_backward_label(
     vertex: VertexId,
     graph: &dyn Graph,
     vertex_to_level_map: &[u32],
-) -> (Vec<LabelEntry>, Vec<(DirectedEdge, VertexId)>) {
+) -> (Vec<LabelEntry>, Vec<(Edge, VertexId)>) {
     let data = single_target(graph, vertex);
     let (label, shortcuts) = get_label_from_data(vertex, &data, vertex_to_level_map);
     (
@@ -107,7 +103,7 @@ pub fn get_label_from_data(
     vertex: VertexId,
     data: &DijkstraDataVec,
     vertex_to_level_map: &[u32],
-) -> (Vec<LabelEntry>, Vec<(DirectedEdge, VertexId)>) {
+) -> (Vec<LabelEntry>, Vec<(Edge, VertexId)>) {
     let mut shortest_path_tree = shortests_path_tree(data);
     let mut shortcuts = Vec::new();
 
@@ -128,7 +124,7 @@ pub fn get_label_from_data(
             } else {
                 for &tail_child in std::mem::take(&mut shortest_path_tree[head as usize]).iter() {
                     heads.push(tail_child);
-                    let edge = DirectedEdge::new(tail as VertexId, tail_child).unwrap();
+                    let edge = Edge::new(tail as VertexId, tail_child).unwrap();
                     shortcuts.push((edge, head));
                 }
             }

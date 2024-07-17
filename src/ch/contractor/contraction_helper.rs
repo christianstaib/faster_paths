@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use super::Shortcut;
 use crate::{
     ch::contractor::witness_search::optimal_witness_search,
-    graphs::{edge::DirectedWeightedEdge, path::ShortestPathRequest, Graph, VertexId},
+    graphs::{edge::WeightedEdge, path::ShortestPathRequest, Graph, VertexId},
     heuristics::Heuristic,
 };
 
@@ -58,7 +58,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithWittnessSearch {
                             return None;
                         }
 
-                        let edge = DirectedWeightedEdge::new(tail, head, weight).unwrap();
+                        let edge = WeightedEdge::new(tail, head, weight).unwrap();
                         Some(Shortcut { edge, vertex })
                     })
                     .collect_vec()
@@ -72,10 +72,10 @@ pub struct ShortcutGeneratorWithHeuristic {
 }
 
 fn sample_pairs_1(
-    vec1: &Vec<DirectedWeightedEdge>,
-    vec2: &Vec<DirectedWeightedEdge>,
+    vec1: &Vec<WeightedEdge>,
+    vec2: &Vec<WeightedEdge>,
     n: usize,
-) -> Vec<(DirectedWeightedEdge, DirectedWeightedEdge)> {
+) -> Vec<(WeightedEdge, WeightedEdge)> {
     if vec1.is_empty() || vec2.is_empty() {
         return Vec::new();
     }
@@ -94,10 +94,10 @@ fn sample_pairs_1(
 }
 
 fn sample_pairs_2(
-    vec1: &Vec<DirectedWeightedEdge>,
-    vec2: &Vec<DirectedWeightedEdge>,
+    vec1: &Vec<WeightedEdge>,
+    vec2: &Vec<WeightedEdge>,
     n: usize,
-) -> Vec<(DirectedWeightedEdge, DirectedWeightedEdge)> {
+) -> Vec<(WeightedEdge, WeightedEdge)> {
     if vec1.is_empty() || vec2.is_empty() {
         return Vec::new();
     }
@@ -145,7 +145,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
                     return None;
                 }
 
-                let edge = DirectedWeightedEdge::new(tail, head, weight).unwrap();
+                let edge = WeightedEdge::new(tail, head, weight).unwrap();
                 Some(Shortcut { edge, vertex })
             })
             .collect::<Vec<_>>()
@@ -179,7 +179,7 @@ impl ShortcutGenerator for ShortcutGeneratorWithHeuristic {
                             return None;
                         }
 
-                        let edge = DirectedWeightedEdge::new(tail, head, weight).unwrap();
+                        let edge = WeightedEdge::new(tail, head, weight).unwrap();
                         Some(Shortcut { edge, vertex })
                     })
                     .collect_vec()

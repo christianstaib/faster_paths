@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::graphs::{adjacency_vec_graph::AdjacencyVecGraph, edge::DirectedWeightedEdge, Graph};
+use crate::graphs::{adjacency_vec_graph::AdjacencyVecGraph, edge::WeightedEdge, Graph};
 
 pub fn partition_by_levels(
     graph: &dyn Graph,
@@ -32,7 +32,7 @@ pub fn partition_by_levels(
     println!("creating downward graph");
     let downward_edges: Vec<_> = edges
         .iter()
-        .map(DirectedWeightedEdge::reversed)
+        .map(WeightedEdge::reversed)
         .filter(|edge| {
             vertex_to_level[edge.tail() as usize] <= vertex_to_level[edge.head() as usize]
         })

@@ -4,19 +4,19 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    edge::{DirectedTaillessWeightedEdge, DirectedWeightedEdge},
+    edge::{TaillessWeightedEdge, WeightedEdge},
     Graph, VertexId,
 };
 
 /// Graph that is optimized for cache efficency
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AdjacencyVecGraph {
-    edges: Vec<DirectedTaillessWeightedEdge>,
+    edges: Vec<TaillessWeightedEdge>,
     indices: Vec<(u32, u32)>, // (start, end)
 }
 
 impl AdjacencyVecGraph {
-    pub fn new(edges: &[DirectedWeightedEdge], order: &[VertexId]) -> Self {
+    pub fn new(edges: &[WeightedEdge], order: &[VertexId]) -> Self {
         let mut edges_map = edges
             .iter()
             .map(|edge| (edge.tail(), edge.tailless()))
@@ -45,14 +45,14 @@ impl Graph for AdjacencyVecGraph {
     fn out_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         struct OutEdgeIterator<'a> {
             source: VertexId,
-            tailless_edge_iterator: Iter<'a, DirectedTaillessWeightedEdge>,
+            tailless_edge_iterator: Iter<'a, TaillessWeightedEdge>,
         }
 
         impl<'a> Iterator for OutEdgeIterator<'a> {
-            type Item = DirectedWeightedEdge;
+            type Item = WeightedEdge;
 
             fn next(&mut self) -> Option<Self::Item> {
                 let edge = self.tailless_edge_iterator.next()?;
@@ -81,7 +81,7 @@ impl Graph for AdjacencyVecGraph {
     fn in_edges(
         &self,
         _source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         unimplemented!("cannot visits incoming edges");
     }
 
@@ -93,7 +93,7 @@ impl Graph for AdjacencyVecGraph {
         self.edges.len() as u32
     }
 
-    fn set_edge(&mut self, _edge: &DirectedWeightedEdge) {
+    fn set_edge(&mut self, _edge: &WeightedEdge) {
         unimplemented!("this graph cannot be mutated");
     }
 

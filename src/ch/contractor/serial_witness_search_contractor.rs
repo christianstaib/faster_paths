@@ -9,8 +9,8 @@ use super::contraction_helper::ShortcutGenerator;
 use crate::{
     ch::{ch_priority_element::ChPriorityElement, priority_function::PriorityFunction, Shortcut},
     graphs::{
-        edge::DirectedEdge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph,
-        Graph, VertexId,
+        edge::Edge, graph_functions::all_edges, reversible_vec_graph::ReversibleVecGraph, Graph,
+        VertexId,
     },
 };
 
@@ -29,7 +29,7 @@ impl<'a> SerialAdaptiveSimulatedContractor<'a> {
         println!("initalizing queue");
         self.initialize(&graph);
 
-        let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
+        let mut shortcuts: HashMap<Edge, Shortcut> = HashMap::new();
         let mut level_to_verticies_map = Vec::new();
 
         println!("start contracting");

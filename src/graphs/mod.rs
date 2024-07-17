@@ -1,4 +1,4 @@
-use self::edge::{DirectedEdge, DirectedWeightedEdge};
+use self::edge::{Edge, WeightedEdge};
 
 pub mod adjacency_vec_graph;
 pub mod edge;
@@ -18,14 +18,14 @@ pub trait Graph: Send + Sync {
     fn out_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_>;
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
 
     fn in_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_>;
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
 
-    fn get_edge_weight(&self, edge: &DirectedEdge) -> Option<Weight> {
+    fn get_edge_weight(&self, edge: &Edge) -> Option<Weight> {
         Some(
             self.out_edges(edge.tail())
                 .find(|out_edge| out_edge.head() == edge.head())?
@@ -39,10 +39,10 @@ pub trait Graph: Send + Sync {
 
     // insert edge if not pressent or updated edge weight if new edge weight is
     // smaller than currents.
-    fn set_edge(&mut self, edge: &DirectedWeightedEdge);
+    fn set_edge(&mut self, edge: &WeightedEdge);
 
     // set OR updates eges. may be faster than update edges
-    fn set_edges(&mut self, edges: &[DirectedWeightedEdge]) {
+    fn set_edges(&mut self, edges: &[WeightedEdge]) {
         for edge in edges {
             self.set_edge(edge);
         }

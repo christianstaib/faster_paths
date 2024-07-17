@@ -11,7 +11,7 @@ use crate::{
     classical_search::dijkstra::{single_source, single_target},
     dijkstra_data::dijkstra_data_vec::DijkstraDataVec,
     graphs::{
-        edge::{DirectedEdge, DirectedWeightedEdge},
+        edge::{Edge, WeightedEdge},
         graph_functions::{all_edges, shortests_path_tree},
         path::ShortestPathRequest,
         Graph, VertexId, Weight,
@@ -65,7 +65,7 @@ impl Heuristic for Landmark {
 
 pub struct Landmarks {
     pub landmarks: Vec<Landmark>,
-    pub directed_edges: HashMap<DirectedEdge, Weight>,
+    pub directed_edges: HashMap<Edge, Weight>,
 }
 
 impl Heuristic for Landmarks {
@@ -77,7 +77,7 @@ impl Heuristic for Landmarks {
     }
 
     fn upper_bound(&self, request: &ShortestPathRequest) -> Option<u32> {
-        let edge = DirectedEdge::new(request.source(), request.target()).unwrap();
+        let edge = Edge::new(request.source(), request.target()).unwrap();
         if let Some(&weight) = self.directed_edges.get(&edge) {
             return Some(weight);
         }
@@ -88,7 +88,7 @@ impl Heuristic for Landmarks {
             .min()
     }
 
-    fn respects_upper_bound(&self, edge: &DirectedWeightedEdge) -> bool {
+    fn respects_upper_bound(&self, edge: &WeightedEdge) -> bool {
         self.landmarks
             .iter()
             .all(|landmark| landmark.respects_upper_bound(edge))

@@ -4,14 +4,14 @@ use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    edge::{DirectedHeadlessWeightedEdge, DirectedTaillessWeightedEdge, DirectedWeightedEdge},
+    edge::{HeadlessWeightedEdge, TaillessWeightedEdge, WeightedEdge},
     Graph, VertexId,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ReversibleVecGraph {
-    pub out_edges: Vec<Vec<DirectedTaillessWeightedEdge>>,
-    pub in_edges: Vec<Vec<DirectedHeadlessWeightedEdge>>,
+    pub out_edges: Vec<Vec<TaillessWeightedEdge>>,
+    pub in_edges: Vec<Vec<HeadlessWeightedEdge>>,
     pub number_of_vertices: u32,
 }
 
@@ -25,14 +25,14 @@ impl Graph for ReversibleVecGraph {
     fn out_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         struct OutEdgeIterator<'a> {
             source: VertexId,
-            tailless_edge_iterator: Iter<'a, DirectedTaillessWeightedEdge>,
+            tailless_edge_iterator: Iter<'a, TaillessWeightedEdge>,
         }
 
         impl<'a> Iterator for OutEdgeIterator<'a> {
-            type Item = DirectedWeightedEdge;
+            type Item = WeightedEdge;
 
             fn next(&mut self) -> Option<Self::Item> {
                 let edge = self.tailless_edge_iterator.next()?;
@@ -71,14 +71,14 @@ impl Graph for ReversibleVecGraph {
     fn in_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         struct InEdgeIterator<'a> {
             source: VertexId,
-            tailless_edge_iterator: Iter<'a, DirectedHeadlessWeightedEdge>,
+            tailless_edge_iterator: Iter<'a, HeadlessWeightedEdge>,
         }
 
         impl<'a> Iterator for InEdgeIterator<'a> {
-            type Item = DirectedWeightedEdge;
+            type Item = WeightedEdge;
 
             fn next(&mut self) -> Option<Self::Item> {
                 let edge = self.tailless_edge_iterator.next()?;
@@ -106,7 +106,7 @@ impl Graph for ReversibleVecGraph {
         Box::new(edge_iterator)
     }
 
-    fn set_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn set_edge(&mut self, edge: &WeightedEdge) {
         self.number_of_vertices = *[edge.tail() + 1, edge.head() + 1, self.number_of_vertices]
             .iter()
             .max()
@@ -145,7 +145,7 @@ impl ReversibleVecGraph {
         }
     }
 
-    pub fn from_edges(edges: &[DirectedWeightedEdge]) -> ReversibleVecGraph {
+    pub fn from_edges(edges: &[WeightedEdge]) -> ReversibleVecGraph {
         let mut graph = ReversibleVecGraph::new();
         edges.iter().progress().for_each(|edge| {
             graph.set_edge(edge);
@@ -153,7 +153,7 @@ impl ReversibleVecGraph {
         graph
     }
 
-    fn add_out_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn add_out_edge(&mut self, edge: &WeightedEdge) {
         if (self.out_edges.len() as u32) <= edge.tail() {
             self.out_edges
                 .resize((edge.tail() + 1) as usize, Vec::new());
@@ -171,7 +171,7 @@ impl ReversibleVecGraph {
         }
     }
 
-    fn add_in_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn add_in_edge(&mut self, edge: &WeightedEdge) {
         if (self.in_edges.len() as u32) <= edge.head() {
             self.in_edges.resize((edge.head() + 1) as usize, Vec::new());
         }

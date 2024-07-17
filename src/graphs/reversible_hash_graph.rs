@@ -7,13 +7,11 @@ use std::{
 };
 
 use ahash::{HashMap, HashMapExt};
-use rayon::iter::{
-    IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator,
-};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    edge::{DirectedEdge, DirectedWeightedEdge},
+    edge::{Edge, WeightedEdge},
     Graph, VertexId, Weight,
 };
 
@@ -33,18 +31,18 @@ impl Graph for ReversibleHashGraph {
     fn out_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         struct OutEdgeIterator<'a> {
             source: VertexId,
             tailless_edge_iterator: Iter<'a, VertexId, Weight>,
         }
 
         impl<'a> Iterator for OutEdgeIterator<'a> {
-            type Item = DirectedWeightedEdge;
+            type Item = WeightedEdge;
 
             fn next(&mut self) -> Option<Self::Item> {
                 let edge = self.tailless_edge_iterator.next()?;
-                Some(DirectedWeightedEdge::new(self.source, *edge.0, *edge.1).unwrap())
+                Some(WeightedEdge::new(self.source, *edge.0, *edge.1).unwrap())
             }
         }
 
@@ -67,18 +65,18 @@ impl Graph for ReversibleHashGraph {
     fn in_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         struct InEdgeIterator<'a> {
             source: VertexId,
             tailless_edge_iterator: Iter<'a, VertexId, Weight>,
         }
 
         impl<'a> Iterator for InEdgeIterator<'a> {
-            type Item = DirectedWeightedEdge;
+            type Item = WeightedEdge;
 
             fn next(&mut self) -> Option<Self::Item> {
                 let edge = self.tailless_edge_iterator.next()?;
-                Some(DirectedWeightedEdge::new(*edge.0, self.source, *edge.1).unwrap())
+                Some(WeightedEdge::new(*edge.0, self.source, *edge.1).unwrap())
             }
         }
 
@@ -98,7 +96,7 @@ impl Graph for ReversibleHashGraph {
         Box::new(edge_iterator)
     }
 
-    fn get_edge_weight(&self, edge: &DirectedEdge) -> Option<Weight> {
+    fn get_edge_weight(&self, edge: &Edge) -> Option<Weight> {
         self.out_edges
             .get(edge.tail() as usize)?
             .get(&edge.head())
@@ -113,12 +111,12 @@ impl Graph for ReversibleHashGraph {
         self.out_edges.iter().map(HashMap::len).sum::<usize>() as u32
     }
 
-    fn set_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn set_edge(&mut self, edge: &WeightedEdge) {
         self.add_out_edge(edge);
         self.add_in_edge(edge);
     }
 
-    fn set_edges(&mut self, edges: &[DirectedWeightedEdge]) {
+    fn set_edges(&mut self, edges: &[WeightedEdge]) {
         self.out_edges
             .par_iter_mut()
             .enumerate()
@@ -169,7 +167,7 @@ impl ReversibleHashGraph {
         }
     }
 
-    pub fn from_edges(edges: &[DirectedWeightedEdge]) -> ReversibleHashGraph {
+    pub fn from_edges(edges: &[WeightedEdge]) -> ReversibleHashGraph {
         let mut graph = ReversibleHashGraph::new();
         edges.iter().for_each(|edge| {
             graph.set_edge(edge);
@@ -177,7 +175,7 @@ impl ReversibleHashGraph {
         graph
     }
 
-    fn add_out_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn add_out_edge(&mut self, edge: &WeightedEdge) {
         if (self.out_edges.len() as u32) <= edge.tail() {
             self.out_edges
                 .resize((edge.tail() + 1) as usize, HashMap::new());
@@ -201,7 +199,7 @@ impl ReversibleHashGraph {
         }
     }
 
-    fn add_in_edge(&mut self, edge: &DirectedWeightedEdge) {
+    fn add_in_edge(&mut self, edge: &WeightedEdge) {
         if (self.in_edges.len() as u32) <= edge.head() {
             self.in_edges
                 .resize((edge.head() + 1) as usize, HashMap::new());

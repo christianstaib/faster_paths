@@ -1,13 +1,13 @@
 use ahash::HashMap;
 
 use crate::graphs::{
-    edge::DirectedEdge,
+    edge::Edge,
     path::{Path, PathFinding, ShortestPathRequest},
     VertexId, Weight,
 };
 
 pub struct SlowShortcutReplacer<'a> {
-    shortcuts: &'a HashMap<DirectedEdge, VertexId>,
+    shortcuts: &'a HashMap<Edge, VertexId>,
     path_finder: &'a dyn PathFinding,
 }
 
@@ -29,10 +29,7 @@ impl<'a> PathFinding for SlowShortcutReplacer<'a> {
 }
 
 impl<'a> SlowShortcutReplacer<'a> {
-    pub fn new(
-        shortcuts: &'a HashMap<DirectedEdge, VertexId>,
-        path_finder: &'a dyn PathFinding,
-    ) -> Self {
+    pub fn new(shortcuts: &'a HashMap<Edge, VertexId>, path_finder: &'a dyn PathFinding) -> Self {
         SlowShortcutReplacer {
             shortcuts,
             path_finder,
@@ -40,16 +37,13 @@ impl<'a> SlowShortcutReplacer<'a> {
     }
 }
 
-pub fn replace_shortcuts_slow(
-    path: &mut Vec<VertexId>,
-    shortcuts: &HashMap<DirectedEdge, VertexId>,
-) {
+pub fn replace_shortcuts_slow(path: &mut Vec<VertexId>, shortcuts: &HashMap<Edge, VertexId>) {
     let mut path_with_shortcuts = std::mem::take(path);
 
     while path_with_shortcuts.len() >= 2 {
         let head = path_with_shortcuts.pop().unwrap();
         let tail = *path_with_shortcuts.last().unwrap();
-        let edge = DirectedEdge::new(tail, head).unwrap();
+        let edge = Edge::new(tail, head).unwrap();
 
         if let Some(&skiped_vertex) = shortcuts.get(&edge) {
             if skiped_vertex == head || skiped_vertex == tail {

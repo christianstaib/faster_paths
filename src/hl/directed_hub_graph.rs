@@ -4,27 +4,29 @@ use ahash::HashMap;
 use serde::{Deserialize, Serialize};
 
 use super::{label::LabelEntry, HubGraphTrait};
-use crate::graphs::{edge::DirectedEdge, VertexId};
+use crate::graphs::{edge::Edge, VertexId};
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectedHubGraph {
-    /// The forward label of vertex `v` is stored in `forward_labels[forward_indices[v]..forward_indices[v + 1]]`
+    /// The forward label of vertex `v` is stored in
+    /// `forward_labels[forward_indices[v]..forward_indices[v + 1]]`
     forward_labels: Vec<LabelEntry>,
     forward_indices: Vec<u32>,
 
-    /// The backward label of vertex `v` is stored in `backward_labels[backward_indices[v]..backward_indices[v + 1]]`
+    /// The backward label of vertex `v` is stored in
+    /// `backward_labels[backward_indices[v]..backward_indices[v + 1]]`
     backward_labels: Vec<LabelEntry>,
     backward_indices: Vec<u32>,
 
     // Map of shortcuts represented by directed edges and their corresponding vertex IDs
-    shortcuts: HashMap<DirectedEdge, VertexId>,
+    shortcuts: HashMap<Edge, VertexId>,
 }
 
 impl DirectedHubGraph {
     pub fn new(
         forward_labels: Vec<Vec<LabelEntry>>,
         backward_labels: Vec<Vec<LabelEntry>>,
-        shortcuts: HashMap<DirectedEdge, VertexId>,
+        shortcuts: HashMap<Edge, VertexId>,
     ) -> DirectedHubGraph {
         let mut forward_indices = vec![0];
         let mut flattened_forward_labels = Vec::new();
@@ -56,7 +58,7 @@ impl DirectedHubGraph {
         )
     }
 
-    pub fn shortcuts(&self) -> &HashMap<DirectedEdge, VertexId> {
+    pub fn shortcuts(&self) -> &HashMap<Edge, VertexId> {
         &self.shortcuts
     }
 }

@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::graphs::{
     adjacency_vec_graph::AdjacencyVecGraph,
-    edge::{DirectedEdge, DirectedWeightedEdge},
+    edge::{Edge, WeightedEdge},
     Graph, VertexId,
 };
 
@@ -20,7 +20,7 @@ use crate::graphs::{
 pub struct DirectedContractedGraph {
     pub upward_graph: AdjacencyVecGraph,
     pub downward_graph: AdjacencyVecGraph,
-    pub shortcuts: HashMap<DirectedEdge, VertexId>,
+    pub shortcuts: HashMap<Edge, VertexId>,
     pub level_to_vertices_map: Vec<Vec<VertexId>>,
 }
 
@@ -28,14 +28,14 @@ impl DirectedContractedGraph {
     pub fn upward_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         self.upward_graph.out_edges(source)
     }
 
     pub fn downard_edges(
         &self,
         source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = DirectedWeightedEdge> + Send + '_> {
+    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         self.downward_graph.out_edges(source)
     }
 
@@ -115,7 +115,7 @@ impl DirectedContractedGraph {
                     .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line));
                 values.next();
                 values.next();
-                DirectedWeightedEdge::new(tail, head, weight)
+                WeightedEdge::new(tail, head, weight)
             })
             .collect();
 
@@ -130,7 +130,7 @@ impl DirectedContractedGraph {
 
         let downward_edges = edges
             .iter()
-            .map(DirectedWeightedEdge::reversed)
+            .map(WeightedEdge::reversed)
             .filter(|edge| levels[edge.tail() as usize] <= levels[edge.head() as usize])
             .collect_vec();
         let downward_graph = AdjacencyVecGraph::new(&downward_edges, &order);

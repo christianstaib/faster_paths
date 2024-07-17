@@ -10,7 +10,7 @@ use crate::{
     },
     classical_search::dijkstra::Dijkstra,
     graphs::{
-        edge::{DirectedEdge, DirectedWeightedEdge},
+        edge::{Edge, WeightedEdge},
         graph_functions::{all_edges, hitting_set, random_paths},
         reversible_hash_graph::ReversibleHashGraph,
         reversible_vec_graph::ReversibleVecGraph,
@@ -38,7 +38,7 @@ pub fn contract_adaptive_non_simulated_all_in(graph: &dyn Graph) -> DirectedCont
     let mut levels = Vec::new();
 
     println!("starting actual contraction");
-    let mut all_shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
+    let mut all_shortcuts: HashMap<Edge, Shortcut> = HashMap::new();
 
     let mut remaining_vertices: HashSet<VertexId> = (0..graph.number_of_vertices()).collect();
     let bar = ProgressBar::new(remaining_vertices.len() as u64);
@@ -73,7 +73,7 @@ fn generate_all_shortcuts(
     graph: &dyn Graph,
     heuristic: &dyn Heuristic,
     vertex: u32,
-    all_shortcuts: &HashMap<DirectedEdge, Shortcut>,
+    all_shortcuts: &HashMap<Edge, Shortcut>,
 ) -> Vec<Shortcut> {
     let in_edges = graph.in_edges(vertex).collect_vec();
     let out_edges = graph.out_edges(vertex).collect_vec();
@@ -87,7 +87,7 @@ fn generate_all_shortcuts(
                 return None;
             }
 
-            let edge = DirectedWeightedEdge::new(
+            let edge = WeightedEdge::new(
                 in_edge.tail(),
                 out_edge.head(),
                 in_edge.weight() + out_edge.weight(),

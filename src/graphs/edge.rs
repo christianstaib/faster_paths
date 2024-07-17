@@ -3,19 +3,19 @@ use serde::{Deserialize, Serialize};
 use super::{VertexId, Weight};
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord, Debug)]
-pub struct DirectedWeightedEdge {
+pub struct WeightedEdge {
     tail: VertexId,
     head: VertexId,
     weight: Weight,
 }
 
-impl DirectedWeightedEdge {
-    pub fn new(tail: VertexId, head: VertexId, weight: Weight) -> Option<DirectedWeightedEdge> {
+impl WeightedEdge {
+    pub fn new(tail: VertexId, head: VertexId, weight: Weight) -> Option<WeightedEdge> {
         if tail == head {
             return None;
         }
 
-        Some(DirectedWeightedEdge { head, tail, weight })
+        Some(WeightedEdge { head, tail, weight })
     }
 
     pub fn tail(&self) -> VertexId {
@@ -30,30 +30,30 @@ impl DirectedWeightedEdge {
         self.weight
     }
 
-    pub fn reversed(&self) -> DirectedWeightedEdge {
-        DirectedWeightedEdge {
+    pub fn reversed(&self) -> WeightedEdge {
+        WeightedEdge {
             head: self.tail,
             tail: self.head,
             weight: self.weight,
         }
     }
 
-    pub fn unweighted(&self) -> DirectedEdge {
-        DirectedEdge {
+    pub fn unweighted(&self) -> Edge {
+        Edge {
             tail: self.tail,
             head: self.head,
         }
     }
 
-    pub fn tailless(&self) -> DirectedTaillessWeightedEdge {
-        DirectedTaillessWeightedEdge {
+    pub fn tailless(&self) -> TaillessWeightedEdge {
+        TaillessWeightedEdge {
             head: self.head,
             weight: self.weight,
         }
     }
 
-    pub fn headless(&self) -> DirectedHeadlessWeightedEdge {
-        DirectedHeadlessWeightedEdge {
+    pub fn headless(&self) -> HeadlessWeightedEdge {
+        HeadlessWeightedEdge {
             tail: self.tail,
             weight: self.weight,
         }
@@ -61,14 +61,14 @@ impl DirectedWeightedEdge {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct DirectedTaillessWeightedEdge {
+pub struct TaillessWeightedEdge {
     head: VertexId,
     weight: Weight,
 }
 
-impl DirectedTaillessWeightedEdge {
-    pub fn new(head: VertexId, weight: Weight) -> DirectedTaillessWeightedEdge {
-        DirectedTaillessWeightedEdge { head, weight }
+impl TaillessWeightedEdge {
+    pub fn new(head: VertexId, weight: Weight) -> TaillessWeightedEdge {
+        TaillessWeightedEdge { head, weight }
     }
 
     pub fn head(&self) -> VertexId {
@@ -83,18 +83,18 @@ impl DirectedTaillessWeightedEdge {
         self.weight = weight;
     }
 
-    pub fn set_tail(&self, tail: VertexId) -> Option<DirectedWeightedEdge> {
-        DirectedWeightedEdge::new(tail, self.head, self.weight)
+    pub fn set_tail(&self, tail: VertexId) -> Option<WeightedEdge> {
+        WeightedEdge::new(tail, self.head, self.weight)
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub struct DirectedHeadlessWeightedEdge {
+pub struct HeadlessWeightedEdge {
     tail: VertexId,
     weight: Weight,
 }
 
-impl DirectedHeadlessWeightedEdge {
+impl HeadlessWeightedEdge {
     pub fn tail(&self) -> VertexId {
         self.tail
     }
@@ -107,28 +107,28 @@ impl DirectedHeadlessWeightedEdge {
         self.weight = weight;
     }
 
-    pub fn set_head(&self, head: VertexId) -> Option<DirectedWeightedEdge> {
-        DirectedWeightedEdge::new(self.tail, head, self.weight)
+    pub fn set_head(&self, head: VertexId) -> Option<WeightedEdge> {
+        WeightedEdge::new(self.tail, head, self.weight)
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
-pub struct DirectedEdge {
+pub struct Edge {
     tail: VertexId,
     head: VertexId,
 }
 
-impl DirectedEdge {
-    pub fn new(tail: VertexId, head: VertexId) -> Option<DirectedEdge> {
+impl Edge {
+    pub fn new(tail: VertexId, head: VertexId) -> Option<Edge> {
         if tail == head {
             return None;
         }
 
-        Some(DirectedEdge { tail, head })
+        Some(Edge { tail, head })
     }
 
-    pub fn reversed(&self) -> DirectedEdge {
-        DirectedEdge {
+    pub fn reversed(&self) -> Edge {
+        Edge {
             tail: self.head,
             head: self.tail,
         }

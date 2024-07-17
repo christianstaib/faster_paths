@@ -3,7 +3,7 @@ use std::{collections::HashSet, usize};
 use crate::{
     dijkstra_data::{dijkstra_data_vec::DijkstraDataVec, DijkstraData},
     graphs::{
-        edge::{DirectedEdge, DirectedWeightedEdge},
+        edge::{Edge, WeightedEdge},
         path::{Path, PathFinding, ShortestPathRequest},
         Graph, VertexId, Weight,
     },
@@ -123,7 +123,7 @@ pub fn generate_upward_ch_edges(
     graph: &dyn Graph,
     source: VertexId,
     vertex_to_level_map: &[u32],
-) -> (Vec<(DirectedEdge, VertexId)>, Vec<DirectedWeightedEdge>) {
+) -> (Vec<(Edge, VertexId)>, Vec<WeightedEdge>) {
     let mut alive = HashSet::new();
     let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, source);
 
@@ -138,7 +138,7 @@ pub fn generate_upward_ch_edges(
         {
             alive.remove(&vertex);
 
-            let edge = DirectedWeightedEdge::new(
+            let edge = WeightedEdge::new(
                 source,
                 vertex,
                 data.vertices[vertex as usize].weight.unwrap(),
@@ -154,7 +154,7 @@ pub fn generate_upward_ch_edges(
                         .predecessor
                         .unwrap_or(source);
 
-                    let edge = DirectedEdge::new(source, new_vertex).unwrap();
+                    let edge = Edge::new(source, new_vertex).unwrap();
                     shortcuts.push((edge, predecessor));
                     new_vertex = predecessor;
                     predecessor = new_predecessor;
@@ -198,7 +198,7 @@ pub fn generate_downward_ch_edges(
     graph: &dyn Graph,
     target: VertexId,
     vertex_to_level_map: &[u32],
-) -> (Vec<(DirectedEdge, VertexId)>, Vec<DirectedWeightedEdge>) {
+) -> (Vec<(Edge, VertexId)>, Vec<WeightedEdge>) {
     let mut alive = HashSet::new();
     let mut data = DijkstraDataVec::new(graph.number_of_vertices() as usize, target);
 
@@ -213,7 +213,7 @@ pub fn generate_downward_ch_edges(
         {
             alive.remove(&vertex);
 
-            let edge = DirectedWeightedEdge::new(
+            let edge = WeightedEdge::new(
                 target,
                 vertex,
                 data.vertices[vertex as usize].weight.unwrap(),
@@ -229,7 +229,7 @@ pub fn generate_downward_ch_edges(
                         .predecessor
                         .unwrap_or(target);
 
-                    let edge = DirectedEdge::new(target, new_vertex).unwrap();
+                    let edge = Edge::new(target, new_vertex).unwrap();
                     shortcuts.push((edge, predecessor));
                     new_vertex = predecessor;
                     predecessor = new_predecessor;

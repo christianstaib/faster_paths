@@ -9,9 +9,7 @@ use crate::{
         helpers::generate_directed_contracted_graph,
         Shortcut,
     },
-    graphs::{
-        edge::DirectedEdge, graph_functions::all_edges, vec_graph::VecGraph, Graph, VertexId,
-    },
+    graphs::{edge::Edge, graph_functions::all_edges, vec_graph::VecGraph, Graph, VertexId},
 };
 
 pub fn contract_non_adaptive(
@@ -21,7 +19,7 @@ pub fn contract_non_adaptive(
     let vec_graph = VecGraph::from_edges(&all_edges(graph));
     let mut base_graph = VecGraph::from_edges(&all_edges(graph));
 
-    let mut shortcuts: HashMap<DirectedEdge, Shortcut> = HashMap::new();
+    let mut shortcuts: HashMap<Edge, Shortcut> = HashMap::new();
     let mut levels = Vec::new();
 
     println!("start contracting");
