@@ -1,11 +1,7 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::Parser;
-use faster_paths::{
-    ch::directed_contracted_graph::DirectedContractedGraph,
-    graphs::{path::PathFinding, Graph},
-    hl::{directed_hub_graph::DirectedHubGraph, HubGraphTrait},
-};
+use faster_paths::hl::{directed_hub_graph::DirectedHubGraph, HubGraphTrait};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -19,7 +15,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    println!("Loading contracted graph");
+    println!("Loading hub graph");
     let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
     let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).unwrap();
 
