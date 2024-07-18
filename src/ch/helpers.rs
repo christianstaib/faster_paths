@@ -6,14 +6,14 @@ use crate::graphs::{vec_graph::VecGraph, Graph};
 
 pub fn generate_directed_contracted_graph(
     mut base_graph: VecGraph,
-    shortcuts: &[Shortcut],
-    levels: Vec<Vec<u32>>,
+    shortcuts: &Vec<Shortcut>,
+    level_to_vertices_map: &Vec<Vec<u32>>,
 ) -> DirectedContractedGraph {
     for shortcut in shortcuts.iter() {
         base_graph.set_edge(&shortcut.edge);
     }
 
-    let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &levels);
+    let (upward_graph, downward_graph) = partition_by_levels(&base_graph, &level_to_vertices_map);
 
     let shortcuts = shortcuts
         .iter()
@@ -24,6 +24,6 @@ pub fn generate_directed_contracted_graph(
         upward_graph,
         downward_graph,
         shortcuts,
-        level_to_vertices_map: levels,
+        level_to_vertices_map: level_to_vertices_map.clone(),
     }
 }

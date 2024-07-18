@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-pub fn generate_directed_contracted_graph(
+pub fn ch_from_top_down(
     graph: ReversibleVecGraph,
     vertex_to_level_map: Vec<u32>,
 ) -> DirectedContractedGraph {

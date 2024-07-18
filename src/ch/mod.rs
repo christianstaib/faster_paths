@@ -6,7 +6,7 @@ pub mod ch_from_top_down;
 pub mod ch_priority_element;
 pub mod contraction_adaptive_non_simulated;
 pub mod contraction_adaptive_simulated;
-pub mod contraction_non_adaptive;
+pub mod contraction_with_fixed_order;
 pub mod contractor;
 pub mod directed_contracted_graph;
 pub mod helpers;

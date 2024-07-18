@@ -42,7 +42,7 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
         SerialAdaptiveSimulatedContractor::new(priority_terms, &shortcut_generator);
 
     let (shortcuts, levels) = contractor.contract(graph);
-    generate_directed_contracted_graph(vec_graph, &shortcuts, levels)
+    generate_directed_contracted_graph(vec_graph, &shortcuts, &levels)
 }
 
 pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> DirectedContractedGraph {
@@ -162,5 +162,5 @@ pub fn contract_adaptive_simulated_with_landmarks(graph: &dyn Graph) -> Directed
     );
 
     let vec_graph = VecGraph::from_edges(&all_edges(graph));
-    generate_directed_contracted_graph(vec_graph, &shortcuts, levels)
+    generate_directed_contracted_graph(vec_graph, &shortcuts, &levels)
 }
