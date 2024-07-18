@@ -36,11 +36,6 @@ pub fn ch_from_top_down(
     let mut forward_edges = Vec::new();
     for (this_shortcuts, this_edges) in upward_shortcuts_and_edges.into_iter() {
         forward_edges.extend(this_edges);
-        // shortcuts.extend(
-        //     this_shortcuts
-        //         .iter()
-        //         .map(|(edge, vertex)| (edge.reversed(), *vertex)),
-        // );
         shortcuts.extend(this_shortcuts);
     }
 
