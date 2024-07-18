@@ -41,18 +41,16 @@ fn main() {
     let graph = GraphFactory::from_file(&args.graph);
 
     let vertex_to_level_map = generate_vertex_to_level_map(paths, graph.number_of_vertices);
+    // let contracted_graph = ch_from_top_down(graph, vertex_to_level_map);
 
-    let contracted_graph = ch_from_top_down(graph, vertex_to_level_map);
+    let max_level = *vertex_to_level_map.iter().max().unwrap();
+    let mut level_to_vertices_map = vec![Vec::new(); max_level as usize + 1];
 
-    // let max_level = *vertex_to_level_map.iter().max().unwrap();
-    // let mut level_to_vertices_map = vec![Vec::new(); max_level as usize + 1];
+    for (vertex, &level) in vertex_to_level_map.iter().enumerate() {
+        level_to_vertices_map[level as usize].push(vertex as VertexId);
+    }
 
-    // for (vertex, &level) in vertex_to_level_map.iter().enumerate() {
-    //     level_to_vertices_map[level as usize].push(vertex as VertexId);
-    // }
-
-    // let contracted_graph = contract_with_fixed_order(&graph,
-    // &level_to_vertices_map);
+    let contracted_graph = contract_with_fixed_order(&graph, &level_to_vertices_map);
 
     println!("Writing contracted graph to file");
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
