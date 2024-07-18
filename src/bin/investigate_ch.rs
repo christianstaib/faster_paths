@@ -28,13 +28,17 @@ fn main() {
     );
 
     println!(
-        "the upward graph has {} edges",
-        contracted_graph.upward_graph.number_of_edges()
+        "the upward graph has {} edges (avg edges per vertex: {})",
+        contracted_graph.upward_graph.number_of_edges(),
+        contracted_graph.upward_graph.number_of_edges() as f32
+            / contracted_graph.number_of_vertices() as f32,
     );
 
     println!(
-        "the downward graph has {} edges",
-        contracted_graph.downward_graph.number_of_edges()
+        "the downward graph has {} edges  (avg edges per vertex: {})",
+        contracted_graph.downward_graph.number_of_edges(),
+        contracted_graph.downward_graph.number_of_edges() as f32
+            / contracted_graph.number_of_vertices() as f32
     );
 
     println!(
