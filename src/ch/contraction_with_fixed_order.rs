@@ -38,6 +38,7 @@ pub fn contract_with_fixed_order(
         .progress_count(graph.number_of_vertices() as u64)
     {
         let vertex_shortcuts = shortcut_generator.get_shortcuts(&working_graph, vertex);
+        println!("got shortcuts");
 
         vertex_shortcuts.into_iter().for_each(|shortcut| {
             let current_weight = working_graph
@@ -48,8 +49,10 @@ pub fn contract_with_fixed_order(
                 shortcuts.insert(shortcut.edge.unweighted(), shortcut);
             }
         });
+        println!("inserted new edges");
 
         working_graph.remove_vertex(vertex);
+        println!("removed vertex");
     }
 
     let shortcuts = shortcuts.into_values().collect_vec();
