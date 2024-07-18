@@ -1,6 +1,7 @@
 use ahash::{HashMap, HashMapExt};
 use indicatif::ProgressIterator;
 use itertools::Itertools;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
     ch::{
@@ -37,17 +38,25 @@ pub fn contract_with_fixed_order(
         .flatten()
         .progress_count(graph.number_of_vertices() as u64)
     {
-        let vertex_shortcuts = shortcut_generator.get_shortcuts(&working_graph, vertex);
+        let mut vertex_shortcuts = shortcut_generator.get_shortcuts(&working_graph, vertex);
         println!("got shortcuts");
 
+        vertex_shortcuts = vertex_shortcuts
+            .into_par_iter()
+            .flat_map(|shortcut| {
+                let current_weight = working_graph
+                    .get_edge_weight(&shortcut.edge.unweighted())
+                    .unwrap_or(u32::MAX);
+                if shortcut.edge.weight() >= current_weight {
+                    return None;
+                }
+                Some(shortcut)
+            })
+            .collect();
+
         vertex_shortcuts.into_iter().for_each(|shortcut| {
-            let current_weight = working_graph
-                .get_edge_weight(&shortcut.edge.unweighted())
-                .unwrap_or(u32::MAX);
-            if shortcut.edge.weight() < current_weight {
-                working_graph.set_edge(&shortcut.edge);
-                shortcuts.insert(shortcut.edge.unweighted(), shortcut);
-            }
+            working_graph.set_edge(&shortcut.edge);
+            shortcuts.insert(shortcut.edge.unweighted(), shortcut);
         });
         println!("inserted new edges");
 

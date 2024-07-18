@@ -5,7 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use indicatif::ProgressIterator;
+use indicatif::{ProgressBar, ProgressIterator};
 
 use super::{edge::WeightedEdge, reversible_vec_graph::ReversibleVecGraph};
 
@@ -42,10 +42,12 @@ impl GraphFactory {
         let number_of_vertices: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
         let number_of_edges: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
 
+        let pb = ProgressBar::new(number_of_vertices as u64 + number_of_edges as u64);
+
         let _: Vec<_> = lines
             .by_ref()
             .take(number_of_vertices)
-            .progress_count(number_of_vertices as u64)
+            .progress_with(pb.clone())
             .map(|node_line| {
                 // nodeID nodeID2 latitude longitude elevation
                 let node_line = node_line.unwrap();
@@ -58,10 +60,12 @@ impl GraphFactory {
             })
             .collect();
 
+        pb.set_position(number_of_vertices as u64);
+
         let edges: Vec<_> = lines
             .by_ref()
             .take(number_of_edges)
-            .progress_count(number_of_edges as u64)
+            .progress_with(pb)
             .filter_map(|edge_line| {
                 // srcIDX trgIDX cost type maxspeed
                 let line = edge_line.unwrap();
