@@ -8,7 +8,7 @@ use super::directed_contracted_graph::DirectedContractedGraph;
 use crate::{
     classical_search::dijkstra::{generate_downward_ch_edges, generate_upward_ch_edges},
     graphs::{
-        adjacency_vec_graph::AdjacencyVecGraph, reversible_vec_graph::ReversibleVecGraph, Graph,
+        adjacency_list_graph::AdjacencyListGraph, reversible_vec_graph::ReversibleVecGraph, Graph,
         VertexId,
     },
 };
@@ -39,7 +39,7 @@ pub fn ch_from_top_down(
         shortcuts.extend(this_shortcuts);
     }
 
-    let upward_graph = AdjacencyVecGraph::new(&forward_edges, &vertex_to_level_map);
+    let upward_graph = AdjacencyListGraph::new(&forward_edges, &vertex_to_level_map);
 
     // downward graph
     let downward_shortcuts_and_edges: Vec<_> = vertices
@@ -59,7 +59,7 @@ pub fn ch_from_top_down(
         // shortcuts.extend(this_shortcuts);
     }
 
-    let downward_graph = AdjacencyVecGraph::new(&downward_edges, &vertex_to_level_map);
+    let downward_graph = AdjacencyListGraph::new(&downward_edges, &vertex_to_level_map);
 
     let max_level = *vertex_to_level_map.iter().max().unwrap();
     let mut level_to_vertices_map = vec![Vec::new(); max_level as usize + 1];

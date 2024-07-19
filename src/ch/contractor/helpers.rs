@@ -1,11 +1,11 @@
 use itertools::Itertools;
 
-use crate::graphs::{adjacency_vec_graph::AdjacencyVecGraph, edge::WeightedEdge, Graph};
+use crate::graphs::{adjacency_list_graph::AdjacencyListGraph, edge::WeightedEdge, Graph};
 
 pub fn partition_by_levels(
     graph: &dyn Graph,
     levels: &[Vec<u32>],
-) -> (AdjacencyVecGraph, AdjacencyVecGraph) {
+) -> (AdjacencyListGraph, AdjacencyListGraph) {
     let mut vertex_to_level = vec![0; graph.number_of_vertices() as usize];
     for (level, level_list) in levels.iter().enumerate() {
         for &vertex in level_list.iter() {
@@ -27,7 +27,7 @@ pub fn partition_by_levels(
         })
         .cloned()
         .collect();
-    let upward_graph = AdjacencyVecGraph::new(&upward_edges, &order);
+    let upward_graph = AdjacencyListGraph::new(&upward_edges, &order);
 
     println!("creating downward graph");
     let downward_edges: Vec<_> = edges
@@ -37,7 +37,7 @@ pub fn partition_by_levels(
             vertex_to_level[edge.tail() as usize] <= vertex_to_level[edge.head() as usize]
         })
         .collect();
-    let downard_graph = AdjacencyVecGraph::new(&downward_edges, &order);
+    let downard_graph = AdjacencyListGraph::new(&downward_edges, &order);
 
     (upward_graph, downard_graph)
 }

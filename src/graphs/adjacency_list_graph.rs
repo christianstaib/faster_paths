@@ -10,12 +10,12 @@ use super::{
 
 /// Graph that is optimized for cache efficency
 #[derive(Serialize, Deserialize, Clone)]
-pub struct AdjacencyVecGraph {
+pub struct AdjacencyListGraph {
     edges: Vec<TaillessWeightedEdge>,
     indices: Vec<(u32, u32)>, // (start, end)
 }
 
-impl AdjacencyVecGraph {
+impl AdjacencyListGraph {
     pub fn new(edges: &[WeightedEdge], order: &[VertexId]) -> Self {
         let mut edges_map = edges
             .iter()
@@ -41,7 +41,7 @@ impl AdjacencyVecGraph {
     }
 }
 
-impl Graph for AdjacencyVecGraph {
+impl Graph for AdjacencyListGraph {
     fn out_edges(
         &self,
         source: VertexId,

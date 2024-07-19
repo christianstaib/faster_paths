@@ -11,15 +11,15 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::graphs::{
-    adjacency_vec_graph::AdjacencyVecGraph,
+    adjacency_list_graph::AdjacencyListGraph,
     edge::{Edge, WeightedEdge},
     Graph, VertexId,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct DirectedContractedGraph {
-    pub upward_graph: AdjacencyVecGraph,
-    pub downward_graph: AdjacencyVecGraph,
+    pub upward_graph: AdjacencyListGraph,
+    pub downward_graph: AdjacencyListGraph,
     pub shortcuts: HashMap<Edge, VertexId>,
     pub level_to_vertices_map: Vec<Vec<VertexId>>,
 }
@@ -126,14 +126,14 @@ impl DirectedContractedGraph {
             .filter(|edge| levels[edge.tail() as usize] <= levels[edge.head() as usize])
             .cloned()
             .collect_vec();
-        let upward_graph = AdjacencyVecGraph::new(&upward_edges, &order);
+        let upward_graph = AdjacencyListGraph::new(&upward_edges, &order);
 
         let downward_edges = edges
             .iter()
             .map(WeightedEdge::reversed)
             .filter(|edge| levels[edge.tail() as usize] <= levels[edge.head() as usize])
             .collect_vec();
-        let downward_graph = AdjacencyVecGraph::new(&downward_edges, &order);
+        let downward_graph = AdjacencyListGraph::new(&downward_edges, &order);
 
         let shortcuts = HashMap::new();
 

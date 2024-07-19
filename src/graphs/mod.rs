@@ -1,6 +1,6 @@
 use self::edge::{Edge, WeightedEdge};
 
-pub mod adjacency_vec_graph;
+pub mod adjacency_list_graph;
 pub mod edge;
 pub mod graph_factory;
 pub mod graph_functions;
