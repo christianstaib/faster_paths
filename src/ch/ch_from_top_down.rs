@@ -26,6 +26,7 @@ pub fn ch_from_top_down(
     let style =
         ProgressStyle::with_template("{wide_bar} {percent_precise}% eta: {eta_precise}").unwrap();
 
+    println!("starting forward ch");
     // upward graph
     let upward_shortcuts_and_edges: Vec<_> = vertices
         .par_iter()
