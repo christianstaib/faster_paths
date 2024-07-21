@@ -7,7 +7,7 @@ use std::{
     time::Instant,
 };
 
-use ahash::{HashSet, HashSetExt};
+use ahash::{HashMap, HashSet, HashSetExt};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
@@ -464,10 +464,16 @@ pub fn generate_vertex_to_level_map(paths: Vec<Path>, number_of_vertices: u32) -
     hitting_setx.extend(not_hitting_set);
     hitting_setx.reverse();
 
-    println!("generating map");
+    // Create a HashMap from hitting_setx for O(1) lookups
+    let hitting_set_map: HashMap<_, _> = hitting_setx
+        .iter()
+        .enumerate()
+        .map(|(i, &x)| (x, i as u32))
+        .collect();
+
     let vertex_to_level_map: Vec<_> = (0..number_of_vertices)
         .into_par_iter()
-        .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
+        .map(|vertex| *hitting_set_map.get(&vertex).unwrap())
         .collect();
 
     vertex_to_level_map
