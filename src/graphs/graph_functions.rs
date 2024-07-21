@@ -456,6 +456,7 @@ pub fn generate_vertex_to_level_map(paths: Vec<Path>, number_of_vertices: u32) -
         .filter(|vertex| !hitting_setx.contains(vertex))
         .collect_vec();
 
+    println!("Sorting");
     // shuffle to break neighboring ties
     not_hitting_set.shuffle(&mut thread_rng());
     not_hitting_set.sort_unstable_by_key(|&vertex| Reverse(num_hits[vertex as usize]));
@@ -463,6 +464,7 @@ pub fn generate_vertex_to_level_map(paths: Vec<Path>, number_of_vertices: u32) -
     hitting_setx.extend(not_hitting_set);
     hitting_setx.reverse();
 
+    println!("generating map");
     let vertex_to_level_map: Vec<_> = (0..number_of_vertices)
         .into_par_iter()
         .map(|vertex| hitting_setx.iter().position(|&x| x == vertex).unwrap() as u32)
