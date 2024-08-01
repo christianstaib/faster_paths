@@ -53,11 +53,13 @@ pub fn contract(graph: &mut ReversibleVecGraph, vertex: VertexId) {
                 .binary_search_by_key(&head, |edge| edge.head())
                 .map_or(u32::MAX, |idx| graph.out_edges[tail as usize][idx].weight());
 
-            if (in_edge.weight() + out_edge.weight()) < alternative_weight {
-                // edge allready exists
-                let edge =
-                    WeightedEdge::new(tail, head, in_edge.weight() + out_edge.weight()).unwrap();
-                graph.set_edge(&edge);
+            if tail != head {
+                if (in_edge.weight() + out_edge.weight()) < alternative_weight {
+                    // edge allready exists
+                    let edge = WeightedEdge::new(tail, head, in_edge.weight() + out_edge.weight())
+                        .unwrap();
+                    graph.set_edge(&edge);
+                }
             }
         });
     });
