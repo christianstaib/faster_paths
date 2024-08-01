@@ -4,8 +4,8 @@ FMI_DIR := $(DATA_DIR)
 CH_EXTENSION := di_ch_bincode
 HL_EXTENSION := di_hl_bincode
 
-GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
-# GRAPH := $(FMI_DIR)/aegaeis-ref-visibility.fmi
+# GRAPH := $(FMI_DIR)/USA-road-d.NY.gr
+GRAPH := $(FMI_DIR)/aegaeis-ref-visibility.fmi
 
 CH := $(GRAPH).$(CH_EXTENSION)
 HL := $(GRAPH).$(HL_EXTENSION)
