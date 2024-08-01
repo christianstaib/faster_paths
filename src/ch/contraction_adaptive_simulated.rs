@@ -65,11 +65,11 @@ pub fn edge_difference_all_in(
                 .filter(|&out_edge| {
                     let head = out_edge.head();
 
-                    // if graph.out_edges[tail as usize]
-                    //     .binary_search_by_key(&head, |edge| edge.head())
-                    //     .is_ok()
-                    // {
-                    if edges[tail as usize].contains(&head) {
+                    if graph.out_edges[tail as usize]
+                        .binary_search_by_key(&head, |edge| edge.head())
+                        .is_ok()
+                    {
+                        // if edges[tail as usize].contains(&head) {
                         // edge allready exists
                         return false;
                     }
@@ -95,6 +95,7 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
     let hash_graph: Vec<HashSet<VertexId>> = (0..graph.number_of_vertices())
         .map(|vertex| graph.out_edges(vertex).map(|edge| edge.head()).collect())
         .collect();
+
     println!("initalizing queue");
     let start = Instant::now();
     let mut queue: Vec<_> = vertices
