@@ -107,13 +107,15 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
         .collect();
     println!("queue init took {:?}", start.elapsed());
 
+    let minmax = queue
+        .iter()
+        .minmax_by_key(|entry| entry.priority)
+        .into_option()
+        .unwrap();
+
     println!(
-        "min edge difference is {}",
-        queue
-            .iter()
-            .min_by_key(|entry| entry.priority)
-            .unwrap()
-            .priority
+        "min max edge difference is {} {}",
+        minmax.0.priority, minmax.1.priority,
     );
 
     todo!()
