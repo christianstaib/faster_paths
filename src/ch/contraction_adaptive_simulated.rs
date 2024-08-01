@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use ahash::HashSet;
-use indicatif::ParallelProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressBar};
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -118,13 +118,15 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
 
     queue.par_sort_by_key(|elem| -elem.priority);
 
+    let pb = ProgressBar::new(graph.number_of_vertices() as u64);
     while let Some(ChPriorityElement { vertex, priority }) = queue.pop() {
-        println!(
-            "vertex: {}, priority: {}, remaining: {}",
-            vertex,
-            priority,
-            queue.len()
-        );
+        pb.inc(1);
+        // println!(
+        //     "vertex: {}, priority: {}, remaining: {}",
+        //     vertex,
+        //     priority,
+        //     queue.len()
+        // );
         let neighbors = neighbors(vertex, graph);
 
         contract(&mut work_graph, vertex);
