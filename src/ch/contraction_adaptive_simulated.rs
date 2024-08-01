@@ -114,6 +114,8 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
         .collect();
     println!("queue init took {:?}", start.elapsed());
 
+    queue.sort_by_key(|elem| elem.priority);
+
     while let Some(ChPriorityElement { vertex, priority }) = queue.pop() {
         println!(
             "vertex: {}, priority: {}, remaining: {}",
@@ -130,6 +132,8 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
                 elem.priority = edge_difference_all_in(&work_graph, vertex);
             }
         });
+
+        queue.sort_by_key(|elem| elem.priority);
     }
 
     todo!()
