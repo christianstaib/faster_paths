@@ -1,21 +1,14 @@
-use std::{
-    collections::BinaryHeap,
-    fs::File,
-    io::{BufWriter, Write},
-    time::Instant,
-};
+use std::time::Instant;
 
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use ahash::HashSet;
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
 
 use super::{
     contractor::{
-        contraction_helper::{
-            ShortcutGenerator, ShortcutGeneratorWithHeuristic, ShortcutGeneratorWithWittnessSearch,
-        },
+        contraction_helper::ShortcutGeneratorWithWittnessSearch,
         serial_witness_search_contractor::SerialAdaptiveSimulatedContractor,
     },
     helpers::generate_directed_contracted_graph,
@@ -24,19 +17,15 @@ use super::{
 use crate::{
     ch::{
         ch_priority_element::ChPriorityElement, directed_contracted_graph::DirectedContractedGraph,
-        Shortcut,
     },
     graphs::{
-        self,
         edge::{Edge, WeightedEdge},
-        graph_functions::all_edges,
-        reversible_graph::ReversibleGraph,
-        reversible_hash_graph::ReversibleHashGraph,
+        graph_functions::{all_edges, neighbors},
         reversible_vec_graph::ReversibleVecGraph,
         vec_graph::VecGraph,
         Graph, VertexId,
     },
-    heuristics::{landmarks::Landmarks, Heuristic},
+    queue,
 };
 
 pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedContractedGraph {
@@ -51,11 +40,32 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
     generate_directed_contracted_graph(vec_graph, &shortcuts, &levels)
 }
 
-pub fn edge_difference_all_in(
-    graph: &ReversibleVecGraph,
-    vertex: VertexId,
-    edges: &Vec<HashSet<VertexId>>,
-) -> i32 {
+pub fn contract(graph: &mut ReversibleVecGraph, vertex: VertexId) {
+    let in_edges = graph.in_edges[vertex as usize].clone();
+    let out_edges = graph.out_edges[vertex as usize].clone();
+
+    in_edges.iter().for_each(|in_edge| {
+        let tail = in_edge.tail();
+        out_edges.iter().for_each(|out_edge| {
+            let head = out_edge.head();
+
+            let alternative_weight = graph.out_edges[tail as usize]
+                .binary_search_by_key(&head, |edge| edge.head())
+                .map_or(u32::MAX, |idx| graph.out_edges[tail as usize][idx].weight());
+
+            if (in_edge.weight() + out_edge.weight()) < alternative_weight {
+                // edge allready exists
+                let edge =
+                    WeightedEdge::new(tail, head, in_edge.weight() + out_edge.weight()).unwrap();
+                graph.set_edge(&edge);
+            }
+        });
+    });
+
+    graph.remove_vertex(vertex);
+}
+
+pub fn edge_difference_all_in(graph: &ReversibleVecGraph, vertex: VertexId) -> i32 {
     let number_of_new_edges: usize = graph.in_edges[vertex as usize]
         .par_iter()
         .map(|in_edge| {
@@ -92,32 +102,35 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
     let mut vertices = (0..work_graph.number_of_vertices()).collect_vec();
     vertices.shuffle(&mut thread_rng());
 
-    let hash_graph: Vec<HashSet<VertexId>> = (0..graph.number_of_vertices())
-        .map(|vertex| graph.out_edges(vertex).map(|edge| edge.head()).collect())
-        .collect();
-
     println!("initalizing queue");
     let start = Instant::now();
     let mut queue: Vec<_> = vertices
         .par_iter()
         .progress()
         .map(|&vertex| {
-            let priority = edge_difference_all_in(&work_graph, vertex, &hash_graph);
+            let priority = edge_difference_all_in(&work_graph, vertex);
             ChPriorityElement { vertex, priority }
         })
         .collect();
     println!("queue init took {:?}", start.elapsed());
 
-    let minmax = queue
-        .iter()
-        .minmax_by_key(|entry| entry.priority)
-        .into_option()
-        .unwrap();
+    while let Some(ChPriorityElement { vertex, priority }) = queue.pop() {
+        println!(
+            "vertex: {}, priority: {}, remaining: {}",
+            vertex,
+            priority,
+            queue.len()
+        );
+        let neighbors = neighbors(vertex, graph);
 
-    println!(
-        "min max edge difference is {} {}",
-        minmax.0.priority, minmax.1.priority,
-    );
+        contract(&mut work_graph, vertex);
+
+        queue.par_iter_mut().for_each(|elem| {
+            if neighbors.contains(&elem.vertex) {
+                elem.priority = edge_difference_all_in(&work_graph, vertex);
+            }
+        });
+    }
 
     todo!()
 }
