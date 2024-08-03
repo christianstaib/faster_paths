@@ -4,6 +4,12 @@ pub struct VecVecGraph {
     pub edges: Vec<Vec<TaillessEdge>>,
 }
 
+impl Default for VecVecGraph {
+    fn default() -> Self {
+        VecVecGraph { edges: Vec::new() }
+    }
+}
+
 impl Graph for VecVecGraph {
     fn number_of_vertices(&self) -> u32 {
         self.edges.len() as u32
