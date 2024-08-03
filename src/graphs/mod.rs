@@ -1,52 +1,58 @@
-use self::edge::{Edge, WeightedEdge};
-
-pub mod adjacency_list_graph;
-pub mod edge;
-pub mod graph_factory;
-pub mod graph_functions;
-pub mod path;
-pub mod reversible_graph;
-pub mod reversible_hash_graph;
-pub mod reversible_vec_graph;
-pub mod vec_graph;
+pub mod vec_vec_graph;
 
 pub type VertexId = u32;
 pub type EdgeId = u32;
 pub type Weight = u32;
 
-pub trait Graph: Send + Sync {
-    fn out_edges(
-        &self,
-        source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
+// struct Edge {
+//     pub tail: VertexId,
+//     pub head: VertexId,
+// }
 
-    fn in_edges(
-        &self,
-        source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
+#[derive(Clone)]
+pub struct Edge {
+    pub tail: VertexId,
+    pub head: VertexId,
+}
 
-    fn get_edge_weight(&self, edge: &Edge) -> Option<Weight> {
-        Some(
-            self.out_edges(edge.tail())
-                .find(|out_edge| out_edge.head() == edge.head())?
-                .weight(),
-        )
-    }
+#[derive(Clone)]
+pub struct WeightedEdge {
+    pub tail: VertexId,
+    pub head: VertexId,
+    pub weight: Weight,
+}
 
-    fn number_of_vertices(&self) -> u32;
-
-    fn number_of_edges(&self) -> u32;
-
-    // insert edge if not pressent or updated edge weight if new edge weight is
-    // smaller than currents.
-    fn set_edge(&mut self, edge: &WeightedEdge);
-
-    // set OR updates eges. may be faster than update edges
-    fn set_edges(&mut self, edges: &[WeightedEdge]) {
-        for edge in edges {
-            self.set_edge(edge);
+impl WeightedEdge {
+    pub fn remove_tail(&self) -> TaillessEdge {
+        TaillessEdge {
+            head: self.head,
+            weight: self.weight,
         }
     }
+}
 
-    fn remove_vertex(&mut self, vertex: VertexId);
+#[derive(Clone)]
+pub struct TaillessEdge {
+    pub head: VertexId,
+    pub weight: Weight,
+}
+
+impl TaillessEdge {
+    pub fn set_tail(&self, tail: VertexId) -> WeightedEdge {
+        WeightedEdge {
+            tail,
+            head: self.head,
+            weight: self.weight,
+        }
+    }
+}
+
+pub trait Graph: Send + Sync {
+    fn number_of_vertices(&self) -> u32;
+
+    fn edges(&self, source: VertexId) -> impl Iterator<Item = WeightedEdge> + '_;
+
+    fn get_weight(&self, edge: &Edge) -> Option<Weight>;
+
+    fn set_weight(&mut self, edge: &Edge, weight: Option<Weight>);
 }
