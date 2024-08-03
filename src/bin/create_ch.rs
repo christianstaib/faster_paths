@@ -1,4 +1,9 @@
-use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::PathBuf,
+    time::Instant,
+};
 
 use clap::Parser;
 use faster_paths::{
@@ -6,6 +11,7 @@ use faster_paths::{
         contract_adaptive_simulated_all_in, contract_adaptive_simulated_with_witness,
     },
     graphs::graph_factory::GraphFactory,
+    hl::directed_hub_graph::DirectedHubGraph,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -18,6 +24,8 @@ struct Args {
     /// Outfile in .bincode format
     #[arg(short, long)]
     contracted_graph: PathBuf,
+    #[arg(short, long)]
+    hub_graph: PathBuf,
 }
 
 fn main() {
@@ -29,7 +37,11 @@ fn main() {
     println!("Starting contracted graph generation");
     let start = Instant::now();
 
-    let contracted_graph = contract_adaptive_simulated_all_in(&graph);
+    println!("Loading hub graph");
+    let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
+    let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).unwrap();
+
+    let contracted_graph = contract_adaptive_simulated_all_in(&graph, &hub_graph);
     println!("Generating contracted graph took {:?}", start.elapsed());
 
     println!("Writing contracted graph to file");

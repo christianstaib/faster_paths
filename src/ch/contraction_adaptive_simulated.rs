@@ -21,6 +21,7 @@ use crate::{
     graphs::{
         edge::{Edge, WeightedEdge},
         graph_functions::{all_edges, neighbors},
+        path::{PathFinding, ShortestPathRequest},
         reversible_vec_graph::ReversibleVecGraph,
         vec_graph::VecGraph,
         Graph, VertexId,
@@ -40,7 +41,7 @@ pub fn contract_adaptive_simulated_with_witness(graph: &dyn Graph) -> DirectedCo
     generate_directed_contracted_graph(vec_graph, &shortcuts, &levels)
 }
 
-pub fn contract(graph: &mut ReversibleVecGraph, vertex: VertexId) {
+pub fn contract(graph: &mut ReversibleVecGraph, vertex: VertexId, pathfinder: &dyn PathFinding) {
     let in_edges = graph.in_edges[vertex as usize].clone();
     let out_edges = graph.out_edges[vertex as usize].clone();
 
@@ -49,12 +50,13 @@ pub fn contract(graph: &mut ReversibleVecGraph, vertex: VertexId) {
         out_edges.iter().for_each(|out_edge| {
             let head = out_edge.head();
 
-            let alternative_weight = graph.out_edges[tail as usize]
-                .binary_search_by_key(&head, |edge| edge.head())
-                .map_or(u32::MAX, |idx| graph.out_edges[tail as usize][idx].weight());
-
             if tail != head {
-                if (in_edge.weight() + out_edge.weight()) < alternative_weight {
+                let request = ShortestPathRequest::new(tail, head).unwrap();
+                let alternative_weight = pathfinder
+                    .shortest_path_weight(&request)
+                    .unwrap_or(u32::MAX);
+
+                if (in_edge.weight() + out_edge.weight()) <= alternative_weight {
                     // edge allready exists
                     let edge = WeightedEdge::new(tail, head, in_edge.weight() + out_edge.weight())
                         .unwrap();
@@ -67,7 +69,11 @@ pub fn contract(graph: &mut ReversibleVecGraph, vertex: VertexId) {
     graph.remove_vertex(vertex);
 }
 
-pub fn edge_difference_all_in(graph: &ReversibleVecGraph, vertex: VertexId) -> i32 {
+pub fn edge_difference_all_in(
+    graph: &ReversibleVecGraph,
+    vertex: VertexId,
+    pathfinder: &dyn PathFinding,
+) -> i32 {
     let number_of_new_edges: usize = graph.in_edges[vertex as usize]
         .par_iter()
         .map(|in_edge| {
@@ -77,16 +83,19 @@ pub fn edge_difference_all_in(graph: &ReversibleVecGraph, vertex: VertexId) -> i
                 .filter(|&out_edge| {
                     let head = out_edge.head();
 
-                    if graph.out_edges[tail as usize]
-                        .binary_search_by_key(&head, |edge| edge.head())
-                        .is_ok()
-                    {
-                        // if edges[tail as usize].contains(&head) {
-                        // edge allready exists
-                        return false;
+                    if tail != head {
+                        let request = ShortestPathRequest::new(tail, head).unwrap();
+                        let alternative_weight = pathfinder
+                            .shortest_path_weight(&request)
+                            .unwrap_or(u32::MAX);
+
+                        if (in_edge.weight() + out_edge.weight()) <= alternative_weight {
+                            // edge allready exists
+                            return true;
+                        }
                     }
 
-                    true
+                    false
                 })
                 .count()
         })
@@ -97,7 +106,10 @@ pub fn edge_difference_all_in(graph: &ReversibleVecGraph, vertex: VertexId) -> i
         - graph.out_edges[vertex as usize].len() as i32
 }
 
-pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContractedGraph {
+pub fn contract_adaptive_simulated_all_in(
+    graph: &dyn Graph,
+    pathfinder: &dyn PathFinding,
+) -> DirectedContractedGraph {
     let mut work_graph = ReversibleVecGraph::from_edges(&all_edges(graph));
 
     // shuffle vertices for smooth progress bar
@@ -110,7 +122,7 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
         .par_iter()
         .progress()
         .map(|&vertex| {
-            let priority = edge_difference_all_in(&work_graph, vertex);
+            let priority = edge_difference_all_in(&work_graph, vertex, pathfinder);
             ChPriorityElement { vertex, priority }
         })
         .collect();
@@ -119,21 +131,15 @@ pub fn contract_adaptive_simulated_all_in(graph: &dyn Graph) -> DirectedContract
     queue.par_sort_by_key(|elem| -elem.priority);
 
     let pb = ProgressBar::new(graph.number_of_vertices() as u64);
-    while let Some(ChPriorityElement { vertex, priority }) = queue.pop() {
+    while let Some(ChPriorityElement { vertex, .. }) = queue.pop() {
         pb.inc(1);
-        // println!(
-        //     "vertex: {}, priority: {}, remaining: {}",
-        //     vertex,
-        //     priority,
-        //     queue.len()
-        // );
         let neighbors = neighbors(vertex, graph);
 
-        contract(&mut work_graph, vertex);
+        contract(&mut work_graph, vertex, pathfinder);
 
         queue.par_iter_mut().for_each(|elem| {
             if neighbors.contains(&elem.vertex) {
-                elem.priority = edge_difference_all_in(&work_graph, vertex);
+                elem.priority = edge_difference_all_in(&work_graph, vertex, pathfinder);
             }
         });
 
