@@ -12,16 +12,18 @@ use faster_paths::{
         Distance, Graph,
     },
     search::{
+        ch::contraction::simulate_contraction,
         collections::{
             dijkstra_data::DijkstraDataVec, vertex_distance_queue::VertexDistanceQueueDaryHeap,
             vertex_expanded_data::VertexExpandedDataBitSet,
         },
-        dijkstra::dijktra_single_pair,
+        dijkstra::dijktra_one_to_one,
         path::ShortestPathTestCase,
     },
 };
-use indicatif::ProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rand::{thread_rng, Rng};
+use rayon::prelude::*;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -46,7 +48,6 @@ fn main() {
     let edges = read_edges_from_fmi_file(&args.graph);
 
     let mut graph = ReversibleGraph::<VecVecGraph>::new();
-    let mut graph = VecVecGraph::default();
 
     println!("Building graph");
     edges.into_iter().for_each(|edge| {
@@ -59,24 +60,32 @@ fn main() {
         }
     });
 
+    println!("set up ch queue");
+    (0..graph.out_graph().number_of_vertices())
+        .into_par_iter()
+        .progress()
+        .for_each(|vertex| {
+            simulate_contraction(&graph, vertex);
+        });
+
     let mut duration = Duration::ZERO;
 
     // let graph = graph.out_graph();
-    let graph = &graph;
-    for _ in (0..200).progress().progress() {
-        let source = thread_rng().gen_range(0..graph.number_of_vertices());
-        let target = thread_rng().gen_range(0..graph.number_of_vertices());
+    // let graph = &graph;
+    // for _ in (0..200).progress().progress() {
+    //     let source = thread_rng().gen_range(0..graph.number_of_vertices());
+    //     let target = thread_rng().gen_range(0..graph.number_of_vertices());
 
-        let mut data = DijkstraDataVec::new(graph);
-        let mut expanded = VertexExpandedDataBitSet::new(graph);
-        let mut queue = VertexDistanceQueueDaryHeap::<3>::new();
+    //     let mut data = DijkstraDataVec::new(graph);
+    //     let mut expanded = VertexExpandedDataBitSet::new(graph);
+    //     let mut queue = VertexDistanceQueueDaryHeap::<3>::new();
 
-        let start = Instant::now();
-        dijktra_single_pair(graph, &mut data, &mut expanded, &mut queue, source, target);
-        duration += start.elapsed();
-    }
-    println!(
-        "average duration was {:?}",
-        duration / (test_cases.len() as u32)
-    );
+    //     let start = Instant::now();
+    //     dijktra_one_to_one(graph, &mut data, &mut expanded, &mut queue,
+    // source, target);     duration += start.elapsed();
+    // }
+    // println!(
+    //     "average duration was {:?}",
+    //     duration / (test_cases.len() as u32)
+    // );
 }
