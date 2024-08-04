@@ -6,6 +6,7 @@ use std::{
 
 use indicatif::ProgressIterator;
 
+pub mod reversible_graph;
 pub mod vec_vec_graph;
 
 pub type Vertex = u32;
@@ -21,6 +22,15 @@ pub type Distance = u32;
 pub struct Edge {
     pub tail: Vertex,
     pub head: Vertex,
+}
+
+impl Edge {
+    pub fn reversed(&self) -> Edge {
+        Edge {
+            tail: self.head,
+            head: self.tail,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

@@ -1,5 +1,6 @@
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
+#[derive(Clone)]
 pub struct VecVecGraph {
     pub edges: Vec<Vec<TaillessEdge>>,
 }
@@ -61,9 +62,10 @@ impl Graph for VecVecGraph {
     }
 
     fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>) {
-        // Ensure the tail index is within the bounds of self.edges.
-        if edge.tail as usize >= self.edges.len() {
-            self.edges.resize(edge.tail as usize + 1, Vec::new());
+        // Ensure the edge endpoints is within the bounds of self.edges.
+        let max_edge_endpoints = std::cmp::max(edge.tail, edge.head) as usize;
+        if max_edge_endpoints >= self.edges.len() {
+            self.edges.resize(max_edge_endpoints + 1, Vec::new());
         }
 
         // Get a mutable reference to the vector of edges sharing the same tail.
