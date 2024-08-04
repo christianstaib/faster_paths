@@ -15,11 +15,11 @@ impl Graph for VecVecGraph {
         self.edges.len() as u32
     }
 
-    fn edges(&self, tail: VertexId) -> impl Iterator<Item = WeightedEdge> {
+    fn edges(&self, tail: VertexId) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         // Define a struct for iterating over edges with the same tail. Struct is needed
         // as tail would otherwise not live enough.
         struct EdgeIterator<'a> {
-            edges: std::slice::Iter<'a, TaillessEdge>,
+            edge_iter: std::slice::Iter<'a, TaillessEdge>,
             tail: VertexId,
         }
 
@@ -28,16 +28,23 @@ impl Graph for VecVecGraph {
 
             // Returns the next edge in the iterator, setting the tail vertex.
             fn next(&mut self) -> Option<Self::Item> {
-                self.edges
+                self.edge_iter
                     .next()
                     .map(|tailless_edge| tailless_edge.set_tail(self.tail))
             }
         }
 
-        EdgeIterator {
-            edges: self.edges[tail as usize].iter(),
-            tail,
+        // Implentig ExactSizeIterator for EdgeIterator
+        impl<'a> ExactSizeIterator for EdgeIterator<'a> {
+            fn len(&self) -> usize {
+                self.edge_iter.len()
+            }
         }
+
+        Box::new(EdgeIterator {
+            edge_iter: self.edges[tail as usize].iter(),
+            tail,
+        })
     }
 
     fn get_weight(&self, edge: &Edge) -> Option<Weight> {
