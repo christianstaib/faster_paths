@@ -8,9 +8,9 @@ use indicatif::ProgressIterator;
 
 pub mod vec_vec_graph;
 
-pub type VertexId = u32;
+pub type Vertex = u32;
 pub type EdgeId = u32;
-pub type Weight = u32;
+pub type Distance = u32;
 
 // struct Edge {
 //     pub tail: VertexId,
@@ -19,15 +19,15 @@ pub type Weight = u32;
 
 #[derive(Clone)]
 pub struct Edge {
-    pub tail: VertexId,
-    pub head: VertexId,
+    pub tail: Vertex,
+    pub head: Vertex,
 }
 
 #[derive(Clone, Debug)]
 pub struct WeightedEdge {
-    pub tail: VertexId,
-    pub head: VertexId,
-    pub weight: Weight,
+    pub tail: Vertex,
+    pub head: Vertex,
+    pub weight: Distance,
 }
 
 impl WeightedEdge {
@@ -48,12 +48,12 @@ impl WeightedEdge {
 
 #[derive(Clone)]
 pub struct TaillessEdge {
-    pub head: VertexId,
-    pub weight: Weight,
+    pub head: Vertex,
+    pub weight: Distance,
 }
 
 impl TaillessEdge {
-    pub fn set_tail(&self, tail: VertexId) -> WeightedEdge {
+    pub fn set_tail(&self, tail: Vertex) -> WeightedEdge {
         WeightedEdge {
             tail,
             head: self.head,
@@ -71,14 +71,11 @@ pub trait Graph: Send + Sync {
             .sum::<u32>()
     }
 
-    fn edges(
-        &self,
-        source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
+    fn edges(&self, source: Vertex) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
 
-    fn get_weight(&self, edge: &Edge) -> Option<Weight>;
+    fn get_weight(&self, edge: &Edge) -> Option<Distance>;
 
-    fn set_weight(&mut self, edge: &Edge, weight: Option<Weight>);
+    fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);
 }
 
 pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {

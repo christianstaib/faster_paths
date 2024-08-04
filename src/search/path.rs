@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::graphs::{VertexId, Weight};
+use crate::graphs::{Distance, Vertex};
 
 /// Represents a request for validating a shortest path in a graph.
 ///
@@ -9,7 +9,7 @@ use crate::graphs::{VertexId, Weight};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ShortestPathTestCase {
     pub request: ShortestPathRequest,
-    pub weight: Option<Weight>,
+    pub weight: Option<Distance>,
     pub dijkstra_rank: u32,
 }
 
@@ -19,6 +19,6 @@ pub struct ShortestPathTestCase {
 /// from a source vertex to a target vertex in a graph.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ShortestPathRequest {
-    pub source: VertexId,
-    pub target: VertexId,
+    pub source: Vertex,
+    pub target: Vertex,
 }

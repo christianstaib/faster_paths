@@ -2,10 +2,10 @@ use std::usize;
 
 use fixedbitset::FixedBitSet;
 
-use crate::graphs::{Graph, VertexId};
+use crate::graphs::{Graph, Vertex};
 
 pub trait VertexExpandedData {
-    fn expand(&mut self, vertex: VertexId) -> bool;
+    fn expand(&mut self, vertex: Vertex) -> bool;
 
     fn clear(&mut self);
 }
@@ -23,7 +23,7 @@ impl VertexExpandedDataVec {
 }
 
 impl VertexExpandedData for VertexExpandedDataVec {
-    fn expand(&mut self, vertex: VertexId) -> bool {
+    fn expand(&mut self, vertex: Vertex) -> bool {
         let is_expanded = self.expanded[vertex as usize];
         self.expanded[vertex as usize] = true;
         is_expanded
@@ -47,7 +47,7 @@ impl VertexExpandedDataBitSet {
 }
 
 impl VertexExpandedData for VertexExpandedDataBitSet {
-    fn expand(&mut self, vertex: VertexId) -> bool {
+    fn expand(&mut self, vertex: Vertex) -> bool {
         self.expanded.put(vertex as usize)
     }
 

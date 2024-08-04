@@ -238,7 +238,6 @@ dependencies = [
  "fixedbitset",
  "indicatif",
  "itertools",
- "radix-heap",
  "rand",
  "rayon",
  "serde",
@@ -456,12 +455,6 @@ checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
 ]
-
-[[package]]
-name = "radix-heap"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59ffec9df464013295b499298811e6a3de31bf8128092135826517db12dee601"
 
 [[package]]
 name = "rand"

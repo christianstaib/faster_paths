@@ -1,4 +1,4 @@
-use super::{Edge, Graph, TaillessEdge, VertexId, Weight, WeightedEdge};
+use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
 pub struct VecVecGraph {
     pub edges: Vec<Vec<TaillessEdge>>,
@@ -15,12 +15,12 @@ impl Graph for VecVecGraph {
         self.edges.len() as u32
     }
 
-    fn edges(&self, tail: VertexId) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
+    fn edges(&self, tail: Vertex) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
         // Define a struct for iterating over edges with the same tail. Struct is needed
         // as tail would otherwise not live enough.
         struct EdgeIterator<'a> {
             edge_iter: std::slice::Iter<'a, TaillessEdge>,
-            tail: VertexId,
+            tail: Vertex,
         }
 
         impl<'a> Iterator for EdgeIterator<'a> {
@@ -47,7 +47,7 @@ impl Graph for VecVecGraph {
         })
     }
 
-    fn get_weight(&self, edge: &Edge) -> Option<Weight> {
+    fn get_weight(&self, edge: &Edge) -> Option<Distance> {
         // Retrieve the vector of edges sharing the same tail, if it exists.
         let edges_sharing_tail = self.edges.get(edge.tail as usize)?;
 
@@ -60,7 +60,7 @@ impl Graph for VecVecGraph {
         Some(edges_sharing_tail[edge_index].weight)
     }
 
-    fn set_weight(&mut self, edge: &Edge, weight: Option<Weight>) {
+    fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>) {
         // Ensure the tail index is within the bounds of self.edges.
         if edge.tail as usize >= self.edges.len() {
             self.edges.resize(edge.tail as usize + 1, Vec::new());

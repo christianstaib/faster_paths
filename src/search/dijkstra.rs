@@ -1,17 +1,17 @@
-use super::{
+use super::collections::{
     dijkstra_data::DijkstraData, vertex_distance_queue::VertexDistanceQueue,
     vertex_expanded_data::VertexExpandedData,
 };
-use crate::graphs::{Graph, VertexId, Weight};
+use crate::graphs::{Distance, Graph, Vertex};
 
 pub fn dijktra_single_source(
     graph: &dyn Graph,
     data: &mut dyn DijkstraData,
     expanded: &mut dyn VertexExpandedData,
     queue: &mut dyn VertexDistanceQueue,
-    source: VertexId,
+    source: Vertex,
 ) {
-    dijktra_single_pair(graph, data, expanded, queue, source, VertexId::MAX)
+    dijktra_single_pair(graph, data, expanded, queue, source, Vertex::MAX)
 }
 
 pub fn dijktra_single_pair(
@@ -19,8 +19,8 @@ pub fn dijktra_single_pair(
     data: &mut dyn DijkstraData,
     expanded: &mut dyn VertexExpandedData,
     queue: &mut dyn VertexDistanceQueue,
-    source: VertexId,
-    target: VertexId,
+    source: Vertex,
+    target: Vertex,
 ) {
     data.set_distance(source, 0);
     queue.insert(source, 0);
@@ -36,7 +36,7 @@ pub fn dijktra_single_pair(
         let distance_tail = data.get_distance(tail).unwrap();
 
         for edge in graph.edges(tail) {
-            let current_distance_head = data.get_distance(edge.head).unwrap_or(Weight::MAX);
+            let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
             let alternative_distance_head = distance_tail + edge.weight;
             if alternative_distance_head < current_distance_head {
                 data.set_distance(edge.head, alternative_distance_head);

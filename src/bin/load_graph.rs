@@ -7,16 +7,19 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{read_edges_from_fmi_file, vec_vec_graph::VecVecGraph, Graph, Weight},
+    graphs::{read_edges_from_fmi_file, vec_vec_graph::VecVecGraph, Distance, Graph},
     search::{
+        collections::{
+            dijkstra_data::{DijkstraData, DijkstraDataVec},
+            vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+        },
         dijkstra::dijktra_single_pair,
-        dijkstra_data::{DijkstraData, DijkstraDataVec},
         path::ShortestPathTestCase,
-        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueRadixHeap},
-        vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
     },
 };
 use indicatif::ProgressIterator;
+use rand::{thread_rng, Rng};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -45,7 +48,7 @@ fn main() {
             if edge.weight
                 < graph
                     .get_weight(&edge.remove_weight())
-                    .unwrap_or(Weight::MAX)
+                    .unwrap_or(Distance::MAX)
             {
                 graph.set_weight(&edge.remove_weight(), Some(edge.weight))
             }
@@ -61,27 +64,27 @@ fn main() {
 
     let mut data = DijkstraDataVec::new(&graph);
     let mut expanded = VertexExpandedDataBitSet::new(&graph);
-    let mut queue = VertexDistanceQueueRadixHeap::new();
+    let mut queue = VertexDistanceQueueBinaryHeap::new();
     for test in test_cases.iter().progress() {
+        let source = thread_rng().gen_range(0..graph.number_of_vertices());
+        let target = thread_rng().gen_range(0..graph.number_of_vertices());
+
+        let start = Instant::now();
         data.clear();
         expanded.clear();
         queue.clear();
 
-        let source = test.request.source;
-        let target = test.request.target;
-
-        let start = Instant::now();
         dijktra_single_pair(&graph, &mut data, &mut expanded, &mut queue, source, target);
         duration += start.elapsed();
-        if data.get_distance(target) != test.weight {
-            println!(
-                "{} to {} is {:?} but should be {:?}",
-                source,
-                target,
-                data.get_distance(target),
-                test.weight,
-            );
-        }
+        // if data.get_distance(target) != test.weight {
+        //     println!(
+        //         "{} to {} is {:?} but should be {:?}",
+        //         source,
+        //         target,
+        //         data.get_distance(target),
+        //         test.weight,
+        //     );
+        // }
     }
     println!(
         "average duration was {:?}",
