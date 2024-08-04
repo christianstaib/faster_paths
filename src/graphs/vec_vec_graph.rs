@@ -76,10 +76,8 @@ impl Graph for VecVecGraph {
             // If a weight is provided, connect or update the edge.
             match edge_index {
                 Ok(index) => {
-                    // Edge exists, update its weight if the new weight is smaller.
-                    if weight < edges_sharing_tail[index].weight {
-                        edges_sharing_tail[index].weight = weight;
-                    }
+                    // Update weight
+                    edges_sharing_tail[index].weight = weight;
                 }
                 Err(index) => {
                     // Edge doesn't exist, insert the new edge.

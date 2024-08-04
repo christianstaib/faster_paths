@@ -7,15 +7,16 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{read_edges_from_fmi_file, vec_vec_graph::VecVecGraph, Graph},
+    graphs::{read_edges_from_fmi_file, vec_vec_graph::VecVecGraph, Graph, Weight},
     search::{
-        dijkstra::{dijktra_single_pair, dijktra_single_source},
+        dijkstra::dijktra_single_pair,
         dijkstra_data::{DijkstraData, DijkstraDataVec},
         path::ShortestPathTestCase,
-        vertex_distance_queue::VertexDistanceQueueRadixHeap,
-        vertex_expanded_data::VertexExpandedDataVec,
+        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueRadixHeap},
+        vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
     },
 };
+use indicatif::ProgressIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -34,13 +35,21 @@ fn main() {
 
     println!("Reading test cases");
     let mut reader = BufReader::new(File::open(&args.tests).unwrap());
-    let mut test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(&mut reader).unwrap();
+    let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(&mut reader).unwrap();
 
     println!("Loading graph");
     let mut graph = VecVecGraph::default();
     read_edges_from_fmi_file(&args.graph)
         .iter()
-        .for_each(|edge| graph.set_weight(&edge.remove_weight(), Some(edge.weight)));
+        .for_each(|edge| {
+            if edge.weight
+                < graph
+                    .get_weight(&edge.remove_weight())
+                    .unwrap_or(Weight::MAX)
+            {
+                graph.set_weight(&edge.remove_weight(), Some(edge.weight))
+            }
+        });
 
     println!(
         "graph has {} vertices and {} edges",
@@ -50,24 +59,32 @@ fn main() {
 
     let mut duration = Duration::ZERO;
 
-    for (test_index, test) in test_cases.iter().enumerate() {
+    let mut data = DijkstraDataVec::new(&graph);
+    let mut expanded = VertexExpandedDataBitSet::new(&graph);
+    let mut queue = VertexDistanceQueueRadixHeap::new();
+    for test in test_cases.iter().progress() {
+        data.clear();
+        expanded.clear();
+        queue.clear();
+
         let source = test.request.source;
         let target = test.request.target;
 
-        let mut data = DijkstraDataVec::new(&graph);
-        let mut expanded = VertexExpandedDataVec::new(&graph);
-        let mut queue = VertexDistanceQueueRadixHeap::new();
         let start = Instant::now();
         dijktra_single_pair(&graph, &mut data, &mut expanded, &mut queue, source, target);
         duration += start.elapsed();
-        println!(
-            "distance from {:>12} to {:>12} is {:>12?} and should be {:>12?}. took {:>12?}. avg {:>12?}",
-            source,
-            target,
-            data.get_distance(target),
-            test.weight,
-            start.elapsed(),
-            duration / (test_index as u32 + 1)
-        );
+        if data.get_distance(target) != test.weight {
+            println!(
+                "{} to {} is {:?} but should be {:?}",
+                source,
+                target,
+                data.get_distance(target),
+                test.weight,
+            );
+        }
     }
+    println!(
+        "average duration was {:?}",
+        duration / (test_cases.len() as u32)
+    );
 }

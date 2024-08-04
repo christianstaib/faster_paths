@@ -1,5 +1,10 @@
 use crate::graphs::{Graph, VertexId, Weight};
 
+pub struct Path {
+    pub vertices: Vec<VertexId>,
+    pub weight: Weight,
+}
+
 pub trait DijkstraData {
     fn clear(&mut self);
 
@@ -10,51 +15,71 @@ pub trait DijkstraData {
     fn get_distance(&self, vertex: VertexId) -> Option<VertexId>;
 
     fn set_distance(&mut self, vertex: VertexId, distance: Weight);
+
+    fn get_path(&self, target: VertexId) -> Option<Path> {
+        let mut path = Path {
+            vertices: Vec::new(),
+            weight: self.get_distance(target)?,
+        };
+
+        let mut predecessor = target;
+        path.vertices.push(predecessor);
+        while let Some(new_predecessor) = self.get_predecessor(predecessor) {
+            predecessor = new_predecessor;
+            path.vertices.push(predecessor);
+        }
+
+        path.vertices.reverse();
+
+        Some(path)
+    }
 }
 
 pub struct DijkstraDataVec {
-    predecessors: Vec<VertexId>,
-    distances: Vec<Weight>,
+    // only one vector for better cache locality
+    predecessors_and_distances: Vec<(VertexId, Weight)>,
 }
 
 impl DijkstraDataVec {
     pub fn new(graph: &dyn Graph) -> Self {
         DijkstraDataVec {
-            predecessors: vec![VertexId::MAX; graph.number_of_vertices() as usize],
-            distances: vec![Weight::MAX; graph.number_of_vertices() as usize],
+            predecessors_and_distances: vec![
+                (VertexId::MAX, Weight::MAX);
+                graph.number_of_vertices() as usize
+            ],
         }
     }
 }
 
 impl DijkstraData for DijkstraDataVec {
     fn clear(&mut self) {
-        for vertex in 0..self.predecessors.len() {
-            self.predecessors[vertex] = VertexId::MAX;
-            self.distances[vertex] = Weight::MAX;
-        }
+        self.predecessors_and_distances
+            .fill((VertexId::MAX, Weight::MAX));
     }
 
     fn get_predecessor(&self, vertex: VertexId) -> Option<VertexId> {
-        if self.predecessors[vertex as usize] != VertexId::MAX {
-            return Some(self.predecessors[vertex as usize]);
+        let predecessor = self.predecessors_and_distances[vertex as usize].0;
+        if predecessor != VertexId::MAX {
+            return Some(predecessor);
         }
 
         None
     }
 
     fn set_predecessor(&mut self, vertex: VertexId, predecessor: VertexId) {
-        self.predecessors[vertex as usize] = predecessor;
+        self.predecessors_and_distances[vertex as usize].0 = predecessor;
     }
 
     fn get_distance(&self, vertex: VertexId) -> Option<Weight> {
-        if self.distances[vertex as usize] != Weight::MAX {
-            return Some(self.distances[vertex as usize]);
+        let distance = self.predecessors_and_distances[vertex as usize].1;
+        if distance != Weight::MAX {
+            return Some(distance);
         }
 
         None
     }
 
     fn set_distance(&mut self, vertex: VertexId, distance: Weight) {
-        self.distances[vertex as usize] = distance;
+        self.predecessors_and_distances[vertex as usize].1 = distance;
     }
 }

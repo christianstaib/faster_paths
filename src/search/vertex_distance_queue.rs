@@ -5,6 +5,8 @@ use radix_heap::RadixHeapMap;
 use crate::graphs::{VertexId, Weight};
 
 pub trait VertexDistanceQueue {
+    fn clear(&mut self);
+
     fn insert(&mut self, vertex: VertexId, distance: Weight);
 
     fn pop(&mut self) -> Option<VertexId>;
@@ -23,6 +25,10 @@ impl VertexDistanceQueueRadixHeap {
 }
 
 impl VertexDistanceQueue for VertexDistanceQueueRadixHeap {
+    fn clear(&mut self) {
+        self.heap.clear();
+    }
+
     fn insert(&mut self, vertex: VertexId, distance: Weight) {
         self.heap.push(-(distance as i64), vertex);
     }
@@ -45,6 +51,10 @@ impl VertexDistanceQueueBinaryHeap {
 }
 
 impl VertexDistanceQueue for VertexDistanceQueueBinaryHeap {
+    fn clear(&mut self) {
+        self.heap.clear();
+    }
+
     fn insert(&mut self, vertex: VertexId, distance: Weight) {
         self.heap.push(Reverse((distance, vertex)));
     }
