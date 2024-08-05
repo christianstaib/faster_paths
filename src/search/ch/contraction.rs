@@ -1,12 +1,12 @@
 use itertools::Itertools;
 
 use crate::{
-    graphs::{reversible_graph::ReversibleGraph, Distance, Edge, Graph, Vertex, WeightedEdge},
+    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex, WeightedEdge},
     search::{
         collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataVec},
+            dijkstra_data::{DijkstraData, DijkstraDataHashMap},
             vertex_distance_queue::VertexDistanceQueueBinaryHeap,
-            vertex_expanded_data::VertexExpandedDataBitSet,
+            vertex_expanded_data::VertexExpandedDataHashSet,
         },
         dijkstra::dijktra_one_to_many,
     },
@@ -30,9 +30,9 @@ pub fn simulate_contraction<G: Graph + Default>(
     graph.in_graph().edges(vertex).for_each(|in_edge| {
         let tail = in_edge.head;
 
-        // dijkstra from tail to all out_neighbors
-        let mut data = DijkstraDataVec::new(graph.out_graph());
-        let mut expanded = VertexExpandedDataBitSet::new(graph.out_graph());
+        // dijkstra tail -> targets
+        let mut data = DijkstraDataHashMap::new();
+        let mut expanded = VertexExpandedDataHashSet::new();
         let mut queue = VertexDistanceQueueBinaryHeap::new();
         dijktra_one_to_many(
             graph.out_graph(),
@@ -65,4 +65,14 @@ pub fn simulate_contraction<G: Graph + Default>(
     });
 
     (new_edges, updated_edges)
+}
+
+pub fn edge_difference<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    new_edges: &Vec<WeightedEdge>,
+    vertex: Vertex,
+) -> i32 {
+    new_edges.len() as i32
+        - graph.in_graph().edges(vertex).len() as i32
+        - graph.out_graph().edges(vertex).len() as i32
 }

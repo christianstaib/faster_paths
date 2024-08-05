@@ -1,4 +1,4 @@
-use std::usize;
+use std::{collections::HashSet, usize};
 
 use fixedbitset::FixedBitSet;
 
@@ -49,6 +49,28 @@ impl VertexExpandedDataBitSet {
 impl VertexExpandedData for VertexExpandedDataBitSet {
     fn expand(&mut self, vertex: Vertex) -> bool {
         self.expanded.put(vertex as usize)
+    }
+
+    fn clear(&mut self) {
+        self.expanded.clear()
+    }
+}
+
+pub struct VertexExpandedDataHashSet {
+    expanded: HashSet<Vertex>,
+}
+
+impl VertexExpandedDataHashSet {
+    pub fn new() -> Self {
+        VertexExpandedDataHashSet {
+            expanded: HashSet::new(),
+        }
+    }
+}
+
+impl VertexExpandedData for VertexExpandedDataHashSet {
+    fn expand(&mut self, vertex: Vertex) -> bool {
+        !self.expanded.insert(vertex)
     }
 
     fn clear(&mut self) {

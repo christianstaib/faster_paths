@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::graphs::{Distance, Graph, Vertex};
 
 pub struct Path {
@@ -85,5 +87,42 @@ impl DijkstraData for DijkstraDataVec {
 
     fn set_distance(&mut self, vertex: Vertex, distance: Distance) {
         self.predecessors_and_distances[vertex as usize].1 = Some(distance);
+    }
+}
+
+pub struct DijkstraDataHashMap {
+    predecessors: HashMap<Vertex, Vertex>,
+    distances: HashMap<Vertex, Distance>,
+}
+
+impl DijkstraDataHashMap {
+    pub fn new() -> Self {
+        DijkstraDataHashMap {
+            predecessors: HashMap::new(),
+            distances: HashMap::new(),
+        }
+    }
+}
+
+impl DijkstraData for DijkstraDataHashMap {
+    fn clear(&mut self) {
+        self.predecessors.clear();
+        self.distances.clear();
+    }
+
+    fn get_predecessor(&self, vertex: Vertex) -> Option<Vertex> {
+        self.predecessors.get(&vertex).cloned()
+    }
+
+    fn set_predecessor(&mut self, vertex: Vertex, predecessor: Vertex) {
+        self.predecessors.insert(vertex, predecessor);
+    }
+
+    fn get_distance(&self, vertex: Vertex) -> Option<Distance> {
+        self.distances.get(&vertex).cloned()
+    }
+
+    fn set_distance(&mut self, vertex: Vertex, distance: Distance) {
+        self.distances.insert(vertex, distance);
     }
 }

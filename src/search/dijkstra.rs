@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, process::exit};
 
 use super::collections::{
     dijkstra_data::DijkstraData, vertex_distance_queue::VertexDistanceQueue,
@@ -82,5 +82,13 @@ pub fn dijktra_one_to_many(
                 queue.insert(edge.head, alternative_distance_head);
             }
         }
+    }
+
+    if !targets.is_empty() {
+        println!("not all targets found for search from {}", source);
+        for target in targets {
+            println!("{}", target);
+        }
+        exit(0)
     }
 }
