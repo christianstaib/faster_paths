@@ -2,7 +2,7 @@ use itertools::Itertools;
 use rand::prelude::*;
 
 use crate::{
-    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex, WeightedEdge},
+    graphs::{reversible_graph::ReversibleGraph, Distance, Edge, Graph, Vertex, WeightedEdge},
     search::{
         self,
         collections::{
@@ -11,11 +11,12 @@ use crate::{
             vertex_expanded_data::VertexExpandedDataHashSet,
         },
         dijkstra::dijktra_one_to_many,
+        DistanceHeuristic,
     },
 };
 
 /// Simulates a contraction. Returns (new_edges, updated_edges)
-pub fn probabilistic_edge_difference<G: Graph + Default>(
+pub fn probabilistic_edge_difference_witness_search<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
     vertex: Vertex,
     min_searches: u32,
@@ -38,8 +39,7 @@ pub fn probabilistic_edge_difference<G: Graph + Default>(
         .map(|edge| edge.head)
         .collect_vec();
 
-    let mut new_edges = Vec::new();
-    let mut updated_edges = Vec::new();
+    let mut new_edges_len = 0;
 
     // tail -> vertex -> head
     in_edges_selected.for_each(|in_edge| {
@@ -71,15 +71,16 @@ pub fn probabilistic_edge_difference<G: Graph + Default>(
                     weight: shortcut_distance,
                 };
                 if graph.get_weight(&edge.remove_weight()).is_some() {
-                    updated_edges.push(edge);
+                    // updated_edges.push(edge);
                 } else {
-                    new_edges.push(edge);
+                    // new_edges.push(edge);
+                    new_edges_len += 1;
                 }
             }
         })
     });
 
-    let new_edges_len = (new_edges.len() as f32 / selcted_factor) as i32;
+    let new_edges_len = (new_edges_len as f32 / selcted_factor) as i32;
 
     new_edges_len
         - graph.in_graph().edges(vertex).len() as i32
@@ -87,7 +88,7 @@ pub fn probabilistic_edge_difference<G: Graph + Default>(
 }
 
 /// Simulates a contraction. Returns (new_edges, updated_edges)
-pub fn simulate_contraction<G: Graph + Default>(
+pub fn simulate_contraction_witness_search<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
     vertex: Vertex,
 ) -> (Vec<WeightedEdge>, Vec<WeightedEdge>) {
@@ -149,4 +150,98 @@ pub fn edge_difference<G: Graph + Default>(
     new_edges.len() as i32
         - graph.in_graph().edges(vertex).len() as i32
         - graph.out_graph().edges(vertex).len() as i32
+}
+
+pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    distance_heuristic: &dyn DistanceHeuristic,
+    vertex: Vertex,
+) -> (Vec<WeightedEdge>, Vec<WeightedEdge>) {
+    let mut new_edges = Vec::new();
+    let mut updated_edges = Vec::new();
+
+    // tail -> vertex -> head
+    graph.in_graph().edges(vertex).for_each(|in_edge| {
+        let tail = in_edge.head;
+
+        graph.out_graph().edges(vertex).for_each(|out_edge| {
+            let head = out_edge.head;
+            let shortcut_distance = in_edge.weight + out_edge.weight;
+
+            let lower_bound_distance = distance_heuristic
+                .lower_bound(tail, head)
+                .unwrap_or(Distance::MAX);
+
+            if shortcut_distance <= lower_bound_distance {
+                let edge = WeightedEdge {
+                    tail,
+                    head,
+                    weight: shortcut_distance,
+                };
+                if graph.get_weight(&edge.remove_weight()).is_some() {
+                    updated_edges.push(edge);
+                } else {
+                    new_edges.push(edge);
+                }
+            }
+        })
+    });
+
+    (new_edges, updated_edges)
+}
+
+pub fn probabilistic_edge_difference_distance_neuristic<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    distance_heuristic: &dyn DistanceHeuristic,
+    vertex: Vertex,
+    min_searches: u32,
+    max_searches: u32,
+    search_factor: f32,
+) -> i32 {
+    let in_edges = graph.in_graph().edges(vertex).collect_vec();
+    let out_edges = graph.out_graph().edges(vertex).collect_vec();
+
+    let number_of_edge_pairs = (in_edges.len() * out_edges.len()) as u32;
+
+    if number_of_edge_pairs == 0 {
+        return -(in_edges.len() as i32) - (out_edges.len() as i32);
+    }
+
+    let mut searches = (number_of_edge_pairs as f32 * search_factor) as u32;
+    if searches < min_searches {
+        searches = min_searches;
+    } else if searches > max_searches {
+        searches = max_searches;
+    }
+
+    if searches > number_of_edge_pairs {
+        searches = number_of_edge_pairs;
+    }
+    let searches_factor = searches as f32 / number_of_edge_pairs as f32;
+
+    let mut rng = thread_rng();
+    let mut new_edges_len = 0;
+    for _ in 0..searches {
+        let in_edge = in_edges.choose(&mut rng).unwrap();
+        let out_edge = in_edges.choose(&mut rng).unwrap();
+
+        let shortcut_distance = in_edge.weight + out_edge.weight;
+        let lower_bound = distance_heuristic
+            .lower_bound(in_edge.head, out_edge.head)
+            .unwrap_or(0);
+
+        if shortcut_distance <= lower_bound {
+            let edge = Edge {
+                tail: in_edge.head,
+                head: out_edge.head,
+            };
+            if graph.get_weight(&edge).is_none() {
+                new_edges_len += 1;
+            }
+        }
+    }
+
+    let new_edges_len = ((new_edges_len as f32) / searches_factor) as i32;
+
+    new_edges_len - in_edges.len() as i32 - out_edges.len() as i32
 }

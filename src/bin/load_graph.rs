@@ -6,8 +6,12 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Distance, Graph, Vertex,
     },
-    search::ch::contraction::{
-        edge_difference, probabilistic_edge_difference, simulate_contraction,
+    search::{
+        alt::landmark::Landmarks,
+        ch::contraction::{
+            edge_difference, probabilistic_edge_difference_distance_neuristic,
+            simulate_contraction_distance_heuristic,
+        },
     },
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
@@ -46,18 +50,26 @@ fn main() {
     let mut vertices = (0..graph.out_graph().number_of_vertices()).collect_vec();
     vertices.shuffle(&mut thread_rng());
 
+    println!("Generating Landmarks");
+    let landmarks = Landmarks::new(
+        &graph,
+        &vertices
+            .choose_multiple(&mut thread_rng(), 23)
+            .cloned()
+            .collect_vec(),
+    );
+
     println!("set up ch queue");
     let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = vertices
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            // let (new_edges, _updated_edges) = simulate_contraction(&graph, vertex);
-            // let edge_difference = edge_difference(&graph, &new_edges, vertex);
-            let edge_difference = probabilistic_edge_difference(&graph, vertex, 50, 500, 0.1);
+            let edge_difference = probabilistic_edge_difference_distance_neuristic(
+                &graph, &landmarks, vertex, 50, 5000, 0.1,
+            );
             Reverse((edge_difference, vertex))
         })
         .collect();
-
     println!("min edge difference is {:?}", queue.pop().unwrap());
 
     // println!("Reading test cases");
