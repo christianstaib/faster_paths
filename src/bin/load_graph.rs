@@ -9,6 +9,8 @@ use faster_paths::{
     search::ch::contraction::{edge_difference, simulate_contraction},
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
+use itertools::Itertools;
+use rand::prelude::*;
 use rayon::prelude::*;
 
 /// Starts a routing service on localhost:3030/route
@@ -39,8 +41,11 @@ fn main() {
         }
     });
 
+    let mut vertices = (0..graph.out_graph().number_of_vertices()).collect_vec();
+    vertices.shuffle(&mut thread_rng());
+
     println!("set up ch queue");
-    let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = (0..graph.out_graph().number_of_vertices())
+    let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = vertices
         .into_par_iter()
         .progress()
         .map(|vertex| {
