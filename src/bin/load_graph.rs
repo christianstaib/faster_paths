@@ -6,7 +6,9 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Distance, Graph, Vertex,
     },
-    search::ch::contraction::{edge_difference, simulate_contraction},
+    search::ch::contraction::{
+        edge_difference, probabilistic_edge_difference, simulate_contraction,
+    },
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
@@ -49,8 +51,9 @@ fn main() {
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let (new_edges, _updated_edges) = simulate_contraction(&graph, vertex);
-            let edge_difference = edge_difference(&graph, &new_edges, vertex);
+            // let (new_edges, _updated_edges) = simulate_contraction(&graph, vertex);
+            // let edge_difference = edge_difference(&graph, &new_edges, vertex);
+            let edge_difference = probabilistic_edge_difference(&graph, vertex, 50, 500, 0.1);
             Reverse((edge_difference, vertex))
         })
         .collect();
