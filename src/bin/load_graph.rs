@@ -9,8 +9,9 @@ use faster_paths::{
     search::{
         alt::landmark::Landmarks,
         ch::contraction::{
-            edge_difference, probabilistic_edge_difference_distance_neuristic,
-            simulate_contraction_distance_heuristic,
+            edge_difference, par_simulate_contraction_witness_search,
+            probabilistic_edge_difference_distance_neuristic,
+            simulate_contraction_distance_heuristic, simulate_contraction_witness_search,
         },
     },
 };
@@ -46,6 +47,11 @@ fn main() {
             graph.set_weight(&edge.remove_weight(), Some(edge.weight));
         }
     });
+
+    let vertex = 191911;
+    let (new_edges, updated_edges) = par_simulate_contraction_witness_search(&graph, vertex);
+    let edge_difference = edge_difference(&graph, &new_edges, vertex);
+    println!("edge difference of {} is {}", vertex, edge_difference);
 
     let mut vertices = (0..graph.out_graph().number_of_vertices()).collect_vec();
     vertices.shuffle(&mut thread_rng());

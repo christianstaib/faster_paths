@@ -1,9 +1,11 @@
 use std::collections::HashSet;
 
 use super::collections::{
-    dijkstra_data::{DijkstraData, DijkstraDataVec},
+    dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec},
     vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-    vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+    vertex_expanded_data::{
+        VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
+    },
 };
 use crate::graphs::{Distance, Graph, Vertex};
 
@@ -75,6 +77,18 @@ pub fn dijktra_one_to_one(
             }
         }
     }
+}
+
+pub fn dijkstra_one_to_many(
+    graph: &dyn Graph,
+    source: Vertex,
+    targets: &Vec<Vertex>,
+) -> DijkstraDataHashMap {
+    let mut data = DijkstraDataHashMap::new();
+    let mut expanded = VertexExpandedDataHashSet::new();
+    let mut queue = VertexDistanceQueueBinaryHeap::new();
+    dijktra_one_to_many(graph, &mut data, &mut expanded, &mut queue, source, targets);
+    data
 }
 
 pub fn dijktra_one_to_many(

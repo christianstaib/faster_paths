@@ -1,5 +1,9 @@
+use std::sync::{Arc, Mutex};
+
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
+use rayon::prelude::*;
 
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Edge, Graph, Vertex, WeightedEdge},
@@ -10,7 +14,7 @@ use crate::{
             vertex_distance_queue::VertexDistanceQueueBinaryHeap,
             vertex_expanded_data::VertexExpandedDataHashSet,
         },
-        dijkstra::dijktra_one_to_many,
+        dijkstra::{dijkstra_one_to_many, dijktra_one_to_many},
         DistanceHeuristic,
     },
 };
@@ -102,44 +106,94 @@ pub fn simulate_contraction_witness_search<G: Graph + Default>(
     let mut updated_edges = Vec::new();
 
     // tail -> vertex -> head
-    graph.in_graph().edges(vertex).for_each(|in_edge| {
-        let tail = in_edge.head;
+    graph
+        .in_graph()
+        .edges(vertex)
+        .progress()
+        .for_each(|in_edge| {
+            let tail = in_edge.head;
 
-        // dijkstra tail -> targets
-        let mut data = DijkstraDataHashMap::new();
-        let mut expanded = VertexExpandedDataHashSet::new();
-        let mut queue = VertexDistanceQueueBinaryHeap::new();
-        dijktra_one_to_many(
-            graph.out_graph(),
-            &mut data,
-            &mut expanded,
-            &mut queue,
-            tail,
-            &out_neighbors,
-        );
+            // dijkstra tail -> targets
+            let data = dijkstra_one_to_many(graph.out_graph(), tail, &out_neighbors);
 
-        graph.out_graph().edges(vertex).for_each(|out_edge| {
-            let head = out_edge.head;
-            let shortcut_distance = in_edge.weight + out_edge.weight;
+            graph.out_graph().edges(vertex).for_each(|out_edge| {
+                let head = out_edge.head;
+                let shortcut_distance = in_edge.weight + out_edge.weight;
 
-            let shortest_path_distance = data.get_distance(head).unwrap_or(Distance::MAX);
+                let shortest_path_distance = data.get_distance(head).unwrap_or(Distance::MAX);
 
-            if shortcut_distance <= shortest_path_distance {
-                let edge = WeightedEdge {
-                    tail,
-                    head,
-                    weight: shortcut_distance,
-                };
-                if graph.get_weight(&edge.remove_weight()).is_some() {
-                    updated_edges.push(edge);
-                } else {
-                    new_edges.push(edge);
+                if shortcut_distance <= shortest_path_distance {
+                    let edge = WeightedEdge {
+                        tail,
+                        head,
+                        weight: shortcut_distance,
+                    };
+                    if graph.get_weight(&edge.remove_weight()).is_some() {
+                        updated_edges.push(edge);
+                    } else {
+                        new_edges.push(edge);
+                    }
                 }
-            }
-        })
-    });
+            })
+        });
 
     (new_edges, updated_edges)
+}
+
+/// Simulates a contraction. Returns (new_edges, updated_edges)
+pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    vertex: Vertex,
+) -> (Vec<WeightedEdge>, Vec<WeightedEdge>) {
+    let out_neighbors = graph
+        .out_graph()
+        .edges(vertex)
+        .map(|edge| edge.head)
+        .collect_vec();
+
+    let new_edges = Arc::new(Mutex::new(Vec::new()));
+    let updated_edges = Arc::new(Mutex::new(Vec::new()));
+
+    // tail -> vertex -> head
+    graph
+        .in_graph()
+        .edges(vertex)
+        .progress()
+        .par_bridge()
+        .for_each(|in_edge| {
+            let tail = in_edge.head;
+
+            // dijkstra tail -> targets
+            let data = dijkstra_one_to_many(graph.out_graph(), tail, &out_neighbors);
+
+            graph.out_graph().edges(vertex).for_each(|out_edge| {
+                let head = out_edge.head;
+                let shortcut_distance = in_edge.weight + out_edge.weight;
+
+                let shortest_path_distance = data.get_distance(head).unwrap_or(Distance::MAX);
+
+                if shortcut_distance <= shortest_path_distance {
+                    let edge = WeightedEdge {
+                        tail,
+                        head,
+                        weight: shortcut_distance,
+                    };
+                    if graph.get_weight(&edge.remove_weight()).is_some() {
+                        updated_edges.lock().unwrap().push(edge);
+                    } else {
+                        new_edges.lock().unwrap().push(edge);
+                    }
+                }
+            })
+        });
+
+    (
+        Arc::into_inner(new_edges).unwrap().into_inner().unwrap(),
+        Arc::into_inner(updated_edges)
+            .unwrap()
+            .into_inner()
+            .unwrap(),
+    )
 }
 
 pub fn edge_difference<G: Graph + Default>(
