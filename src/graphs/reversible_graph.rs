@@ -1,7 +1,6 @@
-use ahash::HashMap;
-use itertools::Itertools;
+use std::collections::HashMap;
 
-use super::{Distance, Edge, Graph, TaillessEdge, Vertex};
+use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
 pub struct ReversibleGraph<G: Graph> {
     out_graph: Box<G>,
@@ -14,6 +13,22 @@ impl<G: Graph + Default> ReversibleGraph<G> {
             out_graph: Box::new(G::default()),
             in_graph: Box::new(G::default()),
         }
+    }
+
+    pub fn from_edges(edges: &Vec<WeightedEdge>) -> Self {
+        let mut graph = Self::new();
+
+        edges.iter().for_each(|edge| {
+            if edge.weight
+                < graph
+                    .get_weight(&edge.remove_weight())
+                    .unwrap_or(Distance::MAX)
+            {
+                graph.set_weight(&edge.remove_weight(), Some(edge.weight));
+            }
+        });
+
+        graph
     }
 
     pub fn out_graph(&self) -> &G {

@@ -11,6 +11,24 @@ impl Default for VecVecGraph {
     }
 }
 
+impl VecVecGraph {
+    pub fn from_edges(edges: &Vec<WeightedEdge>) -> VecVecGraph {
+        let mut graph = VecVecGraph::default();
+
+        edges.iter().for_each(|edge| {
+            if edge.weight
+                < graph
+                    .get_weight(&edge.remove_weight())
+                    .unwrap_or(Distance::MAX)
+            {
+                graph.set_weight(&edge.remove_weight(), Some(edge.weight));
+            }
+        });
+
+        graph
+    }
+}
+
 impl Graph for VecVecGraph {
     fn number_of_vertices(&self) -> u32 {
         self.edges.len() as u32

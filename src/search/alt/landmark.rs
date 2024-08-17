@@ -4,7 +4,8 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
     search::{
-        collections::dijkstra_data::DijkstraData, dijkstra::dijkstra_one_to_all, DistanceHeuristic,
+        collections::dijkstra_data::DijkstraData, dijkstra::dijkstra_one_to_all_wraped,
+        DistanceHeuristic,
     },
 };
 
@@ -49,12 +50,12 @@ pub struct Landmark {
 
 impl Landmark {
     pub fn new<G: Graph + Default>(graph: &ReversibleGraph<G>, vertex: Vertex) -> Self {
-        let out_graph_data = dijkstra_one_to_all(graph.out_graph(), vertex);
+        let out_graph_data = dijkstra_one_to_all_wraped(graph.out_graph(), vertex);
         let distance_to = (0..graph.out_graph().number_of_vertices())
             .map(|vertex| out_graph_data.get_distance(vertex))
             .collect_vec();
 
-        let in_graph_data = dijkstra_one_to_all(graph.in_graph(), vertex);
+        let in_graph_data = dijkstra_one_to_all_wraped(graph.in_graph(), vertex);
         let distance_from = (0..graph.in_graph().number_of_vertices())
             .map(|vertex| in_graph_data.get_distance(vertex))
             .collect_vec();

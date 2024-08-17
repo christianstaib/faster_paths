@@ -97,6 +97,18 @@ pub trait Graph: Send + Sync {
 
     fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);
 
+    fn build_graph(&mut self, edges: &Vec<WeightedEdge>) {
+        edges.iter().progress().for_each(|edge| {
+            if edge.weight
+                < self
+                    .get_weight(&edge.remove_weight())
+                    .unwrap_or(Distance::MAX)
+            {
+                self.set_weight(&edge.remove_weight(), Some(edge.weight));
+            }
+        });
+    }
+
     /// remove ONE head per tail
     fn remove_edges(&mut self, edges: &HashMap<Vertex, Vertex>) {
         for (&tail, &head) in edges.iter() {

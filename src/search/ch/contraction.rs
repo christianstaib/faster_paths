@@ -1,10 +1,9 @@
 use std::{
     cmp::Reverse,
-    collections::BinaryHeap,
+    collections::{BinaryHeap, HashMap},
     sync::{Arc, Mutex},
 };
 
-use ahash::HashMap;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
@@ -98,33 +97,47 @@ pub fn probabilistic_edge_difference_witness_search<G: Graph + Default>(
         - graph.out_graph().edges(vertex).len() as i32
 }
 
-pub fn contraction_with_witness_search<G: Graph + Default>(graph: &mut ReversibleGraph<G>) {
+pub fn contraction_with_witness_search<G: Graph + Default>(
+    mut graph: ReversibleGraph<G>,
+) -> (Vec<Vertex>, HashMap<(Vertex, Vertex), Distance>) {
     println!("setting up the queue");
     let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = (0..graph.out_graph().number_of_vertices())
         .into_par_iter()
         .progress()
         .map(|vertex| {
             let new_and_updated_edges = par_simulate_contraction_witness_search(&graph, vertex);
-            let edge_difference = edge_difference(graph, &new_and_updated_edges, vertex);
+            let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
             Reverse((edge_difference, vertex))
         })
         .collect();
 
     println!("contracting");
+    let mut shortcuts = HashMap::new();
+    let mut level_to_vertex = Vec::new();
+
     let pb = ProgressBar::new(graph.out_graph().number_of_vertices() as u64);
     while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
         let new_and_updated_edges = par_simulate_contraction_witness_search(&graph, vertex);
-        let new_edge_difference = edge_difference(graph, &new_and_updated_edges, vertex);
+        let new_edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
         if new_edge_difference > old_edge_difference {
             queue.push(Reverse((new_edge_difference, vertex)));
             continue;
         }
         pb.inc(1);
 
+        for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
+            for edge in new_edges.iter().chain(updated_edges.iter()) {
+                shortcuts.insert((tail, edge.head), edge.weight);
+            }
+        }
+
+        level_to_vertex.push(vertex);
         graph.disconnect(vertex);
         graph.insert_and_update(&new_and_updated_edges);
     }
     pb.finish();
+
+    (level_to_vertex, shortcuts)
 }
 
 /// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
