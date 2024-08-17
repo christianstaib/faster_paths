@@ -1,14 +1,21 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    cmp::Reverse,
+    collections::BinaryHeap,
+    sync::{Arc, Mutex},
+};
 
-use indicatif::{ParallelProgressIterator, ProgressIterator};
+use ahash::HashMap;
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
 
 use crate::{
-    graphs::{reversible_graph::ReversibleGraph, Distance, Edge, Graph, Vertex, WeightedEdge},
+    graphs::{
+        self, reversible_graph::ReversibleGraph, Distance, Edge, Graph, TaillessEdge, Vertex,
+        WeightedEdge,
+    },
     search::{
-        self,
         collections::{
             dijkstra_data::{DijkstraData, DijkstraDataHashMap},
             vertex_distance_queue::VertexDistanceQueueBinaryHeap,
@@ -91,27 +98,57 @@ pub fn probabilistic_edge_difference_witness_search<G: Graph + Default>(
         - graph.out_graph().edges(vertex).len() as i32
 }
 
-/// Simulates a contraction. Returns (new_edges, updated_edges)
-pub fn simulate_contraction_witness_search<G: Graph + Default>(
+pub fn contraction_with_witness_search<G: Graph + Default>(graph: &mut ReversibleGraph<G>) {
+    println!("setting up the queue");
+    let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = (0..graph.out_graph().number_of_vertices())
+        .into_par_iter()
+        .progress()
+        .map(|vertex| {
+            let new_and_updated_edges = par_simulate_contraction_witness_search(&graph, vertex);
+            let edge_difference = edge_difference(graph, &new_and_updated_edges, vertex);
+            Reverse((edge_difference, vertex))
+        })
+        .collect();
+
+    println!("contracting");
+    let pb = ProgressBar::new(graph.out_graph().number_of_vertices() as u64);
+    while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
+        let new_and_updated_edges = par_simulate_contraction_witness_search(&graph, vertex);
+        let new_edge_difference = edge_difference(graph, &new_and_updated_edges, vertex);
+        if new_edge_difference > old_edge_difference {
+            queue.push(Reverse((new_edge_difference, vertex)));
+            continue;
+        }
+        pb.inc(1);
+
+        graph.disconnect(vertex);
+        graph.insert_and_update(&new_and_updated_edges);
+    }
+    pb.finish();
+}
+
+/// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
+pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
     vertex: Vertex,
-) -> (Vec<WeightedEdge>, Vec<WeightedEdge>) {
+) -> HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)> {
+    // create vec of out neighbors once and reuse it afterwards
     let out_neighbors = graph
         .out_graph()
         .edges(vertex)
         .map(|edge| edge.head)
         .collect_vec();
 
-    let mut new_edges = Vec::new();
-    let mut updated_edges = Vec::new();
-
     // tail -> vertex -> head
     graph
         .in_graph()
         .edges(vertex)
-        .progress()
-        .for_each(|in_edge| {
+        .par_bridge()
+        .map(|in_edge| {
             let tail = in_edge.head;
+
+            let mut new_edges = Vec::new();
+            let mut updated_edges = Vec::new();
 
             // dijkstra tail -> targets
             let data = dijkstra_one_to_many(graph.out_graph(), tail, &out_neighbors);
@@ -119,7 +156,6 @@ pub fn simulate_contraction_witness_search<G: Graph + Default>(
             graph.out_graph().edges(vertex).for_each(|out_edge| {
                 let head = out_edge.head;
                 let shortcut_distance = in_edge.weight + out_edge.weight;
-
                 let shortest_path_distance = data.get_distance(head).unwrap_or(Distance::MAX);
 
                 if shortcut_distance <= shortest_path_distance {
@@ -129,28 +165,36 @@ pub fn simulate_contraction_witness_search<G: Graph + Default>(
                         weight: shortcut_distance,
                     };
                     if graph.get_weight(&edge.remove_weight()).is_some() {
-                        updated_edges.push(edge);
+                        updated_edges.push(edge.remove_tail());
                     } else {
-                        new_edges.push(edge);
+                        new_edges.push(edge.remove_tail());
                     }
                 }
-            })
-        });
+            });
 
-    (new_edges, updated_edges)
+            (tail, (new_edges, updated_edges))
+        })
+        .collect()
 }
 
-/// Simulates a contraction. Returns (new_edges, updated_edges)
-pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
+pub fn edge_difference<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
+    new_and_updated_edges: &HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
+    vertex: Vertex,
+) -> i32 {
+    new_and_updated_edges
+        .values()
+        .map(|(new_edges, _updated_edges)| new_edges.len() as i32)
+        .sum::<i32>()
+        - graph.in_graph().edges(vertex).len() as i32
+        - graph.out_graph().edges(vertex).len() as i32
+}
+
+pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    distance_heuristic: &dyn DistanceHeuristic,
     vertex: Vertex,
 ) -> (Vec<WeightedEdge>, Vec<WeightedEdge>) {
-    let out_neighbors = graph
-        .out_graph()
-        .edges(vertex)
-        .map(|edge| edge.head)
-        .collect_vec();
-
     let new_edges = Arc::new(Mutex::new(Vec::new()));
     let updated_edges = Arc::new(Mutex::new(Vec::new()));
 
@@ -158,21 +202,19 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
     graph
         .in_graph()
         .edges(vertex)
-        .progress()
         .par_bridge()
         .for_each(|in_edge| {
             let tail = in_edge.head;
-
-            // dijkstra tail -> targets
-            let data = dijkstra_one_to_many(graph.out_graph(), tail, &out_neighbors);
 
             graph.out_graph().edges(vertex).for_each(|out_edge| {
                 let head = out_edge.head;
                 let shortcut_distance = in_edge.weight + out_edge.weight;
 
-                let shortest_path_distance = data.get_distance(head).unwrap_or(Distance::MAX);
+                let lower_bound_distance = distance_heuristic
+                    .lower_bound(tail, head)
+                    .unwrap_or(Distance::MAX);
 
-                if shortcut_distance <= shortest_path_distance {
+                if shortcut_distance <= lower_bound_distance {
                     let edge = WeightedEdge {
                         tail,
                         head,
@@ -194,54 +236,6 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
             .into_inner()
             .unwrap(),
     )
-}
-
-pub fn edge_difference<G: Graph + Default>(
-    graph: &ReversibleGraph<G>,
-    new_edges: &Vec<WeightedEdge>,
-    vertex: Vertex,
-) -> i32 {
-    new_edges.len() as i32
-        - graph.in_graph().edges(vertex).len() as i32
-        - graph.out_graph().edges(vertex).len() as i32
-}
-
-pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
-    graph: &ReversibleGraph<G>,
-    distance_heuristic: &dyn DistanceHeuristic,
-    vertex: Vertex,
-) -> (Vec<WeightedEdge>, Vec<WeightedEdge>) {
-    let mut new_edges = Vec::new();
-    let mut updated_edges = Vec::new();
-
-    // tail -> vertex -> head
-    graph.in_graph().edges(vertex).for_each(|in_edge| {
-        let tail = in_edge.head;
-
-        graph.out_graph().edges(vertex).for_each(|out_edge| {
-            let head = out_edge.head;
-            let shortcut_distance = in_edge.weight + out_edge.weight;
-
-            let lower_bound_distance = distance_heuristic
-                .lower_bound(tail, head)
-                .unwrap_or(Distance::MAX);
-
-            if shortcut_distance <= lower_bound_distance {
-                let edge = WeightedEdge {
-                    tail,
-                    head,
-                    weight: shortcut_distance,
-                };
-                if graph.get_weight(&edge.remove_weight()).is_some() {
-                    updated_edges.push(edge);
-                } else {
-                    new_edges.push(edge);
-                }
-            }
-        })
-    });
-
-    (new_edges, updated_edges)
 }
 
 pub fn probabilistic_edge_difference_distance_neuristic<G: Graph + Default>(

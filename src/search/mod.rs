@@ -6,7 +6,7 @@ pub mod collections;
 pub mod dijkstra;
 pub mod path;
 
-pub trait DistanceHeuristic {
+pub trait DistanceHeuristic: Send + Sync {
     fn lower_bound(&self, source: Vertex, target: Vertex) -> Option<Distance>;
 
     fn upper_bound(&self, source: Vertex, target: Vertex) -> Option<Distance>;

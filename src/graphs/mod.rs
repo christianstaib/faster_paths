@@ -4,7 +4,9 @@ use std::{
     path::Path,
 };
 
+use ahash::HashMap;
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 
 pub mod reversible_graph;
 pub mod vec_vec_graph;
@@ -54,6 +56,14 @@ impl WeightedEdge {
             weight: self.weight,
         }
     }
+
+    pub fn reversed(&self) -> Self {
+        WeightedEdge {
+            tail: self.head,
+            head: self.tail,
+            weight: self.weight,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -86,6 +96,37 @@ pub trait Graph: Send + Sync {
     fn get_weight(&self, edge: &Edge) -> Option<Distance>;
 
     fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);
+
+    /// remove ONE head per tail
+    fn remove_edges(&mut self, edges: &HashMap<Vertex, Vertex>) {
+        for (&tail, &head) in edges.iter() {
+            let edge = Edge { tail, head };
+
+            self.set_weight(&edge, None);
+        }
+    }
+
+    /// removes ALL heads of a tail
+    fn disconnect(&mut self, vertex: Vertex) {
+        let edges_to_disconnect = self.edges(vertex).collect_vec();
+
+        for edge in edges_to_disconnect {
+            self.set_weight(&edge.remove_weight(), None)
+        }
+    }
+
+    /// addes new edges and updates existing edges
+    fn insert_and_update(
+        &mut self,
+        new_and_updated_edges: &HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
+    ) {
+        for (&vertex, (new_edges, updated_edges)) in new_and_updated_edges {
+            for tailless_edge in new_edges.iter().chain(updated_edges.iter()) {
+                let edge = tailless_edge.set_tail(vertex).remove_weight();
+                self.set_weight(&edge, Some(tailless_edge.weight));
+            }
+        }
+    }
 }
 
 pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
