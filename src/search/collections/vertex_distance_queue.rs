@@ -19,6 +19,8 @@ pub trait VertexDistanceQueue {
     /// Removes and returns the vertex with the smallest distance from the
     /// priority queue or none if the queue is empty.
     fn pop(&mut self) -> Option<Vertex>;
+
+    fn is_empty(&self) -> bool;
 }
 
 /// A priority queue implementation using thre rust collections Binary Heap.
@@ -48,6 +50,10 @@ impl VertexDistanceQueue for VertexDistanceQueueBinaryHeap {
 
         Some(vertex)
     }
+
+    fn is_empty(&self) -> bool {
+        self.heap.is_empty()
+    }
 }
 
 /// A priority queue implementation using a dary heap.
@@ -76,5 +82,9 @@ impl<const N: usize> VertexDistanceQueue for VertexDistanceQueueDaryHeap<N> {
         let Reverse((_distance, vertex)) = self.heap.pop()?;
 
         Some(vertex)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.heap.is_empty()
     }
 }

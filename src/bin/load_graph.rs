@@ -1,4 +1,4 @@
-use std::{option, path::PathBuf};
+use std::{option, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
@@ -8,10 +8,10 @@ use faster_paths::{
     },
     search::{
         ch::{
-            contracted_graph::{self, ContractedGraph},
+            contracted_graph::{self, ch_one_to_one_wrapped, ContractedGraph},
             contraction::contraction_with_witness_search,
         },
-        dijkstra::dijkstra_one_to_one_wraped,
+        dijkstra::{self, dijkstra_one_to_one_wrapped},
     },
 };
 use indicatif::ProgressIterator;
@@ -62,20 +62,33 @@ fn main() {
         VecVecGraph::from_edges(&down_edges.iter().map(|edge| edge.reversed()).collect_vec());
 
     let contracted_graph = ContractedGraph {
-        up_graph,
+        upward_graph: up_graph,
         down_graph,
         level_to_vertex,
     };
 
-    for _ in 0..10 {
-        let source = thread_rng().gen_range(0..contracted_graph.up_graph.number_of_vertices());
-        let target = thread_rng().gen_range(0..contracted_graph.up_graph.number_of_vertices());
+    let mut speedup = Vec::new();
+    for _ in 0..10_000 {
+        let source = thread_rng().gen_range(0..contracted_graph.upward_graph.number_of_vertices());
+        let target = thread_rng().gen_range(0..contracted_graph.upward_graph.number_of_vertices());
 
-        let ch_distance = contracted_graph.shortest_path_distance(source, target);
-        let dijkstra_distance = dijkstra_one_to_one_wraped(&out_graph, source, target);
+        let start = Instant::now();
+        let ch_distance = ch_one_to_one_wrapped(&contracted_graph, source, target);
+        let ch_time = start.elapsed().as_secs_f64();
 
-        println!("{:?} {:?}", ch_distance, dijkstra_distance);
+        let start = Instant::now();
+        let dijkstra_distance = dijkstra_one_to_one_wrapped(&out_graph, source, target);
+        let dijkstra_time = start.elapsed().as_secs_f64();
+
+        assert_eq!(ch_distance, dijkstra_distance);
+
+        speedup.push(dijkstra_time / ch_time);
     }
+
+    println!(
+        "average speedups {:?}",
+        speedup.iter().sum::<f64>() / speedup.len() as f64
+    );
 }
 
 pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {

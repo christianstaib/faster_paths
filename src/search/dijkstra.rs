@@ -84,7 +84,7 @@ pub fn dijkstra_one_to_one(
 
 /// Wrapper that creates all nesseary data structures each time when called
 /// which can have a performance malus.
-pub fn dijkstra_one_to_one_wraped(
+pub fn dijkstra_one_to_one_wrapped(
     graph: &dyn Graph,
     source: Vertex,
     target: Vertex,
