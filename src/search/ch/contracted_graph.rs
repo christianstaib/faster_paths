@@ -94,12 +94,10 @@ pub fn ch_one_to_one(
     let mut meeting_vertex_and_distance = None;
 
     while !forward_queue.is_empty() || !backward_queue.is_empty() {
-        if let Some(tail) = forward_queue.pop() {
+        if let Some((tail, distance_tail)) = forward_queue.pop() {
             if forward_expanded.expand(tail) {
                 continue;
             }
-
-            let distance_tail = forward_data.get_distance(tail).unwrap();
 
             if let Some(backward_distance_tail) = backward_data.get_distance(tail) {
                 let meeting_distance = meeting_vertex_and_distance
@@ -123,12 +121,10 @@ pub fn ch_one_to_one(
             }
         }
 
-        if let Some(tail) = backward_queue.pop() {
+        if let Some((tail, distance_tail)) = backward_queue.pop() {
             if backward_expanded.expand(tail) {
                 continue;
             }
-
-            let distance_tail = backward_data.get_distance(tail).unwrap();
 
             if let Some(forward_distance_tail) = forward_data.get_distance(tail) {
                 let meeting_distance = meeting_vertex_and_distance

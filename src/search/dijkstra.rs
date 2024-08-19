@@ -20,12 +20,10 @@ pub fn dijktra_one_to_all(
     data.set_distance(source, 0);
     queue.insert(source, 0);
 
-    while let Some(tail) = queue.pop() {
+    while let Some((tail, distance_tail)) = queue.pop() {
         if expanded.expand(tail) {
             continue;
         }
-
-        let distance_tail = data.get_distance(tail).unwrap();
 
         for edge in graph.edges(tail) {
             let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
@@ -60,15 +58,13 @@ pub fn dijkstra_one_to_one(
     data.set_distance(source, 0);
     queue.insert(source, 0);
 
-    while let Some(tail) = queue.pop() {
+    while let Some((tail, distance_tail)) = queue.pop() {
         if expanded.expand(tail) {
             continue;
         }
         if tail == target {
             break;
         }
-
-        let distance_tail = data.get_distance(tail).unwrap();
 
         for edge in graph.edges(tail) {
             let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
@@ -121,7 +117,7 @@ pub fn dijktra_one_to_many(
     data.set_distance(source, 0);
     queue.insert(source, 0);
 
-    while let Some(tail) = queue.pop() {
+    while let Some((tail, distance_tail)) = queue.pop() {
         if expanded.expand(tail) {
             continue;
         }
@@ -129,8 +125,6 @@ pub fn dijktra_one_to_many(
         if targets.is_empty() {
             break;
         }
-
-        let distance_tail = data.get_distance(tail).unwrap();
 
         for edge in graph.edges(tail) {
             let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);

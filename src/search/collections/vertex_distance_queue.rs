@@ -18,9 +18,11 @@ pub trait VertexDistanceQueue {
 
     /// Removes and returns the vertex with the smallest distance from the
     /// priority queue or none if the queue is empty.
-    fn pop(&mut self) -> Option<Vertex>;
+    fn pop(&mut self) -> Option<(Vertex, Distance)>;
 
     fn is_empty(&self) -> bool;
+
+    fn peek(&mut self) -> Option<(Vertex, Distance)>;
 }
 
 /// A priority queue implementation using thre rust collections Binary Heap.
@@ -45,14 +47,20 @@ impl VertexDistanceQueue for VertexDistanceQueueBinaryHeap {
         self.heap.push(Reverse((distance, vertex)));
     }
 
-    fn pop(&mut self) -> Option<Vertex> {
-        let Reverse((_distance, vertex)) = self.heap.pop()?;
+    fn pop(&mut self) -> Option<(Vertex, Distance)> {
+        let Reverse((distance, vertex)) = self.heap.pop()?;
 
-        Some(vertex)
+        Some((vertex, distance))
     }
 
     fn is_empty(&self) -> bool {
         self.heap.is_empty()
+    }
+
+    fn peek(&mut self) -> Option<(Vertex, Distance)> {
+        let &Reverse((distance, vertex)) = self.heap.peek()?;
+
+        Some((vertex, distance))
     }
 }
 
@@ -78,13 +86,19 @@ impl<const N: usize> VertexDistanceQueue for VertexDistanceQueueDaryHeap<N> {
         self.heap.push(Reverse((distance, vertex)));
     }
 
-    fn pop(&mut self) -> Option<Vertex> {
-        let Reverse((_distance, vertex)) = self.heap.pop()?;
+    fn pop(&mut self) -> Option<(Vertex, Distance)> {
+        let Reverse((distance, vertex)) = self.heap.pop()?;
 
-        Some(vertex)
+        Some((vertex, distance))
     }
 
     fn is_empty(&self) -> bool {
         self.heap.is_empty()
+    }
+
+    fn peek(&mut self) -> Option<(Vertex, Distance)> {
+        let &Reverse((distance, vertex)) = self.heap.peek()?;
+
+        Some((vertex, distance))
     }
 }
