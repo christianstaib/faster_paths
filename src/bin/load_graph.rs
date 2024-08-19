@@ -12,10 +12,11 @@ use faster_paths::{
             contraction::contraction_with_witness_search,
         },
         dijkstra::{create_test_cases, dijkstra_one_to_one_wrapped},
-        path::ShortestPathTestCase,
+        path::{ShortestPathRequest, ShortestPathTestCase},
     },
 };
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -43,24 +44,29 @@ fn main() {
     let (level_to_vertex, shortcuts) = contraction_with_witness_search(graph);
     let contracted_graph = create_contracted_graph(shortcuts, &level_to_vertex);
 
-    let mut speedup = Vec::new();
-    for ShortestPathTestCase { request, distance } in test_cases.iter().progress() {
-        let source = request.source;
-        let target = request.target;
+    let speedup = test_cases
+        .iter()
+        .progress()
+        .map(
+            |ShortestPathTestCase {
+                 request: ShortestPathRequest { source, target },
+                 distance,
+             }| {
+                let start = Instant::now();
+                let ch_distance = ch_one_to_one_wrapped(&contracted_graph, *source, *target);
+                let ch_time = start.elapsed().as_secs_f64();
 
-        let start = Instant::now();
-        let ch_distance = ch_one_to_one_wrapped(&contracted_graph, source, target);
-        let ch_time = start.elapsed().as_secs_f64();
+                let start = Instant::now();
+                let dijkstra_distance = dijkstra_one_to_one_wrapped(&out_graph, *source, *target);
+                let dijkstra_time = start.elapsed().as_secs_f64();
 
-        let start = Instant::now();
-        let dijkstra_distance = dijkstra_one_to_one_wrapped(&out_graph, source, target);
-        let dijkstra_time = start.elapsed().as_secs_f64();
+                assert_eq!(distance, &dijkstra_distance);
+                assert_eq!(distance, &ch_distance);
 
-        assert_eq!(distance, &dijkstra_distance);
-        assert_eq!(distance, &ch_distance);
-
-        speedup.push(dijkstra_time / ch_time);
-    }
+                dijkstra_time / ch_time
+            },
+        )
+        .collect_vec();
 
     println!(
         "average speedups {:?}",
@@ -79,8 +85,10 @@ fn create_contracted_graph(
     for (&(tail, head), &weight) in shortcuts.iter() {
         if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
             upward_edges.push(WeightedEdge::new(tail, head, weight));
+        } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
+            downward_edges.push(WeightedEdge::new(head, tail, weight));
         } else {
-            downward_edges.push(WeightedEdge::new(head, tail, weight))
+            panic!("tail and head have same level");
         }
     }
 
