@@ -41,7 +41,7 @@ fn main() {
 
     println!("Create contracted graph");
     let (level_to_vertex, shortcuts) = contraction_with_witness_search(graph);
-    let contracted_graph = create_contracted_graph(shortcuts, &edges, &level_to_vertex);
+    let contracted_graph = create_contracted_graph(shortcuts, &level_to_vertex);
 
     let mut speedup = Vec::new();
     for ShortestPathTestCase { request, distance } in test_cases.iter().progress() {
@@ -70,25 +70,17 @@ fn main() {
 
 fn create_contracted_graph(
     shortcuts: HashMap<(Vertex, Vertex), Distance>,
-    edges: &Vec<WeightedEdge>,
     level_to_vertex: &Vec<u32>,
 ) -> ContractedGraph {
-    let mut edges = edges.clone();
-
-    shortcuts.iter().for_each(|(&(tail, head), &weight)| {
-        let edge = WeightedEdge { tail, head, weight };
-        edges.push(edge);
-    });
-
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
     let mut upward_edges = Vec::new();
     let mut downward_edges = Vec::new();
-    for edge in edges.iter() {
-        if vertex_to_level[edge.tail as usize] < vertex_to_level[edge.head as usize] {
-            upward_edges.push(edge.clone())
+    for (&(tail, head), &weight) in shortcuts.iter() {
+        if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
+            upward_edges.push(WeightedEdge::new(tail, head, weight));
         } else {
-            downward_edges.push(edge.reversed())
+            downward_edges.push(WeightedEdge::new(head, tail, weight))
         }
     }
 

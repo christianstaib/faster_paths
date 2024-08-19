@@ -113,6 +113,12 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
 
     println!("contracting");
     let mut shortcuts = HashMap::new();
+    for vertex in 0..graph.out_graph().number_of_vertices() {
+        for edge in graph.out_graph().edges(vertex) {
+            shortcuts.insert((edge.tail, edge.head), edge.weight);
+        }
+    }
+
     let mut level_to_vertex = Vec::new();
 
     let pb = ProgressBar::new(graph.out_graph().number_of_vertices() as u64);

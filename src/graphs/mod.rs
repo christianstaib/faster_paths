@@ -43,6 +43,10 @@ pub struct WeightedEdge {
 }
 
 impl WeightedEdge {
+    pub fn new(tail: Vertex, head: Vertex, weight: Vertex) -> WeightedEdge {
+        WeightedEdge { tail, head, weight }
+    }
+
     pub fn remove_weight(&self) -> Edge {
         Edge {
             tail: self.tail,
