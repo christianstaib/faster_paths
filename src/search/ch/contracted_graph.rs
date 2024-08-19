@@ -12,19 +12,20 @@ use crate::{
 
 pub struct ContractedGraph {
     pub upward_graph: VecVecGraph,
-    pub down_graph: VecVecGraph,
+    pub downward_graph: VecVecGraph,
     pub level_to_vertex: Vec<Vertex>,
+    pub vertex_to_level: Vec<u32>,
 }
 
 impl ContractedGraph {
     pub fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
         let up_weights = dijkstra_one_to_all_wraped(&self.upward_graph, source);
-        let down_weights = dijkstra_one_to_all_wraped(&self.down_graph, target);
+        let down_weights = dijkstra_one_to_all_wraped(&self.downward_graph, target);
 
         let mut min_distance = Distance::MAX;
         for vertex in 0..std::cmp::max(
             self.upward_graph.number_of_vertices(),
-            self.down_graph.number_of_vertices(),
+            self.downward_graph.number_of_vertices(),
         ) {
             let alt_distance = match (
                 up_weights.get_distance(vertex),
@@ -135,7 +136,7 @@ pub fn ch_one_to_one(
                 }
             }
 
-            for edge in ch_graph.down_graph.edges(tail) {
+            for edge in ch_graph.downward_graph.edges(tail) {
                 let current_distance_head = backward_data
                     .get_distance(edge.head)
                     .unwrap_or(Distance::MAX);

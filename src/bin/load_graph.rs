@@ -1,22 +1,21 @@
-use std::{option, path::PathBuf, time::Instant};
+use std::{collections::HashMap, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Distance, Edge, Graph, Vertex, WeightedEdge,
+        Distance, Vertex, WeightedEdge,
     },
     search::{
         ch::{
-            contracted_graph::{self, ch_one_to_one_wrapped, ContractedGraph},
+            contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
             contraction::contraction_with_witness_search,
         },
-        dijkstra::{self, dijkstra_one_to_one_wrapped},
+        dijkstra::{create_test_cases, dijkstra_one_to_one_wrapped},
+        path::ShortestPathTestCase,
     },
 };
 use indicatif::ProgressIterator;
-use itertools::Itertools;
-use rand::{thread_rng, Rng};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -31,46 +30,23 @@ fn main() {
     let args = Args::parse();
 
     println!("Reading edges");
-    let mut edges = read_edges_from_fmi_file(&args.graph);
+    let edges = read_edges_from_fmi_file(&args.graph);
     let out_graph = VecVecGraph::from_edges(&edges);
 
     println!("Building graph");
-    let mut graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
+    println!("Creating test cases");
+    let test_cases = create_test_cases(graph.out_graph(), 100_000);
+
+    println!("Create contracted graph");
     let (level_to_vertex, shortcuts) = contraction_with_witness_search(graph);
-
-    shortcuts.iter().for_each(|(&(tail, head), &weight)| {
-        let edge = WeightedEdge { tail, head, weight };
-        edges.push(edge);
-    });
-
-    let vertex_to_level = vertex_to_level(&level_to_vertex);
-
-    let (up_edges, down_edges): (Vec<WeightedEdge>, Vec<WeightedEdge>) =
-        edges.into_iter().partition(|edge| {
-            vertex_to_level[edge.tail as usize] < vertex_to_level[edge.head as usize]
-        });
-
-    println!(
-        "there are {} up edges and {} down edges",
-        up_edges.len(),
-        down_edges.len()
-    );
-
-    let up_graph = VecVecGraph::from_edges(&up_edges);
-    let down_graph =
-        VecVecGraph::from_edges(&down_edges.iter().map(|edge| edge.reversed()).collect_vec());
-
-    let contracted_graph = ContractedGraph {
-        upward_graph: up_graph,
-        down_graph,
-        level_to_vertex,
-    };
+    let contracted_graph = create_contracted_graph(shortcuts, &edges, &level_to_vertex);
 
     let mut speedup = Vec::new();
-    for _ in 0..10_000 {
-        let source = thread_rng().gen_range(0..contracted_graph.upward_graph.number_of_vertices());
-        let target = thread_rng().gen_range(0..contracted_graph.upward_graph.number_of_vertices());
+    for ShortestPathTestCase { request, distance } in test_cases.iter().progress() {
+        let source = request.source;
+        let target = request.target;
 
         let start = Instant::now();
         let ch_distance = ch_one_to_one_wrapped(&contracted_graph, source, target);
@@ -80,7 +56,8 @@ fn main() {
         let dijkstra_distance = dijkstra_one_to_one_wrapped(&out_graph, source, target);
         let dijkstra_time = start.elapsed().as_secs_f64();
 
-        assert_eq!(ch_distance, dijkstra_distance);
+        assert_eq!(distance, &dijkstra_distance);
+        assert_eq!(distance, &ch_distance);
 
         speedup.push(dijkstra_time / ch_time);
     }
@@ -89,6 +66,38 @@ fn main() {
         "average speedups {:?}",
         speedup.iter().sum::<f64>() / speedup.len() as f64
     );
+}
+
+fn create_contracted_graph(
+    shortcuts: HashMap<(Vertex, Vertex), Distance>,
+    edges: &Vec<WeightedEdge>,
+    level_to_vertex: &Vec<u32>,
+) -> ContractedGraph {
+    let mut edges = edges.clone();
+
+    shortcuts.iter().for_each(|(&(tail, head), &weight)| {
+        let edge = WeightedEdge { tail, head, weight };
+        edges.push(edge);
+    });
+
+    let vertex_to_level = vertex_to_level(&level_to_vertex);
+
+    let mut upward_edges = Vec::new();
+    let mut downward_edges = Vec::new();
+    for edge in edges.iter() {
+        if vertex_to_level[edge.tail as usize] < vertex_to_level[edge.head as usize] {
+            upward_edges.push(edge.clone())
+        } else {
+            downward_edges.push(edge.reversed())
+        }
+    }
+
+    ContractedGraph {
+        upward_graph: VecVecGraph::from_edges(&upward_edges),
+        downward_graph: VecVecGraph::from_edges(&downward_edges),
+        level_to_vertex: level_to_vertex.clone(),
+        vertex_to_level,
+    }
 }
 
 pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
@@ -100,26 +109,3 @@ pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
 
     vertex_to_level
 }
-
-// println!("Reading test cases");
-// let mut reader = BufReader::new(File::open(&args.tests).unwrap());
-// let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(&mut
-// reader).unwrap();
-// let graph = graph.out_graph();
-// let graph = &graph;
-// for _ in (0..200).progress().progress() {
-//     let source = thread_rng().gen_range(0..graph.number_of_vertices());
-//     let target = thread_rng().gen_range(0..graph.number_of_vertices());
-
-//     let mut data = DijkstraDataVec::new(graph);
-//     let mut expanded = VertexExpandedDataBitSet::new(graph);
-//     let mut queue = VertexDistanceQueueDaryHeap::<3>::new();
-
-//     let start = Instant::now();
-//     dijktra_one_to_one(graph, &mut data, &mut expanded, &mut queue,
-// source, target);     duration += start.elapsed();
-// }
-// println!(
-//     "average duration was {:?}",
-//     duration / (test_cases.len() as u32)
-// );

@@ -1,11 +1,18 @@
 use std::collections::HashSet;
 
-use super::collections::{
-    dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec},
-    vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-    vertex_expanded_data::{
-        VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
+use indicatif::{ParallelProgressIterator, ProgressIterator};
+use rand::{thread_rng, Rng};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
+use super::{
+    collections::{
+        dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec},
+        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+        vertex_expanded_data::{
+            VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
+        },
     },
+    path::{ShortestPathRequest, ShortestPathTestCase},
 };
 use crate::graphs::{Distance, Graph, Vertex};
 
@@ -136,4 +143,36 @@ pub fn dijktra_one_to_many(
             }
         }
     }
+}
+
+pub fn create_test_cases(graph: &dyn Graph, number_of_testcases: u32) -> Vec<ShortestPathTestCase> {
+    (0..number_of_testcases)
+        .into_par_iter()
+        .progress()
+        .map_init(
+            || {
+                (
+                    DijkstraDataVec::new(graph),
+                    VertexExpandedDataBitSet::new(graph),
+                    VertexDistanceQueueBinaryHeap::new(),
+                    thread_rng(),
+                )
+            },
+            |(data, expanded, queue, rng), _| {
+                let source = rng.gen_range(0..graph.number_of_vertices());
+                let target = rng.gen_range(0..graph.number_of_vertices());
+                dijkstra_one_to_one(graph, data, expanded, queue, source, target);
+                let distance = data.get_distance(target);
+
+                data.clear();
+                expanded.clear();
+                queue.clear();
+
+                ShortestPathTestCase {
+                    request: ShortestPathRequest { source, target },
+                    distance,
+                }
+            },
+        )
+        .collect()
 }

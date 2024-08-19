@@ -9,8 +9,7 @@ use crate::graphs::{Distance, Vertex};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ShortestPathTestCase {
     pub request: ShortestPathRequest,
-    pub weight: Option<Distance>,
-    pub dijkstra_rank: u32,
+    pub distance: Option<Distance>,
 }
 
 /// Represents a request for finding a shortest path in a graph.
