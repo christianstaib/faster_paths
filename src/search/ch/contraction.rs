@@ -215,6 +215,58 @@ pub fn edge_difference<G: Graph + Default>(
         - graph.out_graph().edges(vertex).len() as i32
 }
 
+pub fn contraction_with_distance_heuristic<G: Graph + Default>(
+    mut graph: ReversibleGraph<G>,
+    distance_heuristic: &dyn DistanceHeuristic,
+) -> (Vec<Vertex>, HashMap<(Vertex, Vertex), Distance>) {
+    println!("setting up the queue");
+    let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = (0..graph.out_graph().number_of_vertices())
+        .into_par_iter()
+        .progress()
+        .map(|vertex| {
+            let new_and_updated_edges =
+                simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+            let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
+            Reverse((edge_difference, vertex))
+        })
+        .collect();
+
+    println!("contracting");
+    let mut edges = HashMap::new();
+    for vertex in 0..graph.out_graph().number_of_vertices() {
+        for edge in graph.out_graph().edges(vertex) {
+            edges.insert((edge.tail, edge.head), edge.weight);
+        }
+    }
+
+    let mut level_to_vertex = Vec::new();
+
+    let pb = ProgressBar::new(graph.out_graph().number_of_vertices() as u64);
+    while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
+        let new_and_updated_edges =
+            simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+        let new_edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
+        if new_edge_difference > old_edge_difference {
+            queue.push(Reverse((new_edge_difference, vertex)));
+            continue;
+        }
+        pb.inc(1);
+
+        for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
+            for edge in new_edges.iter().chain(updated_edges.iter()) {
+                edges.insert((tail, edge.head), edge.weight);
+            }
+        }
+
+        level_to_vertex.push(vertex);
+        graph.disconnect(vertex);
+        graph.insert_and_update(&new_and_updated_edges);
+    }
+    pb.finish();
+
+    (level_to_vertex, edges)
+}
+
 /// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
 pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
