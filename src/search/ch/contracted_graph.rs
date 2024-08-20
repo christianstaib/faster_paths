@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use crate::{
-    graphs::{vec_vec_graph::VecVecGraph, Distance, Graph, Vertex},
+    graphs::{vec_vec_graph::VecVecGraph, Distance, Graph, Vertex, WeightedEdge},
     search::{
         collections::{
             dijkstra_data::{DijkstraData, DijkstraDataHashMap},
@@ -18,6 +20,32 @@ pub struct ContractedGraph {
 }
 
 impl ContractedGraph {
+    pub fn new(
+        edges: HashMap<(Vertex, Vertex), Distance>,
+        level_to_vertex: &Vec<u32>,
+    ) -> ContractedGraph {
+        let vertex_to_level = vertex_to_level(&level_to_vertex);
+
+        let mut upward_edges = Vec::new();
+        let mut downward_edges = Vec::new();
+        for (&(tail, head), &weight) in edges.iter() {
+            if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
+                upward_edges.push(WeightedEdge::new(tail, head, weight));
+            } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
+                downward_edges.push(WeightedEdge::new(head, tail, weight));
+            } else {
+                panic!("tail and head have same level");
+            }
+        }
+
+        ContractedGraph {
+            upward_graph: VecVecGraph::from_edges(&upward_edges),
+            downward_graph: VecVecGraph::from_edges(&downward_edges),
+            level_to_vertex: level_to_vertex.clone(),
+            vertex_to_level,
+        }
+    }
+
     pub fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
         let up_weights = dijkstra_one_to_all_wraped(&self.upward_graph, source);
         let down_weights = dijkstra_one_to_all_wraped(&self.downward_graph, target);
@@ -46,6 +74,16 @@ impl ContractedGraph {
 
         Some(min_distance)
     }
+}
+
+pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
+    let mut vertex_to_level = vec![0; level_to_vertex.len()];
+
+    for (level, &vertex) in level_to_vertex.iter().enumerate() {
+        vertex_to_level[vertex as usize] = level as u32;
+    }
+
+    vertex_to_level
 }
 
 pub fn ch_one_to_one_wrapped(

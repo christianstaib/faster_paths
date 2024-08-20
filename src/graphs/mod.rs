@@ -7,6 +7,10 @@ use std::{
 use ahash::HashMap;
 use indicatif::ProgressIterator;
 use itertools::Itertools;
+use reversible_graph::ReversibleGraph;
+use vec_vec_graph::VecVecGraph;
+
+use crate::search::path::ShortestPathTestCase;
 
 pub mod reversible_graph;
 pub mod vec_vec_graph;
@@ -187,4 +191,15 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
             WeightedEdge { tail, head, weight }
         })
         .collect()
+}
+
+/// Returns a reasonable large test graph
+pub fn large_test_graph() -> (ReversibleGraph<VecVecGraph>, Vec<ShortestPathTestCase>) {
+    let edges = read_edges_from_fmi_file(Path::new("tests/data/stgtregbz_cutout.fmi"));
+    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+
+    let reader = BufReader::new(File::open("test_cases.json").unwrap());
+    let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();
+
+    (graph, test_cases)
 }
