@@ -2,11 +2,12 @@ use std::{path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::large_test_graph,
+    graphs::{large_test_graph, Graph},
     search::{
+        alt::landmark::Landmarks,
         ch::{
             contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
-            contraction::contraction_with_witness_search,
+            contraction::{contraction_with_distance_heuristic, contraction_with_witness_search},
         },
         dijkstra::dijkstra_one_to_one_wrapped,
         path::{ShortestPathRequest, ShortestPathTestCase},
@@ -14,6 +15,7 @@ use faster_paths::{
 };
 use indicatif::ProgressIterator;
 use itertools::Itertools;
+use rand::{seq::IteratorRandom, thread_rng};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -29,8 +31,13 @@ fn main() {
 
     let out_graph = graph.out_graph().clone();
 
+    let distance_heuristic = Landmarks::new(
+        &graph,
+        &(0..graph.out_graph().number_of_vertices()).choose_multiple(&mut thread_rng(), 100),
+    );
+
     println!("Create contracted graph");
-    let (level_to_vertex, edges) = contraction_with_witness_search(graph);
+    let (level_to_vertex, edges) = contraction_with_distance_heuristic(graph, &distance_heuristic);
     let contracted_graph = ContractedGraph::new(edges, &level_to_vertex);
 
     let speedup = test_cases

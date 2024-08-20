@@ -74,7 +74,7 @@ impl WeightedEdge {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct TaillessEdge {
     pub head: Vertex,
     pub weight: Distance,

@@ -221,7 +221,7 @@ pub fn contraction_with_distance_heuristic<G: Graph + Default>(
 ) -> (Vec<Vertex>, HashMap<(Vertex, Vertex), Distance>) {
     println!("setting up the queue");
     let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = (0..graph.out_graph().number_of_vertices())
-        .into_par_iter()
+        //.into_par_iter()
         .progress()
         .map(|vertex| {
             let new_and_updated_edges =
@@ -245,12 +245,28 @@ pub fn contraction_with_distance_heuristic<G: Graph + Default>(
     while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
         let new_and_updated_edges =
             simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+
         let new_edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
         if new_edge_difference > old_edge_difference {
             queue.push(Reverse((new_edge_difference, vertex)));
             continue;
         }
         pb.inc(1);
+
+        // {
+        //     println!("{}", level_to_vertex.len());
+        //     let new_and_updated_edges_wittness =
+        //         par_simulate_contraction_witness_search(&graph, vertex);
+        //     for (tail, (new_edges, updated_edges)) in
+        // new_and_updated_edges_wittness.iter() {         for edge in
+        // new_edges.iter() {
+        // assert!(new_and_updated_edges[tail].0.contains(edge));         }
+
+        //         for edge in updated_edges.iter() {
+        //             assert!(new_and_updated_edges[tail].1.contains(edge));
+        //         }
+        //     }
+        // }
 
         for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
             for edge in new_edges.iter().chain(updated_edges.iter()) {
@@ -273,6 +289,12 @@ pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
     distance_heuristic: &dyn DistanceHeuristic,
     vertex: Vertex,
 ) -> HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)> {
+    let out_neighbors = graph
+        .out_graph()
+        .edges(vertex)
+        .map(|edge| edge.head)
+        .collect_vec();
+
     // tail -> vertex -> head
     graph
         .in_graph()
@@ -284,22 +306,36 @@ pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
             let mut new_edges = Vec::new();
             let mut updated_edges = Vec::new();
 
+            let data = dijkstra_one_to_many(graph.out_graph(), tail, &out_neighbors);
+
             graph.out_graph().edges(vertex).for_each(|out_edge| {
                 let head = out_edge.head;
                 let shortcut_distance = in_edge.weight + out_edge.weight;
 
                 let lower_bound_distance = distance_heuristic
-                    .lower_bound(tail, head)
+                    .upper_bound(tail, head)
                     .unwrap_or(Distance::MAX);
 
-                if shortcut_distance <= lower_bound_distance {
+                if shortcut_distance <= data.get_distance(head).unwrap() {
+                    assert!(
+                        shortcut_distance <= lower_bound_distance,
+                        "shortcut_distance: {}, lower_bound_distance: {}, true_distance: {}",
+                        shortcut_distance,
+                        lower_bound_distance,
+                        data.get_distance(head).unwrap()
+                    );
+                }
+
+                if tail != head && shortcut_distance <= lower_bound_distance {
                     let edge = WeightedEdge {
                         tail,
                         head,
                         weight: shortcut_distance,
                     };
-                    if graph.get_weight(&edge.remove_weight()).is_some() {
-                        updated_edges.push(edge.remove_tail());
+                    if let Some(current_distance) = graph.get_weight(&edge.remove_weight()) {
+                        if shortcut_distance < current_distance {
+                            updated_edges.push(edge.remove_tail());
+                        }
                     } else {
                         new_edges.push(edge.remove_tail());
                     }

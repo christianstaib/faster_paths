@@ -38,7 +38,7 @@ impl DistanceHeuristic for Landmarks {
     fn upper_bound(&self, source: Vertex, target: Vertex) -> Option<Distance> {
         self.landmarks
             .iter()
-            .filter_map(|landmark| landmark.lower_bound(source, target))
+            .filter_map(|landmark| landmark.upper_bound(source, target))
             .min()
     }
 }

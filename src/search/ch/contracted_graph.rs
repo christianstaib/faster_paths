@@ -34,7 +34,7 @@ impl ContractedGraph {
             } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
                 downward_edges.push(WeightedEdge::new(head, tail, weight));
             } else {
-                panic!("tail and head have same level");
+                panic!("tail ({}) and head ({}) have same level", tail, head);
             }
         }
 
