@@ -25,6 +25,11 @@ use crate::{
     },
 };
 
+fn scale(base_value: u32, factor: f32, min: u32, max: u32) -> u32 {
+    let scaled_value = (base_value as f32 * factor).round() as u32;
+    scaled_value.clamp(min, max)
+}
+
 /// Simulates a contraction. Returns (new_edges, updated_edges)
 pub fn probabilistic_edge_difference_witness_search<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
@@ -34,12 +39,13 @@ pub fn probabilistic_edge_difference_witness_search<G: Graph + Default>(
     search_factor: f32,
 ) -> i32 {
     let in_edges = graph.in_graph().edges(vertex).collect_vec();
-    let mut searches = (in_edges.len() as f32 * search_factor) as u32;
-    if searches < min_searches {
-        searches = min_searches;
-    } else if searches > max_searches {
-        searches = max_searches;
-    }
+    let searches = scale(
+        in_edges.len() as u32,
+        search_factor,
+        min_searches,
+        std::cmp::min(in_edges.len() as u32, max_searches),
+    );
+
     let in_edges_selected = in_edges.choose_multiple(&mut thread_rng(), searches as usize);
     let selcted_factor = in_edges_selected.len() as f32 / in_edges.len() as f32;
 
@@ -112,10 +118,10 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
         .collect();
 
     println!("contracting");
-    let mut shortcuts = HashMap::new();
+    let mut edges = HashMap::new();
     for vertex in 0..graph.out_graph().number_of_vertices() {
         for edge in graph.out_graph().edges(vertex) {
-            shortcuts.insert((edge.tail, edge.head), edge.weight);
+            edges.insert((edge.tail, edge.head), edge.weight);
         }
     }
 
@@ -133,7 +139,7 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
 
         for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
             for edge in new_edges.iter().chain(updated_edges.iter()) {
-                shortcuts.insert((tail, edge.head), edge.weight);
+                edges.insert((tail, edge.head), edge.weight);
             }
         }
 
@@ -143,7 +149,7 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
     }
     pb.finish();
 
-    (level_to_vertex, shortcuts)
+    (level_to_vertex, edges)
 }
 
 /// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
@@ -209,21 +215,22 @@ pub fn edge_difference<G: Graph + Default>(
         - graph.out_graph().edges(vertex).len() as i32
 }
 
+/// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
 pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
     distance_heuristic: &dyn DistanceHeuristic,
     vertex: Vertex,
-) -> (Vec<WeightedEdge>, Vec<WeightedEdge>) {
-    let new_edges = Arc::new(Mutex::new(Vec::new()));
-    let updated_edges = Arc::new(Mutex::new(Vec::new()));
-
+) -> HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)> {
     // tail -> vertex -> head
     graph
         .in_graph()
         .edges(vertex)
-        .par_bridge()
-        .for_each(|in_edge| {
+        //.par_bridge()
+        .map(|in_edge| {
             let tail = in_edge.head;
+
+            let mut new_edges = Vec::new();
+            let mut updated_edges = Vec::new();
 
             graph.out_graph().edges(vertex).for_each(|out_edge| {
                 let head = out_edge.head;
@@ -240,21 +247,16 @@ pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
                         weight: shortcut_distance,
                     };
                     if graph.get_weight(&edge.remove_weight()).is_some() {
-                        updated_edges.lock().unwrap().push(edge);
+                        updated_edges.push(edge.remove_tail());
                     } else {
-                        new_edges.lock().unwrap().push(edge);
+                        new_edges.push(edge.remove_tail());
                     }
                 }
-            })
-        });
+            });
 
-    (
-        Arc::into_inner(new_edges).unwrap().into_inner().unwrap(),
-        Arc::into_inner(updated_edges)
-            .unwrap()
-            .into_inner()
-            .unwrap(),
-    )
+            (tail, (new_edges, updated_edges))
+        })
+        .collect()
 }
 
 pub fn probabilistic_edge_difference_distance_neuristic<G: Graph + Default>(
@@ -271,19 +273,16 @@ pub fn probabilistic_edge_difference_distance_neuristic<G: Graph + Default>(
     let number_of_edge_pairs = (in_edges.len() * out_edges.len()) as u32;
 
     if number_of_edge_pairs == 0 {
-        return -(in_edges.len() as i32) - (out_edges.len() as i32);
+        return 0 - (in_edges.len() as i32) - (out_edges.len() as i32);
     }
 
-    let mut searches = (number_of_edge_pairs as f32 * search_factor) as u32;
-    if searches < min_searches {
-        searches = min_searches;
-    } else if searches > max_searches {
-        searches = max_searches;
-    }
+    let searches = scale(
+        number_of_edge_pairs,
+        search_factor,
+        min_searches,
+        std::cmp::min(number_of_edge_pairs as u32, max_searches),
+    );
 
-    if searches > number_of_edge_pairs {
-        searches = number_of_edge_pairs;
-    }
     let searches_factor = searches as f32 / number_of_edge_pairs as f32;
 
     let mut rng = thread_rng();

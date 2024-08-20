@@ -1,4 +1,10 @@
-use std::{collections::HashMap, path::PathBuf, time::Instant};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::{Path, PathBuf},
+    time::Instant,
+};
 
 use clap::Parser;
 use faster_paths::{
@@ -27,22 +33,24 @@ struct Args {
     graph: PathBuf,
 }
 
-fn main() {
-    let args = Args::parse();
-
-    println!("Reading edges");
-    let edges = read_edges_from_fmi_file(&args.graph);
-    let out_graph = VecVecGraph::from_edges(&edges);
-
-    println!("Building graph");
+fn large_test_graph() -> (ReversibleGraph<VecVecGraph>, Vec<ShortestPathTestCase>) {
+    let edges = read_edges_from_fmi_file(Path::new("tests/data/stgtregbz_cutout.fmi"));
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
-    println!("Creating test cases");
-    let test_cases = create_test_cases(graph.out_graph(), 100_000);
+    let reader = BufReader::new(File::open("test_cases.json").unwrap());
+    let test_cases: Vec<ShortestPathTestCase> = serde_json::from_reader(reader).unwrap();
+
+    (graph, test_cases)
+}
+
+fn main() {
+    let (graph, test_cases) = large_test_graph();
+
+    let out_graph = graph.out_graph().clone();
 
     println!("Create contracted graph");
-    let (level_to_vertex, shortcuts) = contraction_with_witness_search(graph);
-    let contracted_graph = create_contracted_graph(shortcuts, &level_to_vertex);
+    let (level_to_vertex, edges) = contraction_with_witness_search(graph);
+    let contracted_graph = create_contracted_graph(edges, &level_to_vertex);
 
     let speedup = test_cases
         .iter()
@@ -75,14 +83,14 @@ fn main() {
 }
 
 fn create_contracted_graph(
-    shortcuts: HashMap<(Vertex, Vertex), Distance>,
+    edges: HashMap<(Vertex, Vertex), Distance>,
     level_to_vertex: &Vec<u32>,
 ) -> ContractedGraph {
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
     let mut upward_edges = Vec::new();
     let mut downward_edges = Vec::new();
-    for (&(tail, head), &weight) in shortcuts.iter() {
+    for (&(tail, head), &weight) in edges.iter() {
         if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
             upward_edges.push(WeightedEdge::new(tail, head, weight));
         } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
