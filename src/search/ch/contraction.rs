@@ -388,10 +388,6 @@ pub fn par_simulate_contraction_distance_heuristic<G: Graph + Default>(
                     continue;
                 }
 
-                // let lower_bound_distance = distance_heuristic
-                //     .upper_bound(tail, head)
-                //     .unwrap_or(Distance::MAX);
-
                 // if shortcut_distance <= lower_bound_distance {
                 if distance_heuristic.is_less_or_equal_upper_bound(tail, head, shortcut_distance) {
                     new_edges.push(edge.remove_tail());
