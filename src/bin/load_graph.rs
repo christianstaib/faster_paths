@@ -43,7 +43,7 @@ fn main() {
     println!("getting landmarks");
     let distance_heuristic = Landmarks::new(
         &graph,
-        &(0..graph.out_graph().number_of_vertices()).choose_multiple(&mut thread_rng(), 10_000),
+        &(0..graph.out_graph().number_of_vertices()).choose_multiple(&mut thread_rng(), 100),
     );
 
     println!("Create contracted graph");

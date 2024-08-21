@@ -227,14 +227,9 @@ pub fn contraction_with_distance_heuristic<G: Graph + Default>(
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let edge_difference = probabilistic_edge_difference_distance_neuristic(
-                &graph,
-                distance_heuristic,
-                vertex,
-                50,
-                5_000,
-                0.1,
-            );
+            let new_and_updated_edges =
+                par_simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+            let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
             Reverse((edge_difference, vertex))
         })
         .collect();
@@ -261,13 +256,21 @@ pub fn contraction_with_distance_heuristic<G: Graph + Default>(
         "create edges,to update,update edge map,disconnect,insert and update,update queue"
     )
     .unwrap();
-    while let Some(Reverse((_edge_difference, vertex))) = queue.pop() {
-        pb.inc(1);
+    while let Some(Reverse((propabalistic_edge_difference, vertex))) = queue.pop() {
+        // pb.inc(1);
 
         let start = Instant::now();
         let new_and_updated_edges =
             par_simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+        let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
         let p0 = start.elapsed().as_secs_f64();
+
+        println!(
+            "{:>10} {:>10} {:>10}",
+            propabalistic_edge_difference,
+            edge_difference,
+            propabalistic_edge_difference - edge_difference
+        );
 
         let start = Instant::now();
         let to_update = get_to_update(&graph, vertex, &mut neighbors);
@@ -306,7 +309,7 @@ fn get_to_update<G: Graph + Default>(
     for edge in graph.out_graph().edges(vertex) {
         neighbors[edge.head as usize] += 1;
 
-        if neighbors[edge.head as usize] > 100 {
+        if neighbors[edge.head as usize] >= 10 {
             neighbors[edge.head as usize] = 0;
             to_update.push(edge.head);
         }
@@ -335,15 +338,10 @@ fn update_queue<G: Graph + Default>(
         .into_par_iter()
         .map(|Reverse((old_edge_difference, vertex))| {
             if to_update.contains(&vertex) {
-                let edge_differnce = probabilistic_edge_difference_distance_neuristic(
-                    graph,
-                    distance_heuristic,
-                    vertex,
-                    50,
-                    5_000,
-                    0.1,
-                );
-                return Reverse((edge_differnce, vertex));
+                let new_and_updated_edges =
+                    par_simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+                let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
+                return Reverse((edge_difference, vertex));
             }
             Reverse((old_edge_difference, vertex))
         })
@@ -388,7 +386,7 @@ pub fn par_simulate_contraction_distance_heuristic<G: Graph + Default>(
                     continue;
                 }
 
-                // if shortcut_distance <= lower_bound_distance {
+                // if shortcut_distance <= upper_bound_distance {
                 if distance_heuristic.is_less_or_equal_upper_bound(tail, head, shortcut_distance) {
                     new_edges.push(edge.remove_tail());
                 }
