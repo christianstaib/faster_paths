@@ -1,3 +1,4 @@
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
@@ -20,6 +21,7 @@ impl Landmarks {
     ) -> Landmarks {
         let landmarks = vertices
             .par_iter()
+            .progress()
             .map(|&vertex| Landmark::new(graph, vertex))
             .collect();
 

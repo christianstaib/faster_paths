@@ -37,8 +37,10 @@ fn main() {
     println!("build graph");
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
+    println!("cloning out graph");
     let out_graph = graph.out_graph().clone();
 
+    println!("getting landmarks");
     let distance_heuristic = Landmarks::new(
         &graph,
         &(0..graph.out_graph().number_of_vertices()).choose_multiple(&mut thread_rng(), 10_000),
