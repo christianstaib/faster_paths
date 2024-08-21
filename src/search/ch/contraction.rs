@@ -256,21 +256,13 @@ pub fn contraction_with_distance_heuristic<G: Graph + Default>(
         "create edges,to update,update edge map,disconnect,insert and update,update queue"
     )
     .unwrap();
-    while let Some(Reverse((propabalistic_edge_difference, vertex))) = queue.pop() {
+    while let Some(Reverse((_edge_difference, vertex))) = queue.pop() {
         // pb.inc(1);
 
         let start = Instant::now();
         let new_and_updated_edges =
             par_simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
-        let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
         let p0 = start.elapsed().as_secs_f64();
-
-        println!(
-            "{:>10} {:>10} {:>10}",
-            propabalistic_edge_difference,
-            edge_difference,
-            propabalistic_edge_difference - edge_difference
-        );
 
         let start = Instant::now();
         let to_update = get_to_update(&graph, vertex, &mut neighbors);
