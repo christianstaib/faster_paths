@@ -41,6 +41,18 @@ impl DistanceHeuristic for Landmarks {
             .filter_map(|landmark| landmark.upper_bound(source, target))
             .min()
     }
+
+    fn is_less_or_equal_upper_bound(
+        &self,
+        source: Vertex,
+        target: Vertex,
+        distance: Distance,
+    ) -> bool {
+        self.landmarks
+            .iter()
+            .filter_map(|landmark| landmark.upper_bound(source, target))
+            .all(|upper_bound_distance| distance <= upper_bound_distance)
+    }
 }
 
 pub struct Landmark {
@@ -100,5 +112,14 @@ impl DistanceHeuristic for Landmark {
             }
             _ => None,
         }
+    }
+
+    fn is_less_or_equal_upper_bound(
+        &self,
+        source: Vertex,
+        target: Vertex,
+        distance: Distance,
+    ) -> bool {
+        distance <= self.upper_bound(source, target).unwrap_or(Distance::MAX)
     }
 }

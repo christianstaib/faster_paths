@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use indicatif::ProgressIterator;
+
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
 pub struct ReversibleGraph<G: Graph> {
@@ -18,7 +20,7 @@ impl<G: Graph + Default> ReversibleGraph<G> {
     pub fn from_edges(edges: &Vec<WeightedEdge>) -> Self {
         let mut graph = Self::new();
 
-        edges.iter().for_each(|edge| {
+        edges.iter().progress().for_each(|edge| {
             if edge.weight
                 < graph
                     .get_weight(&edge.remove_weight())

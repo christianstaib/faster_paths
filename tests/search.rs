@@ -1,10 +1,7 @@
 use faster_paths::{
     graphs::large_test_graph,
     search::{
-        ch::{
-            contracted_graph::{self, ContractedGraph},
-            contraction::contraction_with_witness_search,
-        },
+        ch::{contracted_graph::ContractedGraph, contraction::contraction_with_witness_search},
         dijkstra::dijkstra_one_to_one_wrapped,
         path::{ShortestPathRequest, ShortestPathTestCase},
     },

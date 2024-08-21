@@ -1,7 +1,10 @@
 use std::{
     cmp::Reverse,
     collections::{BinaryHeap, HashMap},
+    fs::File,
+    io::{BufWriter, Write},
     sync::{Arc, Mutex},
+    time::Instant,
 };
 
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
@@ -221,12 +224,17 @@ pub fn contraction_with_distance_heuristic<G: Graph + Default>(
 ) -> (Vec<Vertex>, HashMap<(Vertex, Vertex), Distance>) {
     println!("setting up the queue");
     let mut queue: BinaryHeap<Reverse<(i32, Vertex)>> = (0..graph.out_graph().number_of_vertices())
-        //.into_par_iter()
+        .into_par_iter()
         .progress()
         .map(|vertex| {
-            let new_and_updated_edges =
-                simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
-            let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
+            let edge_difference = probabilistic_edge_difference_distance_neuristic(
+                &graph,
+                distance_heuristic,
+                vertex,
+                50,
+                5_000,
+                0.1,
+            );
             Reverse((edge_difference, vertex))
         })
         .collect();
@@ -241,106 +249,154 @@ pub fn contraction_with_distance_heuristic<G: Graph + Default>(
 
     let mut level_to_vertex = Vec::new();
 
-    let pb = ProgressBar::new(graph.out_graph().number_of_vertices() as u64);
-    while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
-        let new_and_updated_edges =
-            simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+    let mut neighbors = (0..graph.out_graph().number_of_vertices())
+        .map(|_| 0)
+        .collect_vec();
 
-        let new_edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
-        if new_edge_difference > old_edge_difference {
-            queue.push(Reverse((new_edge_difference, vertex)));
-            continue;
-        }
+    let pb = ProgressBar::new(graph.out_graph().number_of_vertices() as u64);
+
+    let mut writer = BufWriter::new(File::create("time.csv").unwrap());
+    writeln!(
+        writer,
+        "create edges,to update,update edge map,disconnect,insert and update,update queue"
+    )
+    .unwrap();
+    while let Some(Reverse((_edge_difference, vertex))) = queue.pop() {
         pb.inc(1);
 
-        // {
-        //     println!("{}", level_to_vertex.len());
-        //     let new_and_updated_edges_wittness =
-        //         par_simulate_contraction_witness_search(&graph, vertex);
-        //     for (tail, (new_edges, updated_edges)) in
-        // new_and_updated_edges_wittness.iter() {         for edge in
-        // new_edges.iter() {
-        // assert!(new_and_updated_edges[tail].0.contains(edge));         }
+        let start = Instant::now();
+        let new_and_updated_edges =
+            par_simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+        let p0 = start.elapsed().as_secs_f64();
 
-        //         for edge in updated_edges.iter() {
-        //             assert!(new_and_updated_edges[tail].1.contains(edge));
-        //         }
-        //     }
-        // }
+        let start = Instant::now();
+        let to_update = get_to_update(&graph, vertex, &mut neighbors);
+        let p1 = start.elapsed().as_secs_f64();
 
-        for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
-            for edge in new_edges.iter().chain(updated_edges.iter()) {
-                edges.insert((tail, edge.head), edge.weight);
-            }
-        }
+        let start = Instant::now();
+        update_edges_map(&new_and_updated_edges, &mut edges);
+        let p2 = start.elapsed().as_secs_f64();
 
         level_to_vertex.push(vertex);
+        let start = Instant::now();
         graph.disconnect(vertex);
+        let p3 = start.elapsed().as_secs_f64();
+        let start = Instant::now();
         graph.insert_and_update(&new_and_updated_edges);
+        let p4 = start.elapsed().as_secs_f64();
+
+        let start = Instant::now();
+        queue = update_queue(queue, to_update, &graph, distance_heuristic);
+        let p5 = start.elapsed().as_secs_f64();
+
+        writeln!(writer, "{},{},{},{},{},{}", p0, p1, p2, p3, p4, p5).unwrap();
+        writer.flush().unwrap();
     }
     pb.finish();
 
     (level_to_vertex, edges)
 }
 
+fn get_to_update<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    vertex: u32,
+    neighbors: &mut Vec<i32>,
+) -> Vec<u32> {
+    let mut to_update = Vec::new();
+    for edge in graph.out_graph().edges(vertex) {
+        neighbors[edge.head as usize] += 1;
+
+        if neighbors[edge.head as usize] > 100 {
+            neighbors[edge.head as usize] = 0;
+            to_update.push(edge.head);
+        }
+    }
+    to_update
+}
+
+fn update_edges_map(
+    new_and_updated_edges: &HashMap<u32, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
+    edges: &mut HashMap<(u32, u32), u32>,
+) {
+    for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
+        for edge in new_edges.iter().chain(updated_edges.iter()) {
+            edges.insert((tail, edge.head), edge.weight);
+        }
+    }
+}
+
+fn update_queue<G: Graph + Default>(
+    queue: BinaryHeap<Reverse<(i32, Vertex)>>,
+    to_update: Vec<u32>,
+    graph: &ReversibleGraph<G>,
+    distance_heuristic: &dyn DistanceHeuristic,
+) -> BinaryHeap<Reverse<(i32, u32)>> {
+    queue
+        .into_par_iter()
+        .map(|Reverse((old_edge_difference, vertex))| {
+            if to_update.contains(&vertex) {
+                let edge_differnce = probabilistic_edge_difference_distance_neuristic(
+                    graph,
+                    distance_heuristic,
+                    vertex,
+                    50,
+                    5_000,
+                    0.1,
+                );
+                return Reverse((edge_differnce, vertex));
+            }
+            Reverse((old_edge_difference, vertex))
+        })
+        .collect()
+}
+
 /// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
-pub fn simulate_contraction_distance_heuristic<G: Graph + Default>(
+pub fn par_simulate_contraction_distance_heuristic<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
     distance_heuristic: &dyn DistanceHeuristic,
     vertex: Vertex,
 ) -> HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)> {
-    let out_neighbors = graph
-        .out_graph()
-        .edges(vertex)
-        .map(|edge| edge.head)
-        .collect_vec();
-
     // tail -> vertex -> head
     graph
         .in_graph()
         .edges(vertex)
-        //.par_bridge()
+        .par_bridge()
         .map(|in_edge| {
+            // an edge head in the in_graph is a tail in the out_graph
             let tail = in_edge.head;
 
             let mut new_edges = Vec::new();
             let mut updated_edges = Vec::new();
 
-            let data = dijkstra_one_to_many(graph.out_graph(), tail, &out_neighbors);
-
-            graph.out_graph().edges(vertex).for_each(|out_edge| {
+            for out_edge in graph.out_graph().edges(vertex) {
                 let head = out_edge.head;
+
+                // (tail -> vertex -> head) cant be a shortest path if (tail == head)
+                if tail == head {
+                    continue;
+                }
+
                 let shortcut_distance = in_edge.weight + out_edge.weight;
+                let edge = WeightedEdge::new(tail, head, shortcut_distance);
 
-                let lower_bound_distance = distance_heuristic
-                    .upper_bound(tail, head)
-                    .unwrap_or(Distance::MAX);
-
-                if shortcut_distance <= data.get_distance(head).unwrap() {
-                    assert!(
-                        shortcut_distance <= lower_bound_distance,
-                        "shortcut_distance: {}, lower_bound_distance: {}, true_distance: {}",
-                        shortcut_distance,
-                        lower_bound_distance,
-                        data.get_distance(head).unwrap()
-                    );
-                }
-
-                if tail != head && shortcut_distance <= lower_bound_distance {
-                    let edge = WeightedEdge {
-                        tail,
-                        head,
-                        weight: shortcut_distance,
-                    };
-                    if let Some(current_distance) = graph.get_weight(&edge.remove_weight()) {
-                        if shortcut_distance < current_distance {
-                            updated_edges.push(edge.remove_tail());
-                        }
-                    } else {
-                        new_edges.push(edge.remove_tail());
+                // if there is already an edge (tail -> head) but shortcut_distance is less than
+                // the current distance, update edge weight
+                if let Some(current_distance) = graph.get_weight(&edge.remove_weight()) {
+                    if shortcut_distance < current_distance {
+                        updated_edges.push(edge.remove_tail());
                     }
+                    continue;
                 }
-            });
+
+                // let lower_bound_distance = distance_heuristic
+                //     .upper_bound(tail, head)
+                //     .unwrap_or(Distance::MAX);
+
+                // if shortcut_distance <= lower_bound_distance {
+                if distance_heuristic.is_less_or_equal_upper_bound(tail, head, shortcut_distance) {
+                    new_edges.push(edge.remove_tail());
+                }
+            }
 
             (tail, (new_edges, updated_edges))
         })
@@ -367,7 +423,7 @@ pub fn probabilistic_edge_difference_distance_neuristic<G: Graph + Default>(
     let searches = scale(
         number_of_edge_pairs,
         search_factor,
-        min_searches,
+        std::cmp::min(number_of_edge_pairs as u32, min_searches),
         std::cmp::min(number_of_edge_pairs as u32, max_searches),
     );
 
@@ -381,10 +437,10 @@ pub fn probabilistic_edge_difference_distance_neuristic<G: Graph + Default>(
 
         let shortcut_distance = in_edge.weight + out_edge.weight;
         let lower_bound = distance_heuristic
-            .lower_bound(in_edge.head, out_edge.head)
-            .unwrap_or(0);
+            .upper_bound(in_edge.head, out_edge.head)
+            .unwrap_or(Distance::MAX);
 
-        if shortcut_distance <= lower_bound {
+        if in_edge.head != out_edge.head && shortcut_distance <= lower_bound {
             let edge = Edge {
                 tail: in_edge.head,
                 head: out_edge.head,
