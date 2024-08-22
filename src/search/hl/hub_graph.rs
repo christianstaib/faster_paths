@@ -23,21 +23,23 @@ pub fn overlapp(
 ) -> Option<(Distance, (usize, usize))> {
     let mut overlapp = None;
 
-    let mut forward_index = 0;
-    let mut backward_index = 0;
+    let mut forward_iter = forward_label
+        .iter()
+        .enumerate()
+        .map(|(index, entry)| (index, entry.vertex))
+        .peekable();
+    let mut backward_iter = backward_label
+        .iter()
+        .enumerate()
+        .map(|(index, entry)| (index, entry.vertex))
+        .peekable();
 
-    let mut forward_vertex = forward_label
-        .get(forward_index as usize)
-        .map(|entry| &entry.vertex)
-        .unwrap_or(&Vertex::MAX);
-    let mut backward_vertex = backward_label
-        .get(backward_index as usize)
-        .map(|entry| &entry.vertex)
-        .unwrap_or(&Vertex::MAX);
-    while forward_index < forward_label.len() || backward_index < backward_label.len() {
+    while let (Some(&(forward_index, forward_vertex)), Some(&(backward_index, backward_vertex))) =
+        (forward_iter.peek(), backward_iter.peek())
+    {
         match forward_vertex.cmp(&backward_vertex) {
             Ordering::Less => {
-                forward_index += 1;
+                forward_iter.next();
             }
             Ordering::Equal => {
                 let alternative_distance = forward_label[forward_index as usize].distance
@@ -50,22 +52,13 @@ pub fn overlapp(
                     overlapp = Some((alternative_distance, (forward_index, backward_index)));
                 }
 
-                forward_index += 1;
-                backward_index += 1;
+                forward_iter.next();
+                backward_iter.next();
             }
             Ordering::Greater => {
-                backward_index += 1;
+                backward_iter.next();
             }
         }
-
-        forward_vertex = forward_label
-            .get(forward_index as usize)
-            .map(|entry| &entry.vertex)
-            .unwrap_or(&Vertex::MAX);
-        backward_vertex = backward_label
-            .get(backward_index as usize)
-            .map(|entry| &entry.vertex)
-            .unwrap_or(&Vertex::MAX);
     }
 
     overlapp

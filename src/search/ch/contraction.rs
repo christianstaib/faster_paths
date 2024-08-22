@@ -3,11 +3,10 @@ use std::{
     collections::{BinaryHeap, HashMap},
     fs::File,
     io::{BufWriter, Write},
-    sync::{Arc, Mutex},
     time::Instant,
 };
 
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressBar};
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
