@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::graphs::{Distance, Graph, Vertex};
 
+#[derive(Debug)]
 pub struct Path {
     pub vertices: Vec<Vertex>,
     pub distance: Distance,

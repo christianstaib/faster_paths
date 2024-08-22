@@ -4,6 +4,7 @@ use indicatif::ProgressIterator;
 
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
+#[derive(Clone)]
 pub struct ReversibleGraph<G: Graph> {
     out_graph: Box<G>,
     in_graph: Box<G>,
