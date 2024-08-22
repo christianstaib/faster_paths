@@ -8,8 +8,8 @@ use faster_paths::{
     },
     search::{
         ch::{
-            brute_force::{self, get_ch_edges},
-            contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
+            brute_force::{self, brute_force_contracted_graph, get_ch_edges},
+            contracted_graph::{ch_one_to_one_wrapped, vertex_to_level, ContractedGraph},
             contraction::contraction_with_witness_search,
         },
         collections::{
@@ -54,35 +54,29 @@ fn main() {
     let my_graph = cloned_graph.out_graph();
     let my_ch_graph = &contracted_graph.upward_graph;
     for vertex in (0..my_graph.number_of_vertices()).progress() {
-        let mut ch_edges = my_ch_graph.edges(vertex).collect_vec();
-        ch_edges.sort_by_key(|edge| edge.head);
+        let ch_edges = my_ch_graph.edges(vertex).collect::<HashSet<_>>();
 
         let mut data = DijkstraDataVec::new(my_ch_graph);
         let mut expanded = VertexExpandedDataBitSet::new(my_ch_graph);
         let mut queue = VertexDistanceQueueBinaryHeap::new();
-        let mut brute_force_ch_edges = get_ch_edges(
+        let brute_force_ch_edges = get_ch_edges(
             my_ch_graph,
             &mut data,
             &mut expanded,
             &mut queue,
             &contracted_graph.vertex_to_level,
             vertex,
-        );
-        brute_force_ch_edges.sort_by_key(|edge| edge.head);
+        )
+        .into_iter()
+        .collect::<HashSet<_>>();
 
-        let ch_vertices = ch_edges
-            .iter()
-            .map(|edge| edge.head)
-            .collect::<HashSet<_>>();
+        // The brute force edges are the minimal ammount of edges, it is no problem if
+        // there are more ch edges.
+        assert!(brute_force_ch_edges.is_subset(&ch_edges));
 
-        let brute_force_vertices = brute_force_ch_edges
-            .iter()
-            .map(|edge| edge.head)
-            .collect::<HashSet<_>>();
-
-        assert!(brute_force_vertices.is_subset(&ch_vertices));
-
-        for ch_vertex in ch_vertices.sub(&brute_force_vertices) {
+        // But for all ch edges that are not brute force edges, we need to prove, that
+        // they are unnecessary.
+        for ch_edge in ch_edges.sub(&brute_force_ch_edges) {
             let mut data = DijkstraDataVec::new(my_ch_graph);
             let mut expanded = VertexExpandedDataBitSet::new(my_ch_graph);
             let mut queue = VertexDistanceQueueBinaryHeap::new();
@@ -93,25 +87,16 @@ fn main() {
                 &mut expanded,
                 &mut queue,
                 vertex,
-                ch_vertex,
+                ch_edge.head,
             );
 
-            let path = data.get_path(ch_vertex).unwrap().vertices;
-            assert!(path.iter().any(|&vertex| vertex == ch_vertex));
+            let vertices = data.get_path(ch_edge.head).unwrap().vertices;
+            assert!(vertices.iter().any(|&vertex| vertex == ch_edge.head));
         }
     }
 
-    let upward_edges = create_ch_edges(cloned_graph.out_graph(), &contracted_graph.vertex_to_level);
-    let downard_edges = create_ch_edges(cloned_graph.in_graph(), &contracted_graph.vertex_to_level);
-    let upward_graph = VecVecGraph::from_edges(&upward_edges);
-    let downward_graph = VecVecGraph::from_edges(&downard_edges);
-
-    let other_contracted_graph = ContractedGraph {
-        upward_graph,
-        downward_graph,
-        level_to_vertex,
-        vertex_to_level: contracted_graph.vertex_to_level.clone(),
-    };
+    let other_contracted_graph =
+        brute_force_contracted_graph(&cloned_graph, &contracted_graph.level_to_vertex);
 
     let mut rng = thread_rng();
     let speedup = (0..100_000)
@@ -133,36 +118,10 @@ fn main() {
 
             dijkstra_time / ch_time
         })
-        .collect_vec();
+        .collect::<Vec<_>>();
 
     println!(
         "average speedups {:?}",
         speedup.iter().sum::<f64>() / speedup.len() as f64
     );
-}
-
-fn create_ch_edges(graph: &dyn Graph, vertex_to_level: &Vec<u32>) -> Vec<WeightedEdge> {
-    (0..graph.number_of_vertices())
-        .into_par_iter()
-        .progress()
-        .map_init(
-            || {
-                (
-                    DijkstraDataVec::new(graph),
-                    VertexExpandedDataBitSet::new(graph),
-                    VertexDistanceQueueBinaryHeap::new(),
-                )
-            },
-            |(data, expanded, queue), vertex| {
-                let edges = get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
-
-                data.clear();
-                expanded.clear();
-                queue.clear();
-
-                edges
-            },
-        )
-        .flatten()
-        .collect::<Vec<_>>()
 }

@@ -2,7 +2,7 @@ use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
 #[derive(Clone)]
 pub struct VecVecGraph {
-    pub edges: Vec<Vec<TaillessEdge>>,
+    edges: Vec<Vec<TaillessEdge>>,
 }
 
 impl Default for VecVecGraph {

@@ -39,7 +39,7 @@ impl Edge {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct WeightedEdge {
     pub tail: Vertex,
     pub head: Vertex,

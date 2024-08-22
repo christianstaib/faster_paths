@@ -1,10 +1,18 @@
 use std::collections::{HashMap, HashSet};
 
+use indicatif::ParallelProgressIterator;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
+use super::contracted_graph::{vertex_to_level, ContractedGraph};
 use crate::{
-    graphs::{Distance, Graph, Vertex, WeightedEdge},
+    graphs::{
+        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
+        WeightedEdge,
+    },
     search::collections::{
-        dijkstra_data::DijkstraData, vertex_distance_queue::VertexDistanceQueue,
-        vertex_expanded_data::VertexExpandedData,
+        dijkstra_data::{DijkstraData, DijkstraDataVec},
+        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+        vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
     },
 };
 
@@ -93,4 +101,53 @@ pub fn get_ch_edges(
     }
 
     edges
+}
+
+pub fn brute_force_contracted_graph(
+    graph: &ReversibleGraph<VecVecGraph>,
+    level_to_vertex: &Vec<u32>,
+) -> ContractedGraph {
+    let vertex_to_level = vertex_to_level(level_to_vertex);
+
+    let upward_edges = brute_force_contracted_graph_edges(graph.out_graph(), &vertex_to_level);
+    let upward_graph = VecVecGraph::from_edges(&upward_edges);
+
+    let downard_edges = brute_force_contracted_graph_edges(graph.in_graph(), &vertex_to_level);
+    let downward_graph = VecVecGraph::from_edges(&downard_edges);
+
+    ContractedGraph {
+        upward_graph,
+        downward_graph,
+        level_to_vertex: level_to_vertex.clone(),
+        vertex_to_level,
+    }
+}
+
+fn brute_force_contracted_graph_edges(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<u32>,
+) -> Vec<WeightedEdge> {
+    (0..graph.number_of_vertices())
+        .into_par_iter()
+        .progress()
+        .map_init(
+            || {
+                (
+                    DijkstraDataVec::new(graph),
+                    VertexExpandedDataBitSet::new(graph),
+                    VertexDistanceQueueBinaryHeap::new(),
+                )
+            },
+            |(data, expanded, queue), vertex| {
+                let edges = get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
+
+                data.clear();
+                expanded.clear();
+                queue.clear();
+
+                edges
+            },
+        )
+        .flatten()
+        .collect::<Vec<_>>()
 }
