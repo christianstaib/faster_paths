@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs::File, io::BufWriter, ops::Sub, path::PathBuf, time::Instant};
+use std::{path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
@@ -8,16 +8,19 @@ use faster_paths::{
     },
     search::{
         ch::{
-            brute_force::{brute_force_contracted_graph, get_ch_edges, get_ch_edges_wrapped},
-            contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
+            brute_force::brute_force_contracted_graph,
+            contracted_graph::{self, ch_one_to_one_wrapped, ContractedGraph},
             contraction::contraction_with_witness_search,
         },
         collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataVec},
-            vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+            dijkstra_data::DijkstraDataVec, vertex_distance_queue::VertexDistanceQueueBinaryHeap,
+            vertex_expanded_data::VertexExpandedDataBitSet,
         },
-        dijkstra::{dijkstra_one_to_one, dijkstra_one_to_one_wrapped},
+        dijkstra::dijkstra_one_to_one_wrapped,
+        hl::{
+            brute_force::{brute_force, get_hub_label},
+            hub_graph::overlapp,
+        },
     },
 };
 use indicatif::ProgressIterator;
@@ -48,8 +51,11 @@ fn main() {
     let (level_to_vertex, edges) = contraction_with_witness_search(graph);
     let contracted_graph = ContractedGraph::new(edges, &level_to_vertex);
 
-    let other_contracted_graph =
-        brute_force_contracted_graph(&cloned_graph, &contracted_graph.level_to_vertex);
+    // let other_contracted_graph =
+    //     brute_force_contracted_graph(&cloned_graph,
+    // &contracted_graph.level_to_vertex);
+
+    let hub_graph = brute_force(&cloned_graph, &contracted_graph.vertex_to_level);
 
     let mut rng = thread_rng();
     let speedup = (0..100_000)
@@ -58,8 +64,40 @@ fn main() {
             let source = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
             let target = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
 
+            // let mut data = DijkstraDataVec::new(cloned_graph.out_graph());
+            // let mut expanded = VertexExpandedDataBitSet::new(cloned_graph.out_graph());
+            // let mut queue = VertexDistanceQueueBinaryHeap::new();
+            // let forward_label = get_hub_label(
+            //     cloned_graph.out_graph(),
+            //     &mut data,
+            //     &mut expanded,
+            //     &mut queue,
+            //     &contracted_graph.vertex_to_level,
+            //     source,
+            // );
+
+            // let mut data = DijkstraDataVec::new(cloned_graph.in_graph());
+            // let mut expanded = VertexExpandedDataBitSet::new(cloned_graph.in_graph());
+            // let mut queue = VertexDistanceQueueBinaryHeap::new();
+            // let backward_label = get_hub_label(
+            //     cloned_graph.in_graph(),
+            //     &mut data,
+            //     &mut expanded,
+            //     &mut queue,
+            //     &contracted_graph.vertex_to_level,
+            //     target,
+            // );
+
+            let (forward_start, forward_end) = hub_graph.forward_indices[source as usize];
+            let forward_label =
+                &hub_graph.forward_labels[forward_start as usize..forward_end as usize];
+
+            let (backward_start, backward_end) = hub_graph.backward_indices[target as usize];
+            let backward_label =
+                &hub_graph.backward_labels[backward_start as usize..backward_end as usize];
+
             let start = Instant::now();
-            let ch_distance = ch_one_to_one_wrapped(&other_contracted_graph, source, target);
+            let hl_distance = overlapp(forward_label, backward_label).map(|(distance, _)| distance); //ch_one_to_one_wrapped(&other_contracted_graph, source, target);
             let ch_time = start.elapsed().as_secs_f64();
 
             let start = Instant::now();
@@ -68,7 +106,7 @@ fn main() {
                     .map(|path| path.distance);
             let dijkstra_time = start.elapsed().as_secs_f64();
 
-            assert_eq!(&ch_distance, &dijkstra_distance);
+            assert_eq!(&hl_distance, &dijkstra_distance);
 
             dijkstra_time / ch_time
         })

@@ -4,6 +4,7 @@ pub mod alt;
 pub mod ch;
 pub mod collections;
 pub mod dijkstra;
+pub mod hl;
 pub mod path;
 
 pub trait DistanceHeuristic: Send + Sync {
