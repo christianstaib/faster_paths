@@ -6,7 +6,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::{
     collections::{
-        dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec},
+        dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec, Path},
         vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
         vertex_expanded_data::{
             VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
@@ -91,12 +91,12 @@ pub fn dijkstra_one_to_one_wrapped(
     graph: &dyn Graph,
     source: Vertex,
     target: Vertex,
-) -> Option<Distance> {
+) -> Option<Path> {
     let mut data = DijkstraDataVec::new(graph);
     let mut expanded = VertexExpandedDataBitSet::new(graph);
     let mut queue = VertexDistanceQueueBinaryHeap::new();
     dijkstra_one_to_one(graph, &mut data, &mut expanded, &mut queue, source, target);
-    data.get_distance(target)
+    data.get_path(target)
 }
 
 pub fn dijkstra_one_to_many(

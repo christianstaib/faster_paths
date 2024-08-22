@@ -17,7 +17,8 @@ fn dijkstra() {
              distance,
          }| {
             let dijkstra_distance =
-                dijkstra_one_to_one_wrapped(graph.out_graph(), *source, *target);
+                dijkstra_one_to_one_wrapped(graph.out_graph(), *source, *target)
+                    .map(|path| path.distance);
 
             assert_eq!(distance, &dijkstra_distance);
         },

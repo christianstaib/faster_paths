@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct VecVecGraph {
     edges: Vec<Vec<TaillessEdge>>,
 }

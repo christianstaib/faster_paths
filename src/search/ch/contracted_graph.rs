@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     graphs::{vec_vec_graph::VecVecGraph, Distance, Graph, Vertex, WeightedEdge},
     search::{
@@ -12,6 +14,7 @@ use crate::{
     },
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct ContractedGraph {
     pub upward_graph: VecVecGraph,
     pub downward_graph: VecVecGraph,

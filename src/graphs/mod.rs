@@ -8,6 +8,7 @@ use ahash::HashMap;
 use indicatif::ProgressIterator;
 use itertools::Itertools;
 use reversible_graph::ReversibleGraph;
+use serde::{Deserialize, Serialize};
 use vec_vec_graph::VecVecGraph;
 
 use crate::search::path::ShortestPathTestCase;
@@ -74,7 +75,7 @@ impl WeightedEdge {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TaillessEdge {
     pub head: Vertex,
     pub weight: Distance,

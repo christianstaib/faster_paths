@@ -16,6 +16,24 @@ use crate::{
     },
 };
 
+pub fn get_ch_edges_wrapped(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<u32>,
+    source: Vertex,
+) -> Vec<WeightedEdge> {
+    let mut data = DijkstraDataVec::new(graph);
+    let mut expanded = VertexExpandedDataBitSet::new(graph);
+    let mut queue = VertexDistanceQueueBinaryHeap::new();
+    get_ch_edges(
+        graph,
+        &mut data,
+        &mut expanded,
+        &mut queue,
+        vertex_to_level,
+        source,
+    )
+}
+
 pub fn get_ch_edges(
     graph: &dyn Graph,
     data: &mut dyn DijkstraData,
@@ -150,4 +168,63 @@ fn brute_force_contracted_graph_edges(
         )
         .flatten()
         .collect::<Vec<_>>()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::HashSet, ops::Sub};
+
+    use crate::{
+        graphs::{large_test_graph, Graph},
+        search::{
+            ch::{brute_force::get_ch_edges_wrapped, large_test_contracted_graph},
+            dijkstra::dijkstra_one_to_one_wrapped,
+        },
+    };
+
+    #[test]
+    fn brute_force_contracted_graph() {
+        let (graph, _test_cases) = large_test_graph();
+        let contracted_graph = large_test_contracted_graph();
+
+        half_brute_force_contracted_graph(
+            graph.out_graph(),
+            &contracted_graph.upward_graph,
+            &contracted_graph.vertex_to_level,
+        );
+
+        half_brute_force_contracted_graph(
+            graph.in_graph(),
+            &contracted_graph.downward_graph,
+            &contracted_graph.vertex_to_level,
+        );
+    }
+
+    fn half_brute_force_contracted_graph(
+        graph: &dyn Graph,
+        contracted_graph: &dyn Graph,
+        vertex_to_level: &Vec<u32>,
+    ) {
+        for vertex in 0..graph.number_of_vertices() {
+            let ch_edges = contracted_graph.edges(vertex).collect::<HashSet<_>>();
+
+            let brute_force_ch_edges = get_ch_edges_wrapped(graph, vertex_to_level, vertex)
+                .into_iter()
+                .collect::<HashSet<_>>();
+
+            // The brute force edges are the minimal ammount of edges, it is no problem if
+            // there are more ch edges.
+            assert!(brute_force_ch_edges.is_subset(&ch_edges));
+
+            // But for all ch edges that are not brute force edges, we need to prove, that
+            // they are unnecessary.
+            for ch_edge in ch_edges.sub(&brute_force_ch_edges) {
+                let vertices = dijkstra_one_to_one_wrapped(graph, vertex, ch_edge.head)
+                    .unwrap()
+                    .vertices;
+
+                assert!(vertices.iter().any(|&vertex| vertex == ch_edge.head));
+            }
+        }
+    }
 }

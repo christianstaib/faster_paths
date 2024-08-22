@@ -1,15 +1,15 @@
-use std::{collections::HashSet, ops::Sub, path::PathBuf, process::exit, time::Instant};
+use std::{collections::HashSet, fs::File, io::BufWriter, ops::Sub, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Graph, WeightedEdge,
+        Graph,
     },
     search::{
         ch::{
-            brute_force::{self, brute_force_contracted_graph, get_ch_edges},
-            contracted_graph::{ch_one_to_one_wrapped, vertex_to_level, ContractedGraph},
+            brute_force::{brute_force_contracted_graph, get_ch_edges, get_ch_edges_wrapped},
+            contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
             contraction::contraction_with_witness_search,
         },
         collections::{
@@ -17,13 +17,11 @@ use faster_paths::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
         },
-        dijkstra::{dijkstra_one_to_all_wraped, dijkstra_one_to_one, dijkstra_one_to_one_wrapped},
+        dijkstra::{dijkstra_one_to_one, dijkstra_one_to_one_wrapped},
     },
 };
-use indicatif::{ParallelProgressIterator, ProgressIterator};
-use itertools::Itertools;
+use indicatif::ProgressIterator;
 use rand::{thread_rng, Rng};
-use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -50,51 +48,6 @@ fn main() {
     let (level_to_vertex, edges) = contraction_with_witness_search(graph);
     let contracted_graph = ContractedGraph::new(edges, &level_to_vertex);
 
-    println!("checking if working");
-    let my_graph = cloned_graph.out_graph();
-    let my_ch_graph = &contracted_graph.upward_graph;
-    for vertex in (0..my_graph.number_of_vertices()).progress() {
-        let ch_edges = my_ch_graph.edges(vertex).collect::<HashSet<_>>();
-
-        let mut data = DijkstraDataVec::new(my_ch_graph);
-        let mut expanded = VertexExpandedDataBitSet::new(my_ch_graph);
-        let mut queue = VertexDistanceQueueBinaryHeap::new();
-        let brute_force_ch_edges = get_ch_edges(
-            my_ch_graph,
-            &mut data,
-            &mut expanded,
-            &mut queue,
-            &contracted_graph.vertex_to_level,
-            vertex,
-        )
-        .into_iter()
-        .collect::<HashSet<_>>();
-
-        // The brute force edges are the minimal ammount of edges, it is no problem if
-        // there are more ch edges.
-        assert!(brute_force_ch_edges.is_subset(&ch_edges));
-
-        // But for all ch edges that are not brute force edges, we need to prove, that
-        // they are unnecessary.
-        for ch_edge in ch_edges.sub(&brute_force_ch_edges) {
-            let mut data = DijkstraDataVec::new(my_ch_graph);
-            let mut expanded = VertexExpandedDataBitSet::new(my_ch_graph);
-            let mut queue = VertexDistanceQueueBinaryHeap::new();
-
-            dijkstra_one_to_one(
-                my_ch_graph,
-                &mut data,
-                &mut expanded,
-                &mut queue,
-                vertex,
-                ch_edge.head,
-            );
-
-            let vertices = data.get_path(ch_edge.head).unwrap().vertices;
-            assert!(vertices.iter().any(|&vertex| vertex == ch_edge.head));
-        }
-    }
-
     let other_contracted_graph =
         brute_force_contracted_graph(&cloned_graph, &contracted_graph.level_to_vertex);
 
@@ -111,7 +64,8 @@ fn main() {
 
             let start = Instant::now();
             let dijkstra_distance =
-                dijkstra_one_to_one_wrapped(cloned_graph.out_graph(), source, target);
+                dijkstra_one_to_one_wrapped(cloned_graph.out_graph(), source, target)
+                    .map(|path| path.distance);
             let dijkstra_time = start.elapsed().as_secs_f64();
 
             assert_eq!(&ch_distance, &dijkstra_distance);
