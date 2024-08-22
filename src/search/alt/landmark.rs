@@ -1,5 +1,6 @@
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
+use rand::{seq::IteratorRandom, thread_rng};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
@@ -26,6 +27,15 @@ impl Landmarks {
             .collect();
 
         Landmarks { landmarks }
+    }
+
+    pub fn random<G: Graph + Default>(
+        graph: &ReversibleGraph<G>,
+        number_of_landmarks: u32,
+    ) -> Landmarks {
+        let vertices = (0..graph.out_graph().number_of_vertices())
+            .choose_multiple(&mut thread_rng(), number_of_landmarks as usize);
+        Landmarks::new(graph, &vertices)
     }
 }
 
