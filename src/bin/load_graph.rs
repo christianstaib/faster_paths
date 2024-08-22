@@ -53,30 +53,6 @@ fn main() {
             let source = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
             let target = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
 
-            // let mut data = DijkstraDataVec::new(cloned_graph.out_graph());
-            // let mut expanded = VertexExpandedDataBitSet::new(cloned_graph.out_graph());
-            // let mut queue = VertexDistanceQueueBinaryHeap::new();
-            // let forward_label = get_hub_label(
-            //     cloned_graph.out_graph(),
-            //     &mut data,
-            //     &mut expanded,
-            //     &mut queue,
-            //     &contracted_graph.vertex_to_level,
-            //     source,
-            // );
-
-            // let mut data = DijkstraDataVec::new(cloned_graph.in_graph());
-            // let mut expanded = VertexExpandedDataBitSet::new(cloned_graph.in_graph());
-            // let mut queue = VertexDistanceQueueBinaryHeap::new();
-            // let backward_label = get_hub_label(
-            //     cloned_graph.in_graph(),
-            //     &mut data,
-            //     &mut expanded,
-            //     &mut queue,
-            //     &contracted_graph.vertex_to_level,
-            //     target,
-            // );
-
             let (forward_start, forward_end) = hub_graph.forward_indices[source as usize];
             let forward_label =
                 &hub_graph.forward_labels[forward_start as usize..forward_end as usize];

@@ -185,7 +185,7 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
                 let shortcut_distance = in_edge.weight + out_edge.weight;
                 let shortest_path_distance = data.get_distance(head).unwrap_or(Distance::MAX);
 
-                if shortcut_distance <= shortest_path_distance {
+                if (tail != head) && (shortcut_distance <= shortest_path_distance) {
                     let edge = WeightedEdge {
                         tail,
                         head,
@@ -330,7 +330,7 @@ fn update_queue<G: Graph + Default>(
         .map(|Reverse((old_edge_difference, vertex))| {
             if to_update.contains(&vertex) {
                 let new_and_updated_edges =
-                    par_simulate_contraction_distance_heuristic(&graph, distance_heuristic, vertex);
+                    par_simulate_contraction_distance_heuristic(graph, distance_heuristic, vertex);
                 let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
                 return Reverse((edge_difference, vertex));
             }
