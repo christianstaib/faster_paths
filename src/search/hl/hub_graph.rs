@@ -38,10 +38,6 @@ pub fn overlapp(
         match forward_vertex.cmp(&backward_vertex) {
             Ordering::Less => {
                 forward_index += 1;
-                forward_vertex = forward_label
-                    .get(forward_index as usize)
-                    .map(|entry| &entry.vertex)
-                    .unwrap_or(&Vertex::MAX);
             }
             Ordering::Equal => {
                 let alternative_distance = forward_label[forward_index as usize].distance
@@ -56,23 +52,20 @@ pub fn overlapp(
 
                 forward_index += 1;
                 backward_index += 1;
-                forward_vertex = forward_label
-                    .get(forward_index as usize)
-                    .map(|entry| &entry.vertex)
-                    .unwrap_or(&Vertex::MAX);
-                backward_vertex = backward_label
-                    .get(backward_index as usize)
-                    .map(|entry| &entry.vertex)
-                    .unwrap_or(&Vertex::MAX);
             }
             Ordering::Greater => {
                 backward_index += 1;
-                backward_vertex = backward_label
-                    .get(backward_index as usize)
-                    .map(|entry| &entry.vertex)
-                    .unwrap_or(&Vertex::MAX);
             }
         }
+
+        forward_vertex = forward_label
+            .get(forward_index as usize)
+            .map(|entry| &entry.vertex)
+            .unwrap_or(&Vertex::MAX);
+        backward_vertex = backward_label
+            .get(backward_index as usize)
+            .map(|entry| &entry.vertex)
+            .unwrap_or(&Vertex::MAX);
     }
 
     overlapp

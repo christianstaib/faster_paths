@@ -54,15 +54,15 @@ fn half_brute_force(
         )
         .collect::<Vec<_>>();
 
-    let mut index = 0;
-    let forward_indices = forward_labels
+    let forward_indices: Vec<(u32, u32)> = forward_labels
         .iter()
-        .map(|label| {
-            let old_index = index;
-            index += label.len();
-            (old_index as u32, index as u32)
+        .map(|label| label.len() as u32)
+        .scan(0, |state, len| {
+            let start = *state;
+            *state += len;
+            Some((start, *state))
         })
-        .collect::<Vec<_>>();
+        .collect();
 
     (
         forward_labels.into_iter().flatten().collect_vec(),
