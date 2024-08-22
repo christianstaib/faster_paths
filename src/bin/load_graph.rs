@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Instant};
+use std::{collections::HashSet, ops::Sub, path::PathBuf, process::exit, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
@@ -8,16 +8,16 @@ use faster_paths::{
     },
     search::{
         ch::{
-            brute_force::get_ch_edges,
+            brute_force::{self, get_ch_edges},
             contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
             contraction::contraction_with_witness_search,
         },
         collections::{
             dijkstra_data::{DijkstraData, DijkstraDataVec},
-            vertex_distance_queue::VertexDistanceQueueBinaryHeap,
-            vertex_expanded_data::VertexExpandedDataBitSet,
+            vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
         },
-        dijkstra::{dijkstra_one_to_all_wraped, dijkstra_one_to_one_wrapped},
+        dijkstra::{dijkstra_one_to_all_wraped, dijkstra_one_to_one, dijkstra_one_to_one_wrapped},
     },
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
@@ -43,13 +43,6 @@ fn main() {
     println!("build graph");
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
-    println!(
-        "{:?}",
-        dijkstra_one_to_all_wraped(graph.out_graph(), 3474)
-            .get_path(3548)
-            .unwrap()
-    );
-
     println!("cloning out graph");
     let cloned_graph = graph.clone();
 
@@ -57,28 +50,56 @@ fn main() {
     let (level_to_vertex, edges) = contraction_with_witness_search(graph);
     let contracted_graph = ContractedGraph::new(edges, &level_to_vertex);
 
-    // println!("checking if working");
-    // for vertex in (0..cloned_graph.out_graph().number_of_vertices()).progress() {
-    //     // let vertex = 3474;
-    //     let mut ch_edges =
-    // contracted_graph.upward_graph.edges(vertex).collect_vec();     ch_edges.
-    // sort_by_key(|edge| edge.head);
+    println!("checking if working");
+    let my_graph = cloned_graph.out_graph();
+    let my_ch_graph = &contracted_graph.upward_graph;
+    for vertex in (0..my_graph.number_of_vertices()).progress() {
+        let mut ch_edges = my_ch_graph.edges(vertex).collect_vec();
+        ch_edges.sort_by_key(|edge| edge.head);
 
-    //     let mut data = DijkstraDataVec::new(cloned_graph.out_graph());
-    //     let mut expanded =
-    // VertexExpandedDataBitSet::new(cloned_graph.out_graph());     let mut
-    // queue = VertexDistanceQueueBinaryHeap::new();     let mut
-    // brute_force_ch_edges = get_ch_edges(         cloned_graph.out_graph(),
-    //         &mut data,
-    //         &mut expanded,
-    //         &mut queue,
-    //         &contracted_graph.vertex_to_level,
-    //         vertex,
-    //     );
-    //     brute_force_ch_edges.sort_by_key(|edge| edge.head);
+        let mut data = DijkstraDataVec::new(my_ch_graph);
+        let mut expanded = VertexExpandedDataBitSet::new(my_ch_graph);
+        let mut queue = VertexDistanceQueueBinaryHeap::new();
+        let mut brute_force_ch_edges = get_ch_edges(
+            my_ch_graph,
+            &mut data,
+            &mut expanded,
+            &mut queue,
+            &contracted_graph.vertex_to_level,
+            vertex,
+        );
+        brute_force_ch_edges.sort_by_key(|edge| edge.head);
 
-    //     assert_eq!(ch_edges, brute_force_ch_edges, "{}", vertex);
-    // }
+        let ch_vertices = ch_edges
+            .iter()
+            .map(|edge| edge.head)
+            .collect::<HashSet<_>>();
+
+        let brute_force_vertices = brute_force_ch_edges
+            .iter()
+            .map(|edge| edge.head)
+            .collect::<HashSet<_>>();
+
+        assert!(brute_force_vertices.is_subset(&ch_vertices));
+
+        for ch_vertex in ch_vertices.sub(&brute_force_vertices) {
+            let mut data = DijkstraDataVec::new(my_ch_graph);
+            let mut expanded = VertexExpandedDataBitSet::new(my_ch_graph);
+            let mut queue = VertexDistanceQueueBinaryHeap::new();
+
+            dijkstra_one_to_one(
+                my_ch_graph,
+                &mut data,
+                &mut expanded,
+                &mut queue,
+                vertex,
+                ch_vertex,
+            );
+
+            let path = data.get_path(ch_vertex).unwrap().vertices;
+            assert!(path.iter().any(|&vertex| vertex == ch_vertex));
+        }
+    }
 
     let upward_edges = create_ch_edges(cloned_graph.out_graph(), &contracted_graph.vertex_to_level);
     let downard_edges = create_ch_edges(cloned_graph.in_graph(), &contracted_graph.vertex_to_level);
@@ -100,7 +121,7 @@ fn main() {
             let target = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
 
             let start = Instant::now();
-            let ch_distance = ch_one_to_one_wrapped(&contracted_graph, source, target);
+            let ch_distance = ch_one_to_one_wrapped(&other_contracted_graph, source, target);
             let ch_time = start.elapsed().as_secs_f64();
 
             let start = Instant::now();
@@ -133,7 +154,13 @@ fn create_ch_edges(graph: &dyn Graph, vertex_to_level: &Vec<u32>) -> Vec<Weighte
                 )
             },
             |(data, expanded, queue), vertex| {
-                get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex)
+                let edges = get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
+
+                data.clear();
+                expanded.clear();
+                queue.clear();
+
+                edges
             },
         )
         .flatten()

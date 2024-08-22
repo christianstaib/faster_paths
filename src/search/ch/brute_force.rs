@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet};
 
-use super::contracted_graph::vertex_to_level;
 use crate::{
     graphs::{Distance, Graph, Vertex, WeightedEdge},
     search::collections::{

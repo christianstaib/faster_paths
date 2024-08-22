@@ -14,7 +14,7 @@ use rayon::prelude::*;
 
 use crate::{
     graphs::{
-        self, reversible_graph::ReversibleGraph, Distance, Edge, Graph, TaillessEdge, Vertex,
+        reversible_graph::ReversibleGraph, Distance, Edge, Graph, TaillessEdge, Vertex,
         WeightedEdge,
     },
     search::{
@@ -150,7 +150,7 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
         graph.disconnect(vertex);
         graph.insert_and_update(&new_and_updated_edges);
     }
-    pb.finish();
+    pb.finish_and_clear();
 
     (level_to_vertex, edges)
 }
