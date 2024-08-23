@@ -1,41 +1,42 @@
 use std::cmp::Ordering;
 
-use crate::graphs::{Distance, Vertex};
+use super::half_hub_graph::HalfHubGraph;
+use crate::{
+    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
+    search::ch::contracted_graph::ContractedGraph,
+};
 
 pub struct HubGraph {
     pub forward: HalfHubGraph,
     pub backward: HalfHubGraph,
 }
 
-pub struct HalfHubGraph {
-    labels: Vec<HubLabelEntry>,
-    indices: Vec<(u32, u32)>,
-}
+impl HubGraph {
+    pub fn by_brute_force<G: Graph + Default>(
+        graph: &ReversibleGraph<G>,
+        vertex_to_level: &Vec<u32>,
+    ) -> HubGraph {
+        let forward = HalfHubGraph::by_brute_force(graph.out_graph(), vertex_to_level);
+        let backward = HalfHubGraph::by_brute_force(graph.in_graph(), vertex_to_level);
 
-impl HalfHubGraph {
-    pub fn new(labels: &Vec<Vec<HubLabelEntry>>) -> Self {
-        let indices: Vec<(u32, u32)> = labels
-            .iter()
-            .map(|label| label.len() as u32)
-            .scan(0, |state, len| {
-                let start = *state;
-                *state += len;
-                Some((start, *state))
-            })
-            .collect();
-
-        let labels = labels.iter().flatten().cloned().collect();
-
-        HalfHubGraph { labels, indices }
+        HubGraph { forward, backward }
     }
 
-    pub fn get_label(&self, vertex: Vertex) -> &[HubLabelEntry] {
-        let &(start, stop) = self.indices.get(vertex as usize).unwrap_or(&(0, 0));
-        &self.labels[start as usize..stop as usize]
+    pub fn by_merging(contracted_graph: &ContractedGraph) -> HubGraph {
+        let forward = HalfHubGraph::by_merging(
+            &contracted_graph.upward_graph,
+            &contracted_graph.level_to_vertex,
+        );
+        let backward = HalfHubGraph::by_merging(
+            &contracted_graph.downward_graph,
+            &contracted_graph.level_to_vertex,
+        );
+
+        HubGraph { forward, backward }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HubLabelEntry {
     pub vertex: Vertex,
     pub distance: Distance,

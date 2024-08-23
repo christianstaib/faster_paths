@@ -1,2 +1,2 @@
-pub mod brute_force;
+pub mod half_hub_graph;
 pub mod hub_graph;
