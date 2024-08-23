@@ -4,15 +4,19 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Graph,
+        Distance, Graph, Vertex, WeightedEdge,
     },
     search::{
         ch::{contracted_graph::ContractedGraph, contraction::contraction_with_witness_search},
         dijkstra::dijkstra_one_to_one_wrapped,
-        hl::{brute_force::brute_force, hub_graph::overlapp},
+        hl::{
+            brute_force::brute_force,
+            hub_graph::{overlapp, HubLabelEntry},
+        },
     },
 };
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 use rand::{thread_rng, Rng};
 
 /// Starts a routing service on localhost:3030/route
@@ -83,4 +87,62 @@ fn main() {
         "average speedups {:?}",
         speedup.iter().sum::<f64>() / speedup.len() as f64
     );
+}
+
+fn create_half_hub_graph(graph: &dyn Graph, level_to_vertex: &Vec<Vertex>) {
+    let mut labels = (0..graph.number_of_vertices())
+        .map(|vertex| vec![HubLabelEntry::new(vertex)])
+        .collect_vec();
+
+    for &vertex in level_to_vertex.iter() {
+        let mut neighbor_labels = graph
+            .edges(vertex)
+            .map(|edge| labels.get(edge.head as usize).unwrap())
+            .collect::<Vec<_>>();
+        neighbor_labels.push(labels.get(vertex as usize).unwrap());
+
+        labels[vertex as usize] = merge_labels(&neighbor_labels);
+    }
+}
+
+fn merge_labels(labels: &Vec<&Vec<HubLabelEntry>>) -> Vec<HubLabelEntry> {
+    let mut new_label = Vec::new();
+
+    let mut labels = labels
+        .iter()
+        .map(|label| label.iter().peekable())
+        .collect_vec();
+
+    while !labels.is_empty() {
+        let mut min_entry = HubLabelEntry {
+            vertex: Vertex::MAX,
+            distance: Distance::MAX,
+            predecessor_index: None,
+        };
+
+        let mut labels_with_min_vertex = Vec::new();
+
+        for label in labels.iter_mut() {
+            let entry = *label.peek().unwrap();
+
+            if entry.vertex < min_entry.vertex {
+                min_entry = entry.clone();
+                labels_with_min_vertex.clear();
+                labels_with_min_vertex.push(label);
+            } else if entry.vertex == min_entry.vertex {
+                labels_with_min_vertex.push(label);
+            }
+        }
+
+        new_label.push(min_entry);
+
+        for label in labels_with_min_vertex.iter_mut() {
+            label.next();
+        }
+
+        // Retain only non-empty iterators
+        labels.retain_mut(|label| label.peek().is_some());
+    }
+
+    new_label
 }

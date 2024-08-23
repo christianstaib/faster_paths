@@ -9,12 +9,22 @@ pub struct HubGraph {
     pub backward_indices: Vec<(u32, u32)>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HubLabelEntry {
     pub vertex: Vertex,
     pub distance: Distance,
     /// relative index of predecessor. Zero if no predecessor.
     pub predecessor_index: Option<u32>,
+}
+
+impl HubLabelEntry {
+    pub fn new(vertex: Vertex) -> Self {
+        HubLabelEntry {
+            vertex,
+            distance: 0,
+            predecessor_index: None,
+        }
+    }
 }
 
 pub fn overlapp(
