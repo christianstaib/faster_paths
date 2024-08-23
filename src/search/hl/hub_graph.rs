@@ -3,10 +3,36 @@ use std::cmp::Ordering;
 use crate::graphs::{Distance, Vertex};
 
 pub struct HubGraph {
-    pub forward_labels: Vec<HubLabelEntry>,
-    pub forward_indices: Vec<(u32, u32)>,
-    pub backward_labels: Vec<HubLabelEntry>,
-    pub backward_indices: Vec<(u32, u32)>,
+    pub forward: HalfHubGraph,
+    pub backward: HalfHubGraph,
+}
+
+pub struct HalfHubGraph {
+    labels: Vec<HubLabelEntry>,
+    indices: Vec<(u32, u32)>,
+}
+
+impl HalfHubGraph {
+    pub fn new(labels: &Vec<Vec<HubLabelEntry>>) -> Self {
+        let indices: Vec<(u32, u32)> = labels
+            .iter()
+            .map(|label| label.len() as u32)
+            .scan(0, |state, len| {
+                let start = *state;
+                *state += len;
+                Some((start, *state))
+            })
+            .collect();
+
+        let labels = labels.iter().flatten().cloned().collect();
+
+        HalfHubGraph { labels, indices }
+    }
+
+    pub fn get_label(&self, vertex: Vertex) -> &[HubLabelEntry] {
+        let &(start, stop) = self.indices.get(vertex as usize).unwrap_or(&(0, 0));
+        &self.labels[start as usize..stop as usize]
+    }
 }
 
 #[derive(Debug, Clone)]

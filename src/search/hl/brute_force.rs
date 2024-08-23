@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use indicatif::ParallelProgressIterator;
-use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use super::hub_graph::{HubGraph, HubLabelEntry};
+use super::hub_graph::{HalfHubGraph, HubGraph, HubLabelEntry};
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
     search::collections::{
@@ -18,22 +17,14 @@ pub fn brute_force<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
     vertex_to_level: &Vec<u32>,
 ) -> HubGraph {
-    let (forward_labels, forward_indices) = half_brute_force(graph.out_graph(), vertex_to_level);
-    let (backward_labels, backward_indices) = half_brute_force(graph.in_graph(), vertex_to_level);
+    let forward = half_brute_force(graph.out_graph(), vertex_to_level);
+    let backward = half_brute_force(graph.in_graph(), vertex_to_level);
 
-    HubGraph {
-        forward_labels,
-        forward_indices,
-        backward_labels,
-        backward_indices,
-    }
+    HubGraph { forward, backward }
 }
 
-fn half_brute_force(
-    graph: &dyn Graph,
-    vertex_to_level: &Vec<u32>,
-) -> (Vec<HubLabelEntry>, Vec<(u32, u32)>) {
-    let forward_labels = (0..graph.number_of_vertices())
+fn half_brute_force(graph: &dyn Graph, vertex_to_level: &Vec<u32>) -> HalfHubGraph {
+    let labels = (0..graph.number_of_vertices())
         .into_par_iter()
         .progress()
         .map_init(
@@ -56,20 +47,7 @@ fn half_brute_force(
         )
         .collect::<Vec<_>>();
 
-    let forward_indices: Vec<(u32, u32)> = forward_labels
-        .iter()
-        .map(|label| label.len() as u32)
-        .scan(0, |state, len| {
-            let start = *state;
-            *state += len;
-            Some((start, *state))
-        })
-        .collect();
-
-    (
-        forward_labels.into_iter().flatten().collect_vec(),
-        forward_indices,
-    )
+    HalfHubGraph::new(&labels)
 }
 
 pub fn get_hub_label(

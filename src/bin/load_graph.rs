@@ -11,7 +11,7 @@ use faster_paths::{
         dijkstra::dijkstra_one_to_one_wrapped,
         hl::{
             brute_force::brute_force,
-            hub_graph::{overlapp, HubLabelEntry},
+            hub_graph::{self, overlapp, HubLabelEntry},
         },
     },
 };
@@ -59,13 +59,8 @@ fn main() {
             let source = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
             let target = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
 
-            let (forward_start, forward_end) = hub_graph.forward_indices[source as usize];
-            let forward_label =
-                &hub_graph.forward_labels[forward_start as usize..forward_end as usize];
-
-            let (backward_start, backward_end) = hub_graph.backward_indices[target as usize];
-            let backward_label =
-                &hub_graph.backward_labels[backward_start as usize..backward_end as usize];
+            let forward_label = hub_graph.forward.get_label(source);
+            let backward_label = hub_graph.backward.get_label(target);
 
             let start = Instant::now();
             let hl_distance = overlapp(forward_label, backward_label).map(|(distance, _)| distance); //ch_one_to_one_wrapped(&other_contracted_graph, source, target);
