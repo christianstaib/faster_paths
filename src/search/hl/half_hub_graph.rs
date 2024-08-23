@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{
+    IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
+};
 
-use super::hub_graph::HubLabelEntry;
+use super::hub_graph::{overlapp, HubLabelEntry};
 use crate::{
     graphs::{Distance, Graph, Vertex, WeightedEdge},
     search::collections::{
@@ -91,10 +93,49 @@ impl HalfHubGraph {
         HalfHubGraph::new(&labels)
     }
 
+    pub fn prune(&mut self, other: &HalfHubGraph) {
+        let mut labels = self
+            .indices
+            .iter()
+            .map(|&(start, end)| self.labels[start as usize..end as usize].to_vec())
+            .collect_vec();
+
+        labels.par_iter_mut().for_each(|mut label| {
+            prune_label(&mut label, other);
+        });
+
+        self.indices = labels
+            .iter()
+            .map(|label| label.len() as u32)
+            .scan(0, |state, len| {
+                let start = *state;
+                *state += len;
+                Some((start, *state))
+            })
+            .collect();
+
+        self.labels = labels.iter().flatten().cloned().collect();
+    }
+
     pub fn get_label(&self, vertex: Vertex) -> &[HubLabelEntry] {
         let &(start, stop) = self.indices.get(vertex as usize).unwrap_or(&(0, 0));
         &self.labels[start as usize..stop as usize]
     }
+}
+
+pub fn prune_label(label: &mut Vec<HubLabelEntry>, other: &HalfHubGraph) {
+    let mut new_label = label
+        .iter()
+        .filter(|entry| {
+            let other_label = other.get_label(entry.vertex);
+            let true_distance = overlapp(label, other_label).unwrap().0;
+
+            entry.distance == true_distance
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    std::mem::swap(&mut new_label, label);
 }
 
 pub fn get_hub_label_with_brute_force(

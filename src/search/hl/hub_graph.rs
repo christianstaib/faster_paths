@@ -23,14 +23,17 @@ impl HubGraph {
     }
 
     pub fn by_merging(contracted_graph: &ContractedGraph) -> HubGraph {
-        let forward = HalfHubGraph::by_merging(
+        let mut forward = HalfHubGraph::by_merging(
             &contracted_graph.upward_graph,
             &contracted_graph.level_to_vertex,
         );
-        let backward = HalfHubGraph::by_merging(
+        let mut backward = HalfHubGraph::by_merging(
             &contracted_graph.downward_graph,
             &contracted_graph.level_to_vertex,
         );
+
+        forward.prune(&backward);
+        backward.prune(&forward);
 
         HubGraph { forward, backward }
     }

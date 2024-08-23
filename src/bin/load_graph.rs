@@ -44,10 +44,12 @@ fn main() {
     println!("brute_force");
     let hub_graph_brute_force =
         HubGraph::by_brute_force(&cloned_graph, &contracted_graph.vertex_to_level);
-    let hub_graph_merging = HubGraph::by_merging(&contracted_graph);
+    let mut hub_graph_merging = HubGraph::by_merging(&contracted_graph);
+
+    let hub_graph = hub_graph_brute_force;
 
     let sum_label_len = (0..cloned_graph.out_graph().number_of_vertices())
-        .map(|vertex| hub_graph_brute_force.forward.get_label(vertex).len())
+        .map(|vertex| hub_graph.forward.get_label(vertex).len())
         .sum::<usize>();
     println!(
         "average label len {}",
@@ -61,8 +63,8 @@ fn main() {
             let source = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
             let target = rng.gen_range(0..cloned_graph.out_graph().number_of_vertices());
 
-            let forward_label = hub_graph_brute_force.forward.get_label(source); // forward_hub_graph.get_label(source);
-            let backward_label = hub_graph_brute_force.backward.get_label(target); // backward_hub_graph.get_label(target);
+            let forward_label = hub_graph.forward.get_label(source);
+            let backward_label = hub_graph.backward.get_label(target);
 
             let start = Instant::now();
             let hl_distance = overlapp(forward_label, backward_label).map(|(distance, _)| distance);
