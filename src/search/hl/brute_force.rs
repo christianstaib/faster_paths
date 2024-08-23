@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
@@ -34,6 +35,7 @@ fn half_brute_force(
 ) -> (Vec<HubLabelEntry>, Vec<(u32, u32)>) {
     let forward_labels = (0..graph.number_of_vertices())
         .into_par_iter()
+        .progress()
         .map_init(
             || {
                 (

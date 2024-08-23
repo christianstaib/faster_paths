@@ -6,7 +6,7 @@ use std::{
     time::Instant,
 };
 
-use indicatif::{ParallelProgressIterator, ProgressBar};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -121,7 +121,7 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
 
     println!("contracting");
     let mut edges = HashMap::new();
-    for vertex in 0..graph.out_graph().number_of_vertices() {
+    for vertex in (0..graph.out_graph().number_of_vertices()).progress() {
         for edge in graph.out_graph().edges(vertex) {
             edges.insert((edge.tail, edge.head), edge.weight);
         }

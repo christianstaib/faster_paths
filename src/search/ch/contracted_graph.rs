@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -31,7 +32,7 @@ impl ContractedGraph {
 
         let mut upward_edges = Vec::new();
         let mut downward_edges = Vec::new();
-        for (&(tail, head), &weight) in edges.iter() {
+        for (&(tail, head), &weight) in edges.iter().progress() {
             if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
                 upward_edges.push(WeightedEdge::new(tail, head, weight));
             } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {

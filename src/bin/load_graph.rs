@@ -38,12 +38,14 @@ fn main() {
 
     println!("Create contracted graph");
     let (level_to_vertex, edges) = contraction_with_witness_search(graph);
+    println!("create graph");
     let contracted_graph = ContractedGraph::new(edges, &level_to_vertex);
 
     // let other_contracted_graph =
     //     brute_force_contracted_graph(&cloned_graph,
     // &contracted_graph.level_to_vertex);
 
+    println!("brute_force");
     let hub_graph = brute_force(&cloned_graph, &contracted_graph.vertex_to_level);
 
     let mut rng = thread_rng();
