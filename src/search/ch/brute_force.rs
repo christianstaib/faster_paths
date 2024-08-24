@@ -3,12 +3,8 @@ use std::collections::{HashMap, HashSet};
 use indicatif::ParallelProgressIterator;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use super::contracted_graph::{vertex_to_level, ContractedGraph};
 use crate::{
-    graphs::{
-        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
-        WeightedEdge,
-    },
+    graphs::{Distance, Graph, Vertex, WeightedEdge},
     search::collections::{
         dijkstra_data::{DijkstraData, DijkstraDataVec},
         vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},

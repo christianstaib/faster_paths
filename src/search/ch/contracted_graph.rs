@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
-use indicatif::{ParallelProgressIterator, ProgressIterator};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
 
-use super::brute_force::{brute_force_contracted_graph_edges, get_ch_edges};
+use super::{
+    brute_force::brute_force_contracted_graph_edges, contraction::contraction_with_witness_search,
+};
 use crate::{
     graphs::{
         reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
@@ -12,11 +11,9 @@ use crate::{
     },
     search::{
         collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec},
+            dijkstra_data::{DijkstraData, DijkstraDataHashMap},
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-            vertex_expanded_data::{
-                VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
-            },
+            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
         dijkstra::dijkstra_one_to_all_wraped,
     },
@@ -31,10 +28,12 @@ pub struct ContractedGraph {
 }
 
 impl ContractedGraph {
-    pub fn from_edges(
-        edges: HashMap<(Vertex, Vertex), Distance>,
-        level_to_vertex: &Vec<u32>,
+    pub fn by_contraction_with_dijkstra_witness_search<G: Graph + Default + Clone>(
+        graph: &ReversibleGraph<G>,
     ) -> ContractedGraph {
+        let graph = graph.clone();
+        let (level_to_vertex, edges) = contraction_with_witness_search(graph);
+
         let vertex_to_level = vertex_to_level(&level_to_vertex);
 
         let mut upward_edges = Vec::new();

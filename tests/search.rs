@@ -29,8 +29,7 @@ fn dijkstra() {
 fn ch_wittness() {
     let (graph, test_cases) = large_test_graph();
 
-    let (level_to_vertex, edges) = contraction_with_witness_search(graph);
-    let contracted_graph = ContractedGraph::from_edges(edges, &level_to_vertex);
+    let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
 
     test_cases.iter().for_each(
         |ShortestPathTestCase {
