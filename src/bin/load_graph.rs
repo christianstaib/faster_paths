@@ -32,36 +32,16 @@ fn main() {
     let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
 
     println!("brute_force");
-    // let hub_graph_brute_force =
-    //     HubGraph::by_brute_force(&graph,
-    // contracted_graph.vertex_to_level()); let mut hub_graph_merging =
-    // HubGraph::by_merging(&contracted_graph);
-
-    // let hub_graph = hub_graph_brute_force;
-
-    // let sum_label_len = (0..graph.out_graph().number_of_vertices())
-    //     .map(|vertex| hub_graph.forward.get_label(vertex).len())
-    //     .sum::<usize>();
-    // println!(
-    //     "average label len {}",
-    //     sum_label_len as f64 / graph.out_graph().number_of_vertices() as
-    // f64 );
-
-    // let contracted_graph =
-    //     ContractedGraph::by_brute_force(&graph,
-    // contracted_graph.level_to_vertex());
 
     let mut rng = thread_rng();
-    let speedup = (0..100_000)
+    let speedup = (0..300)
         .progress()
         .map(|_| {
             let source = rng.gen_range(0..graph.out_graph().number_of_vertices());
             let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
 
             let start = Instant::now();
-            // let hl_distance = overlapp(forward_label, backward_label).map(|(distance, _)|
-            // distance);
-            let hl_distance = contracted_graph.shortest_path_distance(source, target); // overlapp(forward_label, backward_label).map(|(distance, _)| distance);
+            let hl_distance = contracted_graph.shortest_path_distance(source, target);
             let ch_time = start.elapsed().as_secs_f64();
 
             let start = Instant::now();

@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -27,6 +30,73 @@ pub struct ContractedGraph {
     vertex_to_level: Vec<u32>,
 }
 
+pub fn get_slow_shortcuts(
+    edges_and_predecessors: &Vec<(WeightedEdge, Option<Vertex>)>,
+) -> HashMap<(Vertex, Vertex), Vertex> {
+    let mut shortcuts: HashMap<(Vertex, Vertex), Vertex> = HashMap::new();
+
+    for (edge, predecessor) in edges_and_predecessors.iter() {
+        if let Some(predecessor) = predecessor {
+            shortcuts.insert((edge.tail, edge.head), *predecessor);
+        }
+    }
+
+    shortcuts
+}
+
+pub fn get_fast_shortcuts(
+    single_step_shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
+) -> HashMap<(Vertex, Vertex), Vec<Vertex>> {
+    let mut shortcuts = HashMap::new();
+
+    for (&(tail, head), &vertex) in single_step_shortcuts.iter() {
+        let mut path = vec![tail, vertex, head];
+        path.remove(0); // remove tail
+        path.pop(); // remove head
+        replace_shortcuts_slowly(&mut path, &single_step_shortcuts);
+        shortcuts.insert((tail, head), path);
+    }
+
+    shortcuts
+}
+
+pub fn replace_shortcuts_slowly(
+    path_with_shortcuts: &mut Vec<Vertex>,
+    shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
+) {
+    let mut path_without_shortcuts = Vec::new();
+
+    while path_with_shortcuts.len() >= 2 {
+        let head = path_with_shortcuts.pop().unwrap();
+        let tail = *path_with_shortcuts.last().unwrap();
+        if let Some(vertex) = shortcuts.get(&(tail, head)) {
+            path_with_shortcuts.push(*vertex);
+        }
+
+        path_without_shortcuts.push(head);
+    }
+    path_without_shortcuts.push(path_with_shortcuts.pop().unwrap());
+    path_without_shortcuts.reverse();
+
+    *path_with_shortcuts = path_without_shortcuts;
+}
+
+pub fn replace_shortcuts_fast(
+    path_with_shortcuts: &mut Vec<Vertex>,
+    shortcuts: &HashMap<(Vertex, Vertex), Vec<Vertex>>,
+) {
+    let mut path_without_shortcuts = vec![*path_with_shortcuts.first().unwrap()];
+
+    for (&tail, &head) in path_with_shortcuts.iter().tuple_windows() {
+        if let Some(skiped_vertices) = shortcuts.get(&(tail, head)) {
+            path_without_shortcuts.extend(skiped_vertices);
+        }
+        path_without_shortcuts.push(head)
+    }
+
+    *path_with_shortcuts = path_without_shortcuts;
+}
+
 impl ContractedGraph {
     pub fn by_contraction_with_dijkstra_witness_search<G: Graph + Default + Clone>(
         graph: &ReversibleGraph<G>,
@@ -38,7 +108,7 @@ impl ContractedGraph {
 
         let mut upward_edges = Vec::new();
         let mut downward_edges = Vec::new();
-        for (&(tail, head), &weight) in edges.iter().progress() {
+        for (&(tail, head), &(weight, _shortcuted_vertex)) in edges.iter().progress() {
             if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
                 upward_edges.push(WeightedEdge::new(tail, head, weight));
             } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {

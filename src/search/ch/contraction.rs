@@ -16,7 +16,10 @@ use crate::{
 
 pub fn contraction_with_witness_search<G: Graph + Default>(
     mut graph: ReversibleGraph<G>,
-) -> (Vec<Vertex>, HashMap<(Vertex, Vertex), Distance>) {
+) -> (
+    Vec<Vertex>,
+    HashMap<(Vertex, Vertex), (Distance, Option<Vertex>)>,
+) {
     println!("setting up the queue");
     let mut queue = new_queue(&graph);
 
@@ -47,21 +50,23 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
 }
 
 fn update_edge_map(
-    edge_map: &mut HashMap<(u32, u32), u32>,
+    edge_map: &mut HashMap<(Vertex, Vertex), (Distance, Option<Vertex>)>,
     new_and_updated_edges: &HashMap<u32, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
 ) {
     for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
         for edge in new_edges.iter().chain(updated_edges.iter()) {
-            edge_map.insert((tail, edge.head), edge.weight);
+            edge_map.insert((tail, edge.head), (edge.weight, Some(tail)));
         }
     }
 }
 
-fn new_edge_map<G: Graph + Default>(graph: &ReversibleGraph<G>) -> HashMap<(u32, u32), u32> {
+fn new_edge_map<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+) -> HashMap<(Vertex, Vertex), (Distance, Option<Vertex>)> {
     let mut edges = HashMap::new();
     for vertex in (0..graph.out_graph().number_of_vertices()).progress() {
         for edge in graph.out_graph().edges(vertex) {
-            edges.insert((edge.tail, edge.head), edge.weight);
+            edges.insert((edge.tail, edge.head), (edge.weight, None));
         }
     }
     edges
