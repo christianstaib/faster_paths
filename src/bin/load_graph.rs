@@ -4,11 +4,15 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Graph,
+        Edge, Graph,
     },
-    search::{ch::contracted_graph::ContractedGraph, dijkstra::dijkstra_one_to_one_wrapped},
+    search::{
+        ch::contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
+        dijkstra::dijkstra_one_to_one_wrapped,
+    },
 };
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 use rand::{thread_rng, Rng};
 
 /// Starts a routing service on localhost:3030/route
@@ -34,15 +38,24 @@ fn main() {
     println!("brute_force");
 
     let mut rng = thread_rng();
-    let speedup = (0..300)
+    let speedup = (0..100_000)
         .progress()
         .map(|_| {
-            let source = rng.gen_range(0..graph.out_graph().number_of_vertices());
-            let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
+            let source = 123; //rng.gen_range(0..graph.out_graph().number_of_vertices());
+            let target = 2345; //rng.gen_range(0..graph.out_graph().number_of_vertices());
 
             let start = Instant::now();
-            let hl_distance = contracted_graph.shortest_path_distance(source, target);
+            let hl_path = ch_one_to_one_wrapped(&contracted_graph, source, target);
             let ch_time = start.elapsed().as_secs_f64();
+
+            let hl_distance = hl_path.as_ref().map(|path| path.distance);
+            if let Some(hl_path) = &hl_path {
+                let mut distance = 0;
+                for (&tail, &head) in hl_path.vertices.iter().tuple_windows() {
+                    distance += graph.out_graph().get_weight(&Edge { tail, head }).unwrap();
+                }
+                assert_eq!(distance, hl_distance.unwrap());
+            }
 
             let start = Instant::now();
             let dijkstra_distance = dijkstra_one_to_one_wrapped(graph.out_graph(), source, target)

@@ -18,13 +18,15 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
     mut graph: ReversibleGraph<G>,
 ) -> (
     Vec<Vertex>,
-    HashMap<(Vertex, Vertex), (Distance, Option<Vertex>)>,
+    HashMap<(Vertex, Vertex), Distance>,
+    HashMap<(Vertex, Vertex), Vertex>,
 ) {
     println!("setting up the queue");
     let mut queue = new_queue(&graph);
 
     println!("contracting");
-    let mut edge_map = new_edge_map(&graph);
+    let mut edges = new_edge_map(&graph);
+    let mut shortcuts = HashMap::new();
 
     let mut level_to_vertex = Vec::new();
 
@@ -38,7 +40,7 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
         }
         pb.inc(1);
 
-        update_edge_map(&mut edge_map, &new_and_updated_edges);
+        update_edge_map(&mut edges, &mut shortcuts, vertex, &new_and_updated_edges);
 
         level_to_vertex.push(vertex);
         graph.disconnect(vertex);
@@ -46,27 +48,30 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
     }
     pb.finish_and_clear();
 
-    (level_to_vertex, edge_map)
+    (level_to_vertex, edges, shortcuts)
 }
 
 fn update_edge_map(
-    edge_map: &mut HashMap<(Vertex, Vertex), (Distance, Option<Vertex>)>,
+    edge_map: &mut HashMap<(Vertex, Vertex), Distance>,
+    shortcuts: &mut HashMap<(Vertex, Vertex), Vertex>,
+    vertex: Vertex,
     new_and_updated_edges: &HashMap<u32, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
 ) {
     for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
         for edge in new_edges.iter().chain(updated_edges.iter()) {
-            edge_map.insert((tail, edge.head), (edge.weight, Some(tail)));
+            edge_map.insert((tail, edge.head), edge.weight);
+            shortcuts.insert((tail, edge.head), vertex);
         }
     }
 }
 
 fn new_edge_map<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
-) -> HashMap<(Vertex, Vertex), (Distance, Option<Vertex>)> {
+) -> HashMap<(Vertex, Vertex), Distance> {
     let mut edges = HashMap::new();
     for vertex in (0..graph.out_graph().number_of_vertices()).progress() {
         for edge in graph.out_graph().edges(vertex) {
-            edges.insert((edge.tail, edge.head), (edge.weight, None));
+            edges.insert((edge.tail, edge.head), edge.weight);
         }
     }
     edges

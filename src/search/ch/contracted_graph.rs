@@ -14,7 +14,7 @@ use crate::{
     },
     search::{
         collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataHashMap},
+            dijkstra_data::{DijkstraData, DijkstraDataHashMap, Path},
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
@@ -26,6 +26,7 @@ use crate::{
 pub struct ContractedGraph {
     upward_graph: VecVecGraph,
     downward_graph: VecVecGraph,
+    shortcuts: HashMap<(Vertex, Vertex), Vertex>,
     level_to_vertex: Vec<Vertex>,
     vertex_to_level: Vec<u32>,
 }
@@ -71,9 +72,10 @@ pub fn replace_shortcuts_slowly(
         let tail = *path_with_shortcuts.last().unwrap();
         if let Some(vertex) = shortcuts.get(&(tail, head)) {
             path_with_shortcuts.push(*vertex);
+            path_with_shortcuts.push(head);
+        } else {
+            path_without_shortcuts.push(head);
         }
-
-        path_without_shortcuts.push(head);
     }
     path_without_shortcuts.push(path_with_shortcuts.pop().unwrap());
     path_without_shortcuts.reverse();
@@ -102,13 +104,13 @@ impl ContractedGraph {
         graph: &ReversibleGraph<G>,
     ) -> ContractedGraph {
         let graph = graph.clone();
-        let (level_to_vertex, edges) = contraction_with_witness_search(graph);
+        let (level_to_vertex, edges, shortcuts) = contraction_with_witness_search(graph);
 
         let vertex_to_level = vertex_to_level(&level_to_vertex);
 
         let mut upward_edges = Vec::new();
         let mut downward_edges = Vec::new();
-        for (&(tail, head), &(weight, _shortcuted_vertex)) in edges.iter().progress() {
+        for (&(tail, head), &weight) in edges.iter().progress() {
             if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
                 upward_edges.push(WeightedEdge::new(tail, head, weight));
             } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
@@ -119,28 +121,31 @@ impl ContractedGraph {
         ContractedGraph {
             upward_graph: VecVecGraph::from_edges(&upward_edges),
             downward_graph: VecVecGraph::from_edges(&downward_edges),
+            shortcuts,
             level_to_vertex: level_to_vertex.clone(),
             vertex_to_level,
         }
     }
 
-    pub fn by_brute_force<G: Graph + Default>(
-        graph: &ReversibleGraph<G>,
-        level_to_vertex: &Vec<u32>,
-    ) -> ContractedGraph {
-        let vertex_to_level = vertex_to_level(&level_to_vertex);
+    // pub fn by_brute_force<G: Graph + Default>(
+    //     graph: &ReversibleGraph<G>,
+    //     level_to_vertex: &Vec<u32>,
+    // ) -> ContractedGraph {
+    //     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-        let upward_edges = brute_force_contracted_graph_edges(graph.out_graph(), &vertex_to_level);
+    //     let upward_edges = brute_force_contracted_graph_edges(graph.out_graph(),
+    // &vertex_to_level);
 
-        let downward_edges = brute_force_contracted_graph_edges(graph.in_graph(), &vertex_to_level);
+    //     let downward_edges = brute_force_contracted_graph_edges(graph.in_graph(),
+    // &vertex_to_level);
 
-        ContractedGraph {
-            upward_graph: VecVecGraph::from_edges(&upward_edges),
-            downward_graph: VecVecGraph::from_edges(&downward_edges),
-            level_to_vertex: level_to_vertex.clone(),
-            vertex_to_level,
-        }
-    }
+    //     ContractedGraph {
+    //         upward_graph: VecVecGraph::from_edges(&upward_edges),
+    //         downward_graph: VecVecGraph::from_edges(&downward_edges),
+    //         level_to_vertex: level_to_vertex.clone(),
+    //         vertex_to_level,
+    //     }
+    // }
 
     pub fn upward_graph(&self) -> &dyn Graph {
         &self.upward_graph
@@ -202,7 +207,7 @@ pub fn ch_one_to_one_wrapped(
     ch_graph: &ContractedGraph,
     source: Vertex,
     target: Vertex,
-) -> Option<Distance> {
+) -> Option<Path> {
     let mut forward_data = DijkstraDataHashMap::new();
     let mut forward_expanded = VertexExpandedDataHashSet::new();
     let mut forward_queue = VertexDistanceQueueBinaryHeap::new();
@@ -211,7 +216,7 @@ pub fn ch_one_to_one_wrapped(
     let mut backward_expanded = VertexExpandedDataHashSet::new();
     let mut backward_queue = VertexDistanceQueueBinaryHeap::new();
 
-    ch_one_to_one(
+    let (vertex, distance) = ch_one_to_one(
         ch_graph,
         &mut forward_data,
         &mut forward_expanded,
@@ -221,8 +226,23 @@ pub fn ch_one_to_one_wrapped(
         &mut backward_queue,
         source,
         target,
-    )
-    .map(|(_vertex, distance)| distance)
+    )?;
+
+    let mut forward_vertices = forward_data.get_path(vertex).unwrap().vertices;
+    let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices;
+
+    replace_shortcuts_slowly(&mut forward_vertices, &ch_graph.shortcuts);
+    replace_shortcuts_slowly(&mut backward_vertices, &ch_graph.shortcuts);
+
+    forward_vertices.pop(); // remove double
+    backward_vertices.reverse();
+
+    forward_vertices.extend(backward_vertices);
+
+    Some(Path {
+        vertices: forward_vertices,
+        distance,
+    })
 }
 
 pub fn ch_one_to_one(
