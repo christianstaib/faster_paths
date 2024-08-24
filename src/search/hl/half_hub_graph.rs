@@ -72,70 +72,10 @@ impl HalfHubGraph {
         HalfHubGraph::new(&labels)
     }
 
-    pub fn by_merging(graph: &dyn Graph, level_to_vertex: &Vec<Vertex>) -> HalfHubGraph {
-        let mut labels = (0..graph.number_of_vertices())
-            .map(|vertex| vec![HubLabelEntry::new(vertex)])
-            .collect_vec();
-
-        for &vertex in level_to_vertex.iter().rev().progress() {
-            let mut neighbor_labels = graph
-                .edges(vertex)
-                .map(|edge| {
-                    let neighbor_label = labels.get(edge.head as usize).unwrap();
-                    (Some(edge.clone()), neighbor_label)
-                })
-                .collect::<Vec<_>>();
-            neighbor_labels.push((None, &labels[vertex as usize]));
-
-            labels[vertex as usize] = get_hub_label_by_merging(&neighbor_labels);
-        }
-
-        HalfHubGraph::new(&labels)
-    }
-
-    pub fn prune(&mut self, other: &HalfHubGraph) {
-        let mut labels = self
-            .indices
-            .iter()
-            .map(|&(start, end)| self.labels[start as usize..end as usize].to_vec())
-            .collect_vec();
-
-        labels.par_iter_mut().for_each(|mut label| {
-            prune_label(&mut label, other);
-        });
-
-        self.indices = labels
-            .iter()
-            .map(|label| label.len() as u32)
-            .scan(0, |state, len| {
-                let start = *state;
-                *state += len;
-                Some((start, *state))
-            })
-            .collect();
-
-        self.labels = labels.iter().flatten().cloned().collect();
-    }
-
     pub fn get_label(&self, vertex: Vertex) -> &[HubLabelEntry] {
         let &(start, stop) = self.indices.get(vertex as usize).unwrap_or(&(0, 0));
         &self.labels[start as usize..stop as usize]
     }
-}
-
-pub fn prune_label(label: &mut Vec<HubLabelEntry>, other: &HalfHubGraph) {
-    let mut new_label = label
-        .iter()
-        .filter(|entry| {
-            let other_label = other.get_label(entry.vertex);
-            let true_distance = overlapp(label, other_label).unwrap().0;
-
-            entry.distance == true_distance
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-
-    std::mem::swap(&mut new_label, label);
 }
 
 pub fn get_hub_label_with_brute_force(
@@ -206,22 +146,26 @@ pub fn get_hub_label_with_brute_force(
 
     hub_label.sort_by_key(|entry| entry.vertex);
 
-    let vertex_to_index = hub_label
-        .iter()
-        .enumerate()
-        .map(|(index, entry)| (entry.vertex, index as u32))
-        .collect::<HashMap<_, _>>();
-
-    hub_label.iter_mut().for_each(|entry| {
-        if let Some(ref mut predecessor) = entry.predecessor_index {
-            *predecessor = *vertex_to_index.get(&predecessor).unwrap();
-        }
-    });
+    set_predecessor(&mut hub_label);
 
     hub_label
 }
 
-fn get_hub_label_by_merging(
+fn set_predecessor(hub_label: &mut Vec<HubLabelEntry>) {
+    // let vertex_to_index = hub_label
+    //     .iter()
+    //     .enumerate()
+    //     .map(|(index, entry)| (entry.vertex, index as u32))
+    //     .collect::<HashMap<_, _>>();
+
+    // hub_label.iter_mut().for_each(|entry| {
+    //     if let Some(ref mut predecessor) = entry.predecessor_index {
+    //         *predecessor = *vertex_to_index.get(&predecessor).unwrap();
+    //     }
+    // });
+}
+
+pub fn get_hub_label_by_merging(
     labels: &Vec<(Option<WeightedEdge>, &Vec<HubLabelEntry>)>,
 ) -> Vec<HubLabelEntry> {
     let mut new_label = Vec::new();
@@ -256,7 +200,7 @@ fn get_hub_label_by_merging(
                     entry.distance + edge.as_ref().map(|edge| edge.weight).unwrap_or(0);
                 if alternative_distance < min_entry.distance {
                     min_entry.distance = alternative_distance;
-                    min_entry.predecessor_index = edge.as_ref().map(|_| entry.vertex);
+                    min_entry.predecessor_index = edge.as_ref().map(|edge| edge.head);
                 }
                 labels_with_min_vertex.push(label);
             }

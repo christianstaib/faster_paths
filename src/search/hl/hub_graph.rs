@@ -1,6 +1,9 @@
 use std::cmp::Ordering;
 
-use super::half_hub_graph::HalfHubGraph;
+use indicatif::ProgressIterator;
+use itertools::Itertools;
+
+use super::half_hub_graph::{get_hub_label_by_merging, HalfHubGraph};
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
     search::ch::contracted_graph::ContractedGraph,
@@ -22,28 +25,84 @@ impl HubGraph {
         HubGraph { forward, backward }
     }
 
-    pub fn by_merging(contracted_graph: &ContractedGraph) -> HubGraph {
-        let mut forward = HalfHubGraph::by_merging(
-            &contracted_graph.upward_graph,
-            &contracted_graph.level_to_vertex,
-        );
-        let mut backward = HalfHubGraph::by_merging(
-            &contracted_graph.downward_graph,
-            &contracted_graph.level_to_vertex,
-        );
+    pub fn by_merging(graph: &ContractedGraph) -> HubGraph {
+        let mut forward_labels = graph
+            .upward_graph
+            .vertices()
+            .map(|vertex| vec![HubLabelEntry::new(vertex)])
+            .collect_vec();
 
-        forward.prune(&backward);
-        backward.prune(&forward);
+        let mut backward_labels = graph
+            .downward_graph
+            .vertices()
+            .map(|vertex| vec![HubLabelEntry::new(vertex)])
+            .collect_vec();
+
+        for &vertex in graph.level_to_vertex.iter().rev().progress() {
+            create_label(
+                &graph.upward_graph,
+                vertex,
+                &mut forward_labels,
+                &backward_labels,
+            );
+            create_label(
+                &graph.downward_graph,
+                vertex,
+                &mut backward_labels,
+                &forward_labels,
+            );
+        }
+
+        let forward = HalfHubGraph::new(&forward_labels);
+        let backward = HalfHubGraph::new(&backward_labels);
 
         HubGraph { forward, backward }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+fn create_label(
+    contracted_graph_direction1: &dyn Graph,
+    vertex: u32,
+    labels_direction1: &mut Vec<Vec<HubLabelEntry>>,
+    labels_direction2: &Vec<Vec<HubLabelEntry>>,
+) {
+    let mut neighbor_labels = contracted_graph_direction1
+        .edges(vertex)
+        .map(|edge| {
+            let neighbor_label = labels_direction1.get(edge.head as usize).unwrap();
+            (Some(edge.clone()), neighbor_label)
+        })
+        .collect::<Vec<_>>();
+    neighbor_labels.push((None, labels_direction1.get(vertex as usize).unwrap()));
+
+    let mut forward_label = get_hub_label_by_merging(&neighbor_labels);
+    prune_label(&mut forward_label, labels_direction2);
+    labels_direction1[vertex as usize] = forward_label;
+}
+
+pub fn prune_label(
+    label_direction1: &mut Vec<HubLabelEntry>,
+    labels_direction2: &Vec<Vec<HubLabelEntry>>,
+) {
+    let mut new_label = label_direction1
+        .iter()
+        .filter(|entry| {
+            let other_label = labels_direction2.get(entry.vertex as usize).unwrap();
+            let true_distance = overlapp(label_direction1, other_label).unwrap().0;
+
+            entry.distance == true_distance
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    std::mem::swap(&mut new_label, label_direction1);
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct HubLabelEntry {
     pub vertex: Vertex,
     pub distance: Distance,
-    /// relative index of predecessor. Zero if no predecessor.
+    /// index of predecessor. None if no predecessor.
     pub predecessor_index: Option<u32>,
 }
 
@@ -63,23 +122,16 @@ pub fn overlapp(
 ) -> Option<(Distance, (usize, usize))> {
     let mut overlapp = None;
 
-    let mut forward_iter = forward_label
-        .iter()
-        .enumerate()
-        .map(|(index, entry)| (index, entry.vertex))
-        .peekable();
-    let mut backward_iter = backward_label
-        .iter()
-        .enumerate()
-        .map(|(index, entry)| (index, entry.vertex))
-        .peekable();
+    let mut forward_index = 0;
+    let mut backward_index = 0;
 
-    while let (Some(&(forward_index, forward_vertex)), Some(&(backward_index, backward_vertex))) =
-        (forward_iter.peek(), backward_iter.peek())
-    {
+    while forward_index < forward_label.len() && backward_index < backward_label.len() {
+        let forward_vertex = forward_label[forward_index].vertex;
+        let backward_vertex = backward_label[backward_index].vertex;
+
         match forward_vertex.cmp(&backward_vertex) {
             Ordering::Less => {
-                forward_iter.next();
+                forward_index += 1;
             }
             Ordering::Equal => {
                 let alternative_distance = forward_label[forward_index as usize].distance
@@ -92,11 +144,11 @@ pub fn overlapp(
                     overlapp = Some((alternative_distance, (forward_index, backward_index)));
                 }
 
-                forward_iter.next();
-                backward_iter.next();
+                forward_index += 1;
+                backward_index += 1;
             }
             Ordering::Greater => {
-                backward_iter.next();
+                backward_index += 1;
             }
         }
     }

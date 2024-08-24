@@ -102,6 +102,10 @@ pub trait Graph: Send + Sync {
 
     fn edges(&self, source: Vertex) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
 
+    fn vertices(&self) -> Box<dyn Iterator<Item = Vertex>> {
+        Box::new(0..self.number_of_vertices())
+    }
+
     fn get_weight(&self, edge: &Edge) -> Option<Distance>;
 
     fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);

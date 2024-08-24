@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Instant};
+use std::{collections::HashSet, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
@@ -53,7 +53,7 @@ fn main() {
         .sum::<usize>();
     println!(
         "average label len {}",
-        sum_label_len as f32 / cloned_graph.out_graph().number_of_vertices() as f32
+        sum_label_len as f64 / cloned_graph.out_graph().number_of_vertices() as f64
     );
 
     let mut rng = thread_rng();
