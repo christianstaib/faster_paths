@@ -4,7 +4,7 @@ use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
-use super::brute_force::get_ch_edges;
+use super::brute_force::{brute_force_contracted_graph_edges, get_ch_edges};
 use crate::{
     graphs::{
         reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
@@ -31,7 +31,7 @@ pub struct ContractedGraph {
 }
 
 impl ContractedGraph {
-    pub fn new(
+    pub fn from_edges(
         edges: HashMap<(Vertex, Vertex), Distance>,
         level_to_vertex: &Vec<u32>,
     ) -> ContractedGraph {
@@ -55,21 +55,19 @@ impl ContractedGraph {
         }
     }
 
-    pub fn brute_force_contracted_graph(
-        graph: &ReversibleGraph<VecVecGraph>,
+    pub fn by_brute_force<G: Graph + Default>(
+        graph: &ReversibleGraph<G>,
         level_to_vertex: &Vec<u32>,
     ) -> ContractedGraph {
-        let vertex_to_level = vertex_to_level(level_to_vertex);
+        let vertex_to_level = vertex_to_level(&level_to_vertex);
 
         let upward_edges = brute_force_contracted_graph_edges(graph.out_graph(), &vertex_to_level);
-        let upward_graph = VecVecGraph::from_edges(&upward_edges);
 
-        let downard_edges = brute_force_contracted_graph_edges(graph.in_graph(), &vertex_to_level);
-        let downward_graph = VecVecGraph::from_edges(&downard_edges);
+        let downward_edges = brute_force_contracted_graph_edges(graph.in_graph(), &vertex_to_level);
 
         ContractedGraph {
-            upward_graph,
-            downward_graph,
+            upward_graph: VecVecGraph::from_edges(&upward_edges),
+            downward_graph: VecVecGraph::from_edges(&downward_edges),
             level_to_vertex: level_to_vertex.clone(),
             vertex_to_level,
         }
@@ -119,36 +117,6 @@ impl ContractedGraph {
 
         Some(min_distance)
     }
-}
-
-fn brute_force_contracted_graph_edges(
-    graph: &dyn Graph,
-    vertex_to_level: &Vec<u32>,
-) -> Vec<WeightedEdge> {
-    graph
-        .vertices()
-        .into_par_iter()
-        .progress()
-        .map_init(
-            || {
-                (
-                    DijkstraDataVec::new(graph),
-                    VertexExpandedDataBitSet::new(graph),
-                    VertexDistanceQueueBinaryHeap::new(),
-                )
-            },
-            |(data, expanded, queue), vertex| {
-                let edges = get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
-
-                data.clear();
-                expanded.clear();
-                queue.clear();
-
-                edges
-            },
-        )
-        .flatten()
-        .collect::<Vec<_>>()
 }
 
 pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {

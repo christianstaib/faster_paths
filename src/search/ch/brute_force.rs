@@ -16,22 +16,34 @@ use crate::{
     },
 };
 
-pub fn get_ch_edges_wrapped(
+pub fn brute_force_contracted_graph_edges(
     graph: &dyn Graph,
     vertex_to_level: &Vec<u32>,
-    source: Vertex,
 ) -> Vec<WeightedEdge> {
-    let mut data = DijkstraDataVec::new(graph);
-    let mut expanded = VertexExpandedDataBitSet::new(graph);
-    let mut queue = VertexDistanceQueueBinaryHeap::new();
-    get_ch_edges(
-        graph,
-        &mut data,
-        &mut expanded,
-        &mut queue,
-        vertex_to_level,
-        source,
-    )
+    graph
+        .vertices()
+        .into_par_iter()
+        .progress()
+        .map_init(
+            || {
+                (
+                    DijkstraDataVec::new(graph),
+                    VertexExpandedDataBitSet::new(graph),
+                    VertexDistanceQueueBinaryHeap::new(),
+                )
+            },
+            |(data, expanded, queue), vertex| {
+                let edges = get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
+
+                data.clear();
+                expanded.clear();
+                queue.clear();
+
+                edges
+            },
+        )
+        .flatten()
+        .collect::<Vec<_>>()
 }
 
 pub fn get_ch_edges(
@@ -129,7 +141,7 @@ pub fn get_ch_edges(
 //         graphs::{large_test_graph, Graph},
 //         search::{
 //             ch::{brute_force::get_ch_edges_wrapped,
-// large_test_contracted_graph},             
+// large_test_contracted_graph},
 // dijkstra::dijkstra_one_to_one_wrapped,         },
 //     };
 //
