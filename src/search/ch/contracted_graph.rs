@@ -127,25 +127,30 @@ impl ContractedGraph {
         }
     }
 
-    // pub fn by_brute_force<G: Graph + Default>(
-    //     graph: &ReversibleGraph<G>,
-    //     level_to_vertex: &Vec<u32>,
-    // ) -> ContractedGraph {
-    //     let vertex_to_level = vertex_to_level(&level_to_vertex);
+    pub fn by_brute_force<G: Graph + Default>(
+        graph: &ReversibleGraph<G>,
+        level_to_vertex: &Vec<u32>,
+    ) -> ContractedGraph {
+        let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-    //     let upward_edges = brute_force_contracted_graph_edges(graph.out_graph(),
-    // &vertex_to_level);
+        let (upward_edges, upward_shortcuts) =
+            brute_force_contracted_graph_edges(graph.out_graph(), &vertex_to_level);
 
-    //     let downward_edges = brute_force_contracted_graph_edges(graph.in_graph(),
-    // &vertex_to_level);
+        let (downward_edges, downward_shortcuts) =
+            brute_force_contracted_graph_edges(graph.in_graph(), &vertex_to_level);
 
-    //     ContractedGraph {
-    //         upward_graph: VecVecGraph::from_edges(&upward_edges),
-    //         downward_graph: VecVecGraph::from_edges(&downward_edges),
-    //         level_to_vertex: level_to_vertex.clone(),
-    //         vertex_to_level,
-    //     }
-    // }
+        let mut shortcuts = HashMap::new();
+        shortcuts.extend(upward_shortcuts);
+        shortcuts.extend(downward_shortcuts);
+
+        ContractedGraph {
+            upward_graph: VecVecGraph::from_edges(&upward_edges),
+            downward_graph: VecVecGraph::from_edges(&downward_edges),
+            shortcuts,
+            level_to_vertex: level_to_vertex.clone(),
+            vertex_to_level,
+        }
+    }
 
     pub fn upward_graph(&self) -> &dyn Graph {
         &self.upward_graph

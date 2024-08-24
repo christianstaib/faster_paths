@@ -15,8 +15,10 @@ use crate::{
 pub fn brute_force_contracted_graph_edges(
     graph: &dyn Graph,
     vertex_to_level: &Vec<u32>,
-) -> Vec<WeightedEdge> {
-    graph
+) -> (Vec<WeightedEdge>, HashMap<(Vertex, Vertex), Vertex>) {
+    let mut all_edges = Vec::new();
+    let mut all_shortcuts = HashMap::new();
+    let edges_and_shortcuts = graph
         .vertices()
         .into_par_iter()
         .progress()
@@ -29,17 +31,24 @@ pub fn brute_force_contracted_graph_edges(
                 )
             },
             |(data, expanded, queue), vertex| {
-                let edges = get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
+                let vertex_edges_and_shortcuts =
+                    get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
 
                 data.clear();
                 expanded.clear();
                 queue.clear();
 
-                edges
+                vertex_edges_and_shortcuts
             },
         )
-        .flatten()
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>();
+
+    for (edges, shortcuts) in edges_and_shortcuts.into_iter() {
+        all_edges.extend(edges);
+        all_shortcuts.extend(shortcuts);
+    }
+
+    (all_edges, all_shortcuts)
 }
 
 pub fn get_ch_edges(
@@ -49,7 +58,7 @@ pub fn get_ch_edges(
     queue: &mut dyn VertexDistanceQueue,
     vertex_to_level: &Vec<u32>,
     source: Vertex,
-) -> Vec<WeightedEdge> {
+) -> (Vec<WeightedEdge>, Vec<((Vertex, Vertex), Vertex)>) {
     // Maps (vertex -> (max level on path from source to vertex, associated vertex))
     //
     // A vertex is a head of a ch edge if its levels equals the max level on its
@@ -68,6 +77,7 @@ pub fn get_ch_edges(
     queue.insert(source, 0);
 
     let mut edges = Vec::new();
+    let mut shortcuts = Vec::new();
 
     while let Some((tail, distance_tail)) = queue.pop() {
         if expanded.expand(tail) {
@@ -95,6 +105,15 @@ pub fn get_ch_edges(
                         tail,
                         data.get_distance(tail).unwrap(),
                     ));
+
+                    let mut head = tail;
+                    while let Some(skiped_vertex) = data.get_predecessor(head) {
+                        if skiped_vertex == tail {
+                            break;
+                        }
+                        shortcuts.push(((tail, head), skiped_vertex));
+                        head = skiped_vertex;
+                    }
                 }
                 alive.remove(&tail);
             }
@@ -126,7 +145,7 @@ pub fn get_ch_edges(
         alive.remove(&tail);
     }
 
-    edges
+    (edges, shortcuts)
 }
 
 // #[cfg(test)]
