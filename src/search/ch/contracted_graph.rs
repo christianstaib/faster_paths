@@ -1,15 +1,22 @@
 use std::collections::HashMap;
 
-use indicatif::ProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
+use super::brute_force::get_ch_edges;
 use crate::{
-    graphs::{vec_vec_graph::VecVecGraph, Distance, Graph, Vertex, WeightedEdge},
+    graphs::{
+        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
+        WeightedEdge,
+    },
     search::{
         collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataHashMap},
+            dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec},
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
+            vertex_expanded_data::{
+                VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
+            },
         },
         dijkstra::dijkstra_one_to_all_wraped,
     },
@@ -17,10 +24,10 @@ use crate::{
 
 #[derive(Serialize, Deserialize)]
 pub struct ContractedGraph {
-    pub upward_graph: VecVecGraph,
-    pub downward_graph: VecVecGraph,
-    pub level_to_vertex: Vec<Vertex>,
-    pub vertex_to_level: Vec<u32>,
+    upward_graph: VecVecGraph,
+    downward_graph: VecVecGraph,
+    level_to_vertex: Vec<Vertex>,
+    vertex_to_level: Vec<u32>,
 }
 
 impl ContractedGraph {
@@ -46,6 +53,42 @@ impl ContractedGraph {
             level_to_vertex: level_to_vertex.clone(),
             vertex_to_level,
         }
+    }
+
+    pub fn brute_force_contracted_graph(
+        graph: &ReversibleGraph<VecVecGraph>,
+        level_to_vertex: &Vec<u32>,
+    ) -> ContractedGraph {
+        let vertex_to_level = vertex_to_level(level_to_vertex);
+
+        let upward_edges = brute_force_contracted_graph_edges(graph.out_graph(), &vertex_to_level);
+        let upward_graph = VecVecGraph::from_edges(&upward_edges);
+
+        let downard_edges = brute_force_contracted_graph_edges(graph.in_graph(), &vertex_to_level);
+        let downward_graph = VecVecGraph::from_edges(&downard_edges);
+
+        ContractedGraph {
+            upward_graph,
+            downward_graph,
+            level_to_vertex: level_to_vertex.clone(),
+            vertex_to_level,
+        }
+    }
+
+    pub fn upward_graph(&self) -> &dyn Graph {
+        &self.upward_graph
+    }
+
+    pub fn downward_graph(&self) -> &dyn Graph {
+        &self.downward_graph
+    }
+
+    pub fn level_to_vertex(&self) -> &Vec<Vertex> {
+        &self.level_to_vertex
+    }
+
+    pub fn vertex_to_level(&self) -> &Vec<u32> {
+        &self.vertex_to_level
     }
 
     pub fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
@@ -76,6 +119,36 @@ impl ContractedGraph {
 
         Some(min_distance)
     }
+}
+
+fn brute_force_contracted_graph_edges(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<u32>,
+) -> Vec<WeightedEdge> {
+    graph
+        .vertices()
+        .into_par_iter()
+        .progress()
+        .map_init(
+            || {
+                (
+                    DijkstraDataVec::new(graph),
+                    VertexExpandedDataBitSet::new(graph),
+                    VertexDistanceQueueBinaryHeap::new(),
+                )
+            },
+            |(data, expanded, queue), vertex| {
+                let edges = get_ch_edges(graph, data, expanded, queue, vertex_to_level, vertex);
+
+                data.clear();
+                expanded.clear();
+                queue.clear();
+
+                edges
+            },
+        )
+        .flatten()
+        .collect::<Vec<_>>()
 }
 
 pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {

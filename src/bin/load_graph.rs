@@ -43,7 +43,7 @@ fn main() {
 
     println!("brute_force");
     let hub_graph_brute_force =
-        HubGraph::by_brute_force(&cloned_graph, &contracted_graph.vertex_to_level);
+        HubGraph::by_brute_force(&cloned_graph, contracted_graph.vertex_to_level());
     let mut hub_graph_merging = HubGraph::by_merging(&contracted_graph);
 
     let hub_graph = hub_graph_brute_force;

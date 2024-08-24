@@ -27,26 +27,26 @@ impl HubGraph {
 
     pub fn by_merging(graph: &ContractedGraph) -> HubGraph {
         let mut forward_labels = graph
-            .upward_graph
+            .upward_graph()
             .vertices()
             .map(|vertex| vec![HubLabelEntry::new(vertex)])
             .collect_vec();
 
         let mut backward_labels = graph
-            .downward_graph
+            .downward_graph()
             .vertices()
             .map(|vertex| vec![HubLabelEntry::new(vertex)])
             .collect_vec();
 
-        for &vertex in graph.level_to_vertex.iter().rev().progress() {
+        for &vertex in graph.level_to_vertex().iter().rev().progress() {
             create_label(
-                &graph.upward_graph,
+                graph.upward_graph(),
                 vertex,
                 &mut forward_labels,
                 &backward_labels,
             );
             create_label(
-                &graph.downward_graph,
+                graph.downward_graph(),
                 vertex,
                 &mut backward_labels,
                 &forward_labels,
