@@ -60,6 +60,9 @@ fn update_edge_map(
     for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
         for edge in new_edges.iter().chain(updated_edges.iter()) {
             edge_map.insert((tail, edge.head), edge.weight);
+            assert_ne!(tail, edge.head);
+            assert_ne!(edge.head, vertex);
+            assert_ne!(tail, vertex);
             shortcuts.insert((tail, edge.head), vertex);
         }
     }

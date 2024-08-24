@@ -7,6 +7,7 @@ use std::{
 use ahash::HashMap;
 use indicatif::ProgressIterator;
 use itertools::Itertools;
+use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use reversible_graph::ReversibleGraph;
 use serde::{Deserialize, Serialize};
 use vec_vec_graph::VecVecGraph;
@@ -106,6 +107,15 @@ pub trait Graph: Send + Sync {
         0..self.number_of_vertices()
     }
 
+    fn is_bidirectional(&self) -> bool {
+        self.vertices().into_par_iter().all(|vertex| {
+            self.edges(vertex).all(|edge| {
+                self.get_weight(&edge.remove_weight().reversed())
+                    .map_or(false, |rev_weight| rev_weight == edge.weight)
+            })
+        })
+    }
+
     fn get_weight(&self, edge: &Edge) -> Option<Distance>;
 
     fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);
@@ -174,7 +184,7 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
         .progress_count((number_of_vertices + number_of_edges) as u64)
         .skip(number_of_vertices)
         .take(number_of_edges)
-        .map(|edge_line| {
+        .filter_map(|edge_line| {
             // srcIDX trgIDX cost type maxspeed
             let line = edge_line.unwrap();
             let mut values = line.split_whitespace();
@@ -193,7 +203,32 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
                 .unwrap_or_else(|| panic!("no weight found in line {}", line))
                 .parse()
                 .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line));
-            WeightedEdge { tail, head, weight }
+            if tail == head {
+                return None;
+            }
+            Some(WeightedEdge { tail, head, weight })
+        })
+        .collect()
+}
+
+pub fn read_edges_from_gr_file(path: &Path) -> Vec<WeightedEdge> {
+    let file = File::open(path).unwrap();
+    let reader = BufReader::new(file);
+
+    reader
+        .lines()
+        .filter_map(|edge_line| {
+            // srcIDX trgIDX cost type maxspeed
+            let line = edge_line.unwrap();
+            let mut values = line.split_whitespace();
+            let line_type = values.next().unwrap();
+            if line_type != "a" {
+                return None;
+            }
+            let tail: u32 = values.next().unwrap().parse().unwrap();
+            let head: u32 = values.next().unwrap().parse().unwrap();
+            let weight: u32 = values.next().unwrap().parse().unwrap();
+            Some(WeightedEdge::new(tail, head, weight))
         })
         .collect()
 }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use indicatif::ProgressIterator;
 use itertools::Itertools;
@@ -67,14 +67,21 @@ pub fn replace_shortcuts_slowly(
 ) {
     let mut path_without_shortcuts = Vec::new();
 
+    let mut already_seen = HashSet::new();
+
     while path_with_shortcuts.len() >= 2 {
         let head = path_with_shortcuts.pop().unwrap();
         let tail = *path_with_shortcuts.last().unwrap();
+
         if let Some(vertex) = shortcuts.get(&(tail, head)) {
             path_with_shortcuts.push(*vertex);
             path_with_shortcuts.push(head);
         } else {
             path_without_shortcuts.push(head);
+        }
+
+        if !already_seen.insert((tail, head)) {
+            panic!("illegal loop {} -> {}", tail, head);
         }
     }
     path_without_shortcuts.push(path_with_shortcuts.pop().unwrap());
@@ -167,35 +174,6 @@ impl ContractedGraph {
     pub fn vertex_to_level(&self) -> &Vec<u32> {
         &self.vertex_to_level
     }
-
-    pub fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
-        let up_weights = dijkstra_one_to_all_wraped(&self.upward_graph, source);
-        let down_weights = dijkstra_one_to_all_wraped(&self.downward_graph, target);
-
-        let mut min_distance = Distance::MAX;
-        for vertex in 0..std::cmp::max(
-            self.upward_graph.number_of_vertices(),
-            self.downward_graph.number_of_vertices(),
-        ) {
-            let alt_distance = match (
-                up_weights.get_distance(vertex),
-                down_weights.get_distance(vertex),
-            ) {
-                (Some(a), Some(b)) => a + b,
-                _ => Distance::MAX,
-            };
-
-            if alt_distance < min_distance {
-                min_distance = alt_distance;
-            }
-        }
-
-        if min_distance == Distance::MAX {
-            return None;
-        }
-
-        Some(min_distance)
-    }
 }
 
 pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
@@ -236,13 +214,18 @@ pub fn ch_one_to_one_wrapped(
     let mut forward_vertices = forward_data.get_path(vertex).unwrap().vertices;
     let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices;
 
-    replace_shortcuts_slowly(&mut forward_vertices, &ch_graph.shortcuts);
-    replace_shortcuts_slowly(&mut backward_vertices, &ch_graph.shortcuts);
+    // println!("{:?}", forward_vertices);
+    // println!("{:?}", backward_vertices);
 
-    forward_vertices.pop(); // remove double
+    //replace_shortcuts_slowly(&mut backward_vertices, &ch_graph.shortcuts);
+
+    // println!("{:?}", forward_vertices);
+    // println!("{:?}", backward_vertices);
+
     backward_vertices.reverse();
-
+    forward_vertices.pop(); // remove double
     forward_vertices.extend(backward_vertices);
+    replace_shortcuts_slowly(&mut forward_vertices, &ch_graph.shortcuts);
 
     Some(Path {
         vertices: forward_vertices,

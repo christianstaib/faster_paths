@@ -3,8 +3,8 @@ use std::{path::PathBuf, time::Instant};
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Edge, Graph,
+        read_edges_from_fmi_file, read_edges_from_gr_file, reversible_graph::ReversibleGraph,
+        vec_vec_graph::VecVecGraph, Edge, Graph,
     },
     search::{
         ch::contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
@@ -32,17 +32,29 @@ fn main() {
 
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
+    println!(
+        "Is this graph bidirectional? {}",
+        graph.out_graph().is_bidirectional()
+    );
+
     println!("Create contracted graph");
     let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
 
-    println!("brute_force");
+    // println!("brute_force");
+    // let contracted_graph =
+    //     ContractedGraph::by_brute_force(&graph,
+    // contracted_graph.level_to_vertex());
 
     let mut rng = thread_rng();
-    let speedup = (0..100_000)
+    let speedup = (0..10_000)
         .progress()
         .map(|_| {
-            let source = 123; //rng.gen_range(0..graph.out_graph().number_of_vertices());
-            let target = 2345; //rng.gen_range(0..graph.out_graph().number_of_vertices());
+            let source = rng.gen_range(0..graph.out_graph().number_of_vertices());
+            let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
+            // let source = 965726;
+            // let target = 646694;
+
+            // println!("{} {}", source, target);
 
             let start = Instant::now();
             let hl_path = ch_one_to_one_wrapped(&contracted_graph, source, target);
@@ -52,6 +64,7 @@ fn main() {
             if let Some(hl_path) = &hl_path {
                 let mut distance = 0;
                 for (&tail, &head) in hl_path.vertices.iter().tuple_windows() {
+                    // println!("{} -> {}", tail, head);
                     distance += graph.out_graph().get_weight(&Edge { tail, head }).unwrap();
                 }
                 assert_eq!(distance, hl_distance.unwrap());
