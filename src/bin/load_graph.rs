@@ -4,10 +4,11 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, read_edges_from_gr_file, reversible_graph::ReversibleGraph,
-        vec_vec_graph::VecVecGraph, Edge, Graph,
+        vec_vec_graph::VecVecGraph, Distance, Edge, Graph, Vertex,
     },
     search::{
         ch::contracted_graph::{ch_one_to_one_wrapped, ContractedGraph},
+        collections::dijkstra_data::Path,
         dijkstra::dijkstra_one_to_one_wrapped,
     },
 };
@@ -61,14 +62,10 @@ fn main() {
             let ch_time = start.elapsed().as_secs_f64();
 
             let hl_distance = hl_path.as_ref().map(|path| path.distance);
-            if let Some(hl_path) = &hl_path {
-                let mut distance = 0;
-                for (&tail, &head) in hl_path.vertices.iter().tuple_windows() {
-                    // println!("{} -> {}", tail, head);
-                    distance += graph.out_graph().get_weight(&Edge { tail, head }).unwrap();
-                }
-                assert_eq!(distance, hl_distance.unwrap());
-            }
+
+            let distance =
+                hl_path.and_then(|path| get_path_distance(graph.out_graph(), &path.vertices));
+            assert_eq!(distance, hl_distance);
 
             let start = Instant::now();
             let dijkstra_distance = dijkstra_one_to_one_wrapped(graph.out_graph(), source, target)
@@ -85,4 +82,11 @@ fn main() {
         "average speedups {:?}",
         speedup.iter().sum::<f64>() / speedup.len() as f64
     );
+}
+
+fn get_path_distance(graph: &dyn Graph, path: &Vec<Vertex>) -> Option<Distance> {
+    path.iter()
+        .tuple_windows()
+        .map(|(&tail, &head)| graph.get_weight(&Edge { tail, head }))
+        .sum()
 }

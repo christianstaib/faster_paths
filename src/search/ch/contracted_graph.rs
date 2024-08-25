@@ -211,20 +211,22 @@ pub fn ch_one_to_one_wrapped(
         target,
     )?;
 
+    // get (source -> vertex)
     let mut forward_vertices = forward_data.get_path(vertex).unwrap().vertices;
+
+    // get (target -> vertex)
     let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices;
-
-    // println!("{:?}", forward_vertices);
-    // println!("{:?}", backward_vertices);
-
-    //replace_shortcuts_slowly(&mut backward_vertices, &ch_graph.shortcuts);
-
-    // println!("{:?}", forward_vertices);
-    // println!("{:?}", backward_vertices);
-
+    // get (vertex -> target)
     backward_vertices.reverse();
+
+    // Remove vertex from (source -> vertex) so that (source -> vertex) + (vertex ->
+    // target) has no (vertex -> vertex)
     forward_vertices.pop(); // remove double
+
+    // get (source -> target)
     forward_vertices.extend(backward_vertices);
+
+    // replace the shortcuts
     replace_shortcuts_slowly(&mut forward_vertices, &ch_graph.shortcuts);
 
     Some(Path {
