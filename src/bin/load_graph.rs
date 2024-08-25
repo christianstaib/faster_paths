@@ -41,9 +41,10 @@ fn main() {
     println!("Create contracted graph");
     let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
 
-    println!("brute_force");
-    let contracted_graph =
-        ContractedGraph::by_brute_force(&graph, contracted_graph.level_to_vertex());
+    // println!("brute_force");
+    // let contracted_graph =
+    //     ContractedGraph::by_brute_force(&graph,
+    // contracted_graph.level_to_vertex());
 
     let mut rng = thread_rng();
     let speedup = (0..10_000)

@@ -150,7 +150,6 @@ impl ContractedGraph {
 
         let mut shortcuts = HashMap::new();
         shortcuts.extend(upward_shortcuts);
-        // shortcuts.extend(downward_shortcuts);
 
         shortcuts.extend(
             downward_shortcuts
@@ -226,13 +225,6 @@ pub fn ch_one_to_one_wrapped(
     let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices;
     // get (vertex -> target)
     backward_vertices.reverse();
-
-    // println!("{:?}", forward_vertices);
-    // println!("{:?}", backward_vertices);
-    // println!("f");
-    replace_shortcuts_slowly(&mut forward_vertices, &ch_graph.shortcuts);
-    // println!("b");
-    replace_shortcuts_slowly(&mut backward_vertices, &ch_graph.shortcuts);
 
     // Remove vertex from (source -> vertex) so that (source -> vertex) + (vertex ->
     // target) has no (vertex -> vertex)

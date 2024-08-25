@@ -21,6 +21,8 @@ pub type Vertex = u32;
 pub type EdgeId = u32;
 pub type Distance = u32;
 
+pub type Level = u32;
+
 // struct Edge {
 //     pub tail: VertexId,
 //     pub head: VertexId,

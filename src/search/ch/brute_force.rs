@@ -4,7 +4,7 @@ use indicatif::ParallelProgressIterator;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
-    graphs::{Distance, Graph, Vertex, WeightedEdge},
+    graphs::{Distance, Graph, Level, Vertex, WeightedEdge},
     search::collections::{
         dijkstra_data::{DijkstraData, DijkstraDataVec},
         vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
@@ -64,8 +64,8 @@ pub fn get_ch_edges(
     // A vertex is a head of a ch edge if its levels equals the max level on its
     // path from the source. The tail of this ch edge is is the vertex with the
     // max level on the path to the head's predecessor
-    let mut max_level_on_path = HashMap::new();
-    max_level_on_path.insert(source, (vertex_to_level[source as usize], source));
+    let mut max_level: HashMap<Vertex, (Level, Vertex)> = HashMap::new();
+    max_level.insert(source, (vertex_to_level[source as usize], source));
 
     // Keeps track of vertices that potentially could be the head of a ch edge with
     // a tail in source. If there are no more alive vertices, the search can be
@@ -84,10 +84,10 @@ pub fn get_ch_edges(
             continue;
         }
         if alive.is_empty() {
-            // break;
+            break;
         }
 
-        let (max_level_tail, max_level_tail_vertex) = max_level_on_path[&tail];
+        let (max_level_tail, max_level_tail_vertex) = max_level[&tail];
         let level_tail = vertex_to_level[tail as usize];
 
         // Check if tail is a head of a ch edge
@@ -96,7 +96,7 @@ pub fn get_ch_edges(
 
             // Dont create a edge from source to source. source has no predecessor
             if let Some(predecessor) = data.get_predecessor(tail) {
-                let shortcut_tail = max_level_on_path.get(&predecessor).unwrap().1;
+                let shortcut_tail = max_level.get(&predecessor).unwrap().1;
                 let shortcut_head = tail;
 
                 // Only add edge if its tail is source. This function only returns edges with a
@@ -137,9 +137,9 @@ pub fn get_ch_edges(
 
                 let level_head = vertex_to_level[edge.head as usize];
                 if level_head > max_level_tail {
-                    max_level_on_path.insert(edge.head, (level_head, edge.head));
+                    max_level.insert(edge.head, (level_head, edge.head));
                 } else {
-                    max_level_on_path.insert(edge.head, (max_level_tail, max_level_tail_vertex));
+                    max_level.insert(edge.head, (max_level_tail, max_level_tail_vertex));
                 }
 
                 if tail_is_alive {
