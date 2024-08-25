@@ -100,6 +100,9 @@ pub fn get_ch_edges(
                 // Only add edge if its tail is source. This function only returns edges with a
                 // tail in source.
                 if edge_tail == source {
+                    if edge_tail == 8771 {
+                        println!("8771 -> {}", tail);
+                    }
                     edges.push(WeightedEdge::new(
                         edge_tail,
                         tail,
@@ -108,7 +111,7 @@ pub fn get_ch_edges(
 
                     let mut head = tail;
                     while let Some(skiped_vertex) = data.get_predecessor(head) {
-                        if skiped_vertex == tail {
+                        if (skiped_vertex == tail) && (skiped_vertex == head) {
                             break;
                         }
                         shortcuts.push(((tail, head), skiped_vertex));

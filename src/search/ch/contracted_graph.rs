@@ -148,7 +148,12 @@ impl ContractedGraph {
 
         let mut shortcuts = HashMap::new();
         shortcuts.extend(upward_shortcuts);
-        shortcuts.extend(downward_shortcuts);
+
+        shortcuts.extend(
+            downward_shortcuts
+                .into_iter()
+                .map(|((tail, head), skiped_vertex)| ((head, tail), skiped_vertex)),
+        );
 
         ContractedGraph {
             upward_graph: VecVecGraph::from_edges(&upward_edges),
@@ -218,6 +223,9 @@ pub fn ch_one_to_one_wrapped(
     let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices;
     // get (vertex -> target)
     backward_vertices.reverse();
+
+    println!("{:?}", forward_vertices);
+    println!("{:?}", backward_vertices);
 
     // Remove vertex from (source -> vertex) so that (source -> vertex) + (vertex ->
     // target) has no (vertex -> vertex)
