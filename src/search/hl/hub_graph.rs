@@ -3,10 +3,10 @@ use std::cmp::Ordering;
 use indicatif::ProgressIterator;
 use itertools::Itertools;
 
-use super::half_hub_graph::{get_hub_label_by_merging, HalfHubGraph};
+use super::half_hub_graph::{get_hub_label_by_merging, set_predecessor, HalfHubGraph};
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
-    search::ch::contracted_graph::ContractedGraph,
+    search::{ch::contracted_graph::ContractedGraph, collections::dijkstra_data::Path},
 };
 
 pub struct HubGraph {
@@ -53,6 +53,11 @@ impl HubGraph {
             );
         }
 
+        forward_labels
+            .iter_mut()
+            .chain(backward_labels.iter_mut())
+            .for_each(|label| set_predecessor(label));
+
         let forward = HalfHubGraph::new(&forward_labels);
         let backward = HalfHubGraph::new(&backward_labels);
 
@@ -70,10 +75,24 @@ fn create_label(
         .edges(vertex)
         .map(|edge| {
             let neighbor_label = labels_direction1.get(edge.head as usize).unwrap();
+            let x = neighbor_label
+                .iter()
+                .find(|entry| entry.distance == 0)
+                .unwrap();
+            assert_eq!(x.vertex, edge.head);
             (Some(edge.clone()), neighbor_label)
         })
         .collect::<Vec<_>>();
     neighbor_labels.push((None, labels_direction1.get(vertex as usize).unwrap()));
+
+    let mut x = neighbor_labels
+        .iter()
+        .map(|(edge, _)| edge)
+        .cloned()
+        .collect_vec();
+    let old_x = x.clone();
+    x.dedup();
+    assert_eq!(old_x, x);
 
     let mut forward_label = get_hub_label_by_merging(&neighbor_labels);
     prune_label(&mut forward_label, labels_direction2);
@@ -114,6 +133,35 @@ impl HubLabelEntry {
             predecessor_index: None,
         }
     }
+}
+
+pub fn path_3(forward_label: &[HubLabelEntry], backward_label: &[HubLabelEntry]) -> Option<Path> {
+    let (distance, (forward_index, backward_index)) = overlapp(forward_label, backward_label)?;
+
+    let mut forward_path = path_2(forward_label, forward_index);
+    forward_path.pop();
+    let mut backward_path = path_2(backward_label, backward_index);
+    backward_path.reverse();
+
+    forward_path.extend(backward_path);
+
+    Some(Path {
+        vertices: forward_path,
+        distance,
+    })
+}
+
+pub fn path_2(label: &[HubLabelEntry], index: usize) -> Vec<Vertex> {
+    let mut path = vec![label[index].vertex]; //Vec::new();
+
+    let mut index = index;
+    while let Some(predecessor_index) = label[index].predecessor_index {
+        index = predecessor_index as usize;
+        path.push(label[index].vertex);
+    }
+
+    path.reverse();
+    path
 }
 
 pub fn overlapp(

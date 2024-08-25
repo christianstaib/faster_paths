@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use clap::Parser;
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
 use rayon::iter::{
@@ -151,23 +152,24 @@ pub fn get_hub_label_with_brute_force(
     hub_label
 }
 
-fn set_predecessor(hub_label: &mut Vec<HubLabelEntry>) {
-    // let vertex_to_index = hub_label
-    //     .iter()
-    //     .enumerate()
-    //     .map(|(index, entry)| (entry.vertex, index as u32))
-    //     .collect::<HashMap<_, _>>();
+pub fn set_predecessor(hub_label: &mut Vec<HubLabelEntry>) {
+    let vertex_to_index = hub_label
+        .iter()
+        .enumerate()
+        .map(|(index, entry)| (entry.vertex, index as u32))
+        .collect::<HashMap<_, _>>();
 
-    // hub_label.iter_mut().for_each(|entry| {
-    //     if let Some(ref mut predecessor) = entry.predecessor_index {
-    //         *predecessor = *vertex_to_index.get(&predecessor).unwrap();
-    //     }
-    // });
+    hub_label.iter_mut().for_each(|entry| {
+        if let Some(ref mut predecessor) = entry.predecessor_index {
+            *predecessor = *vertex_to_index.get(&predecessor).unwrap();
+        }
+    });
 }
 
 pub fn get_hub_label_by_merging(
     labels: &Vec<(Option<WeightedEdge>, &Vec<HubLabelEntry>)>,
 ) -> Vec<HubLabelEntry> {
+    let mut this_edge = None;
     let mut new_label = Vec::new();
 
     let mut labels = labels
@@ -185,6 +187,11 @@ pub fn get_hub_label_by_merging(
         let mut labels_with_min_vertex = Vec::new();
 
         for (edge, label) in labels.iter_mut() {
+            let edge = edge.as_ref();
+            if this_edge.is_none() {
+                this_edge = edge.clone();
+            } else {
+            }
             let entry = *label.peek().unwrap();
 
             if entry.vertex <= min_entry.vertex {
@@ -200,7 +207,11 @@ pub fn get_hub_label_by_merging(
                     entry.distance + edge.as_ref().map(|edge| edge.weight).unwrap_or(0);
                 if alternative_distance < min_entry.distance {
                     min_entry.distance = alternative_distance;
-                    min_entry.predecessor_index = edge.as_ref().map(|edge| edge.head);
+                    if entry.predecessor_index.is_none() && edge.is_some() {
+                        min_entry.predecessor_index = Some(edge.as_ref().unwrap().tail);
+                    } else {
+                        min_entry.predecessor_index = entry.predecessor_index;
+                    }
                 }
                 labels_with_min_vertex.push(label);
             }

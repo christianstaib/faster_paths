@@ -118,6 +118,13 @@ pub trait Graph: Send + Sync {
         })
     }
 
+    fn get_path_distance(&self, path: &Vec<Vertex>) -> Option<Distance> {
+        path.iter()
+            .tuple_windows()
+            .map(|(&tail, &head)| self.get_weight(&Edge { tail, head }))
+            .sum()
+    }
+
     fn get_weight(&self, edge: &Edge) -> Option<Distance>;
 
     fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);

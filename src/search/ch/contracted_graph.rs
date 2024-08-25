@@ -181,6 +181,10 @@ impl ContractedGraph {
     pub fn vertex_to_level(&self) -> &Vec<u32> {
         &self.vertex_to_level
     }
+
+    pub fn shortcuts(&self) -> &HashMap<(Vertex, Vertex), Vertex> {
+        &self.shortcuts
+    }
 }
 
 pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
@@ -218,28 +222,15 @@ pub fn ch_one_to_one_wrapped(
         target,
     )?;
 
-    // get (source -> vertex)
-    let mut forward_vertices = forward_data.get_path(vertex).unwrap().vertices;
+    let mut vertices = forward_data.get_path(vertex).unwrap().vertices; // (source -> vertex)
+    let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices; // (target -> vertex)
+    backward_vertices.reverse(); // (vertex -> target)
+    vertices.pop(); // remove double vertex ((source -> vertex) -> (vertex -> target))
+    vertices.extend(backward_vertices); // get (source -> target)
 
-    // get (target -> vertex)
-    let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices;
-    // get (vertex -> target)
-    backward_vertices.reverse();
+    replace_shortcuts_slowly(&mut vertices, &ch_graph.shortcuts); // replace the shortcuts
 
-    // Remove vertex from (source -> vertex) so that (source -> vertex) + (vertex ->
-    // target) has no (vertex -> vertex)
-    forward_vertices.pop(); // remove double
-
-    // get (source -> target)
-    forward_vertices.extend(backward_vertices);
-
-    // replace the shortcuts
-    replace_shortcuts_slowly(&mut forward_vertices, &ch_graph.shortcuts);
-
-    Some(Path {
-        vertices: forward_vertices,
-        distance,
-    })
+    Some(Path { vertices, distance })
 }
 
 pub fn ch_one_to_one(
