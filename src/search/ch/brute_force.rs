@@ -92,30 +92,33 @@ pub fn get_ch_edges(
 
         // Check if tail is a head of a ch edge
         if max_level_tail == level_tail {
-            // Dont create a edge from source to source
-            if tail != source {
-                let predecessor = data.get_predecessor(tail).unwrap();
-                let edge_tail = max_level_on_path.get(&predecessor).unwrap().1;
+            // for less confusion, rename variables
+
+            // Dont create a edge from source to source. source has no predecessor
+            if let Some(predecessor) = data.get_predecessor(tail) {
+                let shortcut_tail = max_level_on_path.get(&predecessor).unwrap().1;
+                let shortcut_head = tail;
 
                 // Only add edge if its tail is source. This function only returns edges with a
                 // tail in source.
-                if edge_tail == source {
-                    if edge_tail == 8771 {
-                        println!("8771 -> {}", tail);
-                    }
+                if shortcut_tail == source {
                     edges.push(WeightedEdge::new(
-                        edge_tail,
-                        tail,
+                        shortcut_tail,
+                        shortcut_head,
                         data.get_distance(tail).unwrap(),
                     ));
 
-                    let mut head = tail;
-                    while let Some(skiped_vertex) = data.get_predecessor(head) {
-                        if (skiped_vertex == tail) && (skiped_vertex == head) {
-                            break;
-                        }
-                        shortcuts.push(((tail, head), skiped_vertex));
-                        head = skiped_vertex;
+                    // if let Some(head_predecessor) = data.get_predecessor(shortcut_head) {
+                    if let Some(mut path) = data.get_path(shortcut_head) {
+                        path.vertices.remove(0);
+                        path.vertices.pop();
+
+                        path.vertices
+                            .iter()
+                            .max_by_key(|&&vertex| vertex_to_level[vertex as usize])
+                            .map(|&skiped_vertex| {
+                                shortcuts.push(((shortcut_tail, shortcut_head), skiped_vertex))
+                            });
                     }
                 }
                 alive.remove(&tail);

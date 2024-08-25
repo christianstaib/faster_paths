@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Instant};
+use std::{path::PathBuf, process::exit, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
@@ -51,10 +51,10 @@ fn main() {
         .map(|_| {
             let source = rng.gen_range(0..graph.out_graph().number_of_vertices());
             let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
-            let source = 14419;
-            let target = 5968;
+            // let source = 14419;
+            // let target = 5968;
 
-            println!("{} {}", source, target);
+            // println!("{} {}", source, target);
 
             let start = Instant::now();
             let hl_path = ch_one_to_one_wrapped(&contracted_graph, source, target);
@@ -62,9 +62,9 @@ fn main() {
 
             let hl_distance = hl_path.as_ref().map(|path| path.distance);
 
-            // let distance =
-            //     hl_path.and_then(|path| get_path_distance(graph.out_graph(),
-            // &path.vertices)); assert_eq!(distance, hl_distance);
+            let distance =
+                hl_path.and_then(|path| get_path_distance(graph.out_graph(), &path.vertices));
+            assert_eq!(distance, hl_distance);
 
             let start = Instant::now();
             let dijkstra_distance = dijkstra_one_to_one_wrapped(graph.out_graph(), source, target)
@@ -73,6 +73,7 @@ fn main() {
 
             assert_eq!(&hl_distance, &dijkstra_distance);
 
+            // exit(0);
             dijkstra_time / ch_time
         })
         .collect::<Vec<_>>();

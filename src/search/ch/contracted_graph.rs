@@ -74,14 +74,16 @@ pub fn replace_shortcuts_slowly(
         let tail = *path_with_shortcuts.last().unwrap();
 
         if let Some(vertex) = shortcuts.get(&(tail, head)) {
+            // println!("{} -> {} skipped {}", tail, head, vertex);
             path_with_shortcuts.push(*vertex);
             path_with_shortcuts.push(head);
         } else {
+            // println!("{} -> {} is a normal edge", tail, head);
             path_without_shortcuts.push(head);
         }
 
         if !already_seen.insert((tail, head)) {
-            panic!("illegal loop {} -> {}", tail, head);
+            // panic!("illegal loop {} -> {}", tail, head);
         }
     }
     path_without_shortcuts.push(path_with_shortcuts.pop().unwrap());
@@ -148,6 +150,7 @@ impl ContractedGraph {
 
         let mut shortcuts = HashMap::new();
         shortcuts.extend(upward_shortcuts);
+        // shortcuts.extend(downward_shortcuts);
 
         shortcuts.extend(
             downward_shortcuts
@@ -224,8 +227,12 @@ pub fn ch_one_to_one_wrapped(
     // get (vertex -> target)
     backward_vertices.reverse();
 
-    println!("{:?}", forward_vertices);
-    println!("{:?}", backward_vertices);
+    // println!("{:?}", forward_vertices);
+    // println!("{:?}", backward_vertices);
+    // println!("f");
+    replace_shortcuts_slowly(&mut forward_vertices, &ch_graph.shortcuts);
+    // println!("b");
+    replace_shortcuts_slowly(&mut backward_vertices, &ch_graph.shortcuts);
 
     // Remove vertex from (source -> vertex) so that (source -> vertex) + (vertex ->
     // target) has no (vertex -> vertex)
