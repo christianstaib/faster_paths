@@ -1,16 +1,16 @@
-use std::{path::PathBuf, process::exit, time::Instant};
+use std::{path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        read_edges_from_fmi_file, read_edges_from_gr_file, reversible_graph::ReversibleGraph,
-        vec_vec_graph::VecVecGraph, Graph,
+        read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
+        Graph,
     },
     search::{
-        ch::contracted_graph::{ch_one_to_one_wrapped, replace_shortcuts_slowly, ContractedGraph},
+        ch::contracted_graph::ContractedGraph,
         dijkstra::dijkstra_one_to_one_wrapped,
-        hl::hub_graph::{self, overlapp, path_3, HubGraph},
-        path,
+        hl::hub_graph::{path_3, HubGraph},
+        shortcuts::replace_shortcuts_slowly,
     },
 };
 use indicatif::ProgressIterator;
@@ -61,14 +61,13 @@ fn main() {
     }
 
     let mut rng = thread_rng();
-    let speedup = (0..10_000)
+    let speedup = (0..100_000)
         .progress()
         .map(|_| {
             let source = rng.gen_range(0..graph.out_graph().number_of_vertices());
             let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
 
             let start = Instant::now();
-            // let hl_path = ch_one_to_one_wrapped(&contracted_graph, source, target);
             let mut hl_path = path_3(
                 hub_graph.forward.get_label(source),
                 hub_graph.backward.get_label(target),
@@ -79,8 +78,6 @@ fn main() {
             if let Some(ref mut path) = hl_path {
                 replace_shortcuts_slowly(&mut path.vertices, contracted_graph.shortcuts());
             }
-
-            // let hl_distance = hl_path.as_ref().map(|path| path.distance);
 
             let distance =
                 hl_path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));

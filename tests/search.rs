@@ -26,19 +26,4 @@ fn dijkstra() {
 }
 
 #[test]
-fn ch_wittness() {
-    let (graph, test_cases) = large_test_graph();
-
-    let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
-
-    test_cases.iter().for_each(
-        |ShortestPathTestCase {
-             request: ShortestPathRequest { source, target },
-             distance,
-         }| {
-            let ch_distance = contracted_graph.shortest_path_distance(*source, *target);
-
-            assert_eq!(distance, &ch_distance);
-        },
-    );
-}
+fn ch_wittness() {}

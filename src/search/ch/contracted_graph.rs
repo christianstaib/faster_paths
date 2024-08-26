@@ -1,7 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use indicatif::ProgressIterator;
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -18,7 +17,7 @@ use crate::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
-        dijkstra::dijkstra_one_to_all_wraped,
+        shortcuts::replace_shortcuts_slowly,
     },
 };
 
@@ -43,69 +42,6 @@ pub fn get_slow_shortcuts(
     }
 
     shortcuts
-}
-
-pub fn get_fast_shortcuts(
-    single_step_shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
-) -> HashMap<(Vertex, Vertex), Vec<Vertex>> {
-    let mut shortcuts = HashMap::new();
-
-    for (&(tail, head), &vertex) in single_step_shortcuts.iter() {
-        let mut path = vec![tail, vertex, head];
-        path.remove(0); // remove tail
-        path.pop(); // remove head
-        replace_shortcuts_slowly(&mut path, &single_step_shortcuts);
-        shortcuts.insert((tail, head), path);
-    }
-
-    shortcuts
-}
-
-pub fn replace_shortcuts_slowly(
-    path_with_shortcuts: &mut Vec<Vertex>,
-    shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
-) {
-    let mut path_without_shortcuts = Vec::new();
-
-    let mut already_seen = HashSet::new();
-
-    while path_with_shortcuts.len() >= 2 {
-        let head = path_with_shortcuts.pop().unwrap();
-        let tail = *path_with_shortcuts.last().unwrap();
-
-        if let Some(vertex) = shortcuts.get(&(tail, head)) {
-            // println!("{} -> {} skipped {}", tail, head, vertex);
-            path_with_shortcuts.push(*vertex);
-            path_with_shortcuts.push(head);
-        } else {
-            // println!("{} -> {} is a normal edge", tail, head);
-            path_without_shortcuts.push(head);
-        }
-
-        if !already_seen.insert((tail, head)) {
-            // panic!("illegal loop {} -> {}", tail, head);
-        }
-    }
-    path_without_shortcuts.push(path_with_shortcuts.pop().unwrap());
-    path_without_shortcuts.reverse();
-
-    *path_with_shortcuts = path_without_shortcuts;
-}
-
-pub fn replace_shortcuts_fast(
-    path_with_shortcuts: &mut Vec<Vertex>,
-    shortcuts: &HashMap<(Vertex, Vertex), Vec<Vertex>>,
-) {
-    let mut path_without_shortcuts = vec![*path_with_shortcuts.first().unwrap()];
-
-    for (&tail, &head) in path_with_shortcuts.iter().tuple_windows() {
-        if let Some(skiped_vertices) = shortcuts.get(&(tail, head)) {
-            path_without_shortcuts.extend(skiped_vertices);
-        }
-        path_without_shortcuts.push(head)
-    }
-
-    *path_with_shortcuts = path_without_shortcuts;
 }
 
 impl ContractedGraph {
@@ -309,4 +245,48 @@ pub fn ch_one_to_one(
     }
 
     meeting_vertex_and_distance
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ch_one_to_one_wrapped, ContractedGraph};
+    use crate::graphs::{large_test_graph, Graph};
+
+    #[test]
+    fn contration_by_witness_search() {
+        let (graph, tests) = large_test_graph();
+        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+
+        for test in tests {
+            let path =
+                ch_one_to_one_wrapped(&contracted_graph, test.request.source, test.request.target);
+
+            let distance = path.as_ref().map(|path| path.distance);
+            assert_eq!(test.distance, distance);
+
+            let path_distance =
+                path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
+            assert_eq!(test.distance, path_distance)
+        }
+    }
+
+    #[test]
+    fn contration_brute_force() {
+        let (graph, tests) = large_test_graph();
+        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+        let contracted_graph =
+            ContractedGraph::by_brute_force(&graph, &contracted_graph.level_to_vertex);
+
+        for test in tests {
+            let path =
+                ch_one_to_one_wrapped(&contracted_graph, test.request.source, test.request.target);
+
+            let distance = path.as_ref().map(|path| path.distance);
+            assert_eq!(test.distance, distance);
+
+            let path_distance =
+                path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
+            assert_eq!(test.distance, path_distance)
+        }
+    }
 }

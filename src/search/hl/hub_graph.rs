@@ -203,3 +203,39 @@ pub fn overlapp(
 
     overlapp
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        graphs::{large_test_graph, Graph},
+        search::{
+            ch::contracted_graph::ContractedGraph,
+            hl::hub_graph::{path_3, HubGraph},
+            shortcuts::replace_shortcuts_slowly,
+        },
+    };
+
+    #[test]
+    fn hub_graph_by_merging() {
+        let (graph, tests) = large_test_graph();
+        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+        let hub_graph = HubGraph::by_merging(&contracted_graph);
+
+        for test in tests {
+            let forward_label = hub_graph.forward.get_label(test.request.source);
+            let backward_label = hub_graph.backward.get_label(test.request.target);
+            let mut path = path_3(forward_label, backward_label);
+
+            if let Some(ref mut path) = path {
+                replace_shortcuts_slowly(&mut path.vertices, contracted_graph.shortcuts());
+            }
+
+            let distance = path.as_ref().map(|path| path.distance);
+            assert_eq!(test.distance, distance);
+
+            let path_distance =
+                path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
+            assert_eq!(test.distance, path_distance)
+        }
+    }
+}
