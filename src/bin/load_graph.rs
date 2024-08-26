@@ -52,15 +52,17 @@ fn main() {
         }
     }
 
-    println!("brute_force");
-    let contracted_graph =
-        ContractedGraph::by_brute_force(&graph, contracted_graph.level_to_vertex());
+    // println!("brute_force");
+    // let contracted_graph =
+    //     ContractedGraph::by_brute_force(&graph,
+    // contracted_graph.level_to_vertex());
 
     //  let contracted_graph =
     //      ContractedGraph::by_brute_force(&graph,
     // &contracted_graph.level_to_vertex());
 
     let hub_graph = HubGraph::by_brute_force(&graph, contracted_graph.vertex_to_level());
+    println!("average label size is {}", hub_graph.average_label_size());
 
     // for &vertex in contracted_graph.level_to_vertex().iter().rev().take(10) {
     //     println!("v:{} {:?}", vertex, hub_graph.forward.get_label(vertex));
@@ -74,7 +76,7 @@ fn main() {
             let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
 
             let start = Instant::now();
-            let mut hl_path = get_path_from_overlapp(
+            let hl_path = get_path_from_overlapp(
                 hub_graph.forward.get_label(source),
                 hub_graph.backward.get_label(target),
                 &hub_graph.shortcuts,

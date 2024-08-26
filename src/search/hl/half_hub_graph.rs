@@ -91,6 +91,10 @@ impl HalfHubGraph {
         let &(start, stop) = self.indices.get(vertex as usize).unwrap_or(&(0, 0));
         &self.labels[start as usize..stop as usize]
     }
+
+    pub fn average_label_size(&self) -> f32 {
+        self.labels.len() as f32 / self.indices.len() as f32
+    }
 }
 
 pub fn get_hub_label_with_brute_force(

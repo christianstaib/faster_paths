@@ -85,6 +85,10 @@ impl HubGraph {
             shortcuts,
         }
     }
+
+    pub fn average_label_size(&self) -> f32 {
+        (self.forward.average_label_size() + self.backward.average_label_size()) / 2.0
+    }
 }
 
 fn create_label(
