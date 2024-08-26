@@ -108,18 +108,16 @@ pub fn get_ch_edges(
                         data.get_distance(tail).unwrap(),
                     ));
 
-                    // if let Some(head_predecessor) = data.get_predecessor(shortcut_head) {
-                    if let Some(mut path) = data.get_path(shortcut_head) {
-                        path.vertices.remove(0);
-                        path.vertices.pop();
+                    let mut path = data.get_path(shortcut_head).unwrap();
+                    path.vertices.remove(0);
+                    path.vertices.pop();
 
-                        path.vertices
-                            .iter()
-                            .max_by_key(|&&vertex| vertex_to_level[vertex as usize])
-                            .map(|&skiped_vertex| {
-                                shortcuts.push(((shortcut_tail, shortcut_head), skiped_vertex))
-                            });
-                    }
+                    path.vertices
+                        .iter()
+                        .max_by_key(|&&vertex| vertex_to_level[vertex as usize])
+                        .map(|&skiped_vertex| {
+                            shortcuts.push(((shortcut_tail, shortcut_head), skiped_vertex))
+                        });
                 }
                 alive.remove(&tail);
             }

@@ -7,9 +7,12 @@ use faster_paths::{
         Graph,
     },
     search::{
-        ch::contracted_graph::ContractedGraph,
+        ch::{
+            contracted_graph::{self, ch_one_to_one_wrapped, ContractedGraph},
+            contraction,
+        },
         dijkstra::dijkstra_one_to_one_wrapped,
-        hl::hub_graph::{path_3, HubGraph},
+        hl::hub_graph::{get_path_from_overlapp, HubGraph},
         shortcuts::replace_shortcuts_slowly,
     },
 };
@@ -49,16 +52,19 @@ fn main() {
         }
     }
 
-    // println!("brute_force");
-    // let contracted_graph =
-    //     ContractedGraph::by_brute_force(&graph,
-    // contracted_graph.level_to_vertex());
+    println!("brute_force");
+    let contracted_graph =
+        ContractedGraph::by_brute_force(&graph, contracted_graph.level_to_vertex());
 
-    let hub_graph = HubGraph::by_merging(&contracted_graph);
+    //  let contracted_graph =
+    //      ContractedGraph::by_brute_force(&graph,
+    // &contracted_graph.level_to_vertex());
 
-    for &vertex in contracted_graph.level_to_vertex().iter().rev().take(10) {
-        println!("v:{} {:?}", vertex, hub_graph.forward.get_label(vertex));
-    }
+    let hub_graph = HubGraph::by_brute_force(&graph, contracted_graph.vertex_to_level());
+
+    // for &vertex in contracted_graph.level_to_vertex().iter().rev().take(10) {
+    //     println!("v:{} {:?}", vertex, hub_graph.forward.get_label(vertex));
+    // }
 
     let mut rng = thread_rng();
     let speedup = (0..100_000)
@@ -68,16 +74,14 @@ fn main() {
             let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
 
             let start = Instant::now();
-            let mut hl_path = path_3(
+            let mut hl_path = get_path_from_overlapp(
                 hub_graph.forward.get_label(source),
                 hub_graph.backward.get_label(target),
+                &hub_graph.shortcuts,
             );
+            // let mut hl_path = ch_one_to_one_wrapped(&contracted_graph, source, target);
             let hl_distance = hl_path.as_ref().map(|path| path.distance);
             let ch_time = start.elapsed().as_secs_f64();
-
-            if let Some(ref mut path) = hl_path {
-                replace_shortcuts_slowly(&mut path.vertices, contracted_graph.shortcuts());
-            }
 
             let distance =
                 hl_path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));

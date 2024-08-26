@@ -10,10 +10,13 @@ use rayon::iter::{
 use super::hub_graph::{overlapp, HubLabelEntry};
 use crate::{
     graphs::{Distance, Graph, Vertex, WeightedEdge},
-    search::collections::{
-        dijkstra_data::{DijkstraData, DijkstraDataVec},
-        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-        vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+    search::{
+        collections::{
+            dijkstra_data::{DijkstraData, DijkstraDataVec},
+            vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+        },
+        shortcuts,
     },
 };
 
@@ -39,8 +42,11 @@ impl HalfHubGraph {
         HalfHubGraph { labels, indices }
     }
 
-    pub fn by_brute_force(graph: &dyn Graph, vertex_to_level: &Vec<u32>) -> HalfHubGraph {
-        let labels = (0..graph.number_of_vertices())
+    pub fn by_brute_force(
+        graph: &dyn Graph,
+        vertex_to_level: &Vec<u32>,
+    ) -> (HalfHubGraph, HashMap<(Vertex, Vertex), Vertex>) {
+        let labels_and_shortcuts = (0..graph.number_of_vertices())
             .into_par_iter()
             .progress()
             .map_init(
@@ -52,7 +58,7 @@ impl HalfHubGraph {
                     )
                 },
                 |(data, expanded, queue), vertex| {
-                    let label = get_hub_label_with_brute_force(
+                    let labels_and_shortcuts = get_hub_label_with_brute_force(
                         graph,
                         data,
                         expanded,
@@ -65,12 +71,20 @@ impl HalfHubGraph {
                     expanded.clear();
                     queue.clear();
 
-                    label
+                    labels_and_shortcuts
                 },
             )
             .collect::<Vec<_>>();
 
-        HalfHubGraph::new(&labels)
+        let mut all_labels = Vec::new();
+        let mut all_shortcuts = HashMap::new();
+
+        for (label, shortcuts) in labels_and_shortcuts {
+            all_labels.push(label);
+            all_shortcuts.extend(shortcuts);
+        }
+
+        (HalfHubGraph::new(&all_labels), all_shortcuts)
     }
 
     pub fn get_label(&self, vertex: Vertex) -> &[HubLabelEntry] {
@@ -86,7 +100,7 @@ pub fn get_hub_label_with_brute_force(
     queue: &mut dyn VertexDistanceQueue,
     vertex_to_level: &Vec<u32>,
     source: Vertex,
-) -> Vec<HubLabelEntry> {
+) -> (Vec<HubLabelEntry>, Vec<((Vertex, Vertex), Vertex)>) {
     // Maps (vertex -> (max level on path from source to vertex, associated vertex))
     //
     // A vertex is a head of a ch edge if its levels equals the max level on its
@@ -98,11 +112,9 @@ pub fn get_hub_label_with_brute_force(
     data.set_distance(source, 0);
     queue.insert(source, 0);
 
-    let mut hub_label = vec![HubLabelEntry {
-        vertex: source,
-        distance: 0,
-        predecessor_index: None,
-    }];
+    let mut shortcuts = Vec::new();
+
+    let mut hub_label = vec![HubLabelEntry::new(source)];
 
     while let Some((tail, distance_tail)) = queue.pop() {
         if expanded.expand(tail) {
@@ -113,18 +125,35 @@ pub fn get_hub_label_with_brute_force(
         let level_tail = vertex_to_level[tail as usize];
 
         // Check if tail is a head of a ch edge
-        // And dont create a edge from source to source
-        if (max_level_tail == level_tail) && (tail != source) {
-            let predecessor = data.get_predecessor(tail).unwrap();
-            let edge_tail = max_level_on_path.get(&predecessor).unwrap().1;
+        if max_level_tail == level_tail {
+            // for less confusion, rename variables
 
-            // Only add edge if its tail is source. This function only returns edges with a
-            // tail in source.
-            hub_label.push(HubLabelEntry {
-                vertex: tail,
-                distance: data.get_distance(tail).unwrap(),
-                predecessor_index: Some(edge_tail),
-            });
+            // Dont create a edge from source to source. source has no predecessor
+            if let Some(predecessor) = data.get_predecessor(tail) {
+                let entry_predecessor = max_level_on_path.get(&predecessor).unwrap().1;
+                let shortcut_head = tail;
+
+                // Only add edge if its tail is source. This function only returns edges with a
+                // tail in source.
+                hub_label.push(HubLabelEntry {
+                    vertex: tail,
+                    distance: data.get_distance(tail).unwrap(),
+                    predecessor_index: Some(entry_predecessor),
+                });
+
+                if entry_predecessor == source {
+                    let mut path = data.get_path(shortcut_head).unwrap();
+                    path.vertices.remove(0);
+                    path.vertices.pop();
+
+                    path.vertices
+                        .iter()
+                        .max_by_key(|&&vertex| vertex_to_level[vertex as usize])
+                        .map(|&skiped_vertex| {
+                            shortcuts.push(((entry_predecessor, shortcut_head), skiped_vertex))
+                        });
+                }
+            }
         }
 
         for edge in graph.edges(tail) {
@@ -149,7 +178,7 @@ pub fn get_hub_label_with_brute_force(
 
     set_predecessor(&mut hub_label);
 
-    hub_label
+    (hub_label, shortcuts)
 }
 
 pub fn set_predecessor(hub_label: &mut Vec<HubLabelEntry>) {

@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashMap};
 
 use indicatif::ProgressIterator;
 use itertools::Itertools;
@@ -6,12 +6,17 @@ use itertools::Itertools;
 use super::half_hub_graph::{get_hub_label_by_merging, set_predecessor, HalfHubGraph};
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
-    search::{ch::contracted_graph::ContractedGraph, collections::dijkstra_data::Path},
+    search::{
+        ch::contracted_graph::{self, ContractedGraph},
+        collections::dijkstra_data::Path,
+        shortcuts::{self, replace_shortcuts_slowly},
+    },
 };
 
 pub struct HubGraph {
     pub forward: HalfHubGraph,
     pub backward: HalfHubGraph,
+    pub shortcuts: HashMap<(Vertex, Vertex), Vertex>,
 }
 
 impl HubGraph {
@@ -19,10 +24,22 @@ impl HubGraph {
         graph: &ReversibleGraph<G>,
         vertex_to_level: &Vec<u32>,
     ) -> HubGraph {
-        let forward = HalfHubGraph::by_brute_force(graph.out_graph(), vertex_to_level);
-        let backward = HalfHubGraph::by_brute_force(graph.in_graph(), vertex_to_level);
+        let (forward, mut shortcuts) =
+            HalfHubGraph::by_brute_force(graph.out_graph(), vertex_to_level);
+        let (backward, backward_shortcuts) =
+            HalfHubGraph::by_brute_force(graph.in_graph(), vertex_to_level);
 
-        HubGraph { forward, backward }
+        shortcuts.extend(
+            backward_shortcuts
+                .into_iter()
+                .map(|((tail, head), skiped_vertex)| ((head, tail), skiped_vertex)),
+        );
+
+        HubGraph {
+            forward,
+            backward,
+            shortcuts,
+        }
     }
 
     pub fn by_merging(graph: &ContractedGraph) -> HubGraph {
@@ -60,8 +77,13 @@ impl HubGraph {
 
         let forward = HalfHubGraph::new(&forward_labels);
         let backward = HalfHubGraph::new(&backward_labels);
+        let shortcuts = graph.shortcuts().clone();
 
-        HubGraph { forward, backward }
+        HubGraph {
+            forward,
+            backward,
+            shortcuts,
+        }
     }
 }
 
@@ -135,15 +157,21 @@ impl HubLabelEntry {
     }
 }
 
-pub fn path_3(forward_label: &[HubLabelEntry], backward_label: &[HubLabelEntry]) -> Option<Path> {
+pub fn get_path_from_overlapp(
+    forward_label: &[HubLabelEntry],
+    backward_label: &[HubLabelEntry],
+    shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
+) -> Option<Path> {
     let (distance, (forward_index, backward_index)) = overlapp(forward_label, backward_label)?;
 
-    let mut forward_path = path_2(forward_label, forward_index);
+    let mut forward_path = get_path_from_label(forward_label, forward_index);
     forward_path.pop();
-    let mut backward_path = path_2(backward_label, backward_index);
+    let mut backward_path = get_path_from_label(backward_label, backward_index);
     backward_path.reverse();
 
     forward_path.extend(backward_path);
+
+    replace_shortcuts_slowly(&mut forward_path, shortcuts);
 
     Some(Path {
         vertices: forward_path,
@@ -151,8 +179,8 @@ pub fn path_3(forward_label: &[HubLabelEntry], backward_label: &[HubLabelEntry])
     })
 }
 
-pub fn path_2(label: &[HubLabelEntry], index: usize) -> Vec<Vertex> {
-    let mut path = vec![label[index].vertex]; //Vec::new();
+pub fn get_path_from_label(label: &[HubLabelEntry], index: usize) -> Vec<Vertex> {
+    let mut path = vec![label[index].vertex];
 
     let mut index = index;
     while let Some(predecessor_index) = label[index].predecessor_index {
@@ -210,7 +238,7 @@ mod tests {
         graphs::{large_test_graph, Graph},
         search::{
             ch::contracted_graph::ContractedGraph,
-            hl::hub_graph::{path_3, HubGraph},
+            hl::hub_graph::{get_path_from_overlapp, HubGraph},
             shortcuts::replace_shortcuts_slowly,
         },
     };
@@ -224,7 +252,7 @@ mod tests {
         for test in tests {
             let forward_label = hub_graph.forward.get_label(test.request.source);
             let backward_label = hub_graph.backward.get_label(test.request.target);
-            let mut path = path_3(forward_label, backward_label);
+            let mut path = get_path_from_overlapp(forward_label, backward_label);
 
             if let Some(ref mut path) = path {
                 replace_shortcuts_slowly(&mut path.vertices, contracted_graph.shortcuts());
