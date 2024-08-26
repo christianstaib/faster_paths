@@ -239,7 +239,6 @@ mod tests {
         search::{
             ch::contracted_graph::ContractedGraph,
             hl::hub_graph::{get_path_from_overlapp, HubGraph},
-            shortcuts::replace_shortcuts_slowly,
         },
     };
 
@@ -252,11 +251,27 @@ mod tests {
         for test in tests {
             let forward_label = hub_graph.forward.get_label(test.request.source);
             let backward_label = hub_graph.backward.get_label(test.request.target);
-            let mut path = get_path_from_overlapp(forward_label, backward_label);
+            let path = get_path_from_overlapp(forward_label, backward_label, &hub_graph.shortcuts);
 
-            if let Some(ref mut path) = path {
-                replace_shortcuts_slowly(&mut path.vertices, contracted_graph.shortcuts());
-            }
+            let distance = path.as_ref().map(|path| path.distance);
+            assert_eq!(test.distance, distance);
+
+            let path_distance =
+                path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
+            assert_eq!(test.distance, path_distance)
+        }
+    }
+
+    #[test]
+    fn hub_graph_by_brute_force() {
+        let (graph, tests) = large_test_graph();
+        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+        let hub_graph = HubGraph::by_brute_force(&graph, contracted_graph.vertex_to_level());
+
+        for test in tests {
+            let forward_label = hub_graph.forward.get_label(test.request.source);
+            let backward_label = hub_graph.backward.get_label(test.request.target);
+            let path = get_path_from_overlapp(forward_label, backward_label, &hub_graph.shortcuts);
 
             let distance = path.as_ref().map(|path| path.distance);
             assert_eq!(test.distance, distance);
