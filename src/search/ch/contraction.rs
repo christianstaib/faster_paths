@@ -51,7 +51,7 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
     (level_to_vertex, edges, shortcuts)
 }
 
-fn update_edge_map(
+pub fn update_edge_map(
     edge_map: &mut HashMap<(Vertex, Vertex), Distance>,
     shortcuts: &mut HashMap<(Vertex, Vertex), Vertex>,
     vertex: Vertex,
@@ -68,7 +68,7 @@ fn update_edge_map(
     }
 }
 
-fn new_edge_map<G: Graph + Default>(
+pub fn new_edge_map<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
 ) -> HashMap<(Vertex, Vertex), Distance> {
     let mut edges = HashMap::new();

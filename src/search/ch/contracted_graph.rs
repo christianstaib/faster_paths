@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     brute_force::brute_force_contracted_graph_edges, contraction::contraction_with_witness_search,
+    contraction_heuristic::contraction_with_heuristic,
 };
 use crate::{
     graphs::{
@@ -18,6 +19,7 @@ use crate::{
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
         shortcuts::replace_shortcuts_slowly,
+        DistanceHeuristic,
     },
     utility::get_progressbar_long_jobs,
 };
@@ -51,6 +53,34 @@ impl ContractedGraph {
     ) -> ContractedGraph {
         let graph = graph.clone();
         let (level_to_vertex, edges, shortcuts) = contraction_with_witness_search(graph);
+
+        let vertex_to_level = vertex_to_level(&level_to_vertex);
+
+        let mut upward_edges = Vec::new();
+        let mut downward_edges = Vec::new();
+        for (&(tail, head), &weight) in edges.iter().progress() {
+            if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
+                upward_edges.push(WeightedEdge::new(tail, head, weight));
+            } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
+                downward_edges.push(WeightedEdge::new(head, tail, weight));
+            }
+        }
+
+        ContractedGraph {
+            upward_graph: VecVecGraph::from_edges(&upward_edges),
+            downward_graph: VecVecGraph::from_edges(&downward_edges),
+            shortcuts,
+            level_to_vertex: level_to_vertex.clone(),
+            vertex_to_level,
+        }
+    }
+
+    pub fn by_contraction_with_heuristic<G: Graph + Default + Clone>(
+        graph: &ReversibleGraph<G>,
+        heuristic: &dyn DistanceHeuristic,
+    ) -> ContractedGraph {
+        let graph = graph.clone();
+        let (level_to_vertex, edges, shortcuts) = contraction_with_heuristic(graph, heuristic);
 
         let vertex_to_level = vertex_to_level(&level_to_vertex);
 
