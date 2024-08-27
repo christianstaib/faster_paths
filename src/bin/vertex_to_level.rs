@@ -145,6 +145,11 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
             .map(|(vertex, _)| vertex as Vertex)
             .expect("hits cannot be empty if number_of_vertices > 0");
 
+        // There is no real max hitting vertex anymore.
+        if hits[vertex as usize] == 1 {
+            break;
+        }
+
         // The level of this vertex is 1 lower than the previous one.
         level_to_vertex.insert(0, vertex);
 
