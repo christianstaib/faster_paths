@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use clap::Parser;
-use indicatif::{ParallelProgressIterator, ProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rayon::iter::{
     IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
@@ -45,10 +45,11 @@ impl HalfHubGraph {
     pub fn by_brute_force(
         graph: &dyn Graph,
         vertex_to_level: &Vec<u32>,
+        progress_bar: ProgressBar,
     ) -> (HalfHubGraph, HashMap<(Vertex, Vertex), Vertex>) {
         let labels_and_shortcuts = (0..graph.number_of_vertices())
             .into_par_iter()
-            .progress()
+            .progress_with(progress_bar)
             .map_init(
                 || {
                     (

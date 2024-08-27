@@ -19,6 +19,7 @@ use crate::{
         },
         shortcuts::replace_shortcuts_slowly,
     },
+    utility::get_progressbar_long_jobs,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -78,11 +79,23 @@ impl ContractedGraph {
     ) -> ContractedGraph {
         let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-        let (upward_edges, upward_shortcuts) =
-            brute_force_contracted_graph_edges(graph.out_graph(), &vertex_to_level);
+        let (upward_edges, upward_shortcuts) = brute_force_contracted_graph_edges(
+            graph.out_graph(),
+            &vertex_to_level,
+            get_progressbar_long_jobs(
+                "Brute forcing upward edges",
+                graph.out_graph().number_of_vertices() as u64,
+            ),
+        );
 
-        let (downward_edges, downward_shortcuts) =
-            brute_force_contracted_graph_edges(graph.in_graph(), &vertex_to_level);
+        let (downward_edges, downward_shortcuts) = brute_force_contracted_graph_edges(
+            graph.in_graph(),
+            &vertex_to_level,
+            get_progressbar_long_jobs(
+                "Brute forcing downward edges",
+                graph.in_graph().number_of_vertices() as u64,
+            ),
+        );
 
         let mut shortcuts = HashMap::new();
         shortcuts.extend(upward_shortcuts);

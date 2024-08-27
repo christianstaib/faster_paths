@@ -61,7 +61,6 @@ fn main() {
     let level_to_vertex = level_to_vertex(&paths, graph.out_graph().number_of_vertices());
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-    println!("writing levels");
     let writer = BufWriter::new(File::create(args.vertex_to_level).unwrap());
     serde_json::to_writer(writer, &vertex_to_level).unwrap();
 
@@ -162,10 +161,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     let mut active_paths: Vec<usize> = (0..paths.len()).collect();
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
 
-    let pb = get_progressbar_long_jobs(
-        "Generating level_to_vertex vertex",
-        number_of_vertices as u64,
-    );
+    let pb = get_progressbar_long_jobs("Generating level_to_vertex vector", paths.len() as u64);
     while !active_paths.is_empty() {
         let hits = active_paths
             // Split the active_paths into chunks for parallel processing.

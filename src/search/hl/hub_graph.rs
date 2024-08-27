@@ -11,6 +11,7 @@ use crate::{
         collections::dijkstra_data::Path,
         shortcuts::{self, replace_shortcuts_slowly},
     },
+    utility::get_progressbar_long_jobs,
 };
 
 pub struct HubGraph {
@@ -24,10 +25,22 @@ impl HubGraph {
         graph: &ReversibleGraph<G>,
         vertex_to_level: &Vec<u32>,
     ) -> HubGraph {
-        let (forward, mut shortcuts) =
-            HalfHubGraph::by_brute_force(graph.out_graph(), vertex_to_level);
-        let (backward, backward_shortcuts) =
-            HalfHubGraph::by_brute_force(graph.in_graph(), vertex_to_level);
+        let (forward, mut shortcuts) = HalfHubGraph::by_brute_force(
+            graph.out_graph(),
+            vertex_to_level,
+            get_progressbar_long_jobs(
+                "Brute forcing forward labels",
+                graph.out_graph().number_of_vertices() as u64,
+            ),
+        );
+        let (backward, backward_shortcuts) = HalfHubGraph::by_brute_force(
+            graph.in_graph(),
+            vertex_to_level,
+            get_progressbar_long_jobs(
+                "Brute forcing backward labels",
+                graph.out_graph().number_of_vertices() as u64,
+            ),
+        );
 
         shortcuts.extend(
             backward_shortcuts
