@@ -4,6 +4,8 @@ use std::{
 };
 
 use indicatif::{ParallelProgressIterator, ProgressBar};
+use itertools::Itertools;
+use rand::prelude::*;
 use rayon::prelude::*;
 
 use super::contraction::edge_difference;
@@ -60,9 +62,10 @@ fn new_queue<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
     heuristic: &dyn DistanceHeuristic,
 ) -> BinaryHeap<Reverse<(i32, u32)>> {
-    graph
-        .out_graph()
-        .vertices()
+    let mut vertices = (0..graph.out_graph().number_of_vertices()).collect_vec();
+    vertices.shuffle(&mut thread_rng());
+
+    vertices
         .into_par_iter()
         .progress_with(get_progressbar_long_jobs(
             "Initalizing queue",
@@ -70,8 +73,8 @@ fn new_queue<G: Graph + Default>(
         ))
         .map(|vertex| {
             let new_and_updated_edges =
-                par_simulate_contraction_heuristic(graph, heuristic, vertex);
-            let edge_difference = edge_difference(graph, &new_and_updated_edges, vertex);
+                par_simulate_contraction_heuristic(&graph, heuristic, vertex);
+            let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
             Reverse((edge_difference, vertex))
         })
         .collect()
@@ -122,4 +125,47 @@ pub fn par_simulate_contraction_heuristic<G: Graph + Default>(
             (tail, (new_edges, updated_edges))
         })
         .collect()
+}
+
+/// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
+pub fn par_simulate_contraction_heuristic_new_edges<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    heuristic: &dyn DistanceHeuristic,
+    vertex: Vertex,
+) -> u32 {
+    // tail -> vertex -> head
+    graph
+        .in_graph()
+        .edges(vertex)
+        .par_bridge()
+        .map(|in_edge| {
+            let tail = in_edge.head;
+
+            let mut new_edges = 0;
+
+            for out_edge in graph.out_graph().edges(vertex) {
+                let head = out_edge.head;
+
+                if tail == head {
+                    continue;
+                }
+
+                let shortcut_distance = in_edge.weight + out_edge.weight;
+
+                if heuristic.is_less_or_equal_upper_bound(tail, head, shortcut_distance) {
+                    let edge = WeightedEdge {
+                        tail,
+                        head,
+                        weight: shortcut_distance,
+                    };
+                    if let Some(current_edge_weight) = graph.get_weight(&edge.remove_weight()) {
+                    } else {
+                        new_edges += 1;
+                    }
+                }
+            }
+
+            new_edges
+        })
+        .sum()
 }

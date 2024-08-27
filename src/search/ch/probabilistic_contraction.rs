@@ -421,9 +421,7 @@ pub fn probabilistic_edge_difference_distance_neuristic<G: Graph + Default>(
         let out_edge = in_edges.choose(&mut rng).unwrap();
 
         let shortcut_distance = in_edge.weight + out_edge.weight;
-        let lower_bound = distance_heuristic
-            .upper_bound(in_edge.head, out_edge.head)
-            .unwrap_or(Distance::MAX);
+        let lower_bound = distance_heuristic.upper_bound(in_edge.head, out_edge.head);
 
         if in_edge.head != out_edge.head && shortcut_distance <= lower_bound {
             let edge = Edge {

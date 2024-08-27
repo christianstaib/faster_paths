@@ -169,7 +169,8 @@ pub fn create_test_cases(graph: &dyn Graph, number_of_testcases: u32) -> Vec<Sho
                 queue.clear();
 
                 ShortestPathTestCase {
-                    request: ShortestPathRequest { source, target },
+                    source,
+                    target,
                     distance,
                 }
             },

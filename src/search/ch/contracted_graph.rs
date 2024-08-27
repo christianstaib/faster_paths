@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 use super::{
     brute_force::brute_force_contracted_graph_edges, contraction::contraction_with_witness_search,
@@ -19,18 +20,32 @@ use crate::{
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
         shortcuts::replace_shortcuts_slowly,
-        DistanceHeuristic,
+        DistanceHeuristic, PathFinding,
     },
     utility::get_progressbar_long_jobs,
 };
 
+#[serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct ContractedGraph {
     upward_graph: VecVecGraph,
     downward_graph: VecVecGraph,
+    #[serde_as(as = "Vec<(_, _)>")]
     shortcuts: HashMap<(Vertex, Vertex), Vertex>,
     level_to_vertex: Vec<Vertex>,
     vertex_to_level: Vec<u32>,
+}
+
+impl PathFinding for ContractedGraph {
+    fn shortest_path(&self, source: Vertex, target: Vertex) -> Option<Path> {
+        ch_one_to_one_wrapped(
+            self.upward_graph(),
+            self.downward_graph(),
+            self.shortcuts(),
+            source,
+            target,
+        )
+    }
 }
 
 pub fn get_slow_shortcuts(
@@ -177,7 +192,9 @@ pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
 }
 
 pub fn ch_one_to_one_wrapped(
-    ch_graph: &ContractedGraph,
+    upward_graph: &dyn Graph,
+    downward_graph: &dyn Graph,
+    shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
     source: Vertex,
     target: Vertex,
 ) -> Option<Path> {
@@ -190,7 +207,8 @@ pub fn ch_one_to_one_wrapped(
     let mut backward_queue = VertexDistanceQueueBinaryHeap::new();
 
     let (vertex, distance) = ch_one_to_one(
-        ch_graph,
+        upward_graph,
+        downward_graph,
         &mut forward_data,
         &mut forward_expanded,
         &mut forward_queue,
@@ -207,13 +225,14 @@ pub fn ch_one_to_one_wrapped(
     vertices.pop(); // remove double vertex ((source -> vertex) -> (vertex -> target))
     vertices.extend(backward_vertices); // get (source -> target)
 
-    replace_shortcuts_slowly(&mut vertices, &ch_graph.shortcuts); // replace the shortcuts
+    replace_shortcuts_slowly(&mut vertices, shortcuts); // replace the shortcuts
 
     Some(Path { vertices, distance })
 }
 
 pub fn ch_one_to_one(
-    ch_graph: &ContractedGraph,
+    upward_graph: &dyn Graph,
+    downward_graph: &dyn Graph,
     forward_data: &mut dyn DijkstraData,
     forward_expanded: &mut dyn VertexExpandedData,
     forward_queue: &mut dyn VertexDistanceQueue,
@@ -246,7 +265,7 @@ pub fn ch_one_to_one(
                 }
             }
 
-            for edge in ch_graph.upward_graph.edges(tail) {
+            for edge in upward_graph.edges(tail) {
                 let current_distance_head = forward_data
                     .get_distance(edge.head)
                     .unwrap_or(Distance::MAX);
@@ -273,7 +292,7 @@ pub fn ch_one_to_one(
                 }
             }
 
-            for edge in ch_graph.downward_graph.edges(tail) {
+            for edge in downward_graph.edges(tail) {
                 let current_distance_head = backward_data
                     .get_distance(edge.head)
                     .unwrap_or(Distance::MAX);
@@ -301,8 +320,13 @@ mod tests {
         let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
 
         for test in tests {
-            let path =
-                ch_one_to_one_wrapped(&contracted_graph, test.request.source, test.request.target);
+            let path = ch_one_to_one_wrapped(
+                contracted_graph.upward_graph(),
+                contracted_graph.downward_graph(),
+                contracted_graph.shortcuts(),
+                test.source,
+                test.target,
+            );
 
             let distance = path.as_ref().map(|path| path.distance);
             assert_eq!(test.distance, distance);
@@ -321,8 +345,13 @@ mod tests {
             ContractedGraph::by_brute_force(&graph, &contracted_graph.level_to_vertex);
 
         for test in tests {
-            let path =
-                ch_one_to_one_wrapped(&contracted_graph, test.request.source, test.request.target);
+            let path = ch_one_to_one_wrapped(
+                contracted_graph.upward_graph(),
+                contracted_graph.downward_graph(),
+                contracted_graph.shortcuts(),
+                test.source,
+                test.target,
+            );
 
             let distance = path.as_ref().map(|path| path.distance);
             assert_eq!(test.distance, distance);

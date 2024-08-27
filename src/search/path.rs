@@ -8,7 +8,8 @@ use crate::graphs::{Distance, Vertex};
 /// weight of a shortest path, if there exists one.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ShortestPathTestCase {
-    pub request: ShortestPathRequest,
+    pub source: Vertex,
+    pub target: Vertex,
     pub distance: Option<Distance>,
 }
 

@@ -266,8 +266,8 @@ mod tests {
         let hub_graph = HubGraph::by_merging(&contracted_graph);
 
         for test in tests {
-            let forward_label = hub_graph.forward.get_label(test.request.source);
-            let backward_label = hub_graph.backward.get_label(test.request.target);
+            let forward_label = hub_graph.forward.get_label(test.source);
+            let backward_label = hub_graph.backward.get_label(test.target);
             let path = get_path_from_overlapp(forward_label, backward_label, &hub_graph.shortcuts);
 
             let distance = path.as_ref().map(|path| path.distance);
@@ -286,8 +286,8 @@ mod tests {
         let hub_graph = HubGraph::by_brute_force(&graph, contracted_graph.vertex_to_level());
 
         for test in tests {
-            let forward_label = hub_graph.forward.get_label(test.request.source);
-            let backward_label = hub_graph.backward.get_label(test.request.target);
+            let forward_label = hub_graph.forward.get_label(test.source);
+            let backward_label = hub_graph.backward.get_label(test.target);
             let path = get_path_from_overlapp(forward_label, backward_label, &hub_graph.shortcuts);
 
             let distance = path.as_ref().map(|path| path.distance);
