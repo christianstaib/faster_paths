@@ -19,7 +19,7 @@ pub mod vec_vec_graph;
 
 pub type Vertex = u32;
 pub type EdgeId = u32;
-pub type Distance = u32;
+pub type Distance = u64;
 
 pub type Level = u32;
 
@@ -51,7 +51,7 @@ pub struct WeightedEdge {
 }
 
 impl WeightedEdge {
-    pub fn new(tail: Vertex, head: Vertex, weight: Vertex) -> WeightedEdge {
+    pub fn new(tail: Vertex, head: Vertex, weight: Distance) -> WeightedEdge {
         WeightedEdge { tail, head, weight }
     }
 
@@ -200,17 +200,17 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
             // srcIDX trgIDX cost type maxspeed
             let line = edge_line.unwrap();
             let mut values = line.split_whitespace();
-            let tail: u32 = values
+            let tail: Vertex = values
                 .next()
                 .unwrap_or_else(|| panic!("no tail found in line {}", line))
                 .parse()
                 .unwrap_or_else(|_| panic!("unable to parse tail in line {}", line));
-            let head: u32 = values
+            let head: Vertex = values
                 .next()
                 .unwrap_or_else(|| panic!("no head found in line {}", line))
                 .parse()
                 .unwrap_or_else(|_| panic!("unable to parse head in line {}", line));
-            let weight: u32 = values
+            let weight: Distance = values
                 .next()
                 .unwrap_or_else(|| panic!("no weight found in line {}", line))
                 .parse()
@@ -237,9 +237,9 @@ pub fn read_edges_from_gr_file(path: &Path) -> Vec<WeightedEdge> {
             if line_type != "a" {
                 return None;
             }
-            let tail: u32 = values.next().unwrap().parse().unwrap();
-            let head: u32 = values.next().unwrap().parse().unwrap();
-            let weight: u32 = values.next().unwrap().parse().unwrap();
+            let tail: Vertex = values.next().unwrap().parse().unwrap();
+            let head: Vertex = values.next().unwrap().parse().unwrap();
+            let weight: Distance = values.next().unwrap().parse().unwrap();
             Some(WeightedEdge::new(tail, head, weight))
         })
         .collect()

@@ -310,7 +310,7 @@ fn get_to_update<G: Graph + Default>(
 
 fn update_edges_map(
     new_and_updated_edges: &HashMap<u32, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
-    edges: &mut HashMap<(u32, u32), u32>,
+    edges: &mut HashMap<(Vertex, Vertex), Distance>,
 ) {
     for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
         for edge in new_edges.iter().chain(updated_edges.iter()) {

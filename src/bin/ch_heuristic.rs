@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
@@ -32,8 +32,8 @@ fn main() {
 
     let contracted_graph = ContractedGraph::by_contraction_with_heuristic(&graph, &alt);
 
-    // let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
-    // serde_json::to_writer(writer, &contracted_graph).unwrap();
+    let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
+    serde_json::to_writer(writer, &contracted_graph).unwrap();
 
     let tests = generate_test_cases(graph.out_graph(), 1_000);
     let average_duration =
