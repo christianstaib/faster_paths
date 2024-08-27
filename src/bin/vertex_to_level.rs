@@ -1,13 +1,6 @@
-use std::{
-    cmp::Reverse,
-    collections::{HashMap, HashSet},
-    fs::File,
-    io::BufWriter,
-    path::PathBuf,
-    time::Instant,
-};
+use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf};
 
-use clap::{parser::Indices, Parser};
+use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
@@ -20,13 +13,11 @@ use faster_paths::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
         },
-        dijkstra::{dijkstra_one_to_one_wrapped, dijktra_one_to_all},
-        hl::hub_graph::{self, get_path_from_overlapp, HubGraph},
+        dijkstra::dijktra_one_to_all,
     },
     utility::get_progressbar_long_jobs,
 };
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
-use itertools::Itertools;
+use indicatif::ParallelProgressIterator;
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 
@@ -63,47 +54,6 @@ fn main() {
 
     let writer = BufWriter::new(File::create(args.vertex_to_level).unwrap());
     serde_json::to_writer(writer, &vertex_to_level).unwrap();
-
-    let hub_graph = HubGraph::by_brute_force(&graph, &vertex_to_level);
-    println!("average label size is {}", hub_graph.average_label_size());
-
-    let mut rng = thread_rng();
-    let speedup = (0..100_000)
-        .progress()
-        .map(|_| {
-            let source = rng.gen_range(0..graph.out_graph().number_of_vertices());
-            let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
-
-            let start = Instant::now();
-            let hl_path = get_path_from_overlapp(
-                hub_graph.forward.get_label(source),
-                hub_graph.backward.get_label(target),
-                &hub_graph.shortcuts,
-            );
-            // let mut hl_path = ch_one_to_one_wrapped(&contracted_graph, source, target);
-            let ch_time = start.elapsed().as_secs_f64();
-
-            let hl_distance = hl_path.as_ref().map(|path| path.distance);
-
-            let distance =
-                hl_path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
-            assert_eq!(distance, hl_distance);
-
-            let start = Instant::now();
-            let dijkstra_distance = dijkstra_one_to_one_wrapped(graph.out_graph(), source, target)
-                .map(|path| path.distance);
-            let dijkstra_time = start.elapsed().as_secs_f64();
-
-            assert_eq!(&hl_distance, &dijkstra_distance);
-
-            dijkstra_time / ch_time
-        })
-        .collect::<Vec<_>>();
-
-    println!(
-        "average speedups {:?}",
-        speedup.iter().sum::<f64>() / speedup.len() as f64
-    );
 }
 
 /// Computes paths in a graph using Dijkstra's algorithm.
