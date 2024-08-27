@@ -10,17 +10,23 @@ use faster_paths::{
     utility::{get_paths, level_to_vertex},
 };
 
-/// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Infile in .fmi format
+    /// The file path to the graph in FMI format.
     #[arg(short, long)]
     graph: PathBuf,
-    #[arg(short, long)]
+
+    /// Number of searches to perform.
+    #[arg(short = 's', long = "searches")]
     number_of_searches: u32,
-    #[arg(short, long)]
+
+    /// Number of paths to find per search.
+    #[arg(short = 'p', long = "paths")]
     number_of_paths_per_search: u32,
+
+    /// Path to the output file where the vertex to level mapping will be
+    /// stored.
     #[arg(short, long)]
     vertex_to_level: PathBuf,
 }
