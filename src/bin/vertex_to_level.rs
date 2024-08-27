@@ -7,7 +7,7 @@ use std::{
     time::Instant,
 };
 
-use clap::Parser;
+use clap::{parser::Indices, Parser};
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
@@ -23,11 +23,12 @@ use faster_paths::{
         dijkstra::{dijkstra_one_to_one_wrapped, dijktra_one_to_all},
         hl::hub_graph::{self, get_path_from_overlapp, HubGraph},
     },
+    utility::get_progressbar_long_jobs,
 };
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
 use itertools::Itertools;
 use rand::{thread_rng, Rng};
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::*;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -47,7 +48,6 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    println!("read_edges_from_fmi_file");
     let edges = read_edges_from_fmi_file(&args.graph);
 
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
@@ -58,7 +58,6 @@ fn main() {
         args.number_of_paths_per_search,
     );
 
-    println!("getting levels");
     let level_to_vertex = level_to_vertex(&paths, graph.out_graph().number_of_vertices());
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
@@ -108,6 +107,7 @@ fn main() {
     );
 }
 
+/// Computes paths in a graph using Dijkstra's algorithm.
 pub fn get_paths(
     graph: &dyn Graph,
     number_of_searches: u32,
@@ -115,10 +115,14 @@ pub fn get_paths(
 ) -> Vec<Vec<Vertex>> {
     (0..number_of_searches)
         .into_par_iter()
-        .progress()
+        .progress_with(get_progressbar_long_jobs(
+            "Getting many paths",
+            number_of_searches as u64,
+        ))
         .map_init(
             || {
                 (
+                    // Reuse data structures.
                     DijkstraDataVec::new(graph),
                     VertexExpandedDataBitSet::new(graph),
                     VertexDistanceQueueBinaryHeap::new(),
@@ -137,6 +141,7 @@ pub fn get_paths(
                     }
                 }
 
+                // Clear the data structures for reuse in the next iteration
                 data.clear();
                 expanded.clear();
                 queue.clear();
@@ -148,61 +153,70 @@ pub fn get_paths(
         .collect()
 }
 
+/// Constructs a vector of vertices ordered by their level, where each level is
+/// determined by the vertex that hits the most paths. The function processes
+/// paths in parallel, iteratively selecting the most frequent vertex and
+/// updating active paths until all paths are exhausted.
 pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex> {
     let mut level_to_vertex = Vec::new();
-
     let mut active_paths: Vec<usize> = (0..paths.len()).collect();
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
 
-    let mut all_hits = (0..number_of_vertices).map(|_| 0).collect_vec();
-
-    let pb = ProgressBar::new(active_paths.len() as u64);
+    let pb = get_progressbar_long_jobs(
+        "Generating level_to_vertex vertex",
+        number_of_vertices as u64,
+    );
     while !active_paths.is_empty() {
-        let number_of_hits: HashMap<Vertex, u32> = active_paths
-            .par_iter()
-            .map(|&index| &paths[index])
-            .map(|path| HashMap::from_iter(path.iter().map(|&vertex| (vertex, 1))))
-            .reduce(
-                || HashMap::new(),
-                |mut acc, local_hits| {
-                    for (&vertex, &hits) in local_hits.iter() {
-                        acc.entry(vertex).and_modify(|v| *v += hits).or_insert(hits);
+        let hits = active_paths
+            // Split the active_paths into chunks for parallel processing.
+            .par_chunks(active_paths.len().div_ceil(rayon::current_num_threads()))
+            // For each chunk, calculate how frequently each vertex appears across the active paths.
+            .map(|indices| {
+                let mut partial_hits = vec![0; number_of_vertices as usize];
+                for &index in indices {
+                    for &vertex in paths[index].iter() {
+                        partial_hits[vertex as usize] += 1;
                     }
-                    acc
+                }
+                partial_hits
+            })
+            // Sum the results from all threads to get the total hit count for each vertex.
+            .reduce(
+                || vec![0; number_of_vertices as usize],
+                |mut hits, partial_hits| {
+                    for index in 0..number_of_vertices as usize {
+                        hits[index] += partial_hits[index]
+                    }
+                    hits
                 },
             );
 
-        let (&max_hitting_vertex, &max_hits) = number_of_hits
+        // Get the vertex that hits the most paths.
+        let vertex = hits
             .iter()
+            .enumerate()
             .max_by_key(|&(_vertex, hits)| hits)
-            .unwrap();
+            .map(|(vertex, _)| vertex as Vertex)
+            .expect("hits cannot be empty if number_of_vertices > 0");
 
-        if max_hits == 1 {
-            println!("early exit");
-            break;
-        }
+        // The level of this vertex is 1 lower than the previous one.
+        level_to_vertex.insert(0, vertex);
 
-        number_of_hits
-            .iter()
-            .for_each(|(&vertex, &hits)| all_hits[vertex as usize] += hits);
+        active_vertices.remove(&(vertex));
 
-        level_to_vertex.push(max_hitting_vertex);
-        active_vertices.remove(&max_hitting_vertex);
-
+        // Remove paths that are hit by vertex.
         active_paths = active_paths
             .into_par_iter()
-            .filter(|&paths_idx| !paths[paths_idx].contains(&max_hitting_vertex))
+            .filter(|&index| !paths[index].contains(&vertex))
             .collect();
 
         pb.set_position((paths.len() - active_paths.len()) as u64);
     }
     pb.finish_and_clear();
 
-    let mut active_vertices = active_vertices.into_iter().collect_vec();
-    active_vertices.sort_unstable_by_key(|&vertex| Reverse(all_hits[vertex as usize]));
-    level_to_vertex.extend(active_vertices);
-
-    level_to_vertex.reverse();
+    // Insert the remaining vertices at the front, e.g. assign them the lowest
+    // levels.
+    level_to_vertex.splice(0..0, active_vertices);
 
     level_to_vertex
 }

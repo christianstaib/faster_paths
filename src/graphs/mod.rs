@@ -7,12 +7,12 @@ use std::{
 use ahash::HashMap;
 use indicatif::ProgressIterator;
 use itertools::Itertools;
-use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use reversible_graph::ReversibleGraph;
 use serde::{Deserialize, Serialize};
 use vec_vec_graph::VecVecGraph;
 
-use crate::search::path::ShortestPathTestCase;
+use crate::{search::path::ShortestPathTestCase, utility::get_progressbar_long_jobs};
 
 pub mod reversible_graph;
 pub mod vec_vec_graph;
@@ -190,7 +190,10 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
     let number_of_edges: usize = lines.next().unwrap().unwrap().parse().unwrap();
 
     lines
-        .progress_count((number_of_vertices + number_of_edges) as u64)
+        .progress_with(get_progressbar_long_jobs(
+            "Reading fmi file",
+            (number_of_vertices + number_of_edges) as u64,
+        ))
         .skip(number_of_vertices)
         .take(number_of_edges)
         .filter_map(|edge_line| {

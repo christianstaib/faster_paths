@@ -3,6 +3,11 @@ use std::collections::HashMap;
 use indicatif::ProgressIterator;
 
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
+use crate::utility::get_progressbar_long_jobs;
+
+pub trait FromEdges {
+    fn from_edges(edges: &Vec<WeightedEdge>) -> Self;
+}
 
 #[derive(Clone)]
 pub struct ReversibleGraph<G: Graph> {
@@ -21,15 +26,21 @@ impl<G: Graph + Default> ReversibleGraph<G> {
     pub fn from_edges(edges: &Vec<WeightedEdge>) -> Self {
         let mut graph = Self::new();
 
-        edges.iter().progress().for_each(|edge| {
-            if edge.weight
-                < graph
-                    .get_weight(&edge.remove_weight())
-                    .unwrap_or(Distance::MAX)
-            {
-                graph.set_weight(&edge.remove_weight(), Some(edge.weight));
-            }
-        });
+        edges
+            .iter()
+            .progress_with(get_progressbar_long_jobs(
+                "Building graph from edges",
+                edges.len() as u64,
+            ))
+            .for_each(|edge| {
+                if edge.weight
+                    < graph
+                        .get_weight(&edge.remove_weight())
+                        .unwrap_or(Distance::MAX)
+                {
+                    graph.set_weight(&edge.remove_weight(), Some(edge.weight));
+                }
+            });
 
         graph
     }
