@@ -7,14 +7,16 @@ use faster_paths::{
         Graph,
     },
     search::{
-        ch::contracted_graph::ContractedGraph,
+        ch::{
+            contracted_graph::ContractedGraph, contraction::par_simulate_contraction_witness_search,
+        },
         dijkstra::dijkstra_one_to_one_wrapped,
         hl::hub_graph::{get_path_from_overlapp, HubGraph},
     },
 };
 use indicatif::ProgressIterator;
 use itertools::Itertools;
-use rand::{thread_rng, Rng};
+use rand::prelude::*;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -33,18 +35,9 @@ fn main() {
 
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
-    println!("Create contracted graph");
-    let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+    let vertices = graph.out_graph().vertices().collect_vec();
 
-    if graph.out_graph().is_bidirectional() {
-        for vertex in graph.out_graph().vertices() {
-            let up = contracted_graph.upward_graph().edges(vertex).collect_vec();
-            let down = contracted_graph
-                .downward_graph()
-                .edges(vertex)
-                .collect_vec();
-
-            assert_eq!(up, down);
-        }
+    for &vertex in vertices.choose_multiple(&mut thread_rng(), 10) {
+        let new_and_updated_edges = par_simulate_contraction_witness_search(&graph, vertex);
     }
 }

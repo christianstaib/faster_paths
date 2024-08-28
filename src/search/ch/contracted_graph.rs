@@ -19,7 +19,7 @@ use crate::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
-        shortcuts::{self, replace_shortcuts_slowly},
+        shortcuts::replace_shortcuts_slowly,
         DistanceHeuristic, PathFinding,
     },
     utility::get_progressbar_long_jobs,
@@ -33,7 +33,7 @@ pub struct ContractedGraph {
     #[serde_as(as = "Vec<(_, _)>")]
     shortcuts: HashMap<(Vertex, Vertex), Vertex>,
     level_to_vertex: Vec<Vertex>,
-    vertex_to_level: Vec<u32>,
+    vertex_to_level: Vec<Level>,
 }
 
 impl PathFinding for ContractedGraph {
@@ -48,7 +48,8 @@ impl PathFinding for ContractedGraph {
     }
 
     fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
-        todo!()
+        ch_one_to_one_wrapped(self.upward_graph(), self.downward_graph(), source, target)
+            .map(|(_, distance, _, _)| distance)
     }
 }
 
@@ -77,7 +78,7 @@ impl ContractedGraph {
 
         let mut upward_edges = Vec::new();
         let mut downward_edges = Vec::new();
-        for (&(tail, head), &weight) in edges.iter().progress() {
+        for (&(tail, head), &weight) in edges.iter() {
             if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
                 upward_edges.push(WeightedEdge::new(tail, head, weight));
             } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
@@ -210,7 +211,7 @@ pub fn ch_one_to_one_path_wrapped(
     target: Vertex,
 ) -> Option<Path> {
     let (vertex, distance, forward_data, backward_data) =
-        ch_one_to_one_wrapped(upward_graph, downward_graph, shortcuts, source, target)?;
+        ch_one_to_one_wrapped(upward_graph, downward_graph, source, target)?;
 
     let mut vertices = forward_data.get_path(vertex).unwrap().vertices; // (source -> vertex)
     let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices; // (target -> vertex)
@@ -227,7 +228,6 @@ pub fn ch_one_to_one_path_wrapped(
 pub fn ch_one_to_one_wrapped(
     upward_graph: &dyn Graph,
     downward_graph: &dyn Graph,
-    shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
     source: Vertex,
     target: Vertex,
 ) -> Option<(Vertex, Distance, DijkstraDataHashMap, DijkstraDataHashMap)> {
@@ -251,14 +251,6 @@ pub fn ch_one_to_one_wrapped(
         source,
         target,
     )?;
-
-    let mut vertices = forward_data.get_path(vertex).unwrap().vertices; // (source -> vertex)
-    let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices; // (target -> vertex)
-    backward_vertices.reverse(); // (vertex -> target)
-    vertices.pop(); // remove double vertex ((source -> vertex) -> (vertex -> target))
-    vertices.extend(backward_vertices); // get (source -> target)
-
-    replace_shortcuts_slowly(&mut vertices, shortcuts); // replace the shortcuts
 
     Some((vertex, distance, forward_data, backward_data))
 }

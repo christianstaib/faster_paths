@@ -6,6 +6,7 @@ use itertools::Itertools;
 use rayon::iter::{
     IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
+use serde::{Deserialize, Serialize};
 
 use super::hub_graph::{overlapp, HubLabelEntry};
 use crate::{
@@ -20,6 +21,7 @@ use crate::{
     },
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct HalfHubGraph {
     labels: Vec<HubLabelEntry>,
     indices: Vec<(u32, u32)>,

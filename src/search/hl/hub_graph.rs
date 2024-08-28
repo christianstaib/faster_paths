@@ -2,6 +2,8 @@ use std::{cmp::Ordering, collections::HashMap};
 
 use indicatif::ProgressIterator;
 use itertools::Itertools;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use serde::{Deserialize, Serialize};
 
 use super::half_hub_graph::{get_hub_label_by_merging, set_predecessor, HalfHubGraph};
 use crate::{
@@ -15,6 +17,7 @@ use crate::{
     utility::get_progressbar_long_jobs,
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct HubGraph {
     pub forward: HalfHubGraph,
     pub backward: HalfHubGraph,
@@ -156,7 +159,7 @@ pub fn prune_label(
     labels_direction2: &Vec<Vec<HubLabelEntry>>,
 ) {
     let mut new_label = label_direction1
-        .iter()
+        .par_iter()
         .filter(|entry| {
             let other_label = labels_direction2.get(entry.vertex as usize).unwrap();
             let true_distance = overlapp(label_direction1, other_label).unwrap().0;
@@ -169,7 +172,7 @@ pub fn prune_label(
     std::mem::swap(&mut new_label, label_direction1);
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct HubLabelEntry {
     pub vertex: Vertex,
     pub distance: Distance,

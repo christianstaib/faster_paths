@@ -43,6 +43,9 @@ fn main() {
     let hub_graph = HubGraph::by_brute_force(&graph, &level_to_vertex);
     println!("Average label size is {}", hub_graph.average_label_size());
 
+    let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
+    bincode::serialize_into(writer, &hub_graph).unwrap();
+
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);
     let average_duration = benchmark_and_test(graph.out_graph(), &tests, &hub_graph).unwrap();

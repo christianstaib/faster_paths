@@ -36,7 +36,7 @@ fn main() {
 
     // Read contracted_graph
     let reader = BufReader::new(File::open(&args.contracted_graph).unwrap());
-    let contracted_graph = serde_json::from_reader(reader).unwrap();
+    let contracted_graph = bincode::deserialize_from(reader).unwrap();
 
     // Create hub_graph
     let hub_graph = HubGraph::by_merging(&contracted_graph);
@@ -44,7 +44,7 @@ fn main() {
 
     // Write hub_graph to file
     let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
-    serde_json::to_writer(writer, &contracted_graph).unwrap();
+    bincode::serialize_into(writer, &hub_graph).unwrap();
 
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);

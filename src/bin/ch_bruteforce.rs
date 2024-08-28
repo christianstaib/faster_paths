@@ -10,7 +10,7 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Vertex,
     },
-    search::ch::contracted_graph::ContractedGraph,
+    search::ch::contracted_graph::{self, ContractedGraph},
     utility::{benchmark_and_test, generate_test_cases},
 };
 
@@ -45,7 +45,7 @@ fn main() {
 
     // Write contracted_graph to file
     let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
-    serde_json::to_writer(writer, &contracted_graph).unwrap();
+    bincode::serialize_into(writer, &contracted_graph).unwrap();
 
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);
