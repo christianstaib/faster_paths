@@ -15,6 +15,7 @@ use vec_vec_graph::VecVecGraph;
 use crate::{search::path::ShortestPathTestCase, utility::get_progressbar_long_jobs};
 
 pub mod reversible_graph;
+pub mod vec_graph;
 pub mod vec_vec_graph;
 
 pub type Vertex = u32;
