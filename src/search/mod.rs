@@ -31,4 +31,6 @@ pub trait DistanceHeuristic: Send + Sync {
 
 pub trait PathFinding {
     fn shortest_path(&self, source: Vertex, target: Vertex) -> Option<Path>;
+
+    fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance>;
 }

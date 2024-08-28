@@ -122,6 +122,12 @@ impl PathFinding for HubGraph {
         let backward_label = self.backward.get_label(target);
         get_path_from_overlapp(forward_label, backward_label, &self.shortcuts)
     }
+
+    fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
+        let forward_label = self.forward.get_label(source);
+        let backward_label = self.backward.get_label(target);
+        overlapp(forward_label, backward_label).map(|(distance, _)| distance)
+    }
 }
 
 fn create_label(

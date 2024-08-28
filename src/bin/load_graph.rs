@@ -8,7 +8,7 @@ use faster_paths::{
     },
     search::{
         ch::{
-            contracted_graph::{self, ch_one_to_one_wrapped, ContractedGraph},
+            contracted_graph::{self, ch_one_to_one_path_wrapped, ContractedGraph},
             contraction,
         },
         dijkstra::dijkstra_one_to_one_wrapped,

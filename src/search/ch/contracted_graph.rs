@@ -38,13 +38,17 @@ pub struct ContractedGraph {
 
 impl PathFinding for ContractedGraph {
     fn shortest_path(&self, source: Vertex, target: Vertex) -> Option<Path> {
-        ch_one_to_one_wrapped(
+        ch_one_to_one_path_wrapped(
             self.upward_graph(),
             self.downward_graph(),
             self.shortcuts(),
             source,
             target,
         )
+    }
+
+    fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
+        todo!()
     }
 }
 
@@ -198,13 +202,35 @@ pub fn level_to_vertex(vertex_to_level: &Vec<Level>) -> Vec<Vertex> {
     level_to_vertex
 }
 
-pub fn ch_one_to_one_wrapped(
+pub fn ch_one_to_one_path_wrapped(
     upward_graph: &dyn Graph,
     downward_graph: &dyn Graph,
     shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
     source: Vertex,
     target: Vertex,
 ) -> Option<Path> {
+    let (vertex, distance, forward_data, backward_data) =
+        ch_one_to_one_wrapped(upward_graph, downward_graph, shortcuts, source, target)?;
+
+    let mut vertices = forward_data.get_path(vertex).unwrap().vertices; // (source -> vertex)
+    let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices; // (target -> vertex)
+
+    backward_vertices.reverse(); // (vertex -> target)
+    vertices.pop(); // remove double vertex ((source -> vertex) -> (vertex -> target))
+    vertices.extend(backward_vertices); // get (source -> target)
+
+    replace_shortcuts_slowly(&mut vertices, shortcuts); // replace the shortcuts
+
+    Some(Path { vertices, distance })
+}
+
+pub fn ch_one_to_one_wrapped(
+    upward_graph: &dyn Graph,
+    downward_graph: &dyn Graph,
+    shortcuts: &HashMap<(Vertex, Vertex), Vertex>,
+    source: Vertex,
+    target: Vertex,
+) -> Option<(Vertex, Distance, DijkstraDataHashMap, DijkstraDataHashMap)> {
     let mut forward_data = DijkstraDataHashMap::new();
     let mut forward_expanded = VertexExpandedDataHashSet::new();
     let mut forward_queue = VertexDistanceQueueBinaryHeap::new();
@@ -234,7 +260,7 @@ pub fn ch_one_to_one_wrapped(
 
     replace_shortcuts_slowly(&mut vertices, shortcuts); // replace the shortcuts
 
-    Some(Path { vertices, distance })
+    Some((vertex, distance, forward_data, backward_data))
 }
 
 pub fn ch_one_to_one(
@@ -332,7 +358,7 @@ fn ch_search_single_step(
 
 #[cfg(test)]
 mod tests {
-    use super::{ch_one_to_one_wrapped, ContractedGraph};
+    use super::{ch_one_to_one_path_wrapped, ContractedGraph};
     use crate::graphs::{large_test_graph, Graph};
 
     #[test]
@@ -341,7 +367,7 @@ mod tests {
         let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
 
         for test in tests {
-            let path = ch_one_to_one_wrapped(
+            let path = ch_one_to_one_path_wrapped(
                 contracted_graph.upward_graph(),
                 contracted_graph.downward_graph(),
                 contracted_graph.shortcuts(),
@@ -366,7 +392,7 @@ mod tests {
             ContractedGraph::by_brute_force(&graph, &contracted_graph.vertex_to_level);
 
         for test in tests {
-            let path = ch_one_to_one_wrapped(
+            let path = ch_one_to_one_path_wrapped(
                 contracted_graph.upward_graph(),
                 contracted_graph.downward_graph(),
                 contracted_graph.shortcuts(),
