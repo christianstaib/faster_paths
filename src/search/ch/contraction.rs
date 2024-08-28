@@ -12,6 +12,7 @@ use crate::{
         reversible_graph::ReversibleGraph, Distance, Graph, TaillessEdge, Vertex, WeightedEdge,
     },
     search::{collections::dijkstra_data::DijkstraData, dijkstra::dijkstra_one_to_many},
+    utility::get_progressbar_long_jobs,
 };
 
 pub fn contraction_with_witness_search<G: Graph + Default>(
@@ -30,7 +31,8 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
 
     let mut level_to_vertex = Vec::new();
 
-    let pb = ProgressBar::new(graph.out_graph().number_of_vertices() as u64);
+    let pb =
+        get_progressbar_long_jobs("Contracting", graph.out_graph().number_of_vertices() as u64);
     while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
         let new_and_updated_edges = par_simulate_contraction_witness_search(&graph, vertex);
         let new_edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
