@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     graphs::{
-        reversible_graph::ReversibleGraph, vec_graph::VecGraph, Distance, Graph, Vertex,
+        reversible_graph::ReversibleGraph, vec_graph::VecGraph, Distance, Graph, Level, Vertex,
         WeightedEdge,
     },
     search::{
@@ -19,7 +19,7 @@ use crate::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
-        shortcuts::replace_shortcuts_slowly,
+        shortcuts::{self, replace_shortcuts_slowly},
         DistanceHeuristic, PathFinding,
     },
     utility::get_progressbar_long_jobs,
@@ -124,7 +124,7 @@ impl ContractedGraph {
     ) -> ContractedGraph {
         let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-        let (upward_edges, upward_shortcuts) = brute_force_contracted_graph_edges(
+        let (upward_edges, mut shortcuts) = brute_force_contracted_graph_edges(
             graph.out_graph(),
             &vertex_to_level,
             get_progressbar_long_jobs(
@@ -141,9 +141,6 @@ impl ContractedGraph {
                 graph.in_graph().number_of_vertices() as u64,
             ),
         );
-
-        let mut shortcuts = HashMap::new();
-        shortcuts.extend(upward_shortcuts);
 
         shortcuts.extend(
             downward_shortcuts
@@ -181,7 +178,7 @@ impl ContractedGraph {
     }
 }
 
-pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
+pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<Level> {
     let mut vertex_to_level = vec![0; level_to_vertex.len()];
 
     for (level, &vertex) in level_to_vertex.iter().enumerate() {
@@ -189,6 +186,16 @@ pub fn vertex_to_level(level_to_vertex: &Vec<Vertex>) -> Vec<u32> {
     }
 
     vertex_to_level
+}
+
+pub fn level_to_vertex(vertex_to_level: &Vec<Level>) -> Vec<Vertex> {
+    let mut level_to_vertex = vec![0; vertex_to_level.len()];
+
+    for (vertex, &level) in vertex_to_level.iter().enumerate() {
+        level_to_vertex[level as usize] = vertex as Vertex;
+    }
+
+    level_to_vertex
 }
 
 pub fn ch_one_to_one_wrapped(
