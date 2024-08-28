@@ -119,7 +119,6 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
     graph
         .in_graph()
         .edges(vertex)
-        .progress()
         .par_bridge()
         .map(|in_edge| {
             let tail = in_edge.head;
@@ -128,7 +127,7 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
             let mut updated_edges = Vec::new();
 
             // Get all shortest path distances (tail -> neighbor)
-            let data = dijkstra_one_to_many(graph.out_graph(), 3, tail, &out_neighbors);
+            let data = dijkstra_one_to_many(graph.out_graph(), hop_limit, tail, &out_neighbors);
 
             for out_edge in graph.out_graph().edges(vertex) {
                 let head = out_edge.head;

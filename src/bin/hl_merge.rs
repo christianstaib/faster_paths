@@ -43,7 +43,7 @@ fn main() {
     println!("Average label size is {}", hub_graph.average_label_size());
 
     // Write hub_graph to file
-    let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
+    let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();
 
     // Benchmark and test correctness

@@ -1,11 +1,19 @@
-use std::{fs::File, io::BufWriter, path::PathBuf};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::PathBuf,
+};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
+        Distance, Vertex,
     },
-    search::{alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph},
+    search::{
+        alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph,
+        DistanceHeuristic, PathFinding, TrivialHeuristic,
+    },
     utility::{benchmark_and_test, generate_test_cases},
 };
 
@@ -21,18 +29,44 @@ struct Args {
     contracted_graph: PathBuf,
 }
 
+pub struct PathfinderHeuristic<'a> {
+    pub pathfinder: &'a dyn PathFinding,
+}
+
+impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
+    fn lower_bound(&self, source: Vertex, target: Vertex) -> Distance {
+        self.pathfinder
+            .shortest_path_distance(source, target)
+            .unwrap_or(0)
+    }
+
+    fn upper_bound(&self, source: Vertex, target: Vertex) -> Distance {
+        self.pathfinder
+            .shortest_path_distance(source, target)
+            .unwrap_or(Distance::MAX)
+    }
+}
+
 fn main() {
     let args = Args::parse();
+
+    let reader =
+        BufReader::new(File::open("tests/data/aegaeis-ref-graph_ch_witness.bincode").unwrap());
+    let hub_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
+    let heuristic = PathfinderHeuristic {
+        pathfinder: &hub_graph,
+    };
 
     // Build graph
     let edges = read_edges_from_fmi_file(&args.graph);
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
     // Create landmakrs
-    let alt = Landmarks::random(&graph, 250);
+    // let heuristic = Landmarks::random(&graph, 25);
+    // let heuristic = TrivialHeuristic {};
 
     // Create contracted_graph
-    let contracted_graph = ContractedGraph::by_contraction_with_heuristic(&graph, &alt);
+    let contracted_graph = ContractedGraph::by_contraction_with_heuristic(&graph, &heuristic);
 
     // Write contracted_graph to file
     let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
