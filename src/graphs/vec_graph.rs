@@ -1,7 +1,9 @@
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
+#[derive(Serialize, Deserialize)]
 pub struct VecGraph {
     edges: Vec<TaillessEdge>,
     indices: Vec<(u32, u32)>,

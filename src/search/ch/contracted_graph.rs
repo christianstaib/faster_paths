@@ -10,8 +10,8 @@ use super::{
 };
 use crate::{
     graphs::{
-        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
-        WeightedEdge,
+        reversible_graph::ReversibleGraph, vec_graph::VecGraph, vec_vec_graph::VecVecGraph,
+        Distance, Graph, Vertex, WeightedEdge,
     },
     search::{
         collections::{
@@ -28,8 +28,8 @@ use crate::{
 #[serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct ContractedGraph {
-    upward_graph: VecVecGraph,
-    downward_graph: VecVecGraph,
+    upward_graph: VecGraph,
+    downward_graph: VecGraph,
     #[serde_as(as = "Vec<(_, _)>")]
     shortcuts: HashMap<(Vertex, Vertex), Vertex>,
     level_to_vertex: Vec<Vertex>,
@@ -82,8 +82,8 @@ impl ContractedGraph {
         }
 
         ContractedGraph {
-            upward_graph: VecVecGraph::from_edges(&upward_edges),
-            downward_graph: VecVecGraph::from_edges(&downward_edges),
+            upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
+            downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
             shortcuts,
             level_to_vertex: level_to_vertex.clone(),
             vertex_to_level,
@@ -110,8 +110,8 @@ impl ContractedGraph {
         }
 
         ContractedGraph {
-            upward_graph: VecVecGraph::from_edges(&upward_edges),
-            downward_graph: VecVecGraph::from_edges(&downward_edges),
+            upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
+            downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
             shortcuts,
             level_to_vertex: level_to_vertex.clone(),
             vertex_to_level,
@@ -152,8 +152,8 @@ impl ContractedGraph {
         );
 
         ContractedGraph {
-            upward_graph: VecVecGraph::from_edges(&upward_edges),
-            downward_graph: VecVecGraph::from_edges(&downward_edges),
+            upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
+            downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
             shortcuts,
             level_to_vertex: level_to_vertex.clone(),
             vertex_to_level,
