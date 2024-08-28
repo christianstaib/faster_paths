@@ -7,7 +7,7 @@ use super::half_hub_graph::{get_hub_label_by_merging, set_predecessor, HalfHubGr
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
     search::{
-        ch::contracted_graph::{self, ContractedGraph},
+        ch::contracted_graph::{vertex_to_level, ContractedGraph},
         collections::dijkstra_data::Path,
         shortcuts::{self, replace_shortcuts_slowly},
         PathFinding,
@@ -24,11 +24,13 @@ pub struct HubGraph {
 impl HubGraph {
     pub fn by_brute_force<G: Graph + Default>(
         graph: &ReversibleGraph<G>,
-        vertex_to_level: &Vec<u32>,
+        level_to_vertex: &Vec<Vertex>,
     ) -> HubGraph {
+        let vertex_to_level = vertex_to_level(level_to_vertex);
+
         let (forward, mut shortcuts) = HalfHubGraph::by_brute_force(
             graph.out_graph(),
-            vertex_to_level,
+            &vertex_to_level,
             get_progressbar_long_jobs(
                 "Brute forcing forward labels",
                 graph.out_graph().number_of_vertices() as u64,
@@ -36,7 +38,7 @@ impl HubGraph {
         );
         let (backward, backward_shortcuts) = HalfHubGraph::by_brute_force(
             graph.in_graph(),
-            vertex_to_level,
+            &vertex_to_level,
             get_progressbar_long_jobs(
                 "Brute forcing backward labels",
                 graph.out_graph().number_of_vertices() as u64,
@@ -132,24 +134,11 @@ fn create_label(
         .edges(vertex)
         .map(|edge| {
             let neighbor_label = labels_direction1.get(edge.head as usize).unwrap();
-            let x = neighbor_label
-                .iter()
-                .find(|entry| entry.distance == 0)
-                .unwrap();
-            assert_eq!(x.vertex, edge.head);
+
             (Some(edge.clone()), neighbor_label)
         })
         .collect::<Vec<_>>();
     neighbor_labels.push((None, labels_direction1.get(vertex as usize).unwrap()));
-
-    let mut x = neighbor_labels
-        .iter()
-        .map(|(edge, _)| edge)
-        .cloned()
-        .collect_vec();
-    let old_x = x.clone();
-    x.dedup();
-    assert_eq!(old_x, x);
 
     let mut forward_label = get_hub_label_by_merging(&neighbor_labels);
     prune_label(&mut forward_label, labels_direction2);
