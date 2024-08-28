@@ -1,6 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use indicatif::{ParallelProgressIterator, ProgressBar};
+use itertools::Itertools;
+use rand::prelude::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
@@ -17,10 +19,13 @@ pub fn brute_force_contracted_graph_edges(
     vertex_to_level: &Vec<u32>,
     progress_bar: ProgressBar,
 ) -> (Vec<WeightedEdge>, HashMap<(Vertex, Vertex), Vertex>) {
+    // Shuffle vertices for better prediction of remaining time
+    let mut vertices = graph.vertices().collect_vec();
+    vertices.shuffle(&mut thread_rng());
+
     let mut all_edges = Vec::new();
     let mut all_shortcuts = HashMap::new();
-    let edges_and_shortcuts = graph
-        .vertices()
+    let edges_and_shortcuts = vertices
         .into_par_iter()
         .progress_with(progress_bar)
         .map_init(
