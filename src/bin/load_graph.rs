@@ -7,13 +7,9 @@ use faster_paths::{
         Graph,
     },
     search::{
-        ch::{
-            contracted_graph::{self, ch_one_to_one_path_wrapped, ContractedGraph},
-            contraction,
-        },
+        ch::contracted_graph::ContractedGraph,
         dijkstra::dijkstra_one_to_one_wrapped,
         hl::hub_graph::{get_path_from_overlapp, HubGraph},
-        shortcuts::replace_shortcuts_slowly,
     },
 };
 use indicatif::ProgressIterator;
@@ -51,57 +47,4 @@ fn main() {
             assert_eq!(up, down);
         }
     }
-
-    // println!("brute_force");
-    // let contracted_graph =
-    //     ContractedGraph::by_brute_force(&graph,
-    // contracted_graph.level_to_vertex());
-
-    //  let contracted_graph =
-    //      ContractedGraph::by_brute_force(&graph,
-    // &contracted_graph.level_to_vertex());
-
-    let hub_graph = HubGraph::by_brute_force(&graph, contracted_graph.vertex_to_level());
-    println!("average label size is {}", hub_graph.average_label_size());
-
-    // for &vertex in contracted_graph.level_to_vertex().iter().rev().take(10) {
-    //     println!("v:{} {:?}", vertex, hub_graph.forward.get_label(vertex));
-    // }
-
-    let mut rng = thread_rng();
-    let speedup = (0..100_000)
-        .progress()
-        .map(|_| {
-            let source = rng.gen_range(0..graph.out_graph().number_of_vertices());
-            let target = rng.gen_range(0..graph.out_graph().number_of_vertices());
-
-            let start = Instant::now();
-            let hl_path = get_path_from_overlapp(
-                hub_graph.forward.get_label(source),
-                hub_graph.backward.get_label(target),
-                &hub_graph.shortcuts,
-            );
-            // let mut hl_path = ch_one_to_one_wrapped(&contracted_graph, source, target);
-            let hl_distance = hl_path.as_ref().map(|path| path.distance);
-            let ch_time = start.elapsed().as_secs_f64();
-
-            let distance =
-                hl_path.and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
-            assert_eq!(distance, hl_distance);
-
-            let start = Instant::now();
-            let dijkstra_distance = dijkstra_one_to_one_wrapped(graph.out_graph(), source, target)
-                .map(|path| path.distance);
-            let dijkstra_time = start.elapsed().as_secs_f64();
-
-            assert_eq!(&hl_distance, &dijkstra_distance);
-
-            dijkstra_time / ch_time
-        })
-        .collect::<Vec<_>>();
-
-    println!(
-        "average speedups {:?}",
-        speedup.iter().sum::<f64>() / speedup.len() as f64
-    );
 }

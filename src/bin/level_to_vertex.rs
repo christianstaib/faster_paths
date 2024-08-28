@@ -33,19 +33,20 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    // Build graph
     let edges = read_edges_from_fmi_file(&args.graph);
-
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
+    // Get paths and level_to_vertex
     let paths = get_paths(
         graph.out_graph(),
         args.number_of_searches,
         args.number_of_paths_per_search,
     );
-
     let level_to_vertex: Vec<Vertex> =
         level_to_vertex(&paths, graph.out_graph().number_of_vertices());
 
+    // Write level_to_vertex to file
     let writer = BufWriter::new(File::create(args.level_to_vertex).unwrap());
     serde_json::to_writer(writer, &level_to_vertex).unwrap();
 }
