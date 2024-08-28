@@ -10,8 +10,8 @@ use super::{
 };
 use crate::{
     graphs::{
-        reversible_graph::ReversibleGraph, vec_graph::VecGraph, vec_vec_graph::VecVecGraph,
-        Distance, Graph, Vertex, WeightedEdge,
+        reversible_graph::ReversibleGraph, vec_graph::VecGraph, Distance, Graph, Vertex,
+        WeightedEdge,
     },
     search::{
         collections::{
@@ -251,62 +251,76 @@ pub fn ch_one_to_one(
     let mut meeting_vertex_and_distance = None;
 
     while !forward_queue.is_empty() || !backward_queue.is_empty() {
-        if let Some((tail, distance_tail)) = forward_queue.pop() {
-            if forward_expanded.expand(tail) {
-                continue;
-            }
+        ch_search_single_step(
+            upward_graph,
+            downward_graph,
+            forward_data,
+            forward_expanded,
+            forward_queue,
+            backward_data,
+            &mut meeting_vertex_and_distance,
+        );
 
-            if let Some(backward_distance_tail) = backward_data.get_distance(tail) {
-                let meeting_distance = meeting_vertex_and_distance
-                    .map_or(Distance::MAX, |(_vertex, distance)| distance);
-                let alternative_meeting_distance = distance_tail + backward_distance_tail;
-                if alternative_meeting_distance < meeting_distance {
-                    meeting_vertex_and_distance = Some((tail, alternative_meeting_distance));
-                }
-            }
-
-            for edge in upward_graph.edges(tail) {
-                let current_distance_head = forward_data
-                    .get_distance(edge.head)
-                    .unwrap_or(Distance::MAX);
-                let alternative_distance_head = distance_tail + edge.weight;
-                if alternative_distance_head < current_distance_head {
-                    forward_data.set_distance(edge.head, alternative_distance_head);
-                    forward_data.set_predecessor(edge.head, tail);
-                    forward_queue.insert(edge.head, alternative_distance_head);
-                }
-            }
-        }
-
-        if let Some((tail, distance_tail)) = backward_queue.pop() {
-            if backward_expanded.expand(tail) {
-                continue;
-            }
-
-            if let Some(forward_distance_tail) = forward_data.get_distance(tail) {
-                let meeting_distance = meeting_vertex_and_distance
-                    .map_or(Distance::MAX, |(_vertex, distance)| distance);
-                let alternative_meeting_distance = distance_tail + forward_distance_tail;
-                if alternative_meeting_distance < meeting_distance {
-                    meeting_vertex_and_distance = Some((tail, alternative_meeting_distance));
-                }
-            }
-
-            for edge in downward_graph.edges(tail) {
-                let current_distance_head = backward_data
-                    .get_distance(edge.head)
-                    .unwrap_or(Distance::MAX);
-                let alternative_distance_head = distance_tail + edge.weight;
-                if alternative_distance_head < current_distance_head {
-                    backward_data.set_distance(edge.head, alternative_distance_head);
-                    backward_data.set_predecessor(edge.head, tail);
-                    backward_queue.insert(edge.head, alternative_distance_head);
-                }
-            }
-        }
+        ch_search_single_step(
+            downward_graph,
+            upward_graph,
+            backward_data,
+            backward_expanded,
+            backward_queue,
+            forward_data,
+            &mut meeting_vertex_and_distance,
+        );
     }
 
     meeting_vertex_and_distance
+}
+
+fn ch_search_single_step(
+    direction1_graph: &dyn Graph,
+    direction2_graph: &dyn Graph,
+    direction1_data: &mut dyn DijkstraData,
+    direction1_expanded: &mut dyn VertexExpandedData,
+    direction1_queue: &mut dyn VertexDistanceQueue,
+    direction2_data: &mut dyn DijkstraData,
+    meeting_vertex_and_distance: &mut Option<(Vertex, Distance)>,
+) {
+    if let Some((tail, distance_tail)) = direction1_queue.pop() {
+        if direction1_expanded.expand(tail) {
+            return;
+        }
+
+        // Stall on demand
+        for direction2_edge in direction2_graph.edges(tail) {
+            if let Some(predecessor_weight) = direction1_data.get_distance(direction2_edge.head) {
+                if predecessor_weight + direction2_edge.weight < distance_tail {
+                    return;
+                }
+            }
+        }
+
+        // Meeting vertex logic
+        if let Some(direction2_distance_tail) = direction2_data.get_distance(tail) {
+            let meeting_distance =
+                meeting_vertex_and_distance.map_or(Distance::MAX, |(_vertex, distance)| distance);
+            let alternative_meeting_distance = distance_tail + direction2_distance_tail;
+            if alternative_meeting_distance < meeting_distance {
+                *meeting_vertex_and_distance = Some((tail, alternative_meeting_distance));
+            }
+        }
+
+        // Search logic
+        for edge in direction1_graph.edges(tail) {
+            let current_distance_head = direction1_data
+                .get_distance(edge.head)
+                .unwrap_or(Distance::MAX);
+            let alternative_distance_head = distance_tail + edge.weight;
+            if alternative_distance_head < current_distance_head {
+                direction1_data.set_distance(edge.head, alternative_distance_head);
+                direction1_data.set_predecessor(edge.head, tail);
+                direction1_queue.insert(edge.head, alternative_distance_head);
+            }
+        }
+    }
 }
 
 #[cfg(test)]

@@ -159,6 +159,10 @@ pub fn benchmark_and_test(
     // cache.
     let path_and_duration = tests
         .into_iter()
+        .progress_with(get_progressbar_long_jobs(
+            "Benchmarking",
+            tests.len() as u64,
+        ))
         .map(|test| {
             let start = Instant::now();
             let path = pathfinder.shortest_path(test.source, test.target);
@@ -166,7 +170,11 @@ pub fn benchmark_and_test(
         })
         .collect_vec();
 
-    for (test, (path, _duration)) in tests.iter().zip(path_and_duration.iter()) {
+    for (test, (path, _duration)) in tests
+        .iter()
+        .zip(path_and_duration.iter())
+        .progress_with(get_progressbar_long_jobs("Validating", tests.len() as u64))
+    {
         // Test distance against test.
         let distance = path.as_ref().map(|path| path.distance);
         if distance != test.distance {
@@ -197,6 +205,10 @@ pub fn generate_test_cases(
 ) -> Vec<ShortestPathTestCase> {
     (0..)
         .par_bridge()
+        .progress_with(get_progressbar_long_jobs(
+            "Generation test cases",
+            number_of_testcases as u64,
+        ))
         .map_init(
             || (thread_rng()),
             |rng, _| {
