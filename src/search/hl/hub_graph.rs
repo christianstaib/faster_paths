@@ -10,6 +10,7 @@ use crate::{
         ch::contracted_graph::{self, ContractedGraph},
         collections::dijkstra_data::Path,
         shortcuts::{self, replace_shortcuts_slowly},
+        PathFinding,
     },
     utility::get_progressbar_long_jobs,
 };
@@ -68,7 +69,16 @@ impl HubGraph {
             .map(|vertex| vec![HubLabelEntry::new(vertex)])
             .collect_vec();
 
-        for &vertex in graph.level_to_vertex().iter().rev().progress() {
+        for &vertex in
+            graph
+                .level_to_vertex()
+                .iter()
+                .rev()
+                .progress_with(get_progressbar_long_jobs(
+                    "Merging labels",
+                    graph.level_to_vertex().len() as u64,
+                ))
+        {
             create_label(
                 graph.upward_graph(),
                 vertex,
@@ -101,6 +111,14 @@ impl HubGraph {
 
     pub fn average_label_size(&self) -> f32 {
         (self.forward.average_label_size() + self.backward.average_label_size()) / 2.0
+    }
+}
+
+impl PathFinding for HubGraph {
+    fn shortest_path(&self, source: Vertex, target: Vertex) -> Option<Path> {
+        let forward_label = self.forward.get_label(source);
+        let backward_label = self.backward.get_label(target);
+        get_path_from_overlapp(forward_label, backward_label, &self.shortcuts)
     }
 }
 
