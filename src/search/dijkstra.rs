@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use indicatif::ParallelProgressIterator;
 use rand::{thread_rng, Rng};
@@ -101,13 +101,22 @@ pub fn dijkstra_one_to_one_wrapped(
 
 pub fn dijkstra_one_to_many(
     graph: &dyn Graph,
+    hop_limit: u32,
     source: Vertex,
     targets: &Vec<Vertex>,
 ) -> DijkstraDataHashMap {
     let mut data = DijkstraDataHashMap::new();
     let mut expanded = VertexExpandedDataHashSet::new();
     let mut queue = VertexDistanceQueueBinaryHeap::new();
-    dijktra_one_to_many(graph, &mut data, &mut expanded, &mut queue, source, targets);
+    dijktra_one_to_many(
+        graph,
+        &mut data,
+        &mut expanded,
+        &mut queue,
+        hop_limit,
+        source,
+        targets,
+    );
     data
 }
 
@@ -116,6 +125,7 @@ pub fn dijktra_one_to_many(
     data: &mut dyn DijkstraData,
     expanded: &mut dyn VertexExpandedData,
     queue: &mut dyn VertexDistanceQueue,
+    hop_limit: u32,
     source: Vertex,
     targets: &Vec<Vertex>,
 ) {
@@ -123,6 +133,9 @@ pub fn dijktra_one_to_many(
 
     data.set_distance(source, 0);
     queue.insert(source, 0);
+
+    let mut hops = HashMap::new();
+    hops.insert(source, 0);
 
     while let Some((tail, distance_tail)) = queue.pop() {
         if expanded.expand(tail) {
@@ -133,13 +146,17 @@ pub fn dijktra_one_to_many(
             break;
         }
 
+        let tail_hops = *hops.get(&tail).unwrap();
+
         for edge in graph.edges(tail) {
             let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
             let alternative_distance_head = distance_tail + edge.weight;
-            if alternative_distance_head < current_distance_head {
+            if alternative_distance_head < current_distance_head && tail_hops < hop_limit {
                 data.set_distance(edge.head, alternative_distance_head);
                 data.set_predecessor(edge.head, tail);
                 queue.insert(edge.head, alternative_distance_head);
+
+                hops.insert(edge.head, tail_hops + 1);
             }
         }
     }

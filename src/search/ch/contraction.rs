@@ -17,13 +17,14 @@ use crate::{
 
 pub fn contraction_with_witness_search<G: Graph + Default>(
     mut graph: ReversibleGraph<G>,
+    hop_limit: u32,
 ) -> (
     Vec<Vertex>,
     HashMap<(Vertex, Vertex), Distance>,
     HashMap<(Vertex, Vertex), Vertex>,
 ) {
     println!("setting up the queue");
-    let mut queue = new_queue(&graph);
+    let mut queue = new_queue(&graph, hop_limit);
 
     println!("contracting");
     let mut edges = new_edge_map(&graph);
@@ -34,7 +35,8 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
     let pb =
         get_progressbar_long_jobs("Contracting", graph.out_graph().number_of_vertices() as u64);
     while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
-        let new_and_updated_edges = par_simulate_contraction_witness_search(&graph, vertex);
+        let new_and_updated_edges =
+            par_simulate_contraction_witness_search(&graph, hop_limit, vertex);
         let new_edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
         if new_edge_difference > old_edge_difference {
             queue.push(Reverse((new_edge_difference, vertex)));
@@ -82,14 +84,18 @@ pub fn new_edge_map<G: Graph + Default>(
     edges
 }
 
-fn new_queue<G: Graph + Default>(graph: &ReversibleGraph<G>) -> BinaryHeap<Reverse<(i32, u32)>> {
+fn new_queue<G: Graph + Default>(
+    graph: &ReversibleGraph<G>,
+    hop_limit: u32,
+) -> BinaryHeap<Reverse<(i32, u32)>> {
     graph
         .out_graph()
         .vertices()
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let new_and_updated_edges = par_simulate_contraction_witness_search(graph, vertex);
+            let new_and_updated_edges =
+                par_simulate_contraction_witness_search(graph, hop_limit, vertex);
             let edge_difference = edge_difference(graph, &new_and_updated_edges, vertex);
             Reverse((edge_difference, vertex))
         })
@@ -99,6 +105,7 @@ fn new_queue<G: Graph + Default>(graph: &ReversibleGraph<G>) -> BinaryHeap<Rever
 /// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
 pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
     graph: &ReversibleGraph<G>,
+    hop_limit: u32,
     vertex: Vertex,
 ) -> HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)> {
     // create vec of out neighbors once and reuse it afterwards
@@ -112,6 +119,7 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
     graph
         .in_graph()
         .edges(vertex)
+        .progress()
         .par_bridge()
         .map(|in_edge| {
             let tail = in_edge.head;
@@ -120,7 +128,7 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
             let mut updated_edges = Vec::new();
 
             // Get all shortest path distances (tail -> neighbor)
-            let data = dijkstra_one_to_many(graph.out_graph(), tail, &out_neighbors);
+            let data = dijkstra_one_to_many(graph.out_graph(), 3, tail, &out_neighbors);
 
             for out_edge in graph.out_graph().edges(vertex) {
                 let head = out_edge.head;
@@ -138,8 +146,10 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
                         head,
                         weight: shortcut_distance,
                     };
-                    if graph.get_weight(&edge.remove_weight()).is_some() {
-                        updated_edges.push(edge.remove_tail());
+                    if let Some(current_edge_weight) = graph.get_weight(&edge.remove_weight()) {
+                        if shortcut_distance < current_edge_weight {
+                            updated_edges.push(edge.remove_tail());
+                        }
                     } else {
                         new_edges.push(edge.remove_tail());
                     }

@@ -34,3 +34,7 @@ pub trait PathFinding {
 
     fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance>;
 }
+
+pub struct TrivialHeuristic {}
+
+impl DistanceHeuristic for TrivialHeuristic {}

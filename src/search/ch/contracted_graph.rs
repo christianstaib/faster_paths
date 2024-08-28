@@ -70,9 +70,10 @@ pub fn get_slow_shortcuts(
 impl ContractedGraph {
     pub fn by_contraction_with_dijkstra_witness_search<G: Graph + Default + Clone>(
         graph: &ReversibleGraph<G>,
+        hop_limit: u32,
     ) -> ContractedGraph {
         let graph = graph.clone();
-        let (level_to_vertex, edges, shortcuts) = contraction_with_witness_search(graph);
+        let (level_to_vertex, edges, shortcuts) = contraction_with_witness_search(graph, hop_limit);
 
         let vertex_to_level = vertex_to_level(&level_to_vertex);
 
@@ -356,7 +357,8 @@ mod tests {
     #[test]
     fn contration_by_witness_search() {
         let (graph, tests) = large_test_graph();
-        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+        let contracted_graph =
+            ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph, u32::MAX);
 
         for test in tests {
             let path = ch_one_to_one_path_wrapped(
@@ -379,7 +381,8 @@ mod tests {
     #[test]
     fn contration_brute_force() {
         let (graph, tests) = large_test_graph();
-        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+        let contracted_graph =
+            ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph, u32::MAX);
         let contracted_graph =
             ContractedGraph::by_brute_force(&graph, &contracted_graph.vertex_to_level);
 

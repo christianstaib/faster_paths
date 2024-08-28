@@ -278,7 +278,8 @@ mod tests {
     #[test]
     fn hub_graph_by_merging() {
         let (graph, tests) = large_test_graph();
-        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+        let contracted_graph =
+            ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph, u32::MAX);
         let hub_graph = HubGraph::by_merging(&contracted_graph);
 
         for test in tests {
@@ -298,7 +299,8 @@ mod tests {
     #[test]
     fn hub_graph_by_brute_force() {
         let (graph, tests) = large_test_graph();
-        let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
+        let contracted_graph =
+            ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph, u32::MAX);
         let hub_graph = HubGraph::by_brute_force(&graph, contracted_graph.vertex_to_level());
 
         for test in tests {
