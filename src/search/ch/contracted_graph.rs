@@ -120,9 +120,9 @@ impl ContractedGraph {
 
     pub fn by_brute_force<G: Graph + Default>(
         graph: &ReversibleGraph<G>,
-        level_to_vertex: &Vec<u32>,
+        level_to_vertex: &Vec<Vertex>,
     ) -> ContractedGraph {
-        let vertex_to_level = vertex_to_level(&level_to_vertex);
+        let vertex_to_level = vertex_to_level(level_to_vertex);
 
         let (upward_edges, mut shortcuts) = brute_force_contracted_graph_edges(
             graph.out_graph(),
@@ -363,7 +363,7 @@ mod tests {
         let (graph, tests) = large_test_graph();
         let contracted_graph = ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph);
         let contracted_graph =
-            ContractedGraph::by_brute_force(&graph, &contracted_graph.level_to_vertex);
+            ContractedGraph::by_brute_force(&graph, &contracted_graph.vertex_to_level);
 
         for test in tests {
             let path = ch_one_to_one_wrapped(

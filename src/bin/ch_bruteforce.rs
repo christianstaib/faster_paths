@@ -10,7 +10,7 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Vertex,
     },
-    search::ch::contracted_graph::{level_to_vertex, ContractedGraph},
+    search::ch::contracted_graph::ContractedGraph,
     utility::{benchmark_and_test, generate_test_cases},
 };
 
@@ -23,7 +23,7 @@ struct Args {
     graph: PathBuf,
     /// Infile in .fmi format
     #[arg(short, long)]
-    vertex_to_level: PathBuf,
+    level_to_vertex: PathBuf,
     /// Infile in .fmi format
     #[arg(short, long)]
     contracted_graph: PathBuf,
@@ -37,7 +37,7 @@ fn main() {
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
     // Read vertex_to_level and build level_to_vertex
-    let reader = BufReader::new(File::open(&args.vertex_to_level).unwrap());
+    let reader = BufReader::new(File::open(&args.level_to_vertex).unwrap());
     let level_to_vertex: Vec<Vertex> = serde_json::from_reader(reader).unwrap();
 
     // Create contracted_graph
