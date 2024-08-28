@@ -8,7 +8,7 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Level, Vertex,
+        Vertex,
     },
     search::ch::contracted_graph::{level_to_vertex, ContractedGraph},
     utility::{benchmark_and_test, generate_test_cases},
@@ -23,7 +23,7 @@ struct Args {
     graph: PathBuf,
     /// Infile in .fmi format
     #[arg(short, long)]
-    level_to_vertex: PathBuf,
+    vertex_to_level: PathBuf,
     /// Infile in .fmi format
     #[arg(short, long)]
     contracted_graph: PathBuf,
@@ -37,9 +37,8 @@ fn main() {
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
     // Read vertex_to_level and build level_to_vertex
-    let reader = BufReader::new(File::open(args.level_to_vertex).unwrap());
-    let vertex_to_level: Vec<Level> = serde_json::from_reader(reader).unwrap();
-    let level_to_vertex = level_to_vertex(&vertex_to_level);
+    let reader = BufReader::new(File::open(&args.vertex_to_level).unwrap());
+    let level_to_vertex: Vec<Vertex> = serde_json::from_reader(reader).unwrap();
 
     // Create contracted_graph
     let contracted_graph = ContractedGraph::by_brute_force(&graph, &level_to_vertex);
