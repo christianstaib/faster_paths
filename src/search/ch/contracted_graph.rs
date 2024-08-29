@@ -138,24 +138,24 @@ impl ContractedGraph {
             ),
         );
 
-        let (downward_edges, downward_shortcuts) = brute_force_contracted_graph_edges(
-            graph.in_graph(),
-            &vertex_to_level,
-            get_progressbar_long_jobs(
-                "Brute forcing downward edges",
-                graph.in_graph().number_of_vertices() as u64,
-            ),
-        );
+        // let (downward_edges, downward_shortcuts) =
+        // brute_force_contracted_graph_edges(     graph.in_graph(),
+        //     &vertex_to_level,
+        //     get_progressbar_long_jobs(
+        //         "Brute forcing downward edges",
+        //         graph.in_graph().number_of_vertices() as u64,
+        //     ),
+        // );
 
-        shortcuts.extend(
-            downward_shortcuts
-                .into_iter()
-                .map(|((tail, head), skiped_vertex)| ((head, tail), skiped_vertex)),
-        );
+        // shortcuts.extend(
+        //     downward_shortcuts
+        //         .into_iter()
+        //         .map(|((tail, head), skiped_vertex)| ((head, tail), skiped_vertex)),
+        // );
 
         ContractedGraph {
             upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
-            downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
+            downward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
             shortcuts,
             level_to_vertex: level_to_vertex.clone(),
             vertex_to_level,
