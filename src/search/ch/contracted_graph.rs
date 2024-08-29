@@ -217,10 +217,7 @@ pub fn ch_one_to_one_path_wrapped(
     let mut backward_vertices = backward_data.get_path(vertex).unwrap().vertices; // (target -> vertex)
 
     backward_vertices.reverse(); // (vertex -> target)
-    if !vertices.is_empty() && !backward_vertices.is_empty() {
-        // remove double vertex ((source -> vertex) -> (vertex -> target))
-        vertices.pop();
-    }
+    vertices.pop(); // remove double vertex ((source -> vertex) -> (vertex -> target))
     vertices.extend(backward_vertices); // get (source -> target)
 
     replace_shortcuts_slowly(&mut vertices, shortcuts); // replace the shortcuts
