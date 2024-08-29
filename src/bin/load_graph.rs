@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
@@ -9,13 +9,16 @@ use faster_paths::{
     search::{
         alt::landmark::Landmarks,
         ch::{
-            contraction::edge_difference,
+            contracted_graph::ContractedGraph, contraction::edge_difference,
             probabilistic_contraction::par_simulate_contraction_distance_heuristic,
         },
+        PathFinding,
     },
 };
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use rand::prelude::*;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -24,42 +27,61 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     graph: PathBuf,
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    ch_graph: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
 
-    println!("read_edges_from_fmi_file");
     let edges = read_edges_from_fmi_file(&args.graph);
-
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
-    // let heuristic = TrivialHeuristic {};
-    let heuristic = Landmarks::random(&graph, rayon::current_num_threads() as u32 * 2);
+    // Read contracted_graph
+    let reader = BufReader::new(File::open(&args.ch_graph).unwrap());
+    let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
 
-    let vertices = graph.out_graph().vertices().collect_vec();
+    (0..100_000_000).into_par_iter().progress().for_each(|_| {
+        let source = thread_rng().gen_range(graph.out_graph().vertices());
+        let target = thread_rng().gen_range(graph.out_graph().vertices());
 
-    for &vertex in vertices.choose_multiple(&mut thread_rng(), 100) {
-        // let new_and_updated_edges_witness =
-        //     par_simulate_contraction_witness_search(&graph, u32::MAX, vertex);
-        // let edge_differece_witness =
-        //     edge_difference(&graph, &new_and_updated_edges_witness, vertex);
-        // println!(
-        //     "edge_difference for vertex {} is {} (outgoing edges {})",
-        //     vertex,
-        //     edge_differece_witness,
-        //     graph.out_graph().edges(vertex).len()
-        // );
+        let path = contracted_graph.shortest_path(source, target);
+        let path_distance = path
+            .as_ref()
+            .and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
+        let distance = path.as_ref().map(|path| path.distance);
 
-        let new_and_updated_edges_heuristic =
-            par_simulate_contraction_distance_heuristic(&graph, &heuristic, vertex);
-        let edge_differece_heuristic =
-            edge_difference(&graph, &new_and_updated_edges_heuristic, vertex);
-        println!(
-            "edge_difference for vertex {} is {} (outgoing edges {})",
-            vertex,
-            edge_differece_heuristic,
-            graph.out_graph().edges(vertex).len()
-        );
-    }
+        assert_eq!(distance, path_distance);
+    })
+
+    // // let heuristic = TrivialHeuristic {};
+    // let heuristic = Landmarks::random(&graph, rayon::current_num_threads() as
+    // u32 * 2);
+
+    // let vertices = graph.out_graph().vertices().collect_vec();
+
+    // for &vertex in vertices.choose_multiple(&mut thread_rng(), 100) {
+    //     // let new_and_updated_edges_witness =
+    //     //     par_simulate_contraction_witness_search(&graph, u32::MAX,
+    // vertex);     // let edge_differece_witness =
+    //     //     edge_difference(&graph, &new_and_updated_edges_witness,
+    // vertex);     // println!(
+    //     //     "edge_difference for vertex {} is {} (outgoing edges {})",
+    //     //     vertex,
+    //     //     edge_differece_witness,
+    //     //     graph.out_graph().edges(vertex).len()
+    //     // );
+
+    //     let new_and_updated_edges_heuristic =
+    //         par_simulate_contraction_distance_heuristic(&graph, &heuristic,
+    // vertex);     let edge_differece_heuristic =
+    //         edge_difference(&graph, &new_and_updated_edges_heuristic,
+    // vertex);     println!(
+    //         "edge_difference for vertex {} is {} (outgoing edges {})",
+    //         vertex,
+    //         edge_differece_heuristic,
+    //         graph.out_graph().edges(vertex).len()
+    //     );
+    // }
 }
