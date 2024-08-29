@@ -4,20 +4,13 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Distance, Graph,
+        Graph,
     },
     search::{
-        alt::landmark::Landmarks,
-        ch::{
-            contracted_graph::ContractedGraph, contraction::edge_difference,
-            probabilistic_contraction::par_simulate_contraction_distance_heuristic,
-        },
-        dijkstra::dijkstra_one_to_one_wrapped,
-        path, PathFinding,
+        ch::contracted_graph::ContractedGraph, dijkstra::dijkstra_one_to_one_wrapped, PathFinding,
     },
 };
 use indicatif::ParallelProgressIterator;
-use itertools::Itertools;
 use rand::prelude::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
@@ -62,12 +55,13 @@ fn main() {
             let total_failed = total_failed.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
 
             println!(
-                "{} -> {} failed. ({}% failed) (dijkstra==ch:{}, dijkstra==path:{})",
+                "{} -> {} failed. ({}% failed) (dijkstra==ch:{}, dijkstra==path:{}) (path distance:{:?})",
                 source,
                 target,
                 total_failed as f32 / all as f32 * 100.0,
                 dijkstra_distance == distance,
-                dijkstra_distance == path_distance
+                dijkstra_distance == path_distance,
+                path_distance
             );
         }
     })
