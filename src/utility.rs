@@ -179,8 +179,8 @@ pub fn benchmark_and_test(
         let distance = path.as_ref().map(|path| path.distance);
         if distance != test.distance {
             return Err(format!(
-                "Distance should be {:?} but is {:?}",
-                test.distance, distance
+                "Distance should be {:?} but is {:?} ({} -> {})",
+                test.distance, distance, test.source, test.target
             )
             .to_string());
         }
@@ -190,7 +190,11 @@ pub fn benchmark_and_test(
             .as_ref()
             .and_then(|path| graph.get_path_distance(&path.vertices));
         if distance != test.distance {
-            return Err("The path distance was correct but the path is wrong".to_string());
+            return Err(format!(
+                "The path distance was correct but the path is wrong ({} -> {})",
+                test.source, test.target
+            )
+            .to_string());
         }
     }
 
