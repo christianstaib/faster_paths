@@ -57,6 +57,42 @@ pub fn brute_force_contracted_graph_edges(
     (all_edges, all_shortcuts)
 }
 
+pub fn create_shortcuts(
+    path: &[Vertex],
+    vertex_to_level: &[Level],
+) -> Vec<((Vertex, Vertex), Vertex)> {
+    assert!(path.len() >= 2);
+
+    if path.len() == 2 {
+        return Vec::new();
+    }
+
+    let max_level_vertex_index = path
+        .iter()
+        .enumerate()
+        .skip(1) // Skip the first element.
+        .take(path.len() - 2) // Take all but the last element.
+        .max_by_key(|&(_index, &vertex)| vertex_to_level[vertex as usize])
+        .unwrap()
+        .0;
+
+    let mut shortcuts = vec![(
+        (*path.first().unwrap(), *path.last().unwrap()),
+        path[max_level_vertex_index],
+    )];
+
+    shortcuts.extend(create_shortcuts(
+        &path[..=max_level_vertex_index],
+        vertex_to_level,
+    ));
+    shortcuts.extend(create_shortcuts(
+        &path[max_level_vertex_index..],
+        vertex_to_level,
+    ));
+
+    shortcuts
+}
+
 pub fn get_ch_edges(
     graph: &dyn Graph,
     data: &mut dyn DijkstraData,
@@ -114,16 +150,8 @@ pub fn get_ch_edges(
                         data.get_distance(tail).unwrap(),
                     ));
 
-                    let mut path = data.get_path(shortcut_head).unwrap();
-                    path.vertices.remove(0);
-                    path.vertices.pop();
-
-                    path.vertices
-                        .iter()
-                        .max_by_key(|&&vertex| vertex_to_level[vertex as usize])
-                        .map(|&skiped_vertex| {
-                            shortcuts.push(((shortcut_tail, shortcut_head), skiped_vertex))
-                        });
+                    let path = data.get_path(shortcut_head).unwrap().vertices;
+                    shortcuts.extend(create_shortcuts(&path, vertex_to_level));
                 }
                 alive.remove(&tail);
             }
