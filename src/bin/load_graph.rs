@@ -43,7 +43,8 @@ fn main() {
     let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
 
     let total_failed = AtomicU32::new(0);
-    (0..100_000_000).into_par_iter().progress().for_each(|i| {
+    let all = AtomicU32::new(0);
+    (0..100_000_000).into_par_iter().progress().for_each(|0| {
         let source = thread_rng().gen_range(graph.out_graph().vertices());
         let target = thread_rng().gen_range(graph.out_graph().vertices());
 
@@ -55,11 +56,13 @@ fn main() {
 
         if distance != path_distance {
             let total_failed = total_failed.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+            let all = all.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+
             println!(
                 "{} -> {} failed. ({}% failed)",
                 source,
                 target,
-                i as f32 / total_failed as f32 * 100.0
+                total_failed as f32 / all as f32 * 100.0
             );
         }
     })
