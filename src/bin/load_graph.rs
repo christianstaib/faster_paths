@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf, sync::atomic::AtomicU32};
+use std::{collections::HashSet, fs::File, io::BufReader, path::PathBuf, sync::atomic::AtomicU32};
 
 use clap::Parser;
 use faster_paths::{
@@ -35,6 +35,16 @@ fn main() {
     // Read contracted_graph
     let reader = BufReader::new(File::open(&args.ch_graph).unwrap());
     let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
+
+    {
+        let x: HashSet<_> = contracted_graph.vertex_to_level().iter().clone().collect();
+        assert_eq!(x.len(), contracted_graph.vertex_to_level().len());
+    }
+
+    {
+        let x: HashSet<_> = contracted_graph.level_to_vertex().iter().clone().collect();
+        assert_eq!(x.len(), contracted_graph.level_to_vertex().len());
+    }
 
     let total_failed = AtomicU32::new(0);
     let all = AtomicU32::new(0);
