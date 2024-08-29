@@ -54,9 +54,9 @@ fn main() {
             .and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
         let distance = path.as_ref().map(|path| path.distance);
 
+        let all = all.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
         if distance != path_distance {
             let total_failed = total_failed.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
-            let all = all.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
 
             println!(
                 "{} -> {} failed. ({}% failed)",
