@@ -10,10 +10,7 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Distance, Vertex,
     },
-    search::{
-        alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph,
-        DistanceHeuristic, PathFinding, TrivialHeuristic,
-    },
+    search::{ch::contracted_graph::ContractedGraph, DistanceHeuristic, PathFinding},
     utility::{benchmark_and_test, generate_test_cases},
 };
 

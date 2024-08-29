@@ -11,7 +11,7 @@ use crate::{
     search::{
         ch::contracted_graph::{vertex_to_level, ContractedGraph},
         collections::dijkstra_data::Path,
-        shortcuts::{self, replace_shortcuts_slowly},
+        shortcuts::replace_shortcuts_slowly,
         PathFinding,
     },
     utility::get_progressbar_long_jobs,

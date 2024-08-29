@@ -3,7 +3,7 @@ use std::{
     collections::{BinaryHeap, HashMap},
 };
 
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
 use rayon::prelude::*;
 

@@ -3,7 +3,7 @@ use std::{
     collections::{BinaryHeap, HashMap},
 };
 
-use indicatif::{ParallelProgressIterator, ProgressBar};
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -159,7 +159,7 @@ pub fn par_simulate_contraction_heuristic_new_edges<G: Graph + Default>(
                         head,
                         weight: shortcut_distance,
                     };
-                    if let Some(current_edge_weight) = graph.get_weight(&edge.remove_weight()) {
+                    if let Some(_current_edge_weight) = graph.get_weight(&edge.remove_weight()) {
                     } else {
                         new_edges += 1;
                     }

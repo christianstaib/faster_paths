@@ -1,23 +1,17 @@
 use std::collections::HashMap;
 
-use clap::Parser;
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressBar};
 use itertools::Itertools;
-use rayon::iter::{
-    IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
-};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use super::hub_graph::{overlapp, HubLabelEntry};
+use super::hub_graph::HubLabelEntry;
 use crate::{
     graphs::{Distance, Graph, Vertex, WeightedEdge},
-    search::{
-        collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataVec},
-            vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
-        },
-        shortcuts,
+    search::collections::{
+        dijkstra_data::{DijkstraData, DijkstraDataVec},
+        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+        vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
     },
 };
 

@@ -12,7 +12,7 @@ use super::{
             VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
         },
     },
-    path::{ShortestPathRequest, ShortestPathTestCase},
+    path::ShortestPathTestCase,
 };
 use crate::graphs::{Distance, Graph, Vertex};
 

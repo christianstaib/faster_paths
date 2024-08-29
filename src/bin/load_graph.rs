@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Instant};
+use std::path::PathBuf;
 
 use clap::Parser;
 use faster_paths::{
@@ -9,16 +9,11 @@ use faster_paths::{
     search::{
         alt::landmark::Landmarks,
         ch::{
-            contracted_graph::ContractedGraph,
-            contraction::{edge_difference, par_simulate_contraction_witness_search},
+            contraction::edge_difference,
             probabilistic_contraction::par_simulate_contraction_distance_heuristic,
         },
-        dijkstra::dijkstra_one_to_one_wrapped,
-        hl::hub_graph::{get_path_from_overlapp, HubGraph},
-        TrivialHeuristic,
     },
 };
-use indicatif::ProgressIterator;
 use itertools::Itertools;
 use rand::prelude::*;
 

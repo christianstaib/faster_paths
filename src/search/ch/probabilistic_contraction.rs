@@ -6,7 +6,7 @@ use std::{
     time::Instant,
 };
 
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressBar};
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -16,15 +16,7 @@ use crate::{
         reversible_graph::ReversibleGraph, Distance, Edge, Graph, TaillessEdge, Vertex,
         WeightedEdge,
     },
-    search::{
-        collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataHashMap},
-            vertex_distance_queue::VertexDistanceQueueBinaryHeap,
-            vertex_expanded_data::VertexExpandedDataHashSet,
-        },
-        dijkstra::{dijkstra_one_to_many, dijktra_one_to_many},
-        DistanceHeuristic,
-    },
+    search::DistanceHeuristic,
 };
 
 fn scale(base_value: u32, factor: f32, min: u32, max: u32) -> u32 {
