@@ -177,11 +177,6 @@ pub fn get_ch_edges(
                 if tail_is_alive {
                     alive.insert(edge.head);
                 }
-            } else if alternative_distance_head == current_distance_head {
-                let current_predecessor = data.get_predecessor(edge.head).unwrap();
-                if vertex_to_level[tail as usize] > vertex_to_level[current_predecessor as usize] {
-                    data.set_predecessor(edge.head, tail);
-                }
             }
         }
 
