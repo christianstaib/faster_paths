@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::{fs::File, io::BufReader, path::PathBuf, sync::atomic::AtomicU32};
 
 use clap::Parser;
 use faster_paths::{
@@ -42,7 +42,8 @@ fn main() {
     let reader = BufReader::new(File::open(&args.ch_graph).unwrap());
     let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
 
-    (0..100_000_000).into_par_iter().progress().for_each(|_| {
+    let total_failed = AtomicU32::new(0);
+    (0..100_000_000).into_par_iter().progress().for_each(|i| {
         let source = thread_rng().gen_range(graph.out_graph().vertices());
         let target = thread_rng().gen_range(graph.out_graph().vertices());
 
@@ -52,7 +53,15 @@ fn main() {
             .and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
         let distance = path.as_ref().map(|path| path.distance);
 
-        assert_eq!(distance, path_distance);
+        if distance != path_distance {
+            let total_failed = total_failed.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+            println!(
+                "{} -> {} failed. ({}% failed)",
+                source,
+                target,
+                i as f32 / total_failed as f32 * 100.0
+            );
+        }
     })
 
     // // let heuristic = TrivialHeuristic {};
