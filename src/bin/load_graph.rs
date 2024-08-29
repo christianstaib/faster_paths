@@ -4,7 +4,7 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Graph,
+        Distance, Graph,
     },
     search::{
         alt::landmark::Landmarks,
@@ -12,7 +12,8 @@ use faster_paths::{
             contracted_graph::ContractedGraph, contraction::edge_difference,
             probabilistic_contraction::par_simulate_contraction_distance_heuristic,
         },
-        PathFinding,
+        dijkstra::dijkstra_one_to_one_wrapped,
+        path, PathFinding,
     },
 };
 use indicatif::ParallelProgressIterator;
@@ -56,13 +57,17 @@ fn main() {
 
         let all = all.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
         if distance != path_distance {
+            let dijkstra_distance = dijkstra_one_to_one_wrapped(graph.out_graph(), source, target)
+                .map(|path| path.distance);
             let total_failed = total_failed.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
 
             println!(
-                "{} -> {} failed. ({}% failed)",
+                "{} -> {} failed. ({}% failed) (dijkstra==ch:{}, dijkstra==path{}:)",
                 source,
                 target,
-                total_failed as f32 / all as f32 * 100.0
+                total_failed as f32 / all as f32 * 100.0,
+                dijkstra_distance == distance,
+                dijkstra_distance == path_distance
             );
         }
     })
