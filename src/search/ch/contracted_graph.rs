@@ -220,9 +220,7 @@ pub fn ch_one_to_one_path_wrapped(
     vertices.pop(); // remove double vertex ((source -> vertex) -> (vertex -> target))
     vertices.extend(backward_vertices); // get (source -> target)
 
-    println!("{:?}", vertices);
     replace_shortcuts_slowly(&mut vertices, shortcuts); // replace the shortcuts
-    println!("{:?}", vertices);
 
     Some(Path { vertices, distance })
 }
