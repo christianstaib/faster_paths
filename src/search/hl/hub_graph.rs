@@ -11,7 +11,7 @@ use crate::{
     search::{
         ch::contracted_graph::{vertex_to_level, ContractedGraph},
         collections::dijkstra_data::Path,
-        shortcuts::replace_shortcuts_slowly,
+        shortcuts::{self, replace_shortcuts_slowly},
         PathFinding,
     },
     utility::get_progressbar_long_jobs,
@@ -50,11 +50,11 @@ impl HubGraph {
             ),
         );
 
-        shortcuts.extend(
-            backward_shortcuts
-                .into_iter()
-                .map(|((tail, head), skiped_vertex)| ((head, tail), skiped_vertex)),
-        );
+        for ((tail, head), skiped_vertex) in backward_shortcuts.into_iter() {
+            let current_skiped_vertex = *shortcuts.get(&(head, tail)).unwrap_or(&skiped_vertex);
+            assert_eq!(current_skiped_vertex, skiped_vertex);
+            shortcuts.insert((head, tail), skiped_vertex);
+        }
 
         HubGraph {
             forward,
