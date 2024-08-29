@@ -44,7 +44,9 @@ impl<G: Graph + Default> ReversibleGraph<G> {
 
         graph
     }
+}
 
+impl<G: Graph> ReversibleGraph<G> {
     pub fn out_graph(&self) -> &G {
         &self.out_graph
     }

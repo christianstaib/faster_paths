@@ -15,7 +15,7 @@ use crate::{
     utility::get_progressbar_long_jobs,
 };
 
-pub fn contraction_with_witness_search<G: Graph + Default>(
+pub fn contraction_with_witness_search<G: Graph>(
     mut graph: ReversibleGraph<G>,
     hop_limit: u32,
 ) -> (
@@ -23,10 +23,8 @@ pub fn contraction_with_witness_search<G: Graph + Default>(
     HashMap<(Vertex, Vertex), Distance>,
     HashMap<(Vertex, Vertex), Vertex>,
 ) {
-    println!("setting up the queue");
     let mut queue = new_queue(&graph, hop_limit);
 
-    println!("contracting");
     let mut edges = new_edge_map(&graph);
     let mut shortcuts = HashMap::new();
 
@@ -72,9 +70,7 @@ pub fn update_edge_map(
     }
 }
 
-pub fn new_edge_map<G: Graph + Default>(
-    graph: &ReversibleGraph<G>,
-) -> HashMap<(Vertex, Vertex), Distance> {
+pub fn new_edge_map<G: Graph>(graph: &ReversibleGraph<G>) -> HashMap<(Vertex, Vertex), Distance> {
     let mut edges = HashMap::new();
     for vertex in (0..graph.out_graph().number_of_vertices()).progress() {
         for edge in graph.out_graph().edges(vertex) {
@@ -84,7 +80,7 @@ pub fn new_edge_map<G: Graph + Default>(
     edges
 }
 
-fn new_queue<G: Graph + Default>(
+fn new_queue<G: Graph>(
     graph: &ReversibleGraph<G>,
     hop_limit: u32,
 ) -> BinaryHeap<Reverse<(i32, u32)>> {
@@ -106,7 +102,7 @@ fn new_queue<G: Graph + Default>(
 }
 
 /// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
-pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
+pub fn par_simulate_contraction_witness_search<G: Graph>(
     graph: &ReversibleGraph<G>,
     hop_limit: u32,
     vertex: Vertex,
@@ -163,7 +159,7 @@ pub fn par_simulate_contraction_witness_search<G: Graph + Default>(
         .collect()
 }
 
-pub fn edge_difference<G: Graph + Default>(
+pub fn edge_difference<G: Graph>(
     graph: &ReversibleGraph<G>,
     new_and_updated_edges: &HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
     vertex: Vertex,

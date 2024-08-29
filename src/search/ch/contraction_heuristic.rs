@@ -45,7 +45,6 @@ pub fn contraction_with_heuristic<G: Graph + Default>(
             queue.push(Reverse((new_edge_difference, vertex)));
             continue;
         }
-        println!("edge difference {}", new_edge_difference);
         pb.inc(1);
 
         update_edge_map(&mut edges, &mut shortcuts, vertex, &new_and_updated_edges);
