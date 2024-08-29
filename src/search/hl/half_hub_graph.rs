@@ -131,28 +131,31 @@ pub fn get_hub_label_with_brute_force(
 
             // Dont create a edge from source to source. source has no predecessor
             if let Some(predecessor) = data.get_predecessor(tail) {
-                let entry_predecessor = max_level_on_path.get(&predecessor).unwrap().1;
+                let shortcut_tail = max_level_on_path.get(&predecessor).unwrap().1;
                 let shortcut_head = tail;
 
                 // Only add edge if its tail is source. This function only returns edges with a
                 // tail in source.
                 hub_label.push(HubLabelEntry {
-                    vertex: tail,
+                    vertex: shortcut_head,
                     distance: data.get_distance(tail).unwrap(),
-                    predecessor_index: Some(entry_predecessor),
+                    predecessor_index: Some(shortcut_tail),
                 });
 
-                if entry_predecessor == source {
+                if shortcut_tail == source {
                     let mut path = data.get_path(shortcut_head).unwrap();
                     path.vertices.remove(0);
                     path.vertices.pop();
 
-                    path.vertices
+                    if let Some(&skiped_vertex) = path
+                        .vertices
                         .iter()
                         .max_by_key(|&&vertex| vertex_to_level[vertex as usize])
-                        .map(|&skiped_vertex| {
-                            shortcuts.push(((entry_predecessor, shortcut_head), skiped_vertex))
-                        });
+                    {
+                        if shortcut_tail != skiped_vertex && skiped_vertex != shortcut_head {
+                            shortcuts.push(((shortcut_tail, shortcut_head), skiped_vertex))
+                        }
+                    }
                 }
             }
         }

@@ -62,7 +62,7 @@ fn main() {
             let total_failed = total_failed.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
 
             println!(
-                "{} -> {} failed. ({}% failed) (dijkstra==ch:{}, dijkstra==path{}:)",
+                "{} -> {} failed. ({}% failed) (dijkstra==ch:{}, dijkstra==path:{})",
                 source,
                 target,
                 total_failed as f32 / all as f32 * 100.0,
