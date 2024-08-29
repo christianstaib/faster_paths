@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::half_hub_graph::{get_hub_label_by_merging, set_predecessor, HalfHubGraph};
 use crate::{
-    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
+    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Level, Vertex},
     search::{
         ch::contracted_graph::{vertex_to_level, ContractedGraph},
         collections::dijkstra_data::Path,
@@ -21,7 +21,9 @@ use crate::{
 pub struct HubGraph {
     pub forward: HalfHubGraph,
     pub backward: HalfHubGraph,
-    pub shortcuts: HashMap<(Vertex, Vertex), Vertex>,
+    shortcuts: HashMap<(Vertex, Vertex), Vertex>,
+    level_to_vertex: Vec<Vertex>,
+    vertex_to_level: Vec<Level>,
 }
 
 impl HubGraph {
@@ -58,6 +60,8 @@ impl HubGraph {
             forward,
             backward,
             shortcuts,
+            level_to_vertex: level_to_vertex.clone(),
+            vertex_to_level,
         }
     }
 
@@ -111,6 +115,8 @@ impl HubGraph {
             forward,
             backward,
             shortcuts,
+            level_to_vertex: graph.level_to_vertex().clone(),
+            vertex_to_level: graph.vertex_to_level().clone(),
         }
     }
 

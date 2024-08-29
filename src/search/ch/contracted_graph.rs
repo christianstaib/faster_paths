@@ -30,7 +30,6 @@ use crate::{
 pub struct ContractedGraph {
     upward_graph: VecGraph,
     downward_graph: VecGraph,
-    #[serde_as(as = "Vec<(_, _)>")]
     shortcuts: HashMap<(Vertex, Vertex), Vertex>,
     level_to_vertex: Vec<Vertex>,
     vertex_to_level: Vec<Level>,
