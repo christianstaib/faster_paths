@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use indicatif::ProgressIterator;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
@@ -137,6 +138,13 @@ impl ContractedGraph {
                 graph.out_graph().number_of_vertices() as u64,
             ),
         );
+
+        let downward_shortcuts: HashMap<_, _> = shortcuts
+            .iter()
+            .map(|(&(tail, head), &skiped_vertex)| ((head, tail), skiped_vertex))
+            .collect();
+
+        shortcuts.extend(downward_shortcuts);
 
         // let (downward_edges, downward_shortcuts) =
         // brute_force_contracted_graph_edges(     graph.in_graph(),
