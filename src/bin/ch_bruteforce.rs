@@ -10,7 +10,7 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Vertex,
     },
-    search::ch::contracted_graph::{self, ContractedGraph},
+    search::ch::contracted_graph::ContractedGraph,
     utility::{benchmark_and_test, generate_test_cases},
 };
 

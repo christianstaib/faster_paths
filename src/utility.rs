@@ -154,7 +154,7 @@ pub fn benchmark_and_test(
     graph: &dyn Graph,
     tests: &[ShortestPathTestCase],
     pathfinder: &dyn PathFinding,
-) -> Result<Duration, ()> {
+) -> Result<Duration, String> {
     // First only calculate paths. Checking correctness immediately would poison
     // cache.
     let path_and_duration = tests
@@ -178,7 +178,11 @@ pub fn benchmark_and_test(
         // Test distance against test.
         let distance = path.as_ref().map(|path| path.distance);
         if distance != test.distance {
-            return Err(());
+            return Err(format!(
+                "Distance should be {:?} but is {:?}",
+                test.distance, distance
+            )
+            .to_string());
         }
 
         // Test path against test.
@@ -186,7 +190,7 @@ pub fn benchmark_and_test(
             .as_ref()
             .and_then(|path| graph.get_path_distance(&path.vertices));
         if distance != test.distance {
-            return Err(());
+            return Err("The path distance was correct but the path is wrong".to_string());
         }
     }
 
