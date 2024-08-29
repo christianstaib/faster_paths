@@ -44,7 +44,7 @@ fn main() {
 
     let total_failed = AtomicU32::new(0);
     let all = AtomicU32::new(0);
-    (0..100_000_000).into_par_iter().progress().for_each(|0| {
+    (0..100_000_000).into_par_iter().progress().for_each(|_| {
         let source = thread_rng().gen_range(graph.out_graph().vertices());
         let target = thread_rng().gen_range(graph.out_graph().vertices());
 
