@@ -92,7 +92,10 @@ fn new_queue<G: Graph + Default>(
         .out_graph()
         .vertices()
         .into_par_iter()
-        .progress()
+        .progress_with(get_progressbar_long_jobs(
+            "Initializing queue",
+            graph.out_graph().number_of_vertices() as u64,
+        ))
         .map(|vertex| {
             let new_and_updated_edges =
                 par_simulate_contraction_witness_search(graph, hop_limit, vertex);
