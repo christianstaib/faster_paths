@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
+use super::generic::contraction_bottom_up;
 use crate::{
     graphs::{
         reversible_graph::ReversibleGraph, Distance, Graph, TaillessEdge, Vertex, WeightedEdge,
     },
     search::{
-        ch::{contracted_graph::ContractedGraph, contraction_generic::contraction_bottom_up},
-        collections::dijkstra_data::DijkstraData,
+        ch::contracted_graph::ContractedGraph, collections::dijkstra_data::DijkstraData,
         dijkstra::dijkstra_one_to_many,
     },
 };

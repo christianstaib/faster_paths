@@ -2,12 +2,10 @@ use std::collections::HashMap;
 
 use rayon::prelude::*;
 
+use super::generic::contraction_bottom_up;
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Graph, TaillessEdge, Vertex, WeightedEdge},
-    search::{
-        ch::{contracted_graph::ContractedGraph, contraction_generic::contraction_bottom_up},
-        DistanceHeuristic,
-    },
+    search::{ch::contracted_graph::ContractedGraph, DistanceHeuristic},
 };
 
 impl ContractedGraph {
