@@ -5,10 +5,7 @@ use rayon::prelude::*;
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Graph, TaillessEdge, Vertex, WeightedEdge},
     search::{
-        ch::{
-            contracted_graph::{new, ContractedGraph},
-            contraction_generic::contraction_bottom_up,
-        },
+        ch::{contracted_graph::ContractedGraph, contraction_generic::contraction_bottom_up},
         DistanceHeuristic,
     },
 };
@@ -23,7 +20,7 @@ impl ContractedGraph {
             par_simulate_contraction_heuristic(graph, heuristic, vertex)
         });
 
-        new(level_to_vertex, edges, shortcuts)
+        ContractedGraph::new(level_to_vertex, edges, shortcuts)
     }
 }
 

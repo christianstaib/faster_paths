@@ -132,7 +132,9 @@ pub fn one_to_one(
 
     let mut meeting_vertex_and_distance = None;
 
+    println!("new");
     while !forward_queue.is_empty() || !backward_queue.is_empty() {
+        println!("{:?} {:?}", forward_queue.peek(), backward_queue.peek());
         single_search_step(
             upward_graph,
             downward_graph,

@@ -7,10 +7,7 @@ use crate::{
         reversible_graph::ReversibleGraph, Distance, Graph, TaillessEdge, Vertex, WeightedEdge,
     },
     search::{
-        ch::{
-            contracted_graph::{new, ContractedGraph},
-            contraction_generic::contraction_bottom_up,
-        },
+        ch::{contracted_graph::ContractedGraph, contraction_generic::contraction_bottom_up},
         collections::dijkstra_data::DijkstraData,
         dijkstra::dijkstra_one_to_many,
     },
@@ -26,7 +23,7 @@ impl ContractedGraph {
             par_simulate_contraction_witness_search(graph, hop_limit, vertex)
         });
 
-        new(level_to_vertex, edges, shortcuts)
+        ContractedGraph::new(level_to_vertex, edges, shortcuts)
     }
 }
 

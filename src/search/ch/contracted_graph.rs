@@ -16,6 +16,33 @@ pub struct ContractedGraph {
 }
 
 impl ContractedGraph {
+    pub fn new(
+        level_to_vertex: Vec<u32>,
+        edges: Vec<WeightedEdge>,
+        shortcuts: HashMap<(u32, u32), u32>,
+    ) -> ContractedGraph {
+        let vertex_to_level = vertex_to_level(&level_to_vertex);
+
+        let mut upward_edges = Vec::new();
+        let mut downward_edges = Vec::new();
+
+        for edge in edges.into_iter() {
+            if vertex_to_level[edge.tail as usize] < vertex_to_level[edge.head as usize] {
+                upward_edges.push(edge);
+            } else if vertex_to_level[edge.tail as usize] > vertex_to_level[edge.head as usize] {
+                downward_edges.push(edge.reversed());
+            }
+        }
+
+        ContractedGraph {
+            upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
+            downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
+            shortcuts,
+            level_to_vertex: level_to_vertex.clone(),
+            vertex_to_level,
+        }
+    }
+
     pub fn upward_graph(&self) -> &dyn Graph {
         &self.upward_graph
     }
@@ -34,32 +61,6 @@ impl ContractedGraph {
 
     pub fn shortcuts(&self) -> &HashMap<(Vertex, Vertex), Vertex> {
         &self.shortcuts
-    }
-}
-
-pub fn new(
-    level_to_vertex: Vec<u32>,
-    edges: Vec<WeightedEdge>,
-    shortcuts: HashMap<(u32, u32), u32>,
-) -> ContractedGraph {
-    let vertex_to_level = vertex_to_level(&level_to_vertex);
-
-    let mut upward_edges = Vec::new();
-    let mut downward_edges = Vec::new();
-    for edge in edges.into_iter() {
-        if vertex_to_level[edge.tail as usize] < vertex_to_level[edge.head as usize] {
-            upward_edges.push(edge);
-        } else if vertex_to_level[edge.tail as usize] > vertex_to_level[edge.head as usize] {
-            downward_edges.push(edge);
-        }
-    }
-
-    ContractedGraph {
-        upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
-        downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
-        shortcuts,
-        level_to_vertex: level_to_vertex.clone(),
-        vertex_to_level,
     }
 }
 

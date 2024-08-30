@@ -5,7 +5,6 @@ use contracted_graph::ContractedGraph;
 pub mod bottom_up;
 pub mod brute_force;
 pub mod contracted_graph;
-pub mod contraction;
 pub mod contraction_generic;
 pub mod pathfinding;
 pub mod probabilistic_contraction;
