@@ -98,13 +98,21 @@ impl TaillessEdge {
 pub trait Graph: Send + Sync {
     fn number_of_vertices(&self) -> u32;
 
+    fn get_weight(&self, edge: &Edge) -> Option<Distance>;
+
+    fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);
+
+    fn edges(&self, source: Vertex) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
+
     fn number_of_edges(&self) -> u32 {
         (0..self.number_of_vertices())
             .map(|vertex| self.edges(vertex).count() as u32)
             .sum::<u32>()
     }
 
-    fn edges(&self, source: Vertex) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
+    fn neighbors(&self, source: Vertex) -> Vec<Vertex> {
+        self.edges(source).map(|edge| edge.head).collect()
+    }
 
     fn vertices(&self) -> std::ops::Range<Vertex> {
         0..self.number_of_vertices()
@@ -125,10 +133,6 @@ pub trait Graph: Send + Sync {
             .map(|(&tail, &head)| self.get_weight(&Edge { tail, head }))
             .sum()
     }
-
-    fn get_weight(&self, edge: &Edge) -> Option<Distance>;
-
-    fn set_weight(&mut self, edge: &Edge, weight: Option<Distance>);
 
     fn build_graph(&mut self, edges: &Vec<WeightedEdge>) {
         edges.iter().progress().for_each(|edge| {

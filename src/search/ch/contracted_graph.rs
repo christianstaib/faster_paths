@@ -6,7 +6,7 @@ use serde_with::serde_as;
 
 use super::{
     brute_force::brute_force_contracted_graph_edges,
-    contraction::par_simulate_contraction_witness_search,
+    contraction::{par_simulate_contraction_heuristic, par_simulate_contraction_witness_search},
     contraction_generic::contraction_bottom_up,
 };
 use crate::{
@@ -80,34 +80,17 @@ impl ContractedGraph {
         gnerate_contracted_graph(level_to_vertex, edges, shortcuts)
     }
 
-    // pub fn by_contraction_with_heuristic<G: Graph + Default + Clone>(
-    //     graph: &ReversibleGraph<G>,
-    //     heuristic: &dyn DistanceHeuristic,
-    // ) -> ContractedGraph {
-    //     let graph = graph.clone();
-    //     let (level_to_vertex, edges, shortcuts) =
-    // contraction_with_heuristic(graph, heuristic);
+    pub fn by_contraction_with_heuristic<G: Graph + Default + Clone>(
+        graph: &ReversibleGraph<G>,
+        heuristic: &dyn DistanceHeuristic,
+    ) -> ContractedGraph {
+        let graph = graph.clone();
+        let (level_to_vertex, edges, shortcuts) = contraction_bottom_up(graph, |graph, vertex| {
+            par_simulate_contraction_heuristic(graph, heuristic, vertex)
+        });
 
-    //     let vertex_to_level = vertex_to_level(&level_to_vertex);
-
-    //     let mut upward_edges = Vec::new();
-    //     let mut downward_edges = Vec::new();
-    //     for (&(tail, head), &weight) in edges.iter().progress() {
-    //         if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
-    //             upward_edges.push(WeightedEdge::new(tail, head, weight));
-    //         } else if vertex_to_level[tail as usize] > vertex_to_level[head as
-    // usize] {             downward_edges.push(WeightedEdge::new(head, tail,
-    // weight));         }
-    //     }
-
-    //     ContractedGraph {
-    //         upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
-    //         downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
-    //         shortcuts,
-    //         level_to_vertex: level_to_vertex.clone(),
-    //         vertex_to_level,
-    //     }
-    // }
+        gnerate_contracted_graph(level_to_vertex, edges, shortcuts)
+    }
 
     pub fn by_brute_force<G: Graph + Default>(
         graph: &ReversibleGraph<G>,

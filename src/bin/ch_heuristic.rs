@@ -10,7 +10,10 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Distance, Vertex,
     },
-    search::{ch::contracted_graph::ContractedGraph, DistanceHeuristic, PathFinding},
+    search::{
+        alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, DistanceHeuristic,
+        PathFinding,
+    },
     utility::{benchmark_and_test, generate_test_cases},
 };
 
@@ -47,20 +50,12 @@ impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
 fn main() {
     let args = Args::parse();
 
-    let reader =
-        BufReader::new(File::open("tests/data/aegaeis-ref-graph_ch_witness.bincode").unwrap());
-    let hub_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
-    let heuristic = PathfinderHeuristic {
-        pathfinder: &hub_graph,
-    };
-
     // Build graph
     let edges = read_edges_from_fmi_file(&args.graph);
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
     // Create landmakrs
-    // let heuristic = Landmarks::random(&graph, 25);
-    // let heuristic = TrivialHeuristic {};
+    let heuristic = Landmarks::random(&graph, 250);
 
     // Create contracted_graph
     let contracted_graph = ContractedGraph::by_contraction_with_heuristic(&graph, &heuristic);
