@@ -63,32 +63,29 @@ pub fn create_shortcuts(
 ) -> Vec<((Vertex, Vertex), Vertex)> {
     assert!(path.len() >= 2);
 
-    if path.len() == 2 {
-        return Vec::new();
+    let mut shortcuts = Vec::new();
+    let mut stack = vec![(0, path.len() - 1)];
+
+    while let Some((tail_index, head_index)) = stack.pop() {
+        if head_index - tail_index >= 2 {
+            let skiped_vertex_index = path[tail_index + 1..head_index]
+                .iter()
+                .enumerate()
+                .max_by_key(|&(_index, &vertex)| vertex_to_level[vertex as usize])
+                .unwrap()
+                .0
+                + tail_index
+                + 1;
+
+            shortcuts.push((
+                (path[tail_index], path[head_index]),
+                path[skiped_vertex_index],
+            ));
+
+            stack.push((tail_index, skiped_vertex_index));
+            stack.push((skiped_vertex_index, head_index));
+        }
     }
-
-    let max_level_vertex_index = path
-        .iter()
-        .enumerate()
-        .skip(1) // Skip the first element.
-        .take(path.len() - 2) // Take all but the last element.
-        .max_by_key(|&(_index, &vertex)| vertex_to_level[vertex as usize])
-        .unwrap()
-        .0;
-
-    let mut shortcuts = vec![(
-        (*path.first().unwrap(), *path.last().unwrap()),
-        path[max_level_vertex_index],
-    )];
-
-    shortcuts.extend(create_shortcuts(
-        &path[..=max_level_vertex_index],
-        vertex_to_level,
-    ));
-    shortcuts.extend(create_shortcuts(
-        &path[max_level_vertex_index..],
-        vertex_to_level,
-    ));
 
     shortcuts
 }
