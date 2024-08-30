@@ -1,8 +1,4 @@
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
-    path::PathBuf,
-};
+use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
