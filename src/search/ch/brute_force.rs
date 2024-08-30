@@ -5,14 +5,55 @@ use itertools::Itertools;
 use rand::prelude::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
+use super::contracted_graph::{
+    generate_contracted_graph_edge_vec, vertex_to_level, ContractedGraph,
+};
 use crate::{
-    graphs::{Distance, Graph, Level, Vertex, WeightedEdge},
+    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Level, Vertex, WeightedEdge},
     search::collections::{
         dijkstra_data::{DijkstraData, DijkstraDataVec},
         vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
         vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
     },
+    utility::get_progressbar_long_jobs,
 };
+
+impl ContractedGraph {
+    pub fn by_brute_force<G: Graph + Default>(
+        graph: &ReversibleGraph<G>,
+        level_to_vertex: &Vec<Vertex>,
+    ) -> ContractedGraph {
+        let vertex_to_level = vertex_to_level(level_to_vertex);
+
+        let (mut edges, mut shortcuts) = brute_force_contracted_graph_edges(
+            graph.out_graph(),
+            &vertex_to_level,
+            get_progressbar_long_jobs(
+                "Brute forcing upward edges",
+                graph.out_graph().number_of_vertices() as u64,
+            ),
+        );
+
+        let (downward_edges, downward_shortcuts) = brute_force_contracted_graph_edges(
+            graph.in_graph(),
+            &vertex_to_level,
+            get_progressbar_long_jobs(
+                "Brute forcing downward edges",
+                graph.in_graph().number_of_vertices() as u64,
+            ),
+        );
+
+        edges.extend(downward_edges);
+
+        shortcuts.extend(
+            downward_shortcuts
+                .into_iter()
+                .map(|((tail, head), skiped_vertex)| ((head, tail), skiped_vertex)),
+        );
+
+        generate_contracted_graph_edge_vec(level_to_vertex.clone(), edges, shortcuts)
+    }
+}
 
 pub fn brute_force_contracted_graph_edges(
     graph: &dyn Graph,

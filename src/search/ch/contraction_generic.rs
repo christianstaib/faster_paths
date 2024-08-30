@@ -7,7 +7,10 @@ use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rayon::prelude::*;
 
 use crate::{
-    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Level, TaillessEdge, Vertex},
+    graphs::{
+        reversible_graph::ReversibleGraph, Distance, Graph, Level, TaillessEdge, Vertex,
+        WeightedEdge,
+    },
     utility::get_progressbar_long_jobs,
 };
 
@@ -17,7 +20,7 @@ pub fn contraction_top_down<G, F>(
     shortcut_generation: F,
 ) -> (
     Vec<Vertex>,
-    HashMap<(Vertex, Vertex), Distance>,
+    Vec<WeightedEdge>,
     HashMap<(Vertex, Vertex), Vertex>,
 )
 where
@@ -47,7 +50,7 @@ pub fn contraction_bottom_up<G, F>(
     shortcut_generation: F,
 ) -> (
     Vec<Vertex>,
-    HashMap<(Vertex, Vertex), Distance>,
+    Vec<WeightedEdge>,
     HashMap<(Vertex, Vertex), Vertex>,
 )
 where
@@ -86,7 +89,7 @@ where
     (level_to_vertex, edges, shortcuts)
 }
 
-fn new_queue_generic<G, F>(
+pub fn new_queue_generic<G, F>(
     graph: &ReversibleGraph<G>,
     shortcut_generation: F,
 ) -> BinaryHeap<Reverse<(i32, u32)>>
@@ -113,17 +116,18 @@ where
 }
 
 pub fn update_edge_map(
-    edge_map: &mut HashMap<(Vertex, Vertex), Distance>,
+    edge_map: &mut Vec<WeightedEdge>,
     shortcuts: &mut HashMap<(Vertex, Vertex), Vertex>,
     vertex: Vertex,
     new_and_updated_edges: &HashMap<u32, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
 ) {
     for (&tail, (new_edges, updated_edges)) in new_and_updated_edges.iter() {
         for edge in new_edges.iter().chain(updated_edges.iter()) {
-            edge_map.insert((tail, edge.head), edge.weight);
             assert_ne!(tail, edge.head);
             assert_ne!(edge.head, vertex);
             assert_ne!(tail, vertex);
+
+            edge_map.push(edge.set_tail(vertex));
             shortcuts.insert((tail, edge.head), vertex);
         }
     }
@@ -142,11 +146,11 @@ pub fn edge_difference<G: Graph>(
         - graph.out_graph().edges(vertex).len() as i32
 }
 
-pub fn new_edge_map<G: Graph>(graph: &ReversibleGraph<G>) -> HashMap<(Vertex, Vertex), Distance> {
-    let mut edges = HashMap::new();
+pub fn new_edge_map<G: Graph>(graph: &ReversibleGraph<G>) -> Vec<WeightedEdge> {
+    let mut edges = Vec::new();
     for vertex in (0..graph.out_graph().number_of_vertices()).progress() {
         for edge in graph.out_graph().edges(vertex) {
-            edges.insert((edge.tail, edge.head), edge.weight);
+            edges.push(edge)
         }
     }
     edges
