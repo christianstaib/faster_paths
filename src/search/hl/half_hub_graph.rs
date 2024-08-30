@@ -8,10 +8,13 @@ use serde::{Deserialize, Serialize};
 use super::hub_graph::HubLabelEntry;
 use crate::{
     graphs::{Distance, Graph, Vertex, WeightedEdge},
-    search::collections::{
-        dijkstra_data::{DijkstraData, DijkstraDataVec},
-        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-        vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+    search::{
+        ch::brute_force::create_shortcuts,
+        collections::{
+            dijkstra_data::{DijkstraData, DijkstraDataVec},
+            vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+        },
     },
 };
 
@@ -143,19 +146,8 @@ pub fn get_hub_label_with_brute_force(
                 });
 
                 if shortcut_tail == source {
-                    let mut path = data.get_path(shortcut_head).unwrap();
-                    path.vertices.remove(0);
-                    path.vertices.pop();
-
-                    if let Some(&skiped_vertex) = path
-                        .vertices
-                        .iter()
-                        .max_by_key(|&&vertex| vertex_to_level[vertex as usize])
-                    {
-                        if shortcut_tail != skiped_vertex && skiped_vertex != shortcut_head {
-                            shortcuts.push(((shortcut_tail, shortcut_head), skiped_vertex))
-                        }
-                    }
+                    let path = &data.get_path(shortcut_head).unwrap().vertices;
+                    shortcuts.extend(create_shortcuts(path, vertex_to_level));
                 }
             }
         }
