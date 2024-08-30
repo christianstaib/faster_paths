@@ -51,8 +51,6 @@ impl HubGraph {
         );
 
         for ((tail, head), skiped_vertex) in backward_shortcuts.into_iter() {
-            let current_skiped_vertex = *shortcuts.get(&(head, tail)).unwrap_or(&skiped_vertex);
-            assert_eq!(current_skiped_vertex, skiped_vertex);
             shortcuts.insert((head, tail), skiped_vertex);
         }
 

@@ -92,22 +92,25 @@ pub fn par_simulate_contraction_heuristic<G: Graph>(
                 }
 
                 let shortcut_distance = in_edge.weight + out_edge.weight;
+                let edge = WeightedEdge {
+                    tail,
+                    head,
+                    weight: shortcut_distance,
+                };
+
+                // Checking current edge weight is propabally cheaper than heuristic so check
+                // first
+                if let Some(current_edge_weight) =
+                    graph.out_graph().get_weight(&edge.remove_weight())
+                {
+                    if shortcut_distance < current_edge_weight {
+                        updated_edges.push(edge.remove_tail());
+                    }
+                    continue;
+                }
 
                 if heuristic.is_less_or_equal_upper_bound(tail, head, shortcut_distance) {
-                    let edge = WeightedEdge {
-                        tail,
-                        head,
-                        weight: shortcut_distance,
-                    };
-                    if let Some(current_edge_weight) =
-                        graph.out_graph().get_weight(&edge.remove_weight())
-                    {
-                        if shortcut_distance < current_edge_weight {
-                            updated_edges.push(edge.remove_tail());
-                        }
-                    } else {
-                        new_edges.push(edge.remove_tail());
-                    }
+                    new_edges.push(edge.remove_tail());
                 }
             }
 
