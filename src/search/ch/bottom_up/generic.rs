@@ -129,7 +129,7 @@ pub fn update_edge_map(
             assert_ne!(edge.head, vertex);
             assert_ne!(tail, vertex);
 
-            edge_map.push(edge.set_tail(vertex));
+            edge_map.push(edge.set_tail(tail));
             shortcuts.insert((tail, edge.head), vertex);
         }
     }
