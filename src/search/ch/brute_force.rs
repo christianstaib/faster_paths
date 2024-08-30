@@ -68,7 +68,9 @@ pub fn create_shortcuts(
 
     while let Some((tail_index, head_index)) = stack.pop() {
         if head_index - tail_index >= 2 {
-            let skiped_vertex_index = path[tail_index + 1..head_index]
+            // Find the index of the vertex with the maximum level between start_index and
+            // end_index
+            let skiped_index = path[tail_index + 1..head_index]
                 .iter()
                 .enumerate()
                 .max_by_key(|&(_index, &vertex)| vertex_to_level[vertex as usize])
@@ -77,13 +79,10 @@ pub fn create_shortcuts(
                 + tail_index
                 + 1;
 
-            shortcuts.push((
-                (path[tail_index], path[head_index]),
-                path[skiped_vertex_index],
-            ));
+            shortcuts.push(((path[tail_index], path[head_index]), path[skiped_index]));
 
-            stack.push((tail_index, skiped_vertex_index));
-            stack.push((skiped_vertex_index, head_index));
+            stack.push((tail_index, skiped_index));
+            stack.push((skiped_index, head_index));
         }
     }
 
@@ -131,8 +130,6 @@ pub fn get_ch_edges(
 
         // Check if tail is a head of a ch edge
         if max_level_tail == level_tail {
-            // for less confusion, rename variables
-
             // Dont create a edge from source to source. source has no predecessor
             if let Some(predecessor) = data.get_predecessor(tail) {
                 let shortcut_tail = max_level.get(&predecessor).unwrap().1;
