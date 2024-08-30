@@ -6,7 +6,7 @@ use crate::{
     graphs::{reversible_graph::ReversibleGraph, Graph, TaillessEdge, Vertex, WeightedEdge},
     search::{
         ch::{
-            contracted_graph::{generate_contracted_graph_edge_vec, ContractedGraph},
+            contracted_graph::{new, ContractedGraph},
             contraction_generic::contraction_bottom_up,
         },
         DistanceHeuristic,
@@ -23,7 +23,7 @@ impl ContractedGraph {
             par_simulate_contraction_heuristic(graph, heuristic, vertex)
         });
 
-        generate_contracted_graph_edge_vec(level_to_vertex, edges, shortcuts)
+        new(level_to_vertex, edges, shortcuts)
     }
 }
 

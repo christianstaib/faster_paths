@@ -8,7 +8,7 @@ use crate::{
     },
     search::{
         ch::{
-            contracted_graph::{generate_contracted_graph_edge_vec, ContractedGraph},
+            contracted_graph::{new, ContractedGraph},
             contraction_generic::contraction_bottom_up,
         },
         collections::dijkstra_data::DijkstraData,
@@ -26,7 +26,7 @@ impl ContractedGraph {
             par_simulate_contraction_witness_search(graph, hop_limit, vertex)
         });
 
-        generate_contracted_graph_edge_vec(level_to_vertex, edges, shortcuts)
+        new(level_to_vertex, edges, shortcuts)
     }
 }
 

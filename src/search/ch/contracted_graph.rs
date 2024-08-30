@@ -3,18 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-use super::{
-    brute_force::brute_force_contracted_graph_edges,
-    search::{one_to_one_wrapped_distance, one_to_one_wrapped_path},
-};
-use crate::{
-    graphs::{
-        reversible_graph::ReversibleGraph, vec_graph::VecGraph, Distance, Graph, Level, Vertex,
-        WeightedEdge,
-    },
-    search::{collections::dijkstra_data::Path, PathFinding},
-    utility::get_progressbar_long_jobs,
-};
+use crate::graphs::{vec_graph::VecGraph, Graph, Level, Vertex, WeightedEdge};
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -48,37 +37,7 @@ impl ContractedGraph {
     }
 }
 
-impl PathFinding for ContractedGraph {
-    fn shortest_path(&self, source: Vertex, target: Vertex) -> Option<Path> {
-        one_to_one_wrapped_path(
-            self.upward_graph(),
-            self.downward_graph(),
-            self.shortcuts(),
-            source,
-            target,
-        )
-    }
-
-    fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
-        one_to_one_wrapped_distance(self.upward_graph(), self.downward_graph(), source, target)
-    }
-}
-
-pub fn get_slow_shortcuts(
-    edges_and_predecessors: &Vec<(WeightedEdge, Option<Vertex>)>,
-) -> HashMap<(Vertex, Vertex), Vertex> {
-    let mut shortcuts: HashMap<(Vertex, Vertex), Vertex> = HashMap::new();
-
-    for (edge, predecessor) in edges_and_predecessors.iter() {
-        if let Some(predecessor) = predecessor {
-            shortcuts.insert((edge.tail, edge.head), *predecessor);
-        }
-    }
-
-    shortcuts
-}
-
-pub fn generate_contracted_graph_edge_vec(
+pub fn new(
     level_to_vertex: Vec<u32>,
     edges: Vec<WeightedEdge>,
     shortcuts: HashMap<(u32, u32), u32>,
@@ -129,7 +88,7 @@ mod tests {
     use super::ContractedGraph;
     use crate::{
         graphs::{large_test_graph, Graph},
-        search::ch::search::one_to_one_wrapped_path,
+        search::ch::pathfinding::one_to_one_wrapped_path,
     };
 
     #[test]

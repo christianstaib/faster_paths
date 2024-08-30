@@ -5,9 +5,7 @@ use itertools::Itertools;
 use rand::prelude::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use super::contracted_graph::{
-    generate_contracted_graph_edge_vec, vertex_to_level, ContractedGraph,
-};
+use super::contracted_graph::{new, vertex_to_level, ContractedGraph};
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Level, Vertex, WeightedEdge},
     search::collections::{
@@ -51,7 +49,7 @@ impl ContractedGraph {
                 .map(|((tail, head), skiped_vertex)| ((head, tail), skiped_vertex)),
         );
 
-        generate_contracted_graph_edge_vec(level_to_vertex.clone(), edges, shortcuts)
+        new(level_to_vertex.clone(), edges, shortcuts)
     }
 }
 

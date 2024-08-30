@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
+use super::contracted_graph::ContractedGraph;
 use crate::{
-    graphs::{Distance, Graph, Vertex},
+    graphs::{Distance, Graph, Vertex, WeightedEdge},
     search::{
         collections::{
             dijkstra_data::{DijkstraData, DijkstraDataHashMap, Path},
@@ -9,8 +10,39 @@ use crate::{
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
         shortcuts::replace_shortcuts_slowly,
+        PathFinding,
     },
 };
+
+impl PathFinding for ContractedGraph {
+    fn shortest_path(&self, source: Vertex, target: Vertex) -> Option<Path> {
+        one_to_one_wrapped_path(
+            self.upward_graph(),
+            self.downward_graph(),
+            self.shortcuts(),
+            source,
+            target,
+        )
+    }
+
+    fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
+        one_to_one_wrapped_distance(self.upward_graph(), self.downward_graph(), source, target)
+    }
+}
+
+pub fn get_slow_shortcuts(
+    edges_and_predecessors: &Vec<(WeightedEdge, Option<Vertex>)>,
+) -> HashMap<(Vertex, Vertex), Vertex> {
+    let mut shortcuts: HashMap<(Vertex, Vertex), Vertex> = HashMap::new();
+
+    for (edge, predecessor) in edges_and_predecessors.iter() {
+        if let Some(predecessor) = predecessor {
+            shortcuts.insert((edge.tail, edge.head), *predecessor);
+        }
+    }
+
+    shortcuts
+}
 
 /// Wrapper that returns the shortest path distance.
 pub fn one_to_one_wrapped_distance(

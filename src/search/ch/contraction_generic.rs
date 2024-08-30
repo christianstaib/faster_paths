@@ -99,14 +99,16 @@ where
         + Send
         + Sync,
 {
+    let pb = get_progressbar_long_jobs(
+        "Initializing queue",
+        graph.out_graph().number_of_vertices() as u64,
+    );
+
     graph
         .out_graph()
         .vertices()
         .into_par_iter()
-        .progress_with(get_progressbar_long_jobs(
-            "Initializing queue",
-            graph.out_graph().number_of_vertices() as u64,
-        ))
+        .progress_with(pb)
         .map(|vertex| {
             let new_and_updated_edges = shortcut_generation(&graph, vertex);
             let edge_difference = edge_difference(graph, &new_and_updated_edges, vertex);
@@ -147,11 +149,9 @@ pub fn edge_difference<G: Graph>(
 }
 
 pub fn new_edge_map<G: Graph>(graph: &ReversibleGraph<G>) -> Vec<WeightedEdge> {
-    let mut edges = Vec::new();
-    for vertex in (0..graph.out_graph().number_of_vertices()).progress() {
-        for edge in graph.out_graph().edges(vertex) {
-            edges.push(edge)
-        }
-    }
-    edges
+    graph
+        .out_graph()
+        .vertices()
+        .flat_map(|vertex| graph.out_graph().edges(vertex))
+        .collect()
 }

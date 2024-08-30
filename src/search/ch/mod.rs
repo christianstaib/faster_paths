@@ -7,8 +7,8 @@ pub mod brute_force;
 pub mod contracted_graph;
 pub mod contraction;
 pub mod contraction_generic;
+pub mod pathfinding;
 pub mod probabilistic_contraction;
-pub mod search;
 
 pub fn large_test_contracted_graph() -> ContractedGraph {
     let reader = BufReader::new(File::open("tests/data/stgtregbz_contracted_graph.json").unwrap());
