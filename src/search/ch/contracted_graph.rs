@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
 use super::{
-    brute_force::brute_force_contracted_graph_edges, contraction::contraction_with_witness_search,
-    contraction_heuristic::contraction_with_heuristic,
+    brute_force::brute_force_contracted_graph_edges,
+    contraction::par_simulate_contraction_witness_search,
+    contraction_generic::contraction_bottom_up,
 };
 use crate::{
     graphs::{
@@ -67,61 +68,46 @@ pub fn get_slow_shortcuts(
 }
 
 impl ContractedGraph {
-    pub fn by_contraction_with_dijkstra_witness_search<G: Graph + Default + Clone>(
+    pub fn with_dijkstra_witness_search<G: Graph + Default + Clone>(
         graph: &ReversibleGraph<G>,
         hop_limit: u32,
     ) -> ContractedGraph {
         let graph = graph.clone();
-        let (level_to_vertex, edges, shortcuts) = contraction_with_witness_search(graph, hop_limit);
+        let (level_to_vertex, edges, shortcuts) = contraction_bottom_up(graph, |graph, vertex| {
+            par_simulate_contraction_witness_search(graph, hop_limit, vertex)
+        });
 
-        let vertex_to_level = vertex_to_level(&level_to_vertex);
-
-        let mut upward_edges = Vec::new();
-        let mut downward_edges = Vec::new();
-        for (&(tail, head), &weight) in edges.iter() {
-            if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
-                upward_edges.push(WeightedEdge::new(tail, head, weight));
-            } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
-                downward_edges.push(WeightedEdge::new(head, tail, weight));
-            }
-        }
-
-        ContractedGraph {
-            upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
-            downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
-            shortcuts,
-            level_to_vertex: level_to_vertex.clone(),
-            vertex_to_level,
-        }
+        gnerate_contracted_graph(level_to_vertex, edges, shortcuts)
     }
 
-    pub fn by_contraction_with_heuristic<G: Graph + Default + Clone>(
-        graph: &ReversibleGraph<G>,
-        heuristic: &dyn DistanceHeuristic,
-    ) -> ContractedGraph {
-        let graph = graph.clone();
-        let (level_to_vertex, edges, shortcuts) = contraction_with_heuristic(graph, heuristic);
+    // pub fn by_contraction_with_heuristic<G: Graph + Default + Clone>(
+    //     graph: &ReversibleGraph<G>,
+    //     heuristic: &dyn DistanceHeuristic,
+    // ) -> ContractedGraph {
+    //     let graph = graph.clone();
+    //     let (level_to_vertex, edges, shortcuts) =
+    // contraction_with_heuristic(graph, heuristic);
 
-        let vertex_to_level = vertex_to_level(&level_to_vertex);
+    //     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-        let mut upward_edges = Vec::new();
-        let mut downward_edges = Vec::new();
-        for (&(tail, head), &weight) in edges.iter().progress() {
-            if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
-                upward_edges.push(WeightedEdge::new(tail, head, weight));
-            } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
-                downward_edges.push(WeightedEdge::new(head, tail, weight));
-            }
-        }
+    //     let mut upward_edges = Vec::new();
+    //     let mut downward_edges = Vec::new();
+    //     for (&(tail, head), &weight) in edges.iter().progress() {
+    //         if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
+    //             upward_edges.push(WeightedEdge::new(tail, head, weight));
+    //         } else if vertex_to_level[tail as usize] > vertex_to_level[head as
+    // usize] {             downward_edges.push(WeightedEdge::new(head, tail,
+    // weight));         }
+    //     }
 
-        ContractedGraph {
-            upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
-            downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
-            shortcuts,
-            level_to_vertex: level_to_vertex.clone(),
-            vertex_to_level,
-        }
-    }
+    //     ContractedGraph {
+    //         upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
+    //         downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
+    //         shortcuts,
+    //         level_to_vertex: level_to_vertex.clone(),
+    //         vertex_to_level,
+    //     }
+    // }
 
     pub fn by_brute_force<G: Graph + Default>(
         graph: &ReversibleGraph<G>,
@@ -180,6 +166,32 @@ impl ContractedGraph {
 
     pub fn shortcuts(&self) -> &HashMap<(Vertex, Vertex), Vertex> {
         &self.shortcuts
+    }
+}
+
+fn gnerate_contracted_graph(
+    level_to_vertex: Vec<u32>,
+    edges: HashMap<(u32, u32), u32>,
+    shortcuts: HashMap<(u32, u32), u32>,
+) -> ContractedGraph {
+    let vertex_to_level = vertex_to_level(&level_to_vertex);
+
+    let mut upward_edges = Vec::new();
+    let mut downward_edges = Vec::new();
+    for (&(tail, head), &weight) in edges.iter() {
+        if vertex_to_level[tail as usize] < vertex_to_level[head as usize] {
+            upward_edges.push(WeightedEdge::new(tail, head, weight));
+        } else if vertex_to_level[tail as usize] > vertex_to_level[head as usize] {
+            downward_edges.push(WeightedEdge::new(head, tail, weight));
+        }
+    }
+
+    ContractedGraph {
+        upward_graph: VecGraph::new(&upward_edges, &level_to_vertex),
+        downward_graph: VecGraph::new(&downward_edges, &level_to_vertex),
+        shortcuts,
+        level_to_vertex: level_to_vertex.clone(),
+        vertex_to_level,
     }
 }
 
@@ -356,8 +368,7 @@ mod tests {
     #[test]
     fn contration_by_witness_search() {
         let (graph, tests) = large_test_graph();
-        let contracted_graph =
-            ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph, u32::MAX);
+        let contracted_graph = ContractedGraph::with_dijkstra_witness_search(&graph, u32::MAX);
 
         for test in tests {
             let path = ch_one_to_one_path_wrapped(
@@ -380,8 +391,7 @@ mod tests {
     #[test]
     fn contration_brute_force() {
         let (graph, tests) = large_test_graph();
-        let contracted_graph =
-            ContractedGraph::by_contraction_with_dijkstra_witness_search(&graph, u32::MAX);
+        let contracted_graph = ContractedGraph::with_dijkstra_witness_search(&graph, u32::MAX);
         let contracted_graph =
             ContractedGraph::by_brute_force(&graph, &contracted_graph.vertex_to_level);
 

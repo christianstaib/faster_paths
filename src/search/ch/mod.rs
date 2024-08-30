@@ -5,7 +5,7 @@ use contracted_graph::ContractedGraph;
 pub mod brute_force;
 pub mod contracted_graph;
 pub mod contraction;
-pub mod contraction_heuristic;
+pub mod contraction_generic;
 pub mod probabilistic_contraction;
 
 pub fn large_test_contracted_graph() -> ContractedGraph {
