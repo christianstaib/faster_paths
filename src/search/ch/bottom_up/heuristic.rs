@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use indicatif::ProgressIterator;
 use rayon::prelude::*;
 
 use super::generic::contraction_bottom_up;

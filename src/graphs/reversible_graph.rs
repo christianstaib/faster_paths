@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use indicatif::ProgressIterator;
+use serde::{Deserialize, Serialize};
 
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 use crate::utility::get_progressbar_long_jobs;
@@ -9,7 +10,7 @@ pub trait FromEdges {
     fn from_edges(edges: &Vec<WeightedEdge>) -> Self;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct ReversibleGraph<G: Graph> {
     out_graph: Box<G>,
     in_graph: Box<G>,

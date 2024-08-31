@@ -38,3 +38,21 @@ pub trait PathFinding: Send + Sync {
 pub struct TrivialHeuristic {}
 
 impl DistanceHeuristic for TrivialHeuristic {}
+
+pub struct PathfinderHeuristic<'a> {
+    pub pathfinder: &'a dyn PathFinding,
+}
+
+impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
+    fn lower_bound(&self, source: Vertex, target: Vertex) -> Distance {
+        self.pathfinder
+            .shortest_path_distance(source, target)
+            .unwrap_or(0)
+    }
+
+    fn upper_bound(&self, source: Vertex, target: Vertex) -> Distance {
+        self.pathfinder
+            .shortest_path_distance(source, target)
+            .unwrap_or(Distance::MAX)
+    }
+}

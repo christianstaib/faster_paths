@@ -8,12 +8,8 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Distance, Vertex,
     },
-    search::{
-        ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, DistanceHeuristic,
-        PathFinding,
-    },
+    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, PathfinderHeuristic},
     utility::{benchmark_and_test, generate_test_cases},
 };
 
@@ -30,24 +26,6 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     contracted_graph: PathBuf,
-}
-
-pub struct PathfinderHeuristic<'a> {
-    pub pathfinder: &'a dyn PathFinding,
-}
-
-impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
-    fn lower_bound(&self, source: Vertex, target: Vertex) -> Distance {
-        self.pathfinder
-            .shortest_path_distance(source, target)
-            .unwrap_or(0)
-    }
-
-    fn upper_bound(&self, source: Vertex, target: Vertex) -> Distance {
-        self.pathfinder
-            .shortest_path_distance(source, target)
-            .unwrap_or(Distance::MAX)
-    }
 }
 
 fn main() {
