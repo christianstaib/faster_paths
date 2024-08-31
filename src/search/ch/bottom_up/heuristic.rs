@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use indicatif::ProgressIterator;
 use rayon::prelude::*;
 
 use super::generic::contraction_bottom_up;
@@ -73,4 +72,39 @@ pub fn par_simulate_contraction_heuristic<G: Graph>(
             (tail, (new_edges, updated_edges))
         })
         .collect()
+}
+
+/// Simulates a contraction. Returns vertex -> (new_edges, updated_edges)
+pub fn par_new_edges<G: Graph>(
+    graph: &ReversibleGraph<G>,
+    heuristic: &dyn DistanceHeuristic,
+    vertex: Vertex,
+) -> i32 {
+    // tail -> vertex -> head
+    graph
+        .in_graph()
+        .edges(vertex)
+        .par_bridge()
+        .map(|in_edge| {
+            let tail = in_edge.head;
+
+            let mut new_edges = 0;
+
+            for out_edge in graph.out_graph().edges(vertex) {
+                let head = out_edge.head;
+
+                if tail == head {
+                    continue;
+                }
+
+                let shortcut_distance = in_edge.weight + out_edge.weight;
+
+                if heuristic.is_less_or_equal_upper_bound(tail, head, shortcut_distance) {
+                    new_edges += 1;
+                }
+            }
+
+            new_edges
+        })
+        .sum()
 }

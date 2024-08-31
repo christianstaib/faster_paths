@@ -2,15 +2,14 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
+    time::Instant,
 };
 
 use clap::Parser;
 use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph},
     search::{
-        ch::bottom_up::{generic::edge_difference, heuristic::par_simulate_contraction_heuristic},
-        hl::hub_graph::HubGraph,
-        PathfinderHeuristic,
+        ch::bottom_up::heuristic::par_new_edges, hl::hub_graph::HubGraph, PathfinderHeuristic,
     },
 };
 
@@ -47,12 +46,18 @@ fn main() {
 
     let mut edge_differences = Vec::new();
 
+    let start = Instant::now();
     for vertex in graph.out_graph().vertices() {
-        let new_and_updated_edges = par_simulate_contraction_heuristic(&graph, &heuristic, vertex);
-        let edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
+        let new_edges = par_new_edges(&graph, &heuristic, vertex);
+        let edge_difference = new_edges
+            - graph.out_graph().edges(vertex).len() as i32
+            - graph.in_graph().edges(vertex).len() as i32;
         println!(
-            "vertex {:>9} has edge difference {:>9}",
-            vertex, edge_difference
+            "vertex {:>9} has edge difference {:>9}. Estimated remaining time {:?}",
+            vertex,
+            edge_difference,
+            start.elapsed() / (vertex + 1)
+                * (graph.out_graph().number_of_vertices() - (vertex + 1))
         );
 
         edge_differences.push(edge_difference);
