@@ -7,10 +7,7 @@ use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rayon::prelude::*;
 
 use crate::{
-    graphs::{
-        reversible_graph::ReversibleGraph, Distance, Graph, Level, TaillessEdge, Vertex,
-        WeightedEdge,
-    },
+    graphs::{reversible_graph::ReversibleGraph, Graph, Level, TaillessEdge, Vertex, WeightedEdge},
     utility::get_progressbar_long_jobs,
 };
 
@@ -29,7 +26,12 @@ where
         + Send
         + Sync,
 {
-    let mut edges = new_edge_map(&graph);
+    let mut edges = graph
+        .out_graph()
+        .vertices()
+        .flat_map(|vertex| graph.out_graph().edges(vertex))
+        .collect();
+
     let mut shortcuts = HashMap::new();
 
     let number_of_vertices = graph.out_graph().number_of_vertices() as u64;
