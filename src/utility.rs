@@ -18,7 +18,7 @@ pub fn get_progressbar(job_name: &str, len: u64) -> ProgressBar {
     bar.set_message(job_name.to_string());
     bar.set_style(
         ProgressStyle::with_template(
-            " {msg} {wide_bar} ({percent_precise}%) estimated remaining: {eta_precise}",
+            "{msg} {wide_bar} ({percent_precise}%) estimated remaining: {eta_precise}",
         )
         .unwrap(),
     );
@@ -29,12 +29,7 @@ pub fn get_progressspinner(job_name: &str) -> ProgressBar {
     let bar = ProgressBar::new_spinner();
     bar.enable_steady_tick(Duration::from_millis(100));
     bar.set_message(job_name.to_string());
-    bar.set_style(
-        ProgressStyle::with_template(
-            " {msg} {wide_bar} ({percent_precise}%) estimated remaining: {eta_precise}",
-        )
-        .unwrap(),
-    );
+    bar.set_style(ProgressStyle::with_template("{msg} {spinner}").unwrap());
     bar
 }
 

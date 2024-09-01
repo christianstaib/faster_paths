@@ -13,13 +13,12 @@ use faster_paths::{
     },
 };
 
-/// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
-    graph_bincode: PathBuf,
+    graph: PathBuf,
     /// Infile in .fmi format
     #[arg(short, long)]
     hub_graph: PathBuf,
@@ -30,10 +29,8 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph: ReversibleGraph<VecVecGraph> = {
-        let reader = BufReader::new(File::open(&args.graph_bincode).unwrap());
-        bincode::deserialize_from(reader).unwrap()
-    };
+    let graph: ReversibleGraph<VecVecGraph> =
+        ReversibleGraph::<VecVecGraph>::from_fmi_file(&args.graph);
 
     let hub_graph: HubGraph = {
         let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
@@ -49,13 +46,16 @@ fn main() {
     let start = Instant::now();
     for vertex in graph.out_graph().vertices() {
         let new_edges = par_new_edges(&graph, &heuristic, vertex);
-        let edge_difference = new_edges
-            - graph.out_graph().edges(vertex).len() as i32
-            - graph.in_graph().edges(vertex).len() as i32;
+        let current_in_edges = graph.in_graph().edges(vertex).len();
+        let current_out_edges = graph.out_graph().edges(vertex).len();
+
+        let edge_difference = new_edges - current_in_edges as i32 - current_out_edges as i32;
         println!(
-            "vertex {:>9} has edge difference {:>9}. Estimated remaining time {:?}",
+            "vertex {:>9} has edge difference {:>9} (in eddges {:>9}, out edges {:9}). Estimated remaining time {:?}",
             vertex,
             edge_difference,
+            current_in_edges,
+            current_out_edges,
             start.elapsed() / (vertex + 1)
                 * (graph.out_graph().number_of_vertices() - (vertex + 1))
         );
