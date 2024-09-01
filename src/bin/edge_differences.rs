@@ -49,7 +49,7 @@ fn main() {
     vertices.shuffle(&mut thread_rng());
 
     let start = Instant::now();
-    for vertex in vertices {
+    for (i, &vertex) in vertices.iter().enumerate() {
         let new_edges = par_new_edges(&graph, &heuristic, vertex);
         let current_in_edges = graph.in_graph().edges(vertex).len();
         let current_out_edges = graph.out_graph().edges(vertex).len();
@@ -61,8 +61,8 @@ fn main() {
             edge_difference,
             current_in_edges,
             current_out_edges,
-            start.elapsed() / (vertex + 1)
-                * (graph.out_graph().number_of_vertices() - (vertex + 1))
+            start.elapsed() / (i as u32 + 1)
+                * (graph.out_graph().number_of_vertices() - (i as u32 + 1))
         );
 
         edge_differences.push(edge_difference);
