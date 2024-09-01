@@ -16,7 +16,7 @@ use crate::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
         },
-        dijkstra::{dijkstra_one_to_one_wrapped, dijktra_one_to_all},
+        dijkstra::{dijkstra_one_to_one_path_wrapped, dijktra_one_to_all},
         path::ShortestPathTestCase,
         PathFinding,
     },
@@ -251,8 +251,8 @@ pub fn generate_test_cases(
                 let source = rng.gen_range(0..graph.number_of_vertices());
                 let target = rng.gen_range(0..graph.number_of_vertices());
 
-                let distance =
-                    dijkstra_one_to_one_wrapped(graph, source, target).map(|path| path.distance);
+                let distance = dijkstra_one_to_one_path_wrapped(graph, source, target)
+                    .map(|path| path.distance);
 
                 ShortestPathTestCase {
                     source,

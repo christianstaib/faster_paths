@@ -7,7 +7,8 @@ use faster_paths::{
         Graph,
     },
     search::{
-        ch::contracted_graph::ContractedGraph, dijkstra::dijkstra_one_to_one_wrapped, PathFinding,
+        ch::contracted_graph::ContractedGraph, dijkstra::dijkstra_one_to_one_path_wrapped,
+        PathFinding,
     },
 };
 use indicatif::ParallelProgressIterator;
@@ -51,8 +52,9 @@ fn main() {
 
         let all = all.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
         if distance != path_distance {
-            let dijkstra_distance = dijkstra_one_to_one_wrapped(graph.out_graph(), source, target)
-                .map(|path| path.distance);
+            let dijkstra_distance =
+                dijkstra_one_to_one_path_wrapped(graph.out_graph(), source, target)
+                    .map(|path| path.distance);
             let total_failed = total_failed.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
 
             println!(

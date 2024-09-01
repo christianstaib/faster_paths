@@ -87,7 +87,7 @@ pub fn dijkstra_one_to_one(
 
 /// Wrapper that creates all nesseary data structures each time when called
 /// which can have a performance malus.
-pub fn dijkstra_one_to_one_wrapped(
+pub fn dijkstra_one_to_one_path_wrapped(
     graph: &dyn Graph,
     source: Vertex,
     target: Vertex,
@@ -97,6 +97,20 @@ pub fn dijkstra_one_to_one_wrapped(
     let mut queue = VertexDistanceQueueBinaryHeap::new();
     dijkstra_one_to_one(graph, &mut data, &mut expanded, &mut queue, source, target);
     data.get_path(target)
+}
+
+/// Wrapper that creates all nesseary data structures each time when called
+/// which can have a performance malus.
+pub fn dijkstra_one_to_one_distance_wrapped(
+    graph: &dyn Graph,
+    source: Vertex,
+    target: Vertex,
+) -> Option<Distance> {
+    let mut data = DijkstraDataVec::new(graph);
+    let mut expanded = VertexExpandedDataBitSet::new(graph);
+    let mut queue = VertexDistanceQueueBinaryHeap::new();
+    dijkstra_one_to_one(graph, &mut data, &mut expanded, &mut queue, source, target);
+    data.get_distance(target)
 }
 
 pub fn dijkstra_one_to_many(
