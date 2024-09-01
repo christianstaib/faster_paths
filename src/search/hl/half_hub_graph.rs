@@ -49,31 +49,7 @@ impl HalfHubGraph {
         let labels_and_shortcuts = (0..graph.number_of_vertices())
             .into_par_iter()
             .progress_with(progress_bar)
-            .map_init(
-                || {
-                    (
-                        DijkstraDataVec::new(graph),
-                        VertexExpandedDataBitSet::new(graph),
-                        VertexDistanceQueueBinaryHeap::new(),
-                    )
-                },
-                |(data, expanded, queue), vertex| {
-                    let labels_and_shortcuts = get_hub_label_with_brute_force(
-                        graph,
-                        data,
-                        expanded,
-                        queue,
-                        vertex_to_level,
-                        vertex,
-                    );
-
-                    data.clear();
-                    expanded.clear();
-                    queue.clear();
-
-                    labels_and_shortcuts
-                },
-            )
+            .map(|vertex| get_hub_label_with_brute_force_wrapped(graph, vertex_to_level, vertex))
             .collect::<Vec<_>>();
 
         let mut all_labels = Vec::new();
@@ -99,6 +75,25 @@ impl HalfHubGraph {
     pub fn number_of_vertices(&self) -> u32 {
         self.indices.len() as u32
     }
+}
+
+pub fn get_hub_label_with_brute_force_wrapped(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<u32>,
+    source: Vertex,
+) -> (Vec<HubLabelEntry>, Vec<((Vertex, Vertex), Vertex)>) {
+    let mut data = DijkstraDataVec::new(graph);
+    let mut expanded = VertexExpandedDataBitSet::new(graph);
+    let mut queue = VertexDistanceQueueBinaryHeap::new();
+
+    get_hub_label_with_brute_force(
+        graph,
+        &mut data,
+        &mut expanded,
+        &mut queue,
+        vertex_to_level,
+        source,
+    )
 }
 
 pub fn get_hub_label_with_brute_force(
