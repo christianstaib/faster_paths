@@ -134,9 +134,12 @@ pub fn one_to_one(
     backward_data.set_distance(target, 0);
     backward_queue.insert(target, 0);
 
-    let mut meeting_vertex_and_distance = None;
+    let mut meeting_vertex = 0;
+    let mut meeting_distance = Distance::MAX;
 
-    while !forward_queue.is_empty() || !backward_queue.is_empty() {
+    while (!forward_queue.is_empty() && forward_queue.peek().unwrap().1 < meeting_distance)
+        || (!backward_queue.is_empty() && backward_queue.peek().unwrap().1 < meeting_distance)
+    {
         single_search_step(
             upward_graph,
             downward_graph,
@@ -144,7 +147,8 @@ pub fn one_to_one(
             forward_expanded,
             forward_queue,
             backward_data,
-            &mut meeting_vertex_and_distance,
+            &mut meeting_vertex,
+            &mut meeting_distance,
         );
 
         single_search_step(
@@ -154,11 +158,16 @@ pub fn one_to_one(
             backward_expanded,
             backward_queue,
             forward_data,
-            &mut meeting_vertex_and_distance,
+            &mut meeting_vertex,
+            &mut meeting_distance,
         );
     }
 
-    meeting_vertex_and_distance
+    if meeting_distance == Distance::MAX {
+        return None;
+    }
+
+    Some((meeting_vertex, meeting_distance))
 }
 
 /// Single search step in one direction.
@@ -169,7 +178,8 @@ fn single_search_step(
     direction1_expanded: &mut dyn VertexExpandedData,
     direction1_queue: &mut dyn VertexDistanceQueue,
     direction2_data: &mut dyn DijkstraData,
-    meeting_vertex_and_distance: &mut Option<(Vertex, Distance)>,
+    meeting_vertex: &mut Vertex,
+    meeting_distance: &mut Distance,
 ) {
     if let Some((tail, distance_tail)) = direction1_queue.pop() {
         // It is not guaranteed that the queue does implement a decrease key operation.
@@ -189,12 +199,10 @@ fn single_search_step(
 
         // Meeting vertex logic
         if let Some(direction2_distance_tail) = direction2_data.get_distance(tail) {
-            let current_meeting_distance = meeting_vertex_and_distance
-                .map(|(_vertex, distance)| distance)
-                .unwrap_or(Distance::MAX);
             let alternative_meeting_distance = distance_tail + direction2_distance_tail;
-            if alternative_meeting_distance < current_meeting_distance {
-                *meeting_vertex_and_distance = Some((tail, alternative_meeting_distance));
+            if alternative_meeting_distance < *meeting_distance {
+                *meeting_vertex = tail;
+                *meeting_distance = alternative_meeting_distance;
             }
         }
 

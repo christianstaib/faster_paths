@@ -13,9 +13,9 @@ use faster_paths::{
 struct Args {
     /// Input file
     #[arg(short, long)]
-    in_file: PathBuf,
+    file: PathBuf,
     /// Type of the input file
-    #[arg(short, long, value_enum, default_value = "fmi")]
+    #[arg(short = 't', long, value_enum, default_value = "fmi")]
     file_type: FileType,
     /// Number of benchmarks to be run.
     #[arg(short, long)]
@@ -34,17 +34,17 @@ fn main() {
 
     let pathfinder: Box<dyn PathFinding> = match args.file_type {
         FileType::CH => {
-            let reader = BufReader::new(File::open(&args.in_file).unwrap());
+            let reader = BufReader::new(File::open(&args.file).unwrap());
             let contractes_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
             Box::new(contractes_graph)
         }
         FileType::HL => {
-            let reader = BufReader::new(File::open(&args.in_file).unwrap());
+            let reader = BufReader::new(File::open(&args.file).unwrap());
             let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
             Box::new(hub_graph)
         }
         FileType::FMI => {
-            let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(args.in_file.as_path());
+            let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(args.file.as_path());
             Box::new(graph)
         }
     };
