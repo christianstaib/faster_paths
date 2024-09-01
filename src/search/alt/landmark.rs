@@ -9,7 +9,7 @@ use crate::{
         collections::dijkstra_data::DijkstraData, dijkstra::dijkstra_one_to_all_wraped,
         DistanceHeuristic,
     },
-    utility::get_progressbar_long_jobs,
+    utility::get_progressbar,
 };
 
 pub struct Landmarks {
@@ -20,7 +20,7 @@ impl Landmarks {
     pub fn new<G: Graph + Default>(graph: &ReversibleGraph<G>, vertices: &[Vertex]) -> Landmarks {
         let landmarks = vertices
             .par_iter()
-            .progress_with(get_progressbar_long_jobs(
+            .progress_with(get_progressbar(
                 "Generating landmarks",
                 vertices.len() as u64,
             ))

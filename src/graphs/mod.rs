@@ -12,7 +12,7 @@ use reversible_graph::ReversibleGraph;
 use serde::{Deserialize, Serialize};
 use vec_vec_graph::VecVecGraph;
 
-use crate::{search::path::ShortestPathTestCase, utility::get_progressbar_long_jobs};
+use crate::{search::path::ShortestPathTestCase, utility::get_progressbar};
 
 pub mod pathfinding;
 pub mod reversible_graph;
@@ -196,7 +196,7 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
     let number_of_edges: usize = lines.next().unwrap().unwrap().parse().unwrap();
 
     lines
-        .progress_with(get_progressbar_long_jobs(
+        .progress_with(get_progressbar(
             "Reading fmi file",
             (number_of_vertices + number_of_edges) as u64,
         ))

@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Graph, Level, TaillessEdge, Vertex, WeightedEdge},
-    utility::get_progressbar_long_jobs,
+    utility::get_progressbar,
 };
 
 pub fn contraction_top_down<G, F>(
@@ -35,7 +35,7 @@ where
     let mut shortcuts = HashMap::new();
 
     let number_of_vertices = graph.out_graph().number_of_vertices() as u64;
-    let pb = get_progressbar_long_jobs("Contracting", number_of_vertices);
+    let pb = get_progressbar("Contracting", number_of_vertices);
 
     for &vertex in level_to_vertex.iter().progress_with(pb) {
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
@@ -69,7 +69,7 @@ where
     let mut level_to_vertex = Vec::new();
 
     let number_of_vertices = graph.out_graph().number_of_vertices() as u64;
-    let pb = get_progressbar_long_jobs("Contracting", number_of_vertices);
+    let pb = get_progressbar("Contracting", number_of_vertices);
 
     while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
@@ -101,7 +101,7 @@ where
         + Send
         + Sync,
 {
-    let pb = get_progressbar_long_jobs(
+    let pb = get_progressbar(
         "Initializing queue",
         graph.out_graph().number_of_vertices() as u64,
     );

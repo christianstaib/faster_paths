@@ -4,9 +4,7 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use super::generic::contraction_bottom_up;
 use crate::{
-    graphs::{
-        reversible_graph::ReversibleGraph, Distance, Graph, TaillessEdge, Vertex, WeightedEdge,
-    },
+    graphs::{reversible_graph::ReversibleGraph, Graph, TaillessEdge, Vertex, WeightedEdge},
     search::{
         ch::contracted_graph::ContractedGraph, collections::dijkstra_data::DijkstraData,
         dijkstra::dijkstra_one_to_many,

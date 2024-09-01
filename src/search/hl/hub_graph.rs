@@ -14,7 +14,7 @@ use crate::{
         shortcuts::replace_shortcuts_slowly,
         PathFinding,
     },
-    utility::get_progressbar_long_jobs,
+    utility::get_progressbar,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -36,7 +36,7 @@ impl HubGraph {
         let (forward, mut shortcuts) = HalfHubGraph::by_brute_force(
             graph.out_graph(),
             &vertex_to_level,
-            get_progressbar_long_jobs(
+            get_progressbar(
                 "Brute forcing forward labels",
                 graph.out_graph().number_of_vertices() as u64,
             ),
@@ -44,7 +44,7 @@ impl HubGraph {
         let (backward, backward_shortcuts) = HalfHubGraph::by_brute_force(
             graph.in_graph(),
             &vertex_to_level,
-            get_progressbar_long_jobs(
+            get_progressbar(
                 "Brute forcing backward labels",
                 graph.out_graph().number_of_vertices() as u64,
             ),
@@ -76,15 +76,14 @@ impl HubGraph {
             .map(|vertex| vec![HubLabelEntry::new(vertex)])
             .collect_vec();
 
-        for &vertex in
-            graph
-                .level_to_vertex()
-                .iter()
-                .rev()
-                .progress_with(get_progressbar_long_jobs(
-                    "Merging labels",
-                    graph.level_to_vertex().len() as u64,
-                ))
+        for &vertex in graph
+            .level_to_vertex()
+            .iter()
+            .rev()
+            .progress_with(get_progressbar(
+                "Merging labels",
+                graph.level_to_vertex().len() as u64,
+            ))
         {
             create_label(
                 graph.upward_graph(),

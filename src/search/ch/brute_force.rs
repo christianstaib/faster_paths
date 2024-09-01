@@ -7,13 +7,13 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::contracted_graph::{vertex_to_level, ContractedGraph};
 use crate::{
-    graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Level, Vertex, WeightedEdge},
+    graphs::{reversible_graph::ReversibleGraph, Graph, Level, Vertex, WeightedEdge},
     search::collections::{
         dijkstra_data::{DijkstraData, DijkstraDataVec},
         vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
         vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
     },
-    utility::get_progressbar_long_jobs,
+    utility::get_progressbar,
 };
 
 impl ContractedGraph {
@@ -26,7 +26,7 @@ impl ContractedGraph {
         let (mut edges, mut shortcuts) = brute_force_contracted_graph_edges(
             graph.out_graph(),
             &vertex_to_level,
-            get_progressbar_long_jobs(
+            get_progressbar(
                 "Brute forcing upward edges",
                 graph.out_graph().number_of_vertices() as u64,
             ),
@@ -35,7 +35,7 @@ impl ContractedGraph {
         let (downward_edges, downward_shortcuts) = brute_force_contracted_graph_edges(
             graph.in_graph(),
             &vertex_to_level,
-            get_progressbar_long_jobs(
+            get_progressbar(
                 "Brute forcing downward edges",
                 graph.in_graph().number_of_vertices() as u64,
             ),

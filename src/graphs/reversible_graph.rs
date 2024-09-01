@@ -4,7 +4,7 @@ use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
 
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
-use crate::{graphs::read_edges_from_fmi_file, utility::get_progressbar_long_jobs};
+use crate::{graphs::read_edges_from_fmi_file, utility::get_progressbar};
 
 pub trait FromEdges {
     fn from_edges(edges: &Vec<WeightedEdge>) -> Self;
@@ -34,7 +34,7 @@ impl<G: Graph + Default> ReversibleGraph<G> {
 
         edges
             .iter()
-            .progress_with(get_progressbar_long_jobs(
+            .progress_with(get_progressbar(
                 "Building graph from edges",
                 edges.len() as u64,
             ))

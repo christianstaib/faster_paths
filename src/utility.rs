@@ -13,8 +13,21 @@ use crate::{
     search::{dijkstra::dijkstra_one_to_one_path_wrapped, path::ShortestPathTestCase, PathFinding},
 };
 
-pub fn get_progressbar_long_jobs(job_name: &str, len: u64) -> ProgressBar {
+pub fn get_progressbar(job_name: &str, len: u64) -> ProgressBar {
     let bar = ProgressBar::new(len);
+    bar.set_message(job_name.to_string());
+    bar.set_style(
+        ProgressStyle::with_template(
+            " {msg} {wide_bar} ({percent_precise}%) estimated remaining: {eta_precise}",
+        )
+        .unwrap(),
+    );
+    bar
+}
+
+pub fn get_progressspinner(job_name: &str) -> ProgressBar {
+    let bar = ProgressBar::new_spinner();
+    bar.enable_steady_tick(Duration::from_millis(100));
     bar.set_message(job_name.to_string());
     bar.set_style(
         ProgressStyle::with_template(
@@ -29,7 +42,7 @@ pub fn get_progressbar_long_jobs(job_name: &str, len: u64) -> ProgressBar {
 pub fn get_paths(pathfinder: &dyn PathFinding, number_of_searches: u32) -> Vec<Vec<Vertex>> {
     (0..number_of_searches)
         .into_par_iter()
-        .progress_with(get_progressbar_long_jobs(
+        .progress_with(get_progressbar(
             "Getting many paths",
             number_of_searches as u64,
         ))
@@ -56,7 +69,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     let mut active_paths: Vec<usize> = (0..paths.len()).collect();
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
 
-    let pb = get_progressbar_long_jobs("Generating level_to_vertex vector", paths.len() as u64);
+    let pb = get_progressbar("Generating level_to_vertex vector", paths.len() as u64);
     while !active_paths.is_empty() {
         let hits = active_paths
             // Split the active_paths into chunks for parallel processing.
@@ -122,10 +135,7 @@ pub fn benchmark(pathfinder: &dyn PathFinding, number_of_benchmarks: u32) -> Dur
 
     let path_and_duration = (0..number_of_benchmarks)
         .into_iter()
-        .progress_with(get_progressbar_long_jobs(
-            "Benchmarking",
-            number_of_benchmarks as u64,
-        ))
+        .progress_with(get_progressbar("Benchmarking", number_of_benchmarks as u64))
         .map(|_| {
             let source = rng.gen_range(0..pathfinder.number_of_vertices());
             let target = rng.gen_range(0..pathfinder.number_of_vertices());
@@ -154,10 +164,7 @@ pub fn benchmark_and_test(
     // cache.
     let path_and_duration = tests
         .into_iter()
-        .progress_with(get_progressbar_long_jobs(
-            "Benchmarking",
-            tests.len() as u64,
-        ))
+        .progress_with(get_progressbar("Benchmarking", tests.len() as u64))
         .map(|test| {
             let start = Instant::now();
             let path = pathfinder.shortest_path(test.source, test.target);
@@ -168,7 +175,7 @@ pub fn benchmark_and_test(
     for (test, (path, _duration)) in tests
         .iter()
         .zip(path_and_duration.iter())
-        .progress_with(get_progressbar_long_jobs("Validating", tests.len() as u64))
+        .progress_with(get_progressbar("Validating", tests.len() as u64))
     {
         // Test distance against test.
         let distance = path.as_ref().map(|path| path.distance);
@@ -208,7 +215,7 @@ pub fn generate_test_cases(
 ) -> Vec<ShortestPathTestCase> {
     (0..)
         .par_bridge()
-        .progress_with(get_progressbar_long_jobs(
+        .progress_with(get_progressbar(
             "Generation test cases",
             number_of_testcases as u64,
         ))
