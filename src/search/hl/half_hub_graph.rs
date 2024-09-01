@@ -145,7 +145,7 @@ pub fn get_hub_label_with_brute_force(
                 // tail in source.
                 hub_label.push(HubLabelEntry {
                     vertex: shortcut_head,
-                    distance: data.get_distance(tail).unwrap(),
+                    distance: data.get_distance(tail),
                     predecessor_index: Some(shortcut_tail),
                 });
 
@@ -157,7 +157,7 @@ pub fn get_hub_label_with_brute_force(
         }
 
         for edge in graph.edges(tail) {
-            let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
+            let current_distance_head = data.get_distance(edge.head);
             let alternative_distance_head = distance_tail + edge.weight;
             if alternative_distance_head < current_distance_head {
                 data.set_distance(edge.head, alternative_distance_head);

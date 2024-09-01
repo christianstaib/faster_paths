@@ -180,7 +180,7 @@ pub fn get_ch_edges(
                     edges.push(WeightedEdge::new(
                         shortcut_tail,
                         shortcut_head,
-                        data.get_distance(tail).unwrap(),
+                        data.get_distance(tail),
                     ));
 
                     let path = data.get_path(shortcut_head).unwrap().vertices;
@@ -193,7 +193,7 @@ pub fn get_ch_edges(
         let tail_is_alive = alive.contains(&tail);
 
         for edge in graph.edges(tail) {
-            let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
+            let current_distance_head = data.get_distance(edge.head);
             let alternative_distance_head = distance_tail + edge.weight;
             if alternative_distance_head < current_distance_head {
                 data.set_distance(edge.head, alternative_distance_head);

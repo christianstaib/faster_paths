@@ -79,12 +79,12 @@ impl Landmark {
     pub fn new<G: Graph + Default>(graph: &ReversibleGraph<G>, vertex: Vertex) -> Self {
         let out_graph_data = dijkstra_one_to_all_wraped(graph.out_graph(), vertex);
         let distance_to = (0..graph.out_graph().number_of_vertices())
-            .map(|vertex| out_graph_data.get_distance(vertex).unwrap_or(Distance::MAX))
+            .map(|vertex| out_graph_data.get_distance(vertex))
             .collect_vec();
 
         let in_graph_data = dijkstra_one_to_all_wraped(graph.in_graph(), vertex);
         let distance_from = (0..graph.in_graph().number_of_vertices())
-            .map(|vertex| in_graph_data.get_distance(vertex).unwrap_or(Distance::MAX))
+            .map(|vertex| in_graph_data.get_distance(vertex))
             .collect_vec();
 
         Landmark {

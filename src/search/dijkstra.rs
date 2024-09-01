@@ -33,7 +33,7 @@ pub fn dijktra_one_to_all(
         }
 
         for edge in graph.edges(tail) {
-            let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
+            let current_distance_head = data.get_distance(edge.head);
             let alternative_distance_head = distance_tail + edge.weight;
             if alternative_distance_head < current_distance_head {
                 data.set_distance(edge.head, alternative_distance_head);
@@ -74,7 +74,7 @@ pub fn dijkstra_one_to_one(
         }
 
         for edge in graph.edges(tail) {
-            let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
+            let current_distance_head = data.get_distance(edge.head);
             let alternative_distance_head = distance_tail + edge.weight;
             if alternative_distance_head < current_distance_head {
                 data.set_distance(edge.head, alternative_distance_head);
@@ -110,7 +110,15 @@ pub fn dijkstra_one_to_one_distance_wrapped(
     let mut expanded = VertexExpandedDataBitSet::new(graph);
     let mut queue = VertexDistanceQueueBinaryHeap::new();
     dijkstra_one_to_one(graph, &mut data, &mut expanded, &mut queue, source, target);
-    data.get_distance(target)
+    let distance_raw = data.get_distance(target);
+
+    let mut distance = None;
+
+    if distance_raw != Distance::MAX {
+        distance = Some(distance_raw);
+    }
+
+    distance
 }
 
 pub fn dijkstra_one_to_many(
@@ -163,7 +171,7 @@ pub fn dijktra_one_to_many(
         let tail_hops = *hops.get(&tail).unwrap();
 
         for edge in graph.edges(tail) {
-            let current_distance_head = data.get_distance(edge.head).unwrap_or(Distance::MAX);
+            let current_distance_head = data.get_distance(edge.head);
             let alternative_distance_head = distance_tail + edge.weight;
             if alternative_distance_head < current_distance_head && tail_hops < hop_limit {
                 data.set_distance(edge.head, alternative_distance_head);
@@ -193,7 +201,12 @@ pub fn create_test_cases(graph: &dyn Graph, number_of_testcases: u32) -> Vec<Sho
                 let source = rng.gen_range(0..graph.number_of_vertices());
                 let target = rng.gen_range(0..graph.number_of_vertices());
                 dijkstra_one_to_one(graph, data, expanded, queue, source, target);
-                let distance = data.get_distance(target);
+                let distance_raw = data.get_distance(target);
+
+                let mut distance = None;
+                if distance_raw != Distance::MAX {
+                    distance = Some(distance_raw);
+                }
 
                 data.clear();
                 expanded.clear();

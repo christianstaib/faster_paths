@@ -58,7 +58,7 @@ pub fn par_simulate_contraction_witness_search<G: Graph>(
                 }
 
                 let shortcut_distance = in_edge.weight + out_edge.weight;
-                let shortest_path_distance = data.get_distance(head).unwrap_or(Distance::MAX);
+                let shortest_path_distance = data.get_distance(head);
 
                 if shortcut_distance <= shortest_path_distance {
                     let edge = WeightedEdge {

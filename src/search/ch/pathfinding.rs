@@ -190,27 +190,27 @@ fn single_search_step(
 
         // Stall on demand logic.
         for direction2_edge in direction2_graph.edges(tail) {
-            if let Some(predecessor_weight) = direction1_data.get_distance(direction2_edge.head) {
-                if predecessor_weight + direction2_edge.weight < distance_tail {
-                    return;
-                }
+            let predecessor_weight = direction1_data.get_distance(direction2_edge.head);
+            if predecessor_weight
+                .checked_add(direction2_edge.weight)
+                .unwrap_or(Distance::MAX)
+                < distance_tail
+            {
+                return;
             }
         }
 
         // Meeting vertex logic
-        if let Some(direction2_distance_tail) = direction2_data.get_distance(tail) {
-            let alternative_meeting_distance = distance_tail + direction2_distance_tail;
-            if alternative_meeting_distance < *meeting_distance {
-                *meeting_vertex = tail;
-                *meeting_distance = alternative_meeting_distance;
-            }
+        let direction2_distance_tail = direction2_data.get_distance(tail);
+        let alternative_meeting_distance = distance_tail + direction2_distance_tail;
+        if alternative_meeting_distance < *meeting_distance {
+            *meeting_vertex = tail;
+            *meeting_distance = alternative_meeting_distance;
         }
 
         // Search logic
         for edge in direction1_graph.edges(tail) {
-            let current_distance_head = direction1_data
-                .get_distance(edge.head)
-                .unwrap_or(Distance::MAX);
+            let current_distance_head = direction1_data.get_distance(edge.head);
             let alternative_distance_head = distance_tail + edge.weight;
             if alternative_distance_head < current_distance_head {
                 direction1_data.set_distance(edge.head, alternative_distance_head);
