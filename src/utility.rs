@@ -10,16 +10,7 @@ use rayon::prelude::*;
 
 use crate::{
     graphs::{Graph, Vertex},
-    search::{
-        collections::{
-            dijkstra_data::{DijkstraData, DijkstraDataVec},
-            vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
-        },
-        dijkstra::{dijkstra_one_to_one_path_wrapped, dijktra_one_to_all},
-        path::ShortestPathTestCase,
-        PathFinding,
-    },
+    search::{dijkstra::dijkstra_one_to_one_path_wrapped, path::ShortestPathTestCase, PathFinding},
 };
 
 pub fn get_progressbar_long_jobs(job_name: &str, len: u64) -> ProgressBar {
@@ -35,11 +26,7 @@ pub fn get_progressbar_long_jobs(job_name: &str, len: u64) -> ProgressBar {
 }
 
 /// Computes paths in a graph using Dijkstra's algorithm.
-pub fn get_paths(
-    graph: &dyn Graph,
-    number_of_searches: u32,
-    number_of_paths_per_search: u32,
-) -> Vec<Vec<Vertex>> {
+pub fn get_paths(pathfinder: &dyn PathFinding, number_of_searches: u32) -> Vec<Vec<Vertex>> {
     (0..number_of_searches)
         .into_par_iter()
         .progress_with(get_progressbar_long_jobs(
@@ -47,36 +34,16 @@ pub fn get_paths(
             number_of_searches as u64,
         ))
         .map_init(
-            || {
-                (
-                    // Reuse data structures.
-                    DijkstraDataVec::new(graph),
-                    VertexExpandedDataBitSet::new(graph),
-                    VertexDistanceQueueBinaryHeap::new(),
-                    thread_rng(),
-                )
-            },
-            |(data, expanded, queue, rng), _| {
-                let mut paths = Vec::new();
-                let source = rng.gen_range(0..graph.number_of_vertices());
-                dijktra_one_to_all(graph, data, expanded, queue, source);
+            || thread_rng(),
+            |rng, _| {
+                let source = rng.gen_range(0..pathfinder.number_of_vertices());
+                let target = rng.gen_range(0..pathfinder.number_of_vertices());
 
-                for _ in 0..number_of_paths_per_search {
-                    let target = rng.gen_range(0..graph.number_of_vertices());
-                    if let Some(path) = data.get_path(target) {
-                        paths.push(path.vertices);
-                    }
-                }
-
-                // Clear the data structures for reuse in the next iteration
-                data.clear();
-                expanded.clear();
-                queue.clear();
-
-                paths
+                pathfinder.shortest_path(source, target)
             },
         )
         .flatten()
+        .map(|path| path.vertices)
         .collect()
 }
 

@@ -20,10 +20,6 @@ struct Args {
     #[arg(short = 's', long = "searches")]
     number_of_searches: u32,
 
-    /// Number of paths to find per search.
-    #[arg(short = 'p', long = "paths")]
-    number_of_paths_per_search: u32,
-
     /// Path to the output file where the vertex to level mapping will be
     /// stored.
     #[arg(short, long)]
@@ -38,11 +34,7 @@ fn main() {
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
     // Get paths and level_to_vertex
-    let paths = get_paths(
-        graph.out_graph(),
-        args.number_of_searches,
-        args.number_of_paths_per_search,
-    );
+    let paths = get_paths(graph.out_graph(), args.number_of_searches);
     let level_to_vertex: Vec<Vertex> =
         level_to_vertex(&paths, graph.out_graph().number_of_vertices());
 
