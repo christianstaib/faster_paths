@@ -202,7 +202,9 @@ fn single_search_step(
 
         // Meeting vertex logic
         let direction2_distance_tail = direction2_data.get_distance(tail);
-        let alternative_meeting_distance = distance_tail + direction2_distance_tail;
+        let alternative_meeting_distance = distance_tail
+            .checked_add(direction2_distance_tail)
+            .unwrap_or(Distance::MAX);
         if alternative_meeting_distance < *meeting_distance {
             *meeting_vertex = tail;
             *meeting_distance = alternative_meeting_distance;
