@@ -7,16 +7,17 @@ use faster_paths::{
     utility::benchmark,
 };
 
+/// Does a single threaded benchmark.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Infile in .fmi format
+    /// Input file
     #[arg(short, long)]
     in_file: PathBuf,
-    /// Type of the input file (ch, hl, fmi)
-    #[arg(short, long, value_enum)]
+    /// Type of the input file
+    #[arg(short, long, value_enum, default_value = "fmi")]
     file_type: FileType,
-    /// Infile in .fmi format
+    /// Number of benchmarks to be run.
     #[arg(short, long)]
     number_of_benchmarks: u32,
 }
