@@ -95,6 +95,10 @@ impl HalfHubGraph {
     pub fn average_label_size(&self) -> f32 {
         self.labels.len() as f32 / self.indices.len() as f32
     }
+
+    pub fn number_of_vertices(&self) -> u32 {
+        self.indices.len() as u32
+    }
 }
 
 pub fn get_hub_label_with_brute_force(

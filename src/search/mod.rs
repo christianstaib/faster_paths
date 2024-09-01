@@ -33,6 +33,8 @@ pub trait PathFinding: Send + Sync {
     fn shortest_path(&self, source: Vertex, target: Vertex) -> Option<Path>;
 
     fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance>;
+
+    fn number_of_vertices(&self) -> u32;
 }
 
 pub struct TrivialHeuristic {}

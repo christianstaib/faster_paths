@@ -135,6 +135,10 @@ impl PathFinding for HubGraph {
         let backward_label = self.backward.get_label(target);
         overlapp(forward_label, backward_label).map(|(distance, _)| distance)
     }
+
+    fn number_of_vertices(&self) -> u32 {
+        self.forward.number_of_vertices()
+    }
 }
 
 fn create_label(

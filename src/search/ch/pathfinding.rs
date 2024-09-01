@@ -28,6 +28,10 @@ impl PathFinding for ContractedGraph {
     fn shortest_path_distance(&self, source: Vertex, target: Vertex) -> Option<Distance> {
         one_to_one_wrapped_distance(self.upward_graph(), self.downward_graph(), source, target)
     }
+
+    fn number_of_vertices(&self) -> u32 {
+        self.upward_graph().number_of_vertices()
+    }
 }
 
 pub fn get_slow_shortcuts(

@@ -150,6 +150,34 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     level_to_vertex
 }
 
+pub fn benchmark(pathfinder: &dyn PathFinding, number_of_benchmarks: u32) -> Duration {
+    let mut rng = thread_rng();
+
+    let path_and_duration = (0..number_of_benchmarks)
+        .into_iter()
+        .progress_with(get_progressbar_long_jobs(
+            "Benchmarking",
+            number_of_benchmarks as u64,
+        ))
+        .map(|_| {
+            let source = rng.gen_range(0..pathfinder.number_of_vertices());
+            let target = rng.gen_range(0..pathfinder.number_of_vertices());
+
+            let start = Instant::now();
+            let path = pathfinder.shortest_path(source, target);
+            (path, start.elapsed())
+        })
+        .collect_vec();
+
+    let average_duration = path_and_duration
+        .iter()
+        .map(|(_path, duration)| duration)
+        .sum::<Duration>()
+        / path_and_duration.len() as u32;
+
+    average_duration
+}
+
 pub fn benchmark_and_test(
     graph: &dyn Graph,
     tests: &[ShortestPathTestCase],
