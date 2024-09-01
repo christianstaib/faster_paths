@@ -52,32 +52,33 @@ fn main() {
     let mut vertices = graph.out_graph().vertices().collect_vec();
     vertices.shuffle(&mut thread_rng());
 
+    let factors = vec![0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.5];
+
     let start = Instant::now();
     for (i, &vertex) in vertices.iter().enumerate() {
+        let in_edges = graph.in_graph().edges(vertex).collect_vec();
+        let out_edges = graph.out_graph().edges(vertex).collect_vec();
+
         let prop_edge_diff = fun_name(&graph, vertex, &hub_graph, 0.05);
 
         let new_edges = par_new_edges(&graph, &heuristic, vertex);
         let current_in_edges = graph.in_graph().edges(vertex).len();
         let current_out_edges = graph.out_graph().edges(vertex).len();
+        let true_edge_diff = new_edges - current_in_edges as i32 - current_out_edges as i32;
 
-        let edge_difference = new_edges - current_in_edges as i32 - current_out_edges as i32;
-        println!(
-            "v {:>9} edge diff {:>7} prop1 {:>7} prop2 {:>7} (in {:>5}, out {:>5}). remaining {:?}",
-            vertex,
-            edge_difference,
-            prop_edge_diff,
-            simpler(
-                graph.in_graph().edges(vertex).collect(),
-                graph.out_graph().edges(vertex).collect(),
-                &hub_graph,
-                0.05
-            ),
-            current_in_edges,
-            current_out_edges,
-            start.elapsed() / (i as u32 + 1) * (graph.number_of_vertices() - (i as u32 + 1))
-        );
+        print!("{:>9} {:>7}", vertex, true_edge_diff);
 
-        edge_differences.push(edge_difference);
+        let edge_diffs = factors
+            .iter()
+            .map(|&factor| simpler(&in_edges, &out_edges, &hub_graph, factor))
+            .collect_vec();
+
+        for diff in edge_diffs {
+            print!(" {:>7}", diff);
+        }
+        println!("");
+
+        edge_differences.push(true_edge_diff);
     }
 
     {
@@ -87,33 +88,38 @@ fn main() {
 }
 
 fn simpler(
-    in_edges: Vec<WeightedEdge>,
-    out_edges: Vec<WeightedEdge>,
+    in_edges: &Vec<WeightedEdge>,
+    out_edges: &Vec<WeightedEdge>,
     pathfinder: &dyn PathFinding,
     factor: f32,
 ) -> i32 {
-    let searches = ((in_edges.len() * out_edges.len()) as f32 * factor).round() as u64;
+    let searches = (out_edges.len() as f32 * factor).round() as u32;
+    let searches = searches.clamp(1, u32::MAX);
 
     if searches == 0 {
         return 0;
     }
 
-    let shortcuts = (0..searches)
+    let shortcuts = in_edges
+        .iter()
         .par_bridge()
         .map_init(
             || thread_rng(),
-            |rng, _| {
-                let in_edge = in_edges.choose(rng).unwrap();
-                let out_edge = out_edges.choose(rng).unwrap();
+            |rng, in_edge| {
+                out_edges
+                    .choose_multiple(rng, searches as usize)
+                    .map(|out_edge| {
+                        let shortcut_distance = in_edge.weight + out_edge.weight;
+                        let true_weight = pathfinder
+                            .shortest_path_distance(in_edge.head, out_edge.head)
+                            .unwrap();
 
-                let shortcut_distance = in_edge.weight + out_edge.weight;
-                let true_weight = pathfinder
-                    .shortest_path_distance(in_edge.head, out_edge.head)
-                    .unwrap();
-
-                shortcut_distance == true_weight
+                        shortcut_distance == true_weight
+                    })
+                    .collect_vec()
             },
         )
+        .flatten()
         .filter(|&x| x)
         .count();
 
