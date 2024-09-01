@@ -4,7 +4,7 @@ use indicatif::ProgressIterator;
 use serde::{Deserialize, Serialize};
 
 use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
-use crate::utility::get_progressbar_long_jobs;
+use crate::{graphs::read_edges_from_fmi_file, utility::get_progressbar_long_jobs};
 
 pub trait FromEdges {
     fn from_edges(edges: &Vec<WeightedEdge>) -> Self;
@@ -22,6 +22,11 @@ impl<G: Graph + Default> ReversibleGraph<G> {
             out_graph: Box::new(G::default()),
             in_graph: Box::new(G::default()),
         }
+    }
+
+    pub fn from_fmi_file(path: &std::path::Path) -> Self {
+        let edges = read_edges_from_fmi_file(path);
+        Self::from_edges(&edges)
     }
 
     pub fn from_edges(edges: &Vec<WeightedEdge>) -> Self {

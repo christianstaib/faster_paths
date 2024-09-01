@@ -18,3 +18,7 @@ impl<T: Graph> PathFinding for T {
         self.number_of_vertices()
     }
 }
+
+impl PathFind
+ing 
+f

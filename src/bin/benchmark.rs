@@ -2,6 +2,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::{Parser, ValueEnum};
 use faster_paths::{
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph},
     search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, PathFinding},
     utility::benchmark,
 };
@@ -41,7 +42,10 @@ fn main() {
             let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
             Box::new(hub_graph)
         }
-        FileType::FMI => todo!(),
+        FileType::FMI => {
+            let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(args.in_file.as_path());
+            Box::new(graph)
+        }
     };
 
     let average_duration = benchmark(&*pathfinder, args.number_of_benchmarks);
