@@ -59,8 +59,6 @@ fn main() {
         let in_edges = graph.in_graph().edges(vertex).collect_vec();
         let out_edges = graph.out_graph().edges(vertex).collect_vec();
 
-        let prop_edge_diff = fun_name(&graph, vertex, &hub_graph, 0.05);
-
         let new_edges = par_new_edges(&graph, &heuristic, vertex);
         let current_in_edges = graph.in_graph().edges(vertex).len();
         let current_out_edges = graph.out_graph().edges(vertex).len();
@@ -128,76 +126,4 @@ fn simpler(
         * out_edges.len() as f64) as i32
         - in_edges.len() as i32
         - out_edges.len() as i32
-}
-
-fn fun_name(
-    graph: &ReversibleGraph<VecVecGraph>,
-    vertex: u32,
-    hub_graph: &HubGraph,
-    factor: f32,
-) -> i32 {
-    let in_edges = graph.in_graph().edges(vertex).collect_vec();
-    let out_edges = graph.out_graph().edges(vertex).collect_vec();
-
-    let mut prop_edge_diff = 0;
-    if in_edges.len() + out_edges.len() > 0 {
-        let pairs =
-            probabilistic_edge_difference(in_edges.len() as u32, out_edges.len() as u32, factor);
-
-        let shortcuts = pairs
-            .par_iter()
-            .filter(|&&(in_index, out_index)| {
-                let shortcut_distance =
-                    in_edges[in_index as usize].weight + out_edges[out_index as usize].weight;
-                let true_distance = hub_graph
-                    .shortest_path_distance(
-                        in_edges[in_index as usize].head,
-                        out_edges[out_index as usize].head,
-                    )
-                    .unwrap();
-                shortcut_distance == true_distance
-            })
-            .count();
-
-        prop_edge_diff = ((shortcuts as f64 / pairs.len() as f64)
-            * in_edges.len() as f64
-            * out_edges.len() as f64) as i32
-            - in_edges.len() as i32
-            - out_edges.len() as i32;
-    }
-    prop_edge_diff
-}
-
-fn probabilistic_edge_difference(
-    num_in_edges: u32,
-    num_out_edges: u32,
-    factor: f32,
-) -> Vec<(u32, u32)> {
-    let in_edges: Vec<u32> = (0..num_in_edges).collect();
-    let out_edges: Vec<u32> = (0..num_out_edges).collect();
-
-    let num_selections = (num_in_edges as f32 * num_out_edges as f32 * factor).round() as u64;
-    let num_selections = num_selections.clamp(
-        num_in_edges as u64,
-        num_in_edges as u64 * num_out_edges as u64,
-    );
-
-    let base_value = num_selections / num_in_edges as u64;
-    let remainder = num_selections % num_in_edges as u64;
-
-    let mut out_edges_to_choose: Vec<u64> = vec![base_value; num_in_edges as usize];
-    for i in 0..remainder as usize {
-        out_edges_to_choose[i] += 1;
-    }
-
-    let mut rng = thread_rng();
-
-    in_edges
-        .iter()
-        .flat_map(|&in_index| {
-            out_edges
-                .choose_multiple(&mut rng, out_edges_to_choose[in_index as usize] as usize)
-                .map(move |&out_index| (in_index, out_index))
-        })
-        .collect()
 }
