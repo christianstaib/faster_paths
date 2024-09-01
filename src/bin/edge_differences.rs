@@ -15,6 +15,7 @@ use faster_paths::{
 };
 use itertools::Itertools;
 use rand::prelude::*;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -60,7 +61,7 @@ fn main() {
                 probabilistic_edge_difference(in_edges.len() as u32, out_edges.len() as u32, 0.25);
 
             let shortcuts = pairs
-                .iter()
+                .par_iter()
                 .filter(|&&(in_index, out_index)| {
                     let shortcut_distance =
                         in_edges[in_index as usize].weight + out_edges[out_index as usize].weight;
