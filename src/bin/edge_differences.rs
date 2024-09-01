@@ -12,6 +12,8 @@ use faster_paths::{
         ch::bottom_up::heuristic::par_new_edges, hl::hub_graph::HubGraph, PathfinderHeuristic,
     },
 };
+use itertools::Itertools;
+use rand::prelude::*;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -41,10 +43,13 @@ fn main() {
         pathfinder: &hub_graph,
     };
 
-    let mut edge_differences = Vec::new();
+    let mut edge_differences = vec![0; graph.out_graph().number_of_vertices() as usize];
+
+    let mut vertices = graph.out_graph().vertices().collect_vec();
+    vertices.shuffle(&mut thread_rng());
 
     let start = Instant::now();
-    for vertex in graph.out_graph().vertices() {
+    for vertex in vertices {
         let new_edges = par_new_edges(&graph, &heuristic, vertex);
         let current_in_edges = graph.in_graph().edges(vertex).len();
         let current_out_edges = graph.out_graph().edges(vertex).len();
