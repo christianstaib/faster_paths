@@ -73,13 +73,6 @@ impl DijkstraDataVec {
             distances: vec![Distance::MAX; graph.number_of_vertices() as usize],
         }
     }
-
-    pub fn dijkstra_rank(&self) -> u32 {
-        self.predecessors
-            .iter()
-            .filter(|&&distance| distance != Distance::MAX)
-            .count() as u32
-    }
 }
 
 impl DijkstraData for DijkstraDataVec {

@@ -10,7 +10,9 @@ use faster_paths::{
         collections::{
             dijkstra_data::{DijkstraData, DijkstraDataVec},
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
+            vertex_expanded_data::{
+                VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
+            },
         },
         dijkstra::dijkstra_one_to_one,
     },
@@ -66,7 +68,7 @@ fn main() {
                     number_of_pops: 0,
                     queue: Box::new(VertexDistanceQueueBinaryHeap::new()),
                 };
-                let expanded = VertexExpandedDataBitSet::new(graph.out_graph());
+                let expanded = VertexExpandedDataHashSet::new();
                 let rng = thread_rng();
 
                 (data, queue, expanded, rng)
@@ -83,7 +85,7 @@ fn main() {
                 );
                 let path = data.get_path(*source_and_target[1]);
 
-                let dijkstra_rank = data.dijkstra_rank();
+                let dijkstra_rank = expanded.dijkstra_rank();
                 let queue_pops = queue.number_of_pops;
 
                 data.clear();

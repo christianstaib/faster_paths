@@ -66,6 +66,10 @@ impl VertexExpandedDataHashSet {
             expanded: HashSet::new(),
         }
     }
+
+    pub fn dijkstra_rank(&self) -> u32 {
+        self.expanded.len() as u32
+    }
 }
 
 impl VertexExpandedData for VertexExpandedDataHashSet {
