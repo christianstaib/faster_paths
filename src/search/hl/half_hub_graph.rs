@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use indicatif::{ParallelProgressIterator, ProgressBar};
 use itertools::Itertools;
-use rayon::prelude::*;
+use rayon::{current_thread_index, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use super::hub_graph::HubLabelEntry;
@@ -252,4 +252,61 @@ pub fn get_hub_label_by_merging(
     }
 
     new_label
+}
+
+pub fn get_hub_label_by_merging2(
+    labels: &Vec<(Option<WeightedEdge>, &Vec<HubLabelEntry>)>,
+) -> Vec<HubLabelEntry> {
+    let mut label = labels
+        .par_chunks(labels.len().div_ceil(rayon::current_num_threads()))
+        .map(|labels| {
+            let mut label_map: HashMap<Vertex, (Option<Vertex>, Distance)> = HashMap::new();
+
+            for (edge, label) in labels {
+                let edge_distance = edge.as_ref().map(|edge| edge.weight).unwrap_or(0);
+                for entry in label.iter() {
+                    let current_distance = *label_map
+                        .get(&entry.vertex)
+                        .map(|(_edge, distance)| distance)
+                        .unwrap_or(&Distance::MAX);
+                    let alternative_distance = entry.distance + edge_distance;
+                    if alternative_distance < current_distance {
+                        let mut predecessor = entry.predecessor_index;
+                        if entry.predecessor_index.is_none() && edge.is_some() {
+                            predecessor = Some(edge.as_ref().unwrap().tail);
+                        }
+                        label_map.insert(entry.vertex, (predecessor, alternative_distance));
+                    }
+                }
+            }
+
+            label_map
+        })
+        .reduce(
+            || HashMap::new(),
+            |mut acc, labels| {
+                for (vertex, (predecessor, distance)) in labels.into_iter() {
+                    let current_distance = *acc
+                        .get(&vertex)
+                        .map(|(_edge, distance)| distance)
+                        .unwrap_or(&Distance::MAX);
+
+                    if distance < current_distance {
+                        acc.insert(vertex, (predecessor, distance));
+                    }
+                }
+
+                acc
+            },
+        )
+        .into_iter()
+        .map(|(vertex, (predecessor, distance))| HubLabelEntry {
+            vertex,
+            distance,
+            predecessor_index: predecessor,
+        })
+        .collect_vec();
+    label.sort_by_key(|entry| entry.vertex);
+
+    label
 }
