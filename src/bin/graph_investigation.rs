@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufWriter, path::PathBuf};
+use std::{fs::File, io::BufWriter, path::PathBuf, process::exit};
 
 use clap::Parser;
 use faster_paths::{
@@ -12,10 +12,9 @@ use faster_paths::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataBitSet},
         },
-        dijkstra::{dijkstra_one_to_one, dijkstra_one_to_one_path_wrapped},
-        PathFinding,
+        dijkstra::dijkstra_one_to_one,
     },
-    utility::get_progressbar,
+    utility::{benchmark, get_progressbar},
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
@@ -112,6 +111,10 @@ fn main() {
     let avg_queue_pops =
         data.iter().map(|&(_, _, pops)| pops as u64).sum::<u64>() as f32 / data.len() as f32;
     println!("average queue pops {}", avg_queue_pops);
+
+    let m = 1_000;
+    let avg_dijkstra_duration = benchmark(graph.out_graph(), m);
+    println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
 }
 
 pub struct QueueWrapper {
