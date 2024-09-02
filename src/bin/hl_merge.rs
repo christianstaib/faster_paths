@@ -16,9 +16,9 @@ use faster_paths::{
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    // /// Infile in .fmi format
-    // #[arg(short, long)]
-    // graph: PathBuf,
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    graph: PathBuf,
     /// Infile in .fmi format
     #[arg(short, long)]
     contracted_graph: PathBuf,
