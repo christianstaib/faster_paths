@@ -30,9 +30,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    // // Build graph
-    // let edges = read_edges_from_fmi_file(&args.graph);
-    // let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+    // Build graph
+    let edges = read_edges_from_fmi_file(&args.graph);
+    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
 
     // Read contracted_graph
     let reader = BufReader::new(File::open(&args.contracted_graph).unwrap());
@@ -46,9 +46,8 @@ fn main() {
     let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();
 
-    // // Benchmark and test correctness
-    // let tests = generate_test_cases(graph.out_graph(), 1_000);
-    // let average_duration = benchmark_and_test(graph.out_graph(), &tests,
-    // &hub_graph).unwrap(); println!("Average duration was {:?}",
-    // average_duration);
+    // Benchmark and test correctness
+    let tests = generate_test_cases(graph.out_graph(), 1_000);
+    let average_duration = benchmark_and_test(graph.out_graph(), &tests, &hub_graph).unwrap();
+    println!("Average duration was {:?}", average_duration);
 }
