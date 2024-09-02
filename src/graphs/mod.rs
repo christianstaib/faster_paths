@@ -105,6 +105,12 @@ pub trait Graph: Send + Sync {
 
     fn edges(&self, source: Vertex) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_>;
 
+    fn non_trivial_vertices(&self) -> Vec<Vertex> {
+        self.vertices()
+            .filter(|&vertex| self.edges(vertex).len() != 0)
+            .collect()
+    }
+
     fn number_of_edges(&self) -> u32 {
         (0..self.number_of_vertices())
             .map(|vertex| self.edges(vertex).count() as u32)
