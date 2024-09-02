@@ -7,17 +7,15 @@ use std::{
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{
-        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex, WeightedEdge,
-    },
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, WeightedEdge},
     search::{
-        ch::bottom_up::heuristic::par_new_edges, hl::hub_graph::HubGraph, shortcuts, PathFinding,
+        ch::bottom_up::heuristic::par_new_edges, hl::hub_graph::HubGraph, PathFinding,
         PathfinderHeuristic,
     },
 };
 use itertools::Itertools;
 use rand::prelude::*;
-use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -54,8 +52,7 @@ fn main() {
 
     let factors = vec![0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.5];
 
-    let start = Instant::now();
-    for (i, &vertex) in vertices.iter().enumerate() {
+    for (_i, &vertex) in vertices.iter().enumerate() {
         let in_edges = graph.in_graph().edges(vertex).collect_vec();
         let out_edges = graph.out_graph().edges(vertex).collect_vec();
 
