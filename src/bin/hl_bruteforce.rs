@@ -8,7 +8,7 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Vertex,
+        Graph, Vertex,
     },
     search::hl::hub_graph::HubGraph,
     utility::{benchmark_and_test, generate_test_cases},
@@ -41,7 +41,11 @@ fn main() {
 
     // Create hub_graph
     let hub_graph = HubGraph::by_brute_force(&graph, &level_to_vertex);
-    println!("Average label size is {}", hub_graph.average_label_size());
+    println!(
+        "Average label size {}",
+        hub_graph.number_of_entries() as f64
+            / graph.out_graph().non_trivial_vertices().len() as f64
+    );
 
     let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
     bincode::serialize_into(writer, &hub_graph).unwrap();

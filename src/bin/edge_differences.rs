@@ -45,10 +45,10 @@ fn main() {
         pathfinder: &hub_graph,
     };
 
-    let mut edge_differences = vec![0; graph.number_of_vertices() as usize];
+    let mut edge_differences = vec![false; graph.number_of_vertices() as usize];
 
     let mut vertices = graph.out_graph().vertices().collect_vec();
-    vertices.shuffle(&mut thread_rng());
+    // vertices.shuffle(&mut thread_rng());
 
     let factors = vec![0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.5];
 
@@ -56,30 +56,59 @@ fn main() {
         let in_edges = graph.in_graph().edges(vertex).collect_vec();
         let out_edges = graph.out_graph().edges(vertex).collect_vec();
 
-        let new_edges = par_new_edges(&graph, &heuristic, vertex);
-        let current_in_edges = graph.in_graph().edges(vertex).len();
-        let current_out_edges = graph.out_graph().edges(vertex).len();
-        let true_edge_diff = new_edges - current_in_edges as i32 - current_out_edges as i32;
+        //  let new_edges = par_new_edges(&graph, &heuristic, vertex);
+        //  let current_in_edges = graph.in_graph().edges(vertex).len();
+        //  let current_out_edges = graph.out_graph().edges(vertex).len();
+        //  let true_edge_diff = new_edges - current_in_edges as i32 -
+        // current_out_edges as i32;
 
-        print!("{:>9} {:>7}", vertex, true_edge_diff);
+        //  print!("{:>9} {:>7}", vertex, true_edge_diff);
 
-        let edge_diffs = factors
-            .iter()
-            .map(|&factor| simpler(&in_edges, &out_edges, &hub_graph, factor))
-            .collect_vec();
+        //  let edge_diffs = factors
+        //      .iter()
+        //      .map(|&factor| simpler(&in_edges, &out_edges, &hub_graph,
+        // factor))      .collect_vec();
 
-        for diff in edge_diffs {
-            print!(" {:>7}", diff);
-        }
-        println!("");
+        //  for diff in edge_diffs {
+        //      print!(" {:>7}", diff);
+        //  }
+        //  println!("");
 
-        edge_differences.push(true_edge_diff);
+        edge_differences[_i] = test_if_on_shortest_path(&in_edges, &out_edges, &hub_graph, 1000);
     }
 
     {
         let writer = BufWriter::new(File::create(&args.edge_differences).unwrap());
         serde_json::to_writer(writer, &edge_differences).unwrap();
     }
+}
+
+fn test_if_on_shortest_path(
+    in_edges: &Vec<WeightedEdge>,
+    out_edges: &Vec<WeightedEdge>,
+    pathfinder: &dyn PathFinding,
+    searches: u32,
+) -> bool {
+    if in_edges.is_empty() || out_edges.is_empty() {
+        return false;
+    }
+
+    (0..searches)
+        .par_bridge()
+        .map_init(
+            || thread_rng(),
+            |mut rng, _| {
+                let in_edge = in_edges.choose(&mut rng).unwrap();
+                let out_edge = out_edges.choose(&mut rng).unwrap();
+                let shortcut_distance = in_edge.weight + out_edge.weight;
+                let true_weight = pathfinder
+                    .shortest_path_distance(in_edge.head, out_edge.head)
+                    .unwrap();
+
+                shortcut_distance == true_weight
+            },
+        )
+        .any(|x| x)
 }
 
 fn simpler(

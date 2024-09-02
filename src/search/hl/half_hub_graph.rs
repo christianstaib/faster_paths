@@ -68,8 +68,8 @@ impl HalfHubGraph {
         &self.labels[start as usize..stop as usize]
     }
 
-    pub fn average_label_size(&self) -> f32 {
-        self.labels.len() as f32 / self.indices.len() as f32
+    pub fn number_of_entires(&self) -> u64 {
+        self.labels.len() as u64
     }
 
     pub fn number_of_vertices(&self) -> u32 {

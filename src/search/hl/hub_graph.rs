@@ -123,8 +123,10 @@ impl HubGraph {
         }
     }
 
-    pub fn average_label_size(&self) -> f32 {
-        (self.forward.average_label_size() + self.backward.average_label_size()) / 2.0
+    // Number of entires in one direction averages over both directions.
+    // If bidireciton both are the same
+    pub fn number_of_entries(&self) -> u64 {
+        (self.forward.number_of_entires() + self.backward.number_of_entires()) / 2
     }
 }
 
