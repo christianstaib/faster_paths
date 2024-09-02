@@ -13,6 +13,9 @@ use itertools::Itertools;
 struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
+    graph: PathBuf,
+    /// Infile in .fmi format
+    #[arg(short, long)]
     contracted_graph: PathBuf,
     /// Infile in .fmi format
     #[arg(short, long)]
