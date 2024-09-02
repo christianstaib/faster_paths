@@ -113,7 +113,16 @@ fn main() {
     println!("average queue pops {}", avg_queue_pops);
 
     let m = 1_000;
-    let avg_dijkstra_duration = benchmark(graph.out_graph(), m);
+    let mut rng = thread_rng();
+    let sources_and_targets = (0..m)
+        .map(|_| {
+            let source_and_target = non_trivial_vertices
+                .choose_multiple(&mut rng, 2)
+                .collect_vec();
+            (*source_and_target[0], *source_and_target[1])
+        })
+        .collect_vec();
+    let avg_dijkstra_duration = benchmark(graph.out_graph(), &sources_and_targets);
     println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
 }
 

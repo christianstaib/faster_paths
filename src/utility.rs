@@ -125,16 +125,16 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     level_to_vertex
 }
 
-pub fn benchmark(pathfinder: &dyn PathFinding, number_of_benchmarks: u32) -> Duration {
-    let mut rng = thread_rng();
+pub fn benchmark(
+    pathfinder: &dyn PathFinding,
+    sources_and_targets: &[(Vertex, Vertex)],
+) -> Duration {
+    let pb = get_progressbar("Benchmarking", sources_and_targets.len() as u64);
 
-    let path_and_duration = (0..number_of_benchmarks)
+    let path_and_duration = sources_and_targets
         .into_iter()
-        .progress_with(get_progressbar("Benchmarking", number_of_benchmarks as u64))
-        .map(|_| {
-            let source = rng.gen_range(0..pathfinder.number_of_vertices());
-            let target = rng.gen_range(0..pathfinder.number_of_vertices());
-
+        .progress_with(pb)
+        .map(|&(source, target)| {
             let start = Instant::now();
             let path = pathfinder.shortest_path(source, target);
             (path, start.elapsed())
