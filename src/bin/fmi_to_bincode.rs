@@ -5,7 +5,7 @@ use faster_paths::graphs::{
     read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
 };
 
-/// For debugging reading a .bincode file is way faster than a .fmi file
+/// Reading a .bincode file is way faster than a .fmi file
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
