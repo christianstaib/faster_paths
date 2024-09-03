@@ -55,9 +55,8 @@ fn main() {
     println!("non trivial vertices: {}", non_trivial_vertices.len());
 
     let n = 10_000;
-    let pb = get_progressbar("Gettings paths", n);
 
-    let (avg_path_len, avg_dijkstra_rank, avg_queue_pops) = get_dijkstra_info(&graph, n, pb);
+    let (avg_path_len, avg_dijkstra_rank, avg_queue_pops) = get_dijkstra_info(&graph, n);
 
     println!("average path hops len {}", avg_path_len);
     println!("average dijkstra_rank {}", avg_dijkstra_rank);
@@ -68,12 +67,9 @@ fn main() {
     println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
 }
 
-fn get_dijkstra_info(
-    graph: &ReversibleGraph<VecVecGraph>,
-    n: u64,
-    pb: indicatif::ProgressBar,
-) -> (f32, f32, f32) {
+fn get_dijkstra_info(graph: &ReversibleGraph<VecVecGraph>, n: u64) -> (f32, f32, f32) {
     let non_trivial_vertices = graph.out_graph().non_trivial_vertices();
+    let pb = get_progressbar("Gettings paths", n);
     let data = (0..)
         .par_bridge()
         .map_init(

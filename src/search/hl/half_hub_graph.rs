@@ -193,79 +193,15 @@ pub fn set_predecessor(hub_label: &mut Vec<HubLabelEntry>) {
 pub fn get_hub_label_by_merging(
     labels: &Vec<(Option<WeightedEdge>, &Vec<HubLabelEntry>)>,
 ) -> Vec<HubLabelEntry> {
-    let mut this_edge = None;
-    let mut new_label = Vec::new();
-
-    let mut labels = labels
-        .iter()
-        .map(|(edge, label)| (edge, label.iter().peekable()))
-        .collect_vec();
-
-    while !labels.is_empty() {
-        let mut min_entry = HubLabelEntry {
-            vertex: Vertex::MAX,
-            distance: Distance::MAX,
-            predecessor_index: None,
-        };
-
-        let mut labels_with_min_vertex = Vec::new();
-
-        for (edge, label) in labels.iter_mut() {
-            let edge = edge.as_ref();
-            if this_edge.is_none() {
-                this_edge = edge.clone();
-            } else {
-            }
-            let entry = *label.peek().unwrap();
-
-            if entry.vertex <= min_entry.vertex {
-                if entry.vertex < min_entry.vertex {
-                    min_entry.vertex = entry.vertex;
-                    min_entry.distance = Distance::MAX;
-                    min_entry.predecessor_index = None;
-
-                    labels_with_min_vertex.clear();
-                }
-
-                let alternative_distance =
-                    entry.distance + edge.as_ref().map(|edge| edge.weight).unwrap_or(0);
-                if alternative_distance < min_entry.distance {
-                    min_entry.distance = alternative_distance;
-                    if entry.predecessor_index.is_none() && edge.is_some() {
-                        min_entry.predecessor_index = Some(edge.as_ref().unwrap().tail);
-                    } else {
-                        min_entry.predecessor_index = entry.predecessor_index;
-                    }
-                }
-                labels_with_min_vertex.push(label);
-            }
-        }
-
-        new_label.push(min_entry);
-
-        labels_with_min_vertex.iter_mut().for_each(|label| {
-            label.next();
-        });
-
-        // Retain only non-empty iterators
-        labels.retain_mut(|(_edge, label)| label.peek().is_some());
-    }
-
-    new_label
-}
-
-pub fn get_hub_label_by_merging2(
-    labels: &Vec<(Option<WeightedEdge>, &Vec<HubLabelEntry>)>,
-) -> Vec<HubLabelEntry> {
     let mut label = labels
         .par_chunks(labels.len().div_ceil(rayon::current_num_threads()))
         .map(|labels| {
-            let mut label_map: HashMap<Vertex, (Option<Vertex>, Distance)> = HashMap::new();
+            let mut local_label: HashMap<Vertex, (Option<Vertex>, Distance)> = HashMap::new();
 
             for (edge, label) in labels {
                 let edge_distance = edge.as_ref().map(|edge| edge.weight).unwrap_or(0);
                 for entry in label.iter() {
-                    let current_distance = *label_map
+                    let current_distance = *local_label
                         .get(&entry.vertex)
                         .map(|(_edge, distance)| distance)
                         .unwrap_or(&Distance::MAX);
@@ -275,12 +211,12 @@ pub fn get_hub_label_by_merging2(
                         if entry.predecessor_index.is_none() && edge.is_some() {
                             predecessor = Some(edge.as_ref().unwrap().tail);
                         }
-                        label_map.insert(entry.vertex, (predecessor, alternative_distance));
+                        local_label.insert(entry.vertex, (predecessor, alternative_distance));
                     }
                 }
             }
 
-            label_map
+            local_label
         })
         .reduce(
             || HashMap::new(),
