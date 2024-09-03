@@ -321,6 +321,7 @@ dependencies = [
  "fixedbitset",
  "indicatif",
  "itertools",
+ "keyed_priority_queue",
  "rand",
  "rayon",
  "serde",
@@ -484,6 +485,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1868808506b929d7b0cfa8f75951347aa71bb21144b7791bae35d9bccfcfe37a"
 dependencies = [
  "wasm-bindgen",
+]
+
+[[package]]
+name = "keyed_priority_queue"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ee7893dab2e44ae5f9d0173f26ff4aa327c10b01b06a72b52dd9405b628640d"
+dependencies = [
+ "indexmap 2.4.0",
 ]
 
 [[package]]

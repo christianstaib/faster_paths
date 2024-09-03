@@ -1,5 +1,7 @@
 use std::{cmp::Reverse, collections::BinaryHeap};
 
+use keyed_priority_queue::KeyedPriorityQueue;
+
 use crate::graphs::{Distance, Vertex};
 
 /// A trait for a priority queue that manages vertices and their distances.
@@ -59,5 +61,43 @@ impl VertexDistanceQueue for VertexDistanceQueueBinaryHeap {
         let &Reverse((distance, vertex)) = self.heap.peek()?;
 
         Some((vertex, distance))
+    }
+}
+
+pub struct VertexDistanceKeyedPriorityQueue {
+    queue: KeyedPriorityQueue<Vertex, Reverse<Distance>>,
+}
+
+impl VertexDistanceKeyedPriorityQueue {
+    pub fn new() -> Self {
+        VertexDistanceKeyedPriorityQueue {
+            queue: KeyedPriorityQueue::new(),
+        }
+    }
+}
+
+impl VertexDistanceQueue for VertexDistanceKeyedPriorityQueue {
+    fn clear(&mut self) {
+        self.queue.clear();
+    }
+
+    fn insert(&mut self, vertex: Vertex, distance: Distance) {
+        self.queue.push(vertex, Reverse(distance));
+    }
+
+    fn pop(&mut self) -> Option<(Vertex, Distance)> {
+        self.queue
+            .pop()
+            .map(|(vertex, Reverse(distance))| (vertex, distance))
+    }
+
+    fn is_empty(&self) -> bool {
+        self.queue.is_empty()
+    }
+
+    fn peek(&mut self) -> Option<(Vertex, Distance)> {
+        self.queue
+            .peek()
+            .map(|(&vertex, &Reverse(distance))| (vertex, distance))
     }
 }
