@@ -1,15 +1,15 @@
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
-    path::PathBuf,
-};
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
     },
-    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, PathfinderHeuristic},
+    search::{
+        ch::contracted_graph::{self, ContractedGraph},
+        hl::hub_graph::HubGraph,
+        PathfinderHeuristic,
+    },
     utility::{benchmark_and_test, generate_test_cases},
 };
 
@@ -32,8 +32,11 @@ fn main() {
     let args = Args::parse();
 
     // Build graph
-    let edges = read_edges_from_fmi_file(&args.graph);
-    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+    let reader = BufReader::new(File::open(&args.graph).unwrap());
+    let graph: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
+
+    let reader = BufReader::new(File::open(&args.contracted_graph).unwrap());
+    let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
 
     let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
@@ -43,11 +46,15 @@ fn main() {
     };
 
     // Create contracted_graph
-    let contracted_graph = ContractedGraph::by_contraction_with_heuristic(&graph, &heuristic);
+    let contracted_graph = ContractedGraph::by_contraction_top_down_with_heuristic(
+        &graph,
+        contracted_graph.level_to_vertex(),
+        &heuristic,
+    );
 
-    // Write contracted_graph to file
-    let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
-    bincode::serialize_into(writer, &contracted_graph).unwrap();
+    // // Write contracted_graph to file
+    // let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
+    // bincode::serialize_into(writer, &contracted_graph).unwrap();
 
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);

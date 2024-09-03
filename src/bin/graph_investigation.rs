@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufWriter, path::PathBuf, process::exit};
+use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
@@ -10,9 +10,7 @@ use faster_paths::{
         collections::{
             dijkstra_data::{DijkstraData, DijkstraDataVec},
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
-            vertex_expanded_data::{
-                VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
-            },
+            vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
         dijkstra::dijkstra_one_to_one,
     },
@@ -59,6 +57,23 @@ fn main() {
     let n = 10_000;
     let pb = get_progressbar("Gettings paths", n);
 
+    let (avg_path_len, avg_dijkstra_rank, avg_queue_pops) = get_dijkstra_info(&graph, n, pb);
+
+    println!("average path hops len {}", avg_path_len);
+    println!("average dijkstra_rank {}", avg_dijkstra_rank);
+    println!("average queue pops {}", avg_queue_pops);
+
+    let sources_and_targets = gen_tests_cases(graph.out_graph(), 1_000);
+    let avg_dijkstra_duration = benchmark(graph.out_graph(), &sources_and_targets);
+    println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
+}
+
+fn get_dijkstra_info(
+    graph: &ReversibleGraph<VecVecGraph>,
+    n: u64,
+    pb: indicatif::ProgressBar,
+) -> (f32, f32, f32) {
+    let non_trivial_vertices = graph.out_graph().non_trivial_vertices();
     let data = (0..)
         .par_bridge()
         .map_init(
@@ -104,28 +119,25 @@ fn main() {
 
     let avg_path_len =
         data.iter().map(|&(len, _, _)| len as u64).sum::<u64>() as f32 / data.len() as f32;
-    println!("average path hops len {}", avg_path_len);
-
     let avg_dijkstra_rank =
         data.iter().map(|&(_, rank, _)| rank as u64).sum::<u64>() as f32 / data.len() as f32;
-    println!("average dijkstra_rank {}", avg_dijkstra_rank);
-
     let avg_queue_pops =
         data.iter().map(|&(_, _, pops)| pops as u64).sum::<u64>() as f32 / data.len() as f32;
-    println!("average queue pops {}", avg_queue_pops);
+    (avg_path_len, avg_dijkstra_rank, avg_queue_pops)
+}
 
-    let m = 1_000;
+fn gen_tests_cases(graph: &dyn Graph, m: i32) -> Vec<(u32, u32)> {
     let mut rng = thread_rng();
-    let sources_and_targets = (0..m)
+    let non_trivial_vertices = graph.non_trivial_vertices();
+
+    (0..m)
         .map(|_| {
             let source_and_target = non_trivial_vertices
                 .choose_multiple(&mut rng, 2)
                 .collect_vec();
             (*source_and_target[0], *source_and_target[1])
         })
-        .collect_vec();
-    let avg_dijkstra_duration = benchmark(graph.out_graph(), &sources_and_targets);
-    println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
+        .collect_vec()
 }
 
 pub struct QueueWrapper {
