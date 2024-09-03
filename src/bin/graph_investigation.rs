@@ -14,7 +14,7 @@ use faster_paths::{
         },
         dijkstra::dijkstra_one_to_one,
     },
-    utility::{benchmark, get_progressbar},
+    utility::{benchmark, gen_tests_cases, get_progressbar},
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
@@ -43,26 +43,34 @@ fn main() {
         graph.out_graph().is_bidirectional()
     );
 
-    let out_degrees = graph
-        .out_graph()
-        .vertices()
-        .map(|vertex| graph.out_graph().edges(vertex).len())
-        .collect_vec();
-    let writer = BufWriter::new(File::create(&args.degrees_out).unwrap());
-    serde_json::to_writer(writer, &out_degrees).unwrap();
+    {
+        let out_degrees = graph
+            .out_graph()
+            .vertices()
+            .map(|vertex| graph.out_graph().edges(vertex).len())
+            .collect_vec();
+        let writer = BufWriter::new(File::create(&args.degrees_out).unwrap());
+        serde_json::to_writer(writer, &out_degrees).unwrap();
+    }
 
     let non_trivial_vertices = graph.out_graph().non_trivial_vertices();
     println!("non trivial vertices: {}", non_trivial_vertices.len());
+    println!(
+        "degree is {}",
+        non_trivial_vertices.len() as f32 / graph.out_graph().number_of_edges() as f32
+    );
 
     let n = 10_000;
-
     let (avg_path_len, avg_dijkstra_rank, avg_queue_pops) = get_dijkstra_info(&graph, n);
 
+    println!("Values over {} parallel searches", n);
     println!("average path hops len {}", avg_path_len);
     println!("average dijkstra_rank {}", avg_dijkstra_rank);
     println!("average queue pops {}", avg_queue_pops);
 
-    let sources_and_targets = gen_tests_cases(graph.out_graph(), 1_000);
+    let m = 1_000;
+    println!("Value over {} sequential searches", m);
+    let sources_and_targets = gen_tests_cases(graph.out_graph(), m);
     let avg_dijkstra_duration = benchmark(graph.out_graph(), &sources_and_targets);
     println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
 }
