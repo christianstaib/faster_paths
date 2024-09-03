@@ -41,7 +41,8 @@ where
     for &vertex in level_to_vertex.iter().progress_with(pb) {
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
         println!(
-            "edge diff {}",
+            "num edges {}, edge diff {}",
+            graph.out_graph().number_of_edges(),
             edge_difference(&graph, &new_and_updated_edges, vertex)
         );
         update_edge_map(&mut edges, &mut shortcuts, vertex, &new_and_updated_edges);

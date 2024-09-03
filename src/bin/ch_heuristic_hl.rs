@@ -2,14 +2,8 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{
-        read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-    },
-    search::{
-        ch::contracted_graph::{self, ContractedGraph},
-        hl::hub_graph::HubGraph,
-        PathfinderHeuristic,
-    },
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph},
+    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, PathfinderHeuristic},
     utility::{benchmark_and_test, generate_test_cases},
 };
 
