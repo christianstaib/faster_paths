@@ -150,6 +150,21 @@ pub fn benchmark(
     average_duration
 }
 
+/// Non trivial unequal pairs
+pub fn gen_tests_cases(graph: &dyn Graph, num: u32) -> Vec<(u32, u32)> {
+    let mut rng = thread_rng();
+    let non_trivial_vertices = graph.non_trivial_vertices();
+
+    (0..num)
+        .map(|_| {
+            let source_and_target = non_trivial_vertices
+                .choose_multiple(&mut rng, 2)
+                .collect_vec();
+            (*source_and_target[0], *source_and_target[1])
+        })
+        .collect_vec()
+}
+
 pub fn benchmark_and_test(
     graph: &dyn Graph,
     tests: &[ShortestPathTestCase],

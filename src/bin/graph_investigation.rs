@@ -122,20 +122,6 @@ fn get_dijkstra_info(graph: &ReversibleGraph<VecVecGraph>, n: u64) -> (f32, f32,
     (avg_path_len, avg_dijkstra_rank, avg_queue_pops)
 }
 
-fn gen_tests_cases(graph: &dyn Graph, m: i32) -> Vec<(u32, u32)> {
-    let mut rng = thread_rng();
-    let non_trivial_vertices = graph.non_trivial_vertices();
-
-    (0..m)
-        .map(|_| {
-            let source_and_target = non_trivial_vertices
-                .choose_multiple(&mut rng, 2)
-                .collect_vec();
-            (*source_and_target[0], *source_and_target[1])
-        })
-        .collect_vec()
-}
-
 pub struct QueueWrapper {
     pub number_of_pops: u32,
     pub queue: Box<dyn VertexDistanceQueue>,

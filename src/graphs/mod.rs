@@ -1,10 +1,10 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
     path::Path,
 };
 
-use ahash::HashMap;
 use indicatif::ProgressIterator;
 use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
