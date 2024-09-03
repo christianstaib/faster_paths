@@ -1,7 +1,5 @@
 use std::{cmp::Reverse, collections::BinaryHeap};
 
-use dary_heap::DaryHeap;
-
 use crate::graphs::{Distance, Vertex};
 
 /// A trait for a priority queue that manages vertices and their distances.
@@ -39,45 +37,6 @@ impl VertexDistanceQueueBinaryHeap {
 }
 
 impl VertexDistanceQueue for VertexDistanceQueueBinaryHeap {
-    fn clear(&mut self) {
-        self.heap.clear();
-    }
-
-    fn insert(&mut self, vertex: Vertex, distance: Distance) {
-        self.heap.push(Reverse((distance, vertex)));
-    }
-
-    fn pop(&mut self) -> Option<(Vertex, Distance)> {
-        let Reverse((distance, vertex)) = self.heap.pop()?;
-
-        Some((vertex, distance))
-    }
-
-    fn is_empty(&self) -> bool {
-        self.heap.is_empty()
-    }
-
-    fn peek(&mut self) -> Option<(Vertex, Distance)> {
-        let &Reverse((distance, vertex)) = self.heap.peek()?;
-
-        Some((vertex, distance))
-    }
-}
-
-/// A priority queue implementation using a dary heap.
-pub struct VertexDistanceQueueDaryHeap<const N: usize> {
-    heap: DaryHeap<Reverse<(Distance, Vertex)>, N>,
-}
-
-impl<const N: usize> VertexDistanceQueueDaryHeap<N> {
-    pub fn new() -> Self {
-        VertexDistanceQueueDaryHeap {
-            heap: DaryHeap::<_, N>::new(),
-        }
-    }
-}
-
-impl<const N: usize> VertexDistanceQueue for VertexDistanceQueueDaryHeap<N> {
     fn clear(&mut self) {
         self.heap.clear();
     }

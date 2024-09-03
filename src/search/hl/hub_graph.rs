@@ -9,9 +9,7 @@ use itertools::Itertools;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
-use super::half_hub_graph::{
-    get_hub_label_by_merging, get_hub_label_by_merging2, set_predecessor, HalfHubGraph,
-};
+use super::half_hub_graph::{get_hub_label_by_merging, set_predecessor, HalfHubGraph};
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Level, Vertex},
     search::{
@@ -164,7 +162,7 @@ fn create_label(
         .collect::<Vec<_>>();
     neighbor_labels.push((None, labels_direction1.get(vertex as usize).unwrap()));
 
-    let mut forward_label = get_hub_label_by_merging2(&neighbor_labels);
+    let mut forward_label = get_hub_label_by_merging(&neighbor_labels);
     prune_label(&mut forward_label, labels_direction2);
     labels_direction1[vertex as usize] = forward_label;
 }

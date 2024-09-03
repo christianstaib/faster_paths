@@ -298,12 +298,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dary_heap"
-version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7762d17f1241643615821a8455a0b2c3e803784b058693d990b11f2dce25a0ca"
-
-[[package]]
 name = "deranged"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -338,7 +332,6 @@ dependencies = [
  "ahash",
  "bincode",
  "clap",
- "dary_heap",
  "fixedbitset",
  "indicatif",
  "itertools",
