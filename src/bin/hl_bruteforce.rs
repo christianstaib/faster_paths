@@ -42,7 +42,7 @@ fn main() {
     // Create hub_graph
     let hub_graph = HubGraph::by_brute_force(&graph, &level_to_vertex);
     println!(
-        "Average label size {}",
+        "Average label size forward label {}",
         hub_graph.number_of_entries() as f64
             / graph.out_graph().non_trivial_vertices().len() as f64
     );
@@ -53,5 +53,5 @@ fn main() {
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);
     let average_duration = benchmark_and_test(graph.out_graph(), &tests, &hub_graph).unwrap();
-    println!("Average duration was {:?}", average_duration);
+    println!("All correct. Average duration was {:?}", average_duration);
 }

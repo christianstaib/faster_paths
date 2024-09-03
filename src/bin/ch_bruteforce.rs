@@ -14,7 +14,6 @@ use faster_paths::{
     utility::{benchmark_and_test, generate_test_cases},
 };
 
-/// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -43,13 +42,22 @@ fn main() {
     // Create contracted_graph
     let contracted_graph = ContractedGraph::by_brute_force(&graph, &level_to_vertex);
 
+    println!(
+        "up graph edges: {}",
+        contracted_graph.upward_graph().number_of_edges()
+    );
+    println!(
+        "up graph average degree: {}",
+        contracted_graph.upward_graph().average_degree()
+    );
+
     // Write contracted_graph to file
     let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
     bincode::serialize_into(writer, &contracted_graph).unwrap();
 
     // Benchmark and test correctness
-    let tests = generate_test_cases(graph.out_graph(), 10_000);
+    let tests = generate_test_cases(graph.out_graph(), 1_000);
     let average_duration =
         benchmark_and_test(graph.out_graph(), &tests, &contracted_graph).unwrap();
-    println!("Average duration was {:?}", average_duration);
+    println!("All correct. Average duration was {:?}", average_duration);
 }

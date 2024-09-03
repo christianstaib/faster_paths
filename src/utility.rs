@@ -223,6 +223,8 @@ pub fn generate_test_cases(
     graph: &dyn Graph,
     number_of_testcases: u32,
 ) -> Vec<ShortestPathTestCase> {
+    let non_trivial_vertices = graph.non_trivial_vertices();
+
     (0..)
         .par_bridge()
         .progress_with(get_progressbar(
@@ -232,8 +234,9 @@ pub fn generate_test_cases(
         .map_init(
             || (thread_rng()),
             |rng, _| {
-                let source = rng.gen_range(0..graph.number_of_vertices());
-                let target = rng.gen_range(0..graph.number_of_vertices());
+                let source_and_target = non_trivial_vertices.choose_multiple(rng, 2).collect_vec();
+                let source = *source_and_target[0];
+                let target = *source_and_target[1];
 
                 let distance = dijkstra_one_to_one_path_wrapped(graph, source, target)
                     .map(|path| path.distance);

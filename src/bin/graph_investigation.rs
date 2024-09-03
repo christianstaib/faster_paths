@@ -53,12 +53,11 @@ fn main() {
         serde_json::to_writer(writer, &out_degrees).unwrap();
     }
 
-    let non_trivial_vertices = graph.out_graph().non_trivial_vertices();
-    println!("non trivial vertices: {}", non_trivial_vertices.len());
     println!(
-        "degree is {}",
-        non_trivial_vertices.len() as f32 / graph.out_graph().number_of_edges() as f32
+        "non trivial vertices: {}",
+        graph.out_graph().non_trivial_vertices().len()
     );
+    println!("degree is {}", graph.out_graph().average_degree());
 
     let n = 10_000;
     let (avg_path_len, avg_dijkstra_rank, avg_queue_pops) = get_dijkstra_info(&graph, n);

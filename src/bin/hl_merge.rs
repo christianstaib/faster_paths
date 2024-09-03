@@ -42,7 +42,7 @@ fn main() {
     // Create hub_graph
     let hub_graph = HubGraph::by_merging(&contracted_graph);
     println!(
-        "Average label size {}",
+        "Average label size forward label {}",
         hub_graph.number_of_entries() as f64
             / graph.out_graph().non_trivial_vertices().len() as f64
     );
