@@ -41,7 +41,7 @@ impl ContractedGraph {
             ),
         );
 
-        edges.extend(downward_edges);
+        edges.extend(downward_edges.into_iter().map(|edge| edge.reversed()));
 
         shortcuts.extend(
             downward_shortcuts
