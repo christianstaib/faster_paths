@@ -2,7 +2,7 @@ use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::Vertex,
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
     reading_pathfinder,
     utility::{get_paths, get_progressbar, level_to_vertex},
     FileType,
@@ -14,6 +14,10 @@ use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterato
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    graph: PathBuf,
+
     /// Input file
     #[arg(short, long)]
     file: PathBuf,
@@ -38,10 +42,17 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    // Build graph
+    let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(&args.graph);
+
     let pathfinder = reading_pathfinder(&args.file.as_path(), &args.file_type);
 
     // Get paths and level_to_vertex
-    let paths = get_paths(&*pathfinder, args.number_of_searches);
+    let paths = get_paths(
+        &*pathfinder,
+        &graph.out_graph().non_trivial_vertices(),
+        args.number_of_searches,
+    );
     let level_to_vertex: Vec<Vertex> = level_to_vertex(&paths, pathfinder.number_of_vertices());
 
     // Write level_to_vertex to file

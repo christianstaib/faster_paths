@@ -34,7 +34,11 @@ pub fn get_progressspinner(job_name: &str) -> ProgressBar {
 }
 
 /// Computes paths in a graph using Dijkstra's algorithm.
-pub fn get_paths(pathfinder: &dyn PathFinding, number_of_searches: u32) -> Vec<Vec<Vertex>> {
+pub fn get_paths(
+    pathfinder: &dyn PathFinding,
+    vertices: &Vec<Vertex>,
+    number_of_searches: u32,
+) -> Vec<Vec<Vertex>> {
     let pb = get_progressbar("Getting many paths", number_of_searches as u64);
 
     (0..)
@@ -42,8 +46,11 @@ pub fn get_paths(pathfinder: &dyn PathFinding, number_of_searches: u32) -> Vec<V
         .map_init(
             || thread_rng(),
             |rng, _| {
-                let source = rng.gen_range(0..pathfinder.number_of_vertices());
-                let target = rng.gen_range(0..pathfinder.number_of_vertices());
+                let (source, target) = vertices
+                    .choose_multiple(rng, 2)
+                    .cloned()
+                    .collect_tuple()
+                    .unwrap();
 
                 pathfinder.shortest_path(source, target)
             },
