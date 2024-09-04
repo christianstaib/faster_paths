@@ -14,10 +14,6 @@ use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterato
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Infile in .fmi format
-    #[arg(short, long)]
-    graph: PathBuf,
-
     /// Input file
     #[arg(short, long)]
     file: PathBuf,
