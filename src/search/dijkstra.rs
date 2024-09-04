@@ -7,9 +7,12 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use super::{
     collections::{
         dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec, Path},
-        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
+        vertex_distance_queue::{
+            VertexDistanceKeyedPriorityQueue, VertexDistanceQueue, VertexDistanceQueueBinaryHeap,
+        },
         vertex_expanded_data::{
-            VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
+            VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataDoNothing,
+            VertexExpandedDataHashSet,
         },
     },
     path::ShortestPathTestCase,
@@ -107,8 +110,8 @@ pub fn dijkstra_one_to_one_distance_wrapped(
     target: Vertex,
 ) -> Option<Distance> {
     let mut data = DijkstraDataVec::new(graph);
-    let mut expanded = VertexExpandedDataBitSet::new(graph);
-    let mut queue = VertexDistanceQueueBinaryHeap::new();
+    let mut expanded = VertexExpandedDataBitSet::new(graph); // VertexExpandedDataDoNothing {}; //;
+    let mut queue = VertexDistanceQueueBinaryHeap::new(); // VertexDistanceKeyedPriorityQueue::new();
     dijkstra_one_to_one(graph, &mut data, &mut expanded, &mut queue, source, target);
     let distance_raw = data.get_distance(target);
 

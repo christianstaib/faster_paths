@@ -21,7 +21,7 @@ fn main() {
     let writer = BufReader::new(File::open(&args.graph_bincode).unwrap());
     let graph: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(writer).unwrap();
 
-    let m = 100;
+    let m = 500;
     println!("Value over {} sequential searches", m);
     let sources_and_targets = gen_tests_cases(graph.out_graph(), m);
     let avg_dijkstra_duration = benchmark(graph.out_graph(), &sources_and_targets);

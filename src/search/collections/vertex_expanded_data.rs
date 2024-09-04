@@ -2,6 +2,7 @@ use std::{collections::HashSet, usize};
 
 use fixedbitset::FixedBitSet;
 
+use super::vertex_distance_queue::VertexDistanceKeyedPriorityQueue;
 use crate::graphs::{Graph, Vertex};
 
 pub trait VertexExpandedData {
@@ -80,4 +81,14 @@ impl VertexExpandedData for VertexExpandedDataHashSet {
     fn clear(&mut self) {
         self.expanded.clear()
     }
+}
+
+pub struct VertexExpandedDataDoNothing {}
+
+impl VertexExpandedData for VertexExpandedDataDoNothing {
+    fn expand(&mut self, _vertex: Vertex) -> bool {
+        false
+    }
+
+    fn clear(&mut self) {}
 }

@@ -17,6 +17,7 @@ use itertools::Itertools;
 use rand::prelude::*;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
+// Predict average label size by brute forcing a number of labels.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -24,11 +25,11 @@ struct Args {
     #[arg(short, long)]
     graph: PathBuf,
 
-    /// Infile in .fmi format
+    /// Where level_to_vertex list shall be stored.
     #[arg(short, long)]
     level_to_vertex: PathBuf,
 
-    /// Infile in .fmi format
+    /// Number of labels to calculate
     #[arg(short, long)]
     num_labels: u32,
 }
@@ -45,7 +46,7 @@ fn main() {
     let level_to_vertex: Vec<Vertex> = serde_json::from_reader(reader).unwrap();
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-    let vertices = graph.out_graph().vertices().collect_vec();
+    let vertices = graph.out_graph().non_trivial_vertices();
 
     let vertices = vertices
         .choose_multiple(&mut thread_rng(), args.num_labels as usize)
