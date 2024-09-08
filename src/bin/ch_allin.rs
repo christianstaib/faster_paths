@@ -64,7 +64,12 @@ fn main() {
             graph_org.set_weight(&edge.remove_weight().reversed(), Some(edge.weight));
         }
     }
-    let mut edges = graph_org.out_graph().all_edges();
+    let mut edges: HashMap<(Vertex, Vertex), Distance> = graph_org
+        .out_graph()
+        .all_edges()
+        .iter()
+        .map(|edge| ((edge.tail, edge.head), edge.weight))
+        .collect();
 
     println!(
         "graph is bidirectional? {}",
@@ -104,8 +109,22 @@ fn main() {
         pb.inc(1);
         level_to_vertex.push(vertex);
 
-        edges.extend(contract(&mut graph, vertex));
+        let this_edges = contract(&mut graph, vertex)
+            .into_par_iter()
+            .filter(|edge| {
+                edge.weight < *edges.get(&(edge.tail, edge.head)).unwrap_or(&Distance::MAX)
+            })
+            .collect::<Vec<_>>();
+
+        this_edges.into_iter().for_each(|edge| {
+            edges.insert((edge.tail, edge.head), edge.weight);
+        });
     }
+
+    let edges = edges
+        .into_par_iter()
+        .map(|((tail, head), weight)| WeightedEdge::new(tail, head, weight))
+        .collect();
 
     let ch = ContractedGraph::new(level_to_vertex, edges, shortcuts);
 
