@@ -1,16 +1,25 @@
-use std::{fs::File, io::BufWriter, path::PathBuf};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::PathBuf,
+};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Distance, Vertex,
+        Distance, Graph, Vertex, WeightedEdge,
     },
     search::{
-        ch::contracted_graph::ContractedGraph, DistanceHeuristic, PathFinding, TrivialHeuristic,
+        ch::contracted_graph::ContractedGraph,
+        collections::vertex_distance_queue::VertexDistanceQueue, DistanceHeuristic, PathFinding,
+        TrivialHeuristic,
     },
-    utility::{benchmark_and_test, generate_test_cases},
+    utility::{benchmark_and_test, generate_test_cases, get_progressbar},
 };
+use indicatif::{ParallelProgressIterator, ProgressIterator};
+use itertools::Itertools;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -47,22 +56,81 @@ fn main() {
     let args = Args::parse();
 
     // Build graph
-    let edges = read_edges_from_fmi_file(&args.graph);
-    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+    let reader = BufReader::new(File::open(&args.graph).unwrap());
+    let graph: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
-    // Create landmakrs
-    let heuristic = TrivialHeuristic {};
+    let mut graph = ArrayGraph::new(&graph.out_graph().all_edges());
 
-    // Create contracted_graph
-    let contracted_graph = ContractedGraph::by_contraction_with_heuristic(&graph, &heuristic);
+    for vertex in 0..graph.num_vertices {
+        contract(&mut graph, vertex as Vertex);
+    }
+}
 
-    // Write contracted_graph to file
-    let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
-    bincode::serialize_into(writer, &contracted_graph).unwrap();
+fn get_index(tail: Vertex, head: Vertex) -> usize {
+    let min = std::cmp::min(tail, head) as usize;
+    let max = std::cmp::max(tail, head) as usize;
+    (((max - 1) * max) / 2) + min
+}
 
-    // Benchmark and test correctness
-    let tests = generate_test_cases(graph.out_graph(), 1_000);
-    let average_duration =
-        benchmark_and_test(graph.out_graph(), &tests, &contracted_graph).unwrap();
-    println!("Average duration was {:?}", average_duration);
+pub struct ArrayGraph {
+    pub num_vertices: usize,
+    pub array: Vec<Vertex>,
+}
+
+impl ArrayGraph {
+    pub fn new(edges: &Vec<WeightedEdge>) -> Self {
+        let max_vertex = edges.iter().map(|edge| edge.tail).max().unwrap();
+        println!("edges len {}", edges.len());
+        println!("max vertex is {}", max_vertex);
+        println!("aray len is {}", get_index(max_vertex + 1, 0));
+        let array = vec![Distance::MAX; get_index(max_vertex + 1, 0)];
+
+        let mut array_graph = ArrayGraph {
+            num_vertices: max_vertex as usize + 1,
+            array,
+        };
+
+        for edge in edges.iter().progress() {
+            if edge.weight < array_graph.get_weight(edge.tail, edge.head) {
+                array_graph.set_weight(edge.tail, edge.head, edge.weight);
+            }
+        }
+
+        array_graph
+    }
+
+    pub fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance {
+        self.array[get_index(tail, head)]
+    }
+
+    pub fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
+        self.array[get_index(tail, head)] = weight
+    }
+}
+
+fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
+    let neighbors_and_edge_weight = (0..graph.num_vertices)
+        .into_par_iter()
+        .progress_with(get_progressbar("get neighbors", graph.num_vertices as u64))
+        .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
+        .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
+        .collect::<Vec<_>>();
+
+    neighbors_and_edge_weight
+        .iter()
+        .progress_with(get_progressbar(
+            format!("contract {}", vertex).as_str(),
+            graph.num_vertices as u64,
+        ))
+        .for_each(|&(tail, tail_weight)| {
+            neighbors_and_edge_weight
+                .iter()
+                .for_each(|&(head, head_weight)| {
+                    if tail < head {
+                        if tail_weight + head_weight < graph.get_weight(tail, head) {
+                            graph.set_weight(tail, head, tail_weight + head_weight);
+                        }
+                    }
+                })
+        });
 }

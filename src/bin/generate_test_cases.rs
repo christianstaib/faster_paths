@@ -34,5 +34,6 @@ fn main() {
 
     let sources_and_targets = gen_tests_cases(graph.out_graph(), args.number_of_test_cases);
 
-    let writer = BufWriter::new(File::create(&test_cases).unwrap());
+    let writer = BufWriter::new(File::create(&args.test_cases).unwrap());
+    serde_json::to_writer(writer, &sources_and_targets).unwrap();
 }
