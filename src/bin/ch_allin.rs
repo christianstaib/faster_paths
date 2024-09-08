@@ -3,8 +3,8 @@ use std::{fs::File, io::BufReader, path::PathBuf, process::exit};
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
-        WeightedEdge,
+        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Edge, Graph,
+        Vertex, WeightedEdge,
     },
     search::{DistanceHeuristic, PathFinding},
     utility::get_progressbar,
@@ -48,9 +48,9 @@ fn main() {
 
     // Build graph
     let reader = BufReader::new(File::open(&args.graph).unwrap());
-    let graph: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
+    let graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
-    let mut graph = ArrayGraph::new(&graph.out_graph().all_edges());
+    let mut graph = ArrayGraph::new(&graph_org.out_graph().all_edges());
 
     let mut diffs = (0..graph.num_vertices)
         .into_par_iter()
@@ -153,18 +153,30 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
         .for_each(|&(head, _)| graph.set_weight(vertex, head, Distance::MAX));
 }
 
-fn edge_diff(graph: &ArrayGraph, vertex: Vertex) -> i32 {
+fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i32 {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
+
+    assert_eq!(
+        neighbors_and_edge_weight.len(),
+        test_graph.neighbors(vertex).len()
+    );
     // println!("num neighbors {}", neighbors_and_edge_weight.len());
 
     let mut new_edges = 0;
     for &(tail, _tail_weight) in neighbors_and_edge_weight.iter() {
         for &(head, _head_weight) in neighbors_and_edge_weight.iter() {
-            if graph.get_weight(tail, head) == Distance::MAX {
+            let distance = graph.get_weight(tail, head);
+            assert_eq!(
+                test_graph
+                    .get_weight(&Edge { tail, head })
+                    .unwrap_or(Distance::MAX),
+                distance
+            );
+            if distance == Distance::MAX {
                 new_edges += 1;
             }
         }
