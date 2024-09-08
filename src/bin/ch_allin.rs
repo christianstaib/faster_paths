@@ -56,7 +56,7 @@ fn main() {
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let diff = edge_diff(&graph, vertex as Vertex);
+            let diff = edge_diff(&graph, graph_org.out_graph(), vertex as Vertex);
             (vertex as Vertex, diff)
         })
         .collect::<Vec<_>>();
