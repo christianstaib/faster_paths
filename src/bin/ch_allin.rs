@@ -1,17 +1,24 @@
 use std::{
-    cmp::Reverse, collections::BinaryHeap, fs::File, io::BufReader, path::PathBuf, process::exit,
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+    fs::File,
+    io::BufReader,
+    path::PathBuf,
+    process::exit,
 };
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Edge, Graph,
+        self, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Edge, Graph,
         Vertex, WeightedEdge,
     },
-    search::{DistanceHeuristic, PathFinding},
+    search::{ch::contracted_graph::ContractedGraph, shortcuts, DistanceHeuristic, PathFinding},
     utility::get_progressbar,
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
+use itertools::Itertools;
+use rand::prelude::*;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
@@ -47,10 +54,22 @@ impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
 
 fn main() {
     let args = Args::parse();
-
     // Build graph
     let reader = BufReader::new(File::open(&args.graph).unwrap());
-    let graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
+    let mut graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
+
+    let mut edges = graph_org.out_graph().all_edges();
+    for edge in edges.iter() {
+        graph_org.set_weight(&edge.remove_weight(), Some(edge.weight));
+        graph_org.set_weight(&edge.remove_weight().reversed(), Some(edge.weight));
+    }
+
+    println!(
+        "graph is bidirectional? {}",
+        graph_org.out_graph().is_bidirectional()
+    );
+
+    let shortcuts = HashMap::new();
 
     let mut graph = ArrayGraph::new(graph_org.out_graph());
 
@@ -72,6 +91,7 @@ fn main() {
             .unwrap()
     );
 
+    let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("contracting", diffs.len() as u64);
     while let Some(Reverse((old_diff, vertex))) = diffs.pop() {
         let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
@@ -80,8 +100,29 @@ fn main() {
             continue;
         }
         pb.inc(1);
+        level_to_vertex.push(vertex);
 
-        contract(&mut graph, vertex);
+        edges.extend(contract(&mut graph, vertex));
+    }
+
+    let ch = ContractedGraph::new(level_to_vertex, edges, shortcuts);
+
+    println!("upward edges {}", ch.upward_graph().number_of_edges());
+    println!("downward edges {}", ch.downward_graph().number_of_edges());
+
+    for _ in 0..100 {
+        let (&source, &target) = graph_org
+            .out_graph()
+            .vertices()
+            .collect_vec()
+            .choose_multiple(&mut thread_rng(), 2)
+            .collect_tuple()
+            .unwrap();
+
+        assert_eq!(
+            graph_org.out_graph().shortest_path_distance(source, target),
+            ch.shortest_path_distance(source, target)
+        );
     }
 }
 
@@ -145,13 +186,15 @@ impl ArrayGraph {
     }
 }
 
-fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
+fn contract(graph: &mut ArrayGraph, vertex: Vertex) -> Vec<WeightedEdge> {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
         .filter(|&head| head as Vertex != vertex)
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
+
+    let mut edges = Vec::new();
 
     for &(tail, tail_weight) in neighbors_and_edge_weight.iter() {
         for &(head, head_weight) in neighbors_and_edge_weight.iter() {
@@ -162,6 +205,7 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
             let alternative_weight = tail_weight + head_weight;
             if alternative_weight < graph.get_weight(tail, head) {
                 graph.set_weight(tail, head, alternative_weight);
+                edges.push(WeightedEdge::new(tail, head, alternative_weight));
             }
         }
     }
@@ -169,6 +213,8 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
     neighbors_and_edge_weight
         .iter()
         .for_each(|&(head, _)| graph.set_weight(vertex, head, Distance::MAX));
+
+    edges
 }
 
 fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i64 {
