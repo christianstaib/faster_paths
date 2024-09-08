@@ -110,17 +110,12 @@ impl ArrayGraph {
 fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
-        .progress_with(get_progressbar("get neighbors", graph.num_vertices as u64))
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
 
     neighbors_and_edge_weight
         .iter()
-        .progress_with(get_progressbar(
-            format!("contract {}", vertex).as_str(),
-            graph.num_vertices as u64,
-        ))
         .for_each(|&(tail, tail_weight)| {
             neighbors_and_edge_weight
                 .iter()
@@ -141,10 +136,6 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
 fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
-        .progress_with(get_progressbar(
-            "get neighbors",
-            graph.num_vertices as u64 / 2,
-        ))
         .filter(|&head| vertex < head as u32)
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
