@@ -12,7 +12,7 @@ use faster_paths::{
     utility::get_progressbar,
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -171,7 +171,7 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
         .for_each(|&(head, _)| graph.set_weight(vertex, head, Distance::MAX));
 }
 
-fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i32 {
+fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i64 {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
         .filter(|&head| head as Vertex != vertex)
@@ -185,26 +185,30 @@ fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i32 
     //  );
     // println!("num neighbors {}", neighbors_and_edge_weight.len());
 
-    let mut new_edges = 0;
-    for &(tail, _tail_weight) in neighbors_and_edge_weight.iter() {
-        for &(head, _head_weight) in neighbors_and_edge_weight.iter() {
-            if tail == head {
-                continue;
-            }
+    let mut new_edges: i64 = neighbors_and_edge_weight
+        .par_iter()
+        .map(|&(tail, _tail_weight)| {
+            let mut new_edges = 0;
+            for &(head, _head_weight) in neighbors_and_edge_weight.iter() {
+                if tail == head {
+                    continue;
+                }
 
-            let distance = graph.get_weight(tail, head);
-            // assert_eq!(
-            //     test_graph
-            //         .get_weight(&Edge { tail, head })
-            //         .unwrap_or(Distance::MAX),
-            //     distance
-            // );
-            if distance == Distance::MAX {
-                new_edges += 1;
+                let distance = graph.get_weight(tail, head);
+                // assert_eq!(
+                //     test_graph
+                //         .get_weight(&Edge { tail, head })
+                //         .unwrap_or(Distance::MAX),
+                //     distance
+                // );
+                if distance == Distance::MAX {
+                    new_edges += 1;
+                }
             }
-        }
-    }
+            new_edges
+        })
+        .sum();
     // println!("num new edges {}", new_edges);
 
-    new_edges as i32 - neighbors_and_edge_weight.len() as i32
+    new_edges as i64 - neighbors_and_edge_weight.len() as i64
 }
