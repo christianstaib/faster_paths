@@ -194,22 +194,41 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) -> Vec<WeightedEdge> {
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
 
-    let mut edges = Vec::new();
+    let edges = neighbors_and_edge_weight
+        .iter()
+        .map(|&(tail, tail_weight)| {
+            let mut sub_edges = Vec::new();
+            let mut to_update = Vec::new();
 
-    for &(tail, tail_weight) in neighbors_and_edge_weight.iter() {
-        for &(head, head_weight) in neighbors_and_edge_weight.iter() {
-            if tail == head {
-                continue;
+            for &(head, head_weight) in neighbors_and_edge_weight.iter() {
+                if tail == head {
+                    continue;
+                }
+
+                let alternative_weight = tail_weight + head_weight;
+                if alternative_weight < graph.get_weight(tail, head) {
+                    to_update.push((tail, head, alternative_weight));
+                    // graph.set_weight(tail, head, alternative_weight);
+                    sub_edges.push(WeightedEdge::new(tail, head, alternative_weight));
+                    sub_edges.push(WeightedEdge::new(head, tail, alternative_weight));
+                }
             }
 
-            let alternative_weight = tail_weight + head_weight;
-            if alternative_weight < graph.get_weight(tail, head) {
-                graph.set_weight(tail, head, alternative_weight);
-                edges.push(WeightedEdge::new(tail, head, alternative_weight));
-                edges.push(WeightedEdge::new(head, tail, alternative_weight));
+            (to_update, sub_edges)
+        })
+        // .flatten()
+        .collect::<Vec<_>>();
+
+    let edges = edges
+        .into_iter()
+        .map(|(to_update, sub_edges)| {
+            for (tail, head, weight) in to_update {
+                graph.set_weight(tail, head, weight);
             }
-        }
-    }
+            sub_edges
+        })
+        .flatten()
+        .collect();
 
     neighbors_and_edge_weight
         .iter()
