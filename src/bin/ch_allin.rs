@@ -2,8 +2,9 @@ use std::{
     cmp::Reverse,
     collections::{BinaryHeap, HashMap},
     fs::File,
-    io::BufReader,
+    io::{BufReader, BufWriter, Write},
     path::PathBuf,
+    time::{Duration, Instant},
 };
 
 use clap::Parser;
@@ -79,7 +80,7 @@ fn main() {
         graph_org.out_graph().is_bidirectional()
     );
 
-    let landmarks = Landmarks::random(&graph_org, rayon::current_num_threads() as u32);
+    let landmarks = Landmarks::random(&graph_org, 0 * rayon::current_num_threads() as u32);
 
     let shortcuts = HashMap::new();
 
@@ -103,9 +104,17 @@ fn main() {
             .unwrap()
     );
 
+    let mut writer = BufWriter::new(File::create("all_in.txt").unwrap());
+
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("contracting", diffs.len() as u64);
     while let Some(Reverse((old_diff, vertex))) = diffs.pop() {
+        let num_edges = graph
+            .array
+            .iter()
+            .filter(|&&distance| distance != Distance::MAX)
+            .count();
+        let num_vertices = diffs.len() + 1;
         // let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
         // if new_diff > old_diff {
         //     diffs.push(Reverse((new_diff, vertex)));
@@ -113,6 +122,8 @@ fn main() {
         // }
         pb.inc(1);
         level_to_vertex.push(vertex);
+
+        let start = Instant::now();
 
         let this_edges = contract(&mut graph, &landmarks, vertex)
             .into_par_iter()
@@ -124,7 +135,18 @@ fn main() {
         this_edges.into_iter().for_each(|edge| {
             edges.insert((edge.tail, edge.head), edge.weight);
         });
+
+        let iteration_duration = start.elapsed();
+        writeln!(
+            writer,
+            "{} {} {}",
+            num_vertices,
+            num_edges,
+            start.elapsed().as_secs_f32()
+        )
+        .unwrap();
     }
+    writer.flush().unwrap();
 
     let edges = edges
         .into_par_iter()
@@ -136,7 +158,9 @@ fn main() {
     println!("upward edges {}", ch.upward_graph().number_of_edges());
     println!("downward edges {}", ch.downward_graph().number_of_edges());
 
-    for _ in 0..10_000 {
+    let n = 10_000;
+    let mut time = Duration::new(0, 0);
+    for _ in 0..n {
         let (&source, &target) = graph_org
             .out_graph()
             .vertices()
@@ -145,11 +169,16 @@ fn main() {
             .collect_tuple()
             .unwrap();
 
+        let start = Instant::now();
+        let ch_dist = ch.shortest_path_distance(source, target);
+        time += start.elapsed();
+
         assert_eq!(
             graph_org.out_graph().shortest_path_distance(source, target),
-            ch.shortest_path_distance(source, target)
+            ch_dist
         );
     }
+    println!("all ok. average time was {:?}", time / n);
 }
 
 fn get_index(tail: Vertex, head: Vertex) -> usize {
