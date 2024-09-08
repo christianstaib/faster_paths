@@ -147,8 +147,9 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
                 continue;
             }
 
-            if tail_weight + head_weight < graph.get_weight(tail, head) {
-                graph.set_weight(tail, head, tail_weight + head_weight);
+            let alternative_weight = tail_weight + head_weight;
+            if alternative_weight < graph.get_weight(tail, head) {
+                graph.set_weight(tail, head, alternative_weight);
             }
         }
     }
