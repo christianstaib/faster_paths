@@ -4,16 +4,15 @@ use std::{
     fs::File,
     io::BufReader,
     path::PathBuf,
-    process::exit,
 };
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        self, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Edge, Graph,
-        Vertex, WeightedEdge,
+        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
+        WeightedEdge,
     },
-    search::{ch::contracted_graph::ContractedGraph, shortcuts, DistanceHeuristic, PathFinding},
+    search::{ch::contracted_graph::ContractedGraph, DistanceHeuristic, PathFinding},
     utility::get_progressbar,
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
@@ -58,11 +57,12 @@ fn main() {
     let reader = BufReader::new(File::open(&args.graph).unwrap());
     let mut graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
-    let mut edges = graph_org.out_graph().all_edges();
+    let edges = graph_org.out_graph().all_edges();
     for edge in edges.iter() {
         graph_org.set_weight(&edge.remove_weight(), Some(edge.weight));
         graph_org.set_weight(&edge.remove_weight().reversed(), Some(edge.weight));
     }
+    let mut edges = graph_org.out_graph().all_edges();
 
     println!(
         "graph is bidirectional? {}",
@@ -94,11 +94,11 @@ fn main() {
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("contracting", diffs.len() as u64);
     while let Some(Reverse((old_diff, vertex))) = diffs.pop() {
-        let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
-        if new_diff > old_diff {
-            diffs.push(Reverse((new_diff, vertex)));
-            continue;
-        }
+        // let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
+        // if new_diff > old_diff {
+        //     diffs.push(Reverse((new_diff, vertex)));
+        //     continue;
+        // }
         pb.inc(1);
         level_to_vertex.push(vertex);
 
@@ -110,7 +110,7 @@ fn main() {
     println!("upward edges {}", ch.upward_graph().number_of_edges());
     println!("downward edges {}", ch.downward_graph().number_of_edges());
 
-    for _ in 0..100 {
+    for _ in 0..10_000 {
         let (&source, &target) = graph_org
             .out_graph()
             .vertices()
@@ -206,6 +206,7 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) -> Vec<WeightedEdge> {
             if alternative_weight < graph.get_weight(tail, head) {
                 graph.set_weight(tail, head, alternative_weight);
                 edges.push(WeightedEdge::new(tail, head, alternative_weight));
+                edges.push(WeightedEdge::new(head, tail, alternative_weight));
             }
         }
     }
