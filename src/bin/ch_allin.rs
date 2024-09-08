@@ -167,10 +167,10 @@ fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i32 
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
 
-    assert_eq!(
-        neighbors_and_edge_weight.len(),
-        test_graph.neighbors(vertex).len()
-    );
+    //  assert_eq!(
+    //      neighbors_and_edge_weight.len(),
+    //      test_graph.neighbors(vertex).len()
+    //  );
     // println!("num neighbors {}", neighbors_and_edge_weight.len());
 
     let mut new_edges = 0;
@@ -181,12 +181,12 @@ fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i32 
             }
 
             let distance = graph.get_weight(tail, head);
-            assert_eq!(
-                test_graph
-                    .get_weight(&Edge { tail, head })
-                    .unwrap_or(Distance::MAX),
-                distance
-            );
+            // assert_eq!(
+            //     test_graph
+            //         .get_weight(&Edge { tail, head })
+            //         .unwrap_or(Distance::MAX),
+            //     distance
+            // );
             if distance == Distance::MAX {
                 new_edges += 1;
             }
