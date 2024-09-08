@@ -80,7 +80,7 @@ fn main() {
         graph_org.out_graph().is_bidirectional()
     );
 
-    let landmarks = Landmarks::random(&graph_org, 0 * rayon::current_num_threads() as u32);
+    let landmarks = Landmarks::random(&graph_org, 1 * rayon::current_num_threads() as u32);
 
     let shortcuts = HashMap::new();
 
