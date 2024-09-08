@@ -50,7 +50,7 @@ fn main() {
     let reader = BufReader::new(File::open(&args.graph).unwrap());
     let graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
-    let mut graph = ArrayGraph::new(&graph_org.out_graph().all_edges());
+    let mut graph = ArrayGraph::new(graph_org.out_graph());
 
     let mut diffs = (0..graph.num_vertices)
         .into_par_iter()
