@@ -52,7 +52,9 @@ fn main() {
 
     let mut graph = ArrayGraph::new(&graph.out_graph().all_edges());
 
-    for vertex in (0..graph.num_vertices).progress() {
+    for vertex in (0..graph.num_vertices)
+        .progress_with(get_progressbar("set up queue", graph.num_vertices as u64))
+    {
         edge_diff(&mut graph, vertex as Vertex);
     }
 }
@@ -133,7 +135,7 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
         .for_each(|&(head, _)| graph.set_weight(vertex, head, Distance::MAX));
 }
 
-fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
+fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> f32 {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
         .filter(|&head| vertex < head as u32)
@@ -156,5 +158,5 @@ fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
                 })
         });
 
-    new_edges - 2 * neighbors_and_edge_weight.len() as i32
+    new_edges as f32 / (2.0 * neighbors_and_edge_weight.len() as f32)
 }
