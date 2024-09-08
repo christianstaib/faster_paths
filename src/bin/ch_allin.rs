@@ -136,23 +136,22 @@ impl ArrayGraph {
 fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
+        .filter(|&head| head as Vertex != vertex)
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
 
-    neighbors_and_edge_weight
-        .iter()
-        .for_each(|&(tail, tail_weight)| {
-            neighbors_and_edge_weight
-                .iter()
-                .for_each(|&(head, head_weight)| {
-                    if tail < head {
-                        if tail_weight + head_weight < graph.get_weight(tail, head) {
-                            graph.set_weight(tail, head, tail_weight + head_weight);
-                        }
-                    }
-                })
-        });
+    for &(tail, tail_weight) in neighbors_and_edge_weight.iter() {
+        for &(head, head_weight) in neighbors_and_edge_weight.iter() {
+            if tail == head {
+                continue;
+            }
+
+            if tail_weight + head_weight < graph.get_weight(tail, head) {
+                graph.set_weight(tail, head, tail_weight + head_weight);
+            }
+        }
+    }
 
     neighbors_and_edge_weight
         .iter()
@@ -176,6 +175,10 @@ fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i32 
     let mut new_edges = 0;
     for &(tail, _tail_weight) in neighbors_and_edge_weight.iter() {
         for &(head, _head_weight) in neighbors_and_edge_weight.iter() {
+            if tail == head {
+                continue;
+            }
+
             let distance = graph.get_weight(tail, head);
             assert_eq!(
                 test_graph
