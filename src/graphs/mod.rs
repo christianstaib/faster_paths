@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, BufWriter, Write},
     path::Path,
 };
 
@@ -125,6 +125,13 @@ pub trait Graph: Send + Sync {
         self.edges(source).map(|edge| edge.head).collect()
     }
 
+    fn all_edges(&self) -> Vec<WeightedEdge> {
+        self.vertices()
+            .map(|vertex| self.edges(vertex))
+            .flatten()
+            .collect()
+    }
+
     fn vertices(&self) -> std::ops::Range<Vertex> {
         0..self.number_of_vertices()
     }
@@ -229,9 +236,8 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
             let weight: Distance = values
                 .next()
                 .unwrap_or_else(|| panic!("no weight found in line {}", line))
-                .parse::<f64>()
-                .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line))
-                .round() as Distance;
+                .parse()
+                .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line));
             if tail == head {
                 return None;
             }

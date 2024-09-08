@@ -9,7 +9,7 @@ use faster_paths::{
 };
 use indicatif::ProgressIterator;
 use itertools::Itertools;
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
