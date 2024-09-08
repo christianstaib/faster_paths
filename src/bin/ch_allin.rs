@@ -85,7 +85,9 @@ pub struct ArrayGraph {
 }
 
 impl ArrayGraph {
-    pub fn new(edges: &Vec<WeightedEdge>) -> Self {
+    pub fn new(graph: &dyn Graph) -> Self {
+        let edges = graph.all_edges();
+
         let max_vertex = edges.iter().map(|edge| edge.tail).max().unwrap();
         println!("edges len {}", edges.len());
         println!("max vertex is {}", max_vertex);
@@ -98,11 +100,15 @@ impl ArrayGraph {
         };
 
         for edge in edges.iter().progress() {
-            if edge.tail < edge.head {
-                if edge.weight < array_graph.get_weight(edge.tail, edge.head) {
-                    array_graph.set_weight(edge.tail, edge.head, edge.weight);
-                }
+            if edge.weight < array_graph.get_weight(edge.tail, edge.head) {
+                array_graph.set_weight(edge.tail, edge.head, edge.weight);
             }
+            assert_eq!(
+                array_graph.get_weight(edge.tail, edge.head),
+                graph
+                    .get_weight(&edge.remove_weight())
+                    .unwrap_or(Distance::MAX)
+            );
 
             if edge.tail == edge.head {
                 println!("{:?}", edge);
