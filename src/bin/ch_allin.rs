@@ -52,11 +52,16 @@ fn main() {
 
     let mut graph = ArrayGraph::new(&graph.out_graph().all_edges());
 
-    (0..graph.num_vertices).for_each(|vertex| {
-        let diff = edge_diff(&mut graph, vertex as Vertex);
-        println!("{}", diff);
-        exit(0)
-    });
+    let diffs = (0..graph.num_vertices)
+        .into_par_iter()
+        .progress()
+        .map(|vertex| {
+            let diff = edge_diff(&graph, vertex as Vertex);
+            diff
+        })
+        .collect::<Vec<_>>();
+
+    println!("min diff {}", diffs.iter().min().unwrap());
 }
 
 fn get_index(tail: Vertex, head: Vertex) -> usize {
@@ -139,27 +144,23 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
         .for_each(|&(head, _)| graph.set_weight(vertex, head, Distance::MAX));
 }
 
-fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
+fn edge_diff(graph: &ArrayGraph, vertex: Vertex) -> i32 {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
-    println!("num neighbors{}", neighbors_and_edge_weight.len());
+    // println!("num neighbors {}", neighbors_and_edge_weight.len());
 
     let mut new_edges = 0;
-    neighbors_and_edge_weight
-        .iter()
-        .for_each(|&(tail, _tail_weight)| {
-            neighbors_and_edge_weight
-                .iter()
-                .for_each(|&(head, _head_weight)| {
-                    if graph.get_weight(tail, head) == Distance::MAX {
-                        new_edges += 1;
-                    }
-                })
-        });
-    println!("num new edges {}", new_edges);
+    for &(tail, _tail_weight) in neighbors_and_edge_weight.iter() {
+        for &(head, _head_weight) in neighbors_and_edge_weight.iter() {
+            if graph.get_weight(tail, head) == Distance::MAX {
+                new_edges += 1;
+            }
+        }
+    }
+    // println!("num new edges {}", new_edges);
 
-    (2 * new_edges as i32) - (2 * neighbors_and_edge_weight.len() as i32)
+    new_edges as i32 - neighbors_and_edge_weight.len() as i32
 }
