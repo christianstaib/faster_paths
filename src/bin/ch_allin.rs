@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::{fs::File, io::BufReader, path::PathBuf, process::exit};
 
 use clap::Parser;
 use faster_paths::{
@@ -52,12 +52,11 @@ fn main() {
 
     let mut graph = ArrayGraph::new(&graph.out_graph().all_edges());
 
-    for vertex in (0..graph.num_vertices)
-    // .progress_with(get_progressbar("set up queue", graph.num_vertices as u64))
-    {
+    (0..graph.num_vertices).for_each(|vertex| {
         let diff = edge_diff(&mut graph, vertex as Vertex);
         println!("{}", diff);
-    }
+        exit(0)
+    });
 }
 
 fn get_index(tail: Vertex, head: Vertex) -> usize {
@@ -100,12 +99,16 @@ impl ArrayGraph {
     }
 
     pub fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance {
-        assert!(tail != head);
+        if tail == head {
+            return 0;
+        }
         self.array[get_index(tail, head)]
     }
 
     pub fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
-        assert!(tail != head);
+        if tail == head {
+            return;
+        }
         self.array[get_index(tail, head)] = weight
     }
 }
@@ -139,10 +142,10 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
 fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
-        .filter(|&head| vertex < head as u32)
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
+    println!("num neighbors{}", neighbors_and_edge_weight.len());
 
     let mut new_edges = 0;
     neighbors_and_edge_weight
@@ -151,13 +154,12 @@ fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
             neighbors_and_edge_weight
                 .iter()
                 .for_each(|&(head, _head_weight)| {
-                    if tail < head {
-                        if graph.get_weight(tail, head) == Distance::MAX {
-                            new_edges += 1;
-                        }
+                    if graph.get_weight(tail, head) == Distance::MAX {
+                        new_edges += 1;
                     }
                 })
         });
+    println!("num new edges {}", new_edges);
 
     (2 * new_edges as i32) - (2 * neighbors_and_edge_weight.len() as i32)
 }
