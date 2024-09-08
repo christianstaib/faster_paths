@@ -1,6 +1,6 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashMap, HashSet},
     fs::File,
     io::BufReader,
     path::PathBuf,
@@ -57,11 +57,13 @@ fn main() {
     let reader = BufReader::new(File::open(&args.graph).unwrap());
     let mut graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
-    // let edges = graph_org.out_graph().all_edges();
-    // for edge in edges.iter() {
-    //     graph_org.set_weight(&edge.remove_weight(), Some(edge.weight));
-    //     graph_org.set_weight(&edge.remove_weight().reversed(),
-    // Some(edge.weight)); }
+    if !graph_org.out_graph().is_bidirectional() {
+        let edges = graph_org.out_graph().all_edges();
+        for edge in edges.iter() {
+            graph_org.set_weight(&edge.remove_weight(), Some(edge.weight));
+            graph_org.set_weight(&edge.remove_weight().reversed(), Some(edge.weight));
+        }
+    }
     let mut edges = graph_org.out_graph().all_edges();
 
     println!(
@@ -195,7 +197,7 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) -> Vec<WeightedEdge> {
         .collect::<Vec<_>>();
 
     let edges = neighbors_and_edge_weight
-        .iter()
+        .par_iter()
         .map(|&(tail, tail_weight)| {
             let mut sub_edges = Vec::new();
             let mut to_update = Vec::new();
