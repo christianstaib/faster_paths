@@ -82,8 +82,14 @@ impl ArrayGraph {
         };
 
         for edge in edges.iter().progress() {
-            if edge.weight < array_graph.get_weight(edge.tail, edge.head) {
-                array_graph.set_weight(edge.tail, edge.head, edge.weight);
+            if edge.tail < edge.head {
+                if edge.weight < array_graph.get_weight(edge.tail, edge.head) {
+                    array_graph.set_weight(edge.tail, edge.head, edge.weight);
+                }
+            }
+
+            if edge.tail == edge.head {
+                println!("{:?}", edge);
             }
         }
 
