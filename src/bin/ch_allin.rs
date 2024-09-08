@@ -52,16 +52,25 @@ fn main() {
 
     let mut graph = ArrayGraph::new(&graph.out_graph().all_edges());
 
-    let diffs = (0..graph.num_vertices)
+    let mut diffs = (0..graph.num_vertices)
         .into_par_iter()
         .progress()
         .map(|vertex| {
             let diff = edge_diff(&graph, vertex as Vertex);
-            diff
+            (vertex as Vertex, diff)
         })
         .collect::<Vec<_>>();
 
-    println!("min diff {}", diffs.iter().min().unwrap());
+    println!(
+        "min diff {}",
+        diffs.iter().map(|(_vertex, diff)| diff).min().unwrap()
+    );
+
+    diffs.sort_by_key(|&(_vertex, diff)| diff);
+
+    for (vertex, _diff) in diffs.into_iter().progress() {
+        contract(&mut graph, vertex);
+    }
 }
 
 fn get_index(tail: Vertex, head: Vertex) -> usize {
