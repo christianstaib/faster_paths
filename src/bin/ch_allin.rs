@@ -154,10 +154,12 @@ fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
                     if tail < head {
                         if graph.get_weight(tail, head) == Distance::MAX {
                             new_edges += 1;
+                        } else {
+                            println!("x");
                         }
                     }
                 })
         });
 
-    new_edges as i32 - (2 * neighbors_and_edge_weight.len() as i32)
+    (2 * new_edges as i32) - (2 * neighbors_and_edge_weight.len() as i32)
 }
