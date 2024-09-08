@@ -1,24 +1,15 @@
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
-    path::PathBuf,
-};
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Distance, Graph, Vertex, WeightedEdge,
+        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
+        WeightedEdge,
     },
-    search::{
-        ch::contracted_graph::ContractedGraph,
-        collections::vertex_distance_queue::VertexDistanceQueue, DistanceHeuristic, PathFinding,
-        TrivialHeuristic,
-    },
-    utility::{benchmark_and_test, generate_test_cases, get_progressbar},
+    search::{DistanceHeuristic, PathFinding},
+    utility::get_progressbar,
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
-use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
@@ -61,8 +52,8 @@ fn main() {
 
     let mut graph = ArrayGraph::new(&graph.out_graph().all_edges());
 
-    for vertex in 0..graph.num_vertices {
-        contract(&mut graph, vertex as Vertex);
+    for vertex in (0..graph.num_vertices).progress() {
+        edge_diff(&mut graph, vertex as Vertex);
     }
 }
 
@@ -100,10 +91,12 @@ impl ArrayGraph {
     }
 
     pub fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance {
+        assert!(tail != head);
         self.array[get_index(tail, head)]
     }
 
     pub fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
+        assert!(tail != head);
         self.array[get_index(tail, head)] = weight
     }
 }
@@ -133,4 +126,34 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) {
                     }
                 })
         });
+
+    neighbors_and_edge_weight
+        .iter()
+        .for_each(|&(head, _)| graph.set_weight(vertex, head, Distance::MAX));
+}
+
+fn edge_diff(graph: &mut ArrayGraph, vertex: Vertex) -> i32 {
+    let neighbors_and_edge_weight = (0..graph.num_vertices)
+        .into_par_iter()
+        .progress_with(get_progressbar("get neighbors", graph.num_vertices as u64))
+        .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
+        .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
+        .collect::<Vec<_>>();
+
+    let mut new_edges = 0;
+    neighbors_and_edge_weight
+        .iter()
+        .for_each(|&(tail, _tail_weight)| {
+            neighbors_and_edge_weight
+                .iter()
+                .for_each(|&(head, _head_weight)| {
+                    if tail < head {
+                        if graph.get_weight(tail, head) == Distance::MAX {
+                            new_edges += 1;
+                        }
+                    }
+                })
+        });
+
+    new_edges - 2 * neighbors_and_edge_weight.len() as i32
 }
