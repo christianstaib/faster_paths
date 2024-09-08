@@ -109,12 +109,12 @@ fn main() {
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("contracting", diffs.len() as u64);
     while let Some(Reverse((old_diff, vertex))) = diffs.pop() {
-        let num_edges = graph
-            .array
-            .iter()
-            .filter(|&&distance| distance != Distance::MAX)
-            .count();
-        let num_vertices = diffs.len() + 1;
+        // let num_edges = graph
+        //     .array
+        //     .par_iter()
+        //     .filter(|&&distance| distance != Distance::MAX)
+        //     .count();
+        // let num_vertices = diffs.len() + 1;
         // let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
         // if new_diff > old_diff {
         //     diffs.push(Reverse((new_diff, vertex)));
@@ -136,15 +136,15 @@ fn main() {
             edges.insert((edge.tail, edge.head), edge.weight);
         });
 
-        let iteration_duration = start.elapsed();
-        writeln!(
-            writer,
-            "{} {} {}",
-            num_vertices,
-            num_edges,
-            start.elapsed().as_secs_f32()
-        )
-        .unwrap();
+        // let iteration_duration = start.elapsed();
+        // writeln!(
+        //     writer,
+        //     "{} {} {}",
+        //     num_vertices,
+        //     num_edges,
+        //     start.elapsed().as_secs_f32()
+        // )
+        // .unwrap();
     }
     writer.flush().unwrap();
 
