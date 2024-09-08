@@ -1,6 +1,6 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::{BinaryHeap, HashMap},
     fs::File,
     io::BufReader,
     path::PathBuf,
@@ -12,7 +12,10 @@ use faster_paths::{
         reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
         WeightedEdge,
     },
-    search::{ch::contracted_graph::ContractedGraph, DistanceHeuristic, PathFinding},
+    search::{
+        alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, DistanceHeuristic,
+        PathFinding,
+    },
     utility::get_progressbar,
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
@@ -76,6 +79,8 @@ fn main() {
         graph_org.out_graph().is_bidirectional()
     );
 
+    let landmarks = Landmarks::random(&graph_org, rayon::current_num_threads() as u32);
+
     let shortcuts = HashMap::new();
 
     let mut graph = ArrayGraph::new(graph_org.out_graph());
@@ -84,7 +89,7 @@ fn main() {
         .into_par_iter()
         .progress()
         .map(|vertex| {
-            let diff = edge_diff(&graph, graph_org.out_graph(), vertex as Vertex);
+            let diff = edge_diff(&graph, &landmarks, vertex as Vertex);
             Reverse((diff, vertex as Vertex))
         })
         .collect::<BinaryHeap<_>>();
@@ -109,7 +114,7 @@ fn main() {
         pb.inc(1);
         level_to_vertex.push(vertex);
 
-        let this_edges = contract(&mut graph, vertex)
+        let this_edges = contract(&mut graph, &landmarks, vertex)
             .into_par_iter()
             .filter(|edge| {
                 edge.weight < *edges.get(&(edge.tail, edge.head)).unwrap_or(&Distance::MAX)
@@ -207,7 +212,11 @@ impl ArrayGraph {
     }
 }
 
-fn contract(graph: &mut ArrayGraph, vertex: Vertex) -> Vec<WeightedEdge> {
+fn contract(
+    graph: &mut ArrayGraph,
+    heuristic: &dyn DistanceHeuristic,
+    vertex: Vertex,
+) -> Vec<WeightedEdge> {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
         .filter(|&head| head as Vertex != vertex)
@@ -228,10 +237,12 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) -> Vec<WeightedEdge> {
 
                 let alternative_weight = tail_weight + head_weight;
                 if alternative_weight < graph.get_weight(tail, head) {
-                    to_update.push((tail, head, alternative_weight));
-                    // graph.set_weight(tail, head, alternative_weight);
-                    sub_edges.push(WeightedEdge::new(tail, head, alternative_weight));
-                    sub_edges.push(WeightedEdge::new(head, tail, alternative_weight));
+                    if heuristic.is_less_or_equal_upper_bound(tail, head, alternative_weight) {
+                        to_update.push((tail, head, alternative_weight));
+                        // graph.set_weight(tail, head, alternative_weight);
+                        sub_edges.push(WeightedEdge::new(tail, head, alternative_weight));
+                        sub_edges.push(WeightedEdge::new(head, tail, alternative_weight));
+                    }
                 }
             }
 
@@ -258,7 +269,7 @@ fn contract(graph: &mut ArrayGraph, vertex: Vertex) -> Vec<WeightedEdge> {
     edges
 }
 
-fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i64 {
+fn edge_diff(graph: &ArrayGraph, heuristic: &dyn DistanceHeuristic, vertex: Vertex) -> i64 {
     let neighbors_and_edge_weight = (0..graph.num_vertices)
         .into_par_iter()
         .filter(|&head| head as Vertex != vertex)
@@ -272,7 +283,7 @@ fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i64 
     //  );
     // println!("num neighbors {}", neighbors_and_edge_weight.len());
 
-    let mut new_edges: i64 = neighbors_and_edge_weight
+    let new_edges: i64 = neighbors_and_edge_weight
         .par_iter()
         .map(|&(tail, _tail_weight)| {
             let mut new_edges = 0;
@@ -288,7 +299,14 @@ fn edge_diff(graph: &ArrayGraph, test_graph: &dyn Graph, vertex: Vertex) -> i64 
                 //         .unwrap_or(Distance::MAX),
                 //     distance
                 // );
-                if distance == Distance::MAX {
+
+                if distance == Distance::MAX
+                    && heuristic.is_less_or_equal_upper_bound(
+                        tail,
+                        head,
+                        _tail_weight + _head_weight,
+                    )
+                {
                     new_edges += 1;
                 }
             }
