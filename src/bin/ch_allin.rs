@@ -57,11 +57,11 @@ fn main() {
     let reader = BufReader::new(File::open(&args.graph).unwrap());
     let mut graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
-    let edges = graph_org.out_graph().all_edges();
-    for edge in edges.iter() {
-        graph_org.set_weight(&edge.remove_weight(), Some(edge.weight));
-        graph_org.set_weight(&edge.remove_weight().reversed(), Some(edge.weight));
-    }
+    // let edges = graph_org.out_graph().all_edges();
+    // for edge in edges.iter() {
+    //     graph_org.set_weight(&edge.remove_weight(), Some(edge.weight));
+    //     graph_org.set_weight(&edge.remove_weight().reversed(),
+    // Some(edge.weight)); }
     let mut edges = graph_org.out_graph().all_edges();
 
     println!(
