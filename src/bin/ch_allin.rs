@@ -1,4 +1,6 @@
-use std::{fs::File, io::BufReader, path::PathBuf, process::exit};
+use std::{
+    cmp::Reverse, collections::BinaryHeap, fs::File, io::BufReader, path::PathBuf, process::exit,
+};
 
 use clap::Parser;
 use faster_paths::{
@@ -57,18 +59,28 @@ fn main() {
         .progress()
         .map(|vertex| {
             let diff = edge_diff(&graph, graph_org.out_graph(), vertex as Vertex);
-            (vertex as Vertex, diff)
+            Reverse((diff, vertex as Vertex))
         })
-        .collect::<Vec<_>>();
+        .collect::<BinaryHeap<_>>();
 
     println!(
         "min diff {}",
-        diffs.iter().map(|(_vertex, diff)| diff).min().unwrap()
+        diffs
+            .iter()
+            .map(|Reverse((diff, _vertex))| diff)
+            .min()
+            .unwrap()
     );
 
-    diffs.sort_by_key(|&(_vertex, diff)| diff);
+    let pb = get_progressbar("contracting", diffs.len() as u64);
+    while let Some(Reverse((old_diff, vertex))) = diffs.pop() {
+        let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
+        if new_diff > old_diff {
+            diffs.push(Reverse((new_diff, vertex)));
+            continue;
+        }
+        pb.inc(1);
 
-    for (vertex, _diff) in diffs.into_iter().progress() {
         contract(&mut graph, vertex);
     }
 }
