@@ -60,8 +60,7 @@ impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
 fn main() {
     let args = Args::parse();
     // Build graph
-    let reader = BufReader::new(File::open(&args.graph).unwrap());
-    let mut graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
+    let mut graph_org: ReversibleGraph<VecVecGraph> = ReversibleGraph::from_fmi_file(&args.graph);
 
     graph_org.make_bidirectional();
     println!(
@@ -112,6 +111,10 @@ fn main() {
         // }
         pb.inc(1);
         level_to_vertex.push(vertex);
+
+        if diffs.len() % 1_000 == 0 {
+            println!("{} remaining", diffs.len());
+        }
 
         let this_edges = contract(&mut graph, &landmarks, vertex)
             .into_par_iter()
