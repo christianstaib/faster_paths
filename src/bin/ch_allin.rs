@@ -17,7 +17,9 @@ use faster_paths::{
         alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, DistanceHeuristic,
         PathFinding,
     },
-    utility::get_progressbar,
+    utility::{
+        benchmark_and_test_distance, benchmark_and_test_path, generate_test_cases, get_progressbar,
+    },
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
@@ -137,27 +139,10 @@ fn main() {
     let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
     bincode::serialize_into(writer, &ch).unwrap();
 
-    let n = 1_000;
-    let mut time = Duration::new(0, 0);
-    for _ in (0..n).progress() {
-        let (&source, &target) = graph_org
-            .out_graph()
-            .vertices()
-            .collect_vec()
-            .choose_multiple(&mut thread_rng(), 2)
-            .collect_tuple()
-            .unwrap();
-
-        let start = Instant::now();
-        let ch_dist = ch.shortest_path_distance(source, target);
-        time += start.elapsed();
-
-        assert_eq!(
-            graph_org.out_graph().shortest_path_distance(source, target),
-            ch_dist
-        );
-    }
-    println!("all ok. average time was {:?}", time / n);
+    // Benchmark and test correctness
+    let tests = generate_test_cases(graph_org.out_graph(), 1_000);
+    let average_duration = benchmark_and_test_distance(&tests, &ch).unwrap();
+    println!("Average duration was {:?}", average_duration);
 }
 
 fn get_index(tail: Vertex, head: Vertex) -> usize {

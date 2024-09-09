@@ -11,7 +11,7 @@ use faster_paths::{
         Graph, Vertex,
     },
     search::hl::hub_graph::HubGraph,
-    utility::{benchmark_and_test, generate_test_cases},
+    utility::{benchmark_and_test_path, generate_test_cases},
 };
 
 #[derive(Parser, Debug)]
@@ -52,6 +52,6 @@ fn main() {
 
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);
-    let average_duration = benchmark_and_test(graph.out_graph(), &tests, &hub_graph).unwrap();
+    let average_duration = benchmark_and_test_path(graph.out_graph(), &tests, &hub_graph).unwrap();
     println!("All correct. Average duration was {:?}", average_duration);
 }

@@ -10,7 +10,7 @@ use faster_paths::{
         alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, DistanceHeuristic,
         PathFinding,
     },
-    utility::{benchmark_and_test, generate_test_cases},
+    utility::{benchmark_and_test_path, generate_test_cases},
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -63,6 +63,6 @@ fn main() {
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);
     let average_duration =
-        benchmark_and_test(graph.out_graph(), &tests, &contracted_graph).unwrap();
+        benchmark_and_test_path(graph.out_graph(), &tests, &contracted_graph).unwrap();
     println!("Average duration was {:?}", average_duration);
 }
