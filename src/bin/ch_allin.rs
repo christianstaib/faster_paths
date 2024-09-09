@@ -84,7 +84,7 @@ fn main() {
 
     let mut diffs = (0..graph.num_vertices)
         .into_par_iter()
-        .progress()
+        .progress_with(get_progressbar("init queue", graph.num_vertices as u64))
         .map(|vertex| {
             let diff = edge_diff(&graph, &landmarks, vertex as Vertex);
             Reverse((diff, vertex as Vertex))
