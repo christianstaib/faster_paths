@@ -1,10 +1,6 @@
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
-};
+use std::collections::HashMap;
 
-use indicatif::{ParallelProgressIterator, ProgressIterator};
-use rayon::prelude::*;
+use indicatif::ProgressIterator;
 
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Graph, Level, TaillessEdge, Vertex, WeightedEdge},

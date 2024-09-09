@@ -2,16 +2,12 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
-    time::Instant,
 };
 
 use clap::Parser;
 use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, WeightedEdge},
-    search::{
-        ch::bottom_up::heuristic::par_new_edges, hl::hub_graph::HubGraph, PathFinding,
-        PathfinderHeuristic,
-    },
+    search::{hl::hub_graph::HubGraph, PathFinding, PathfinderHeuristic},
 };
 use itertools::Itertools;
 use rand::prelude::*;
@@ -41,16 +37,16 @@ fn main() {
         bincode::deserialize_from(reader).unwrap()
     };
 
-    let heuristic = PathfinderHeuristic {
+    let _heuristic = PathfinderHeuristic {
         pathfinder: &hub_graph,
     };
 
     let mut edge_differences = vec![false; graph.number_of_vertices() as usize];
 
-    let mut vertices = graph.out_graph().vertices().collect_vec();
+    let vertices = graph.out_graph().vertices().collect_vec();
     // vertices.shuffle(&mut thread_rng());
 
-    let factors = vec![0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.5];
+    let _factors = vec![0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.5];
 
     for (_i, &vertex) in vertices.iter().enumerate() {
         let in_edges = graph.in_graph().edges(vertex).collect_vec();

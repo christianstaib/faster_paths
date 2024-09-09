@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    sync::atomic::AtomicU64,
     time::{Duration, Instant},
 };
 
@@ -60,6 +61,45 @@ pub fn get_paths(
         .progress_with(pb)
         .map(|path| path.vertices)
         .collect()
+}
+
+pub fn get_paths_large(
+    pathfinder: &dyn PathFinding,
+    vertices: &Vec<Vertex>,
+    number_of_vertices: u64,
+) -> Vec<Vec<Vertex>> {
+    let pb = get_progressbar("Getting many paths", number_of_vertices);
+
+    let curr_num_vertices = AtomicU64::new(0);
+
+    let paths = (0..)
+        .par_bridge()
+        .map_init(
+            || thread_rng(),
+            |rng, _| {
+                let (source, target) = vertices
+                    .choose_multiple(rng, 2)
+                    .cloned()
+                    .collect_tuple()
+                    .unwrap();
+
+                pathfinder.shortest_path(source, target)
+            },
+        )
+        .flatten()
+        .take_any_while(|path| {
+            let old = curr_num_vertices.fetch_add(
+                path.vertices.len() as u64,
+                std::sync::atomic::Ordering::Relaxed,
+            );
+            pb.inc(old);
+            old < number_of_vertices
+        })
+        .map(|path| path.vertices)
+        .collect();
+    pb.finish_and_clear();
+
+    paths
 }
 
 /// Constructs a vector of vertices ordered by their level, where each level is

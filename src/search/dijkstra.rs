@@ -7,12 +7,9 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use super::{
     collections::{
         dijkstra_data::{DijkstraData, DijkstraDataHashMap, DijkstraDataVec, Path},
-        vertex_distance_queue::{
-            VertexDistanceKeyedPriorityQueue, VertexDistanceQueue, VertexDistanceQueueBinaryHeap,
-        },
+        vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
         vertex_expanded_data::{
-            VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataDoNothing,
-            VertexExpandedDataHashSet,
+            VertexExpandedData, VertexExpandedDataBitSet, VertexExpandedDataHashSet,
         },
     },
     path::ShortestPathTestCase,
