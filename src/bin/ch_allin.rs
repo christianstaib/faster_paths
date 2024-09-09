@@ -61,13 +61,12 @@ fn main() {
     let reader = BufReader::new(File::open(&args.graph).unwrap());
     let mut graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
-    if !graph_org.out_graph().is_bidirectional() {
-        let edges = graph_org.out_graph().all_edges();
-        for edge in edges.iter() {
-            graph_org.set_weight(&edge.remove_weight(), Some(edge.weight));
-            graph_org.set_weight(&edge.remove_weight().reversed(), Some(edge.weight));
-        }
-    }
+    graph_org.make_bidirectional();
+    println!(
+        "graph is bidirectional? {}",
+        graph_org.out_graph().is_bidirectional()
+    );
+
     let mut edges: HashMap<(Vertex, Vertex), Distance> = graph_org
         .out_graph()
         .all_edges()
@@ -75,16 +74,11 @@ fn main() {
         .map(|edge| ((edge.tail, edge.head), edge.weight))
         .collect();
 
-    println!(
-        "graph is bidirectional? {}",
-        graph_org.out_graph().is_bidirectional()
-    );
-
     let landmarks = Landmarks::random(&graph_org, 1 * rayon::current_num_threads() as u32);
 
     let shortcuts = HashMap::new();
 
-    let mut graph = ArrayGraph::new(graph_org.out_graph());
+    let mut graph = HashGraph::new(graph_org.out_graph());
 
     let mut diffs = (0..graph.num_vertices)
         .into_par_iter()
@@ -108,13 +102,7 @@ fn main() {
 
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("contracting", diffs.len() as u64);
-    while let Some(Reverse((old_diff, vertex))) = diffs.pop() {
-        // let num_edges = graph
-        //     .array
-        //     .par_iter()
-        //     .filter(|&&distance| distance != Distance::MAX)
-        //     .count();
-        // let num_vertices = diffs.len() + 1;
+    while let Some(Reverse((_old_diff, vertex))) = diffs.pop() {
         // let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
         // if new_diff > old_diff {
         //     diffs.push(Reverse((new_diff, vertex)));
@@ -122,8 +110,6 @@ fn main() {
         // }
         pb.inc(1);
         level_to_vertex.push(vertex);
-
-        let start = Instant::now();
 
         let this_edges = contract(&mut graph, &landmarks, vertex)
             .into_par_iter()
@@ -135,16 +121,6 @@ fn main() {
         this_edges.into_iter().for_each(|edge| {
             edges.insert((edge.tail, edge.head), edge.weight);
         });
-
-        // let iteration_duration = start.elapsed();
-        // writeln!(
-        //     writer,
-        //     "{} {} {}",
-        //     num_vertices,
-        //     num_edges,
-        //     start.elapsed().as_secs_f32()
-        // )
-        // .unwrap();
     }
     writer.flush().unwrap();
 
@@ -158,9 +134,12 @@ fn main() {
     println!("upward edges {}", ch.upward_graph().number_of_edges());
     println!("downward edges {}", ch.downward_graph().number_of_edges());
 
-    let n = 10_000;
+    let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
+    bincode::serialize_into(writer, &ch).unwrap();
+
+    let n = 1_000;
     let mut time = Duration::new(0, 0);
-    for _ in 0..n {
+    for _ in (0..n).progress() {
         let (&source, &target) = graph_org
             .out_graph()
             .vertices()
@@ -185,6 +164,78 @@ fn get_index(tail: Vertex, head: Vertex) -> usize {
     let min = std::cmp::min(tail, head) as usize;
     let max = std::cmp::max(tail, head) as usize;
     (((max - 1) * max) / 2) + min
+}
+
+pub trait SimplestGraph: Send + Sync {
+    fn num_vertices(&self) -> usize;
+
+    fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance;
+
+    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance);
+}
+
+pub struct HashGraph {
+    pub num_vertices: usize,
+    pub edges_map: HashMap<(Vertex, Vertex), Distance>,
+}
+
+impl HashGraph {
+    pub fn new(graph: &dyn Graph) -> Self {
+        let edges = graph.all_edges();
+
+        let max_vertex = edges.iter().map(|edge| edge.tail).max().unwrap();
+        println!("edges len {}", edges.len());
+        println!("max vertex is {}", max_vertex);
+        println!("aray len is {}", get_index(max_vertex + 1, 0));
+        let mut edges_map = HashMap::new();
+
+        for edge in edges.iter().progress() {
+            if edge.tail > edge.head {
+                continue;
+            }
+
+            if edge.weight
+                < *edges_map
+                    .get(&(edge.tail, edge.head))
+                    .unwrap_or(&Distance::MAX)
+            {
+                edges_map.insert((edge.tail, edge.head), edge.weight);
+            }
+        }
+
+        HashGraph {
+            num_vertices: max_vertex as usize + 1,
+            edges_map,
+        }
+    }
+}
+
+impl SimplestGraph for HashGraph {
+    fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance {
+        if tail == head {
+            return 0;
+        }
+
+        let min = std::cmp::min(tail, head);
+        let max = std::cmp::max(tail, head);
+
+        *self.edges_map.get(&(min, max)).unwrap_or(&Distance::MAX)
+    }
+
+    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
+        if tail == head {
+            return;
+        }
+
+        let min = std::cmp::min(tail, head);
+        let max = std::cmp::max(tail, head);
+
+        self.edges_map.insert((min, max), weight);
+    }
+
+    fn num_vertices(&self) -> usize {
+        self.num_vertices
+    }
 }
 
 pub struct ArrayGraph {
@@ -225,28 +276,34 @@ impl ArrayGraph {
 
         array_graph
     }
+}
 
-    pub fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance {
+impl SimplestGraph for ArrayGraph {
+    fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance {
         if tail == head {
             return 0;
         }
         self.array[get_index(tail, head)]
     }
 
-    pub fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
+    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
         if tail == head {
             return;
         }
         self.array[get_index(tail, head)] = weight
     }
+
+    fn num_vertices(&self) -> usize {
+        self.num_vertices
+    }
 }
 
 fn contract(
-    graph: &mut ArrayGraph,
+    graph: &mut dyn SimplestGraph,
     heuristic: &dyn DistanceHeuristic,
     vertex: Vertex,
 ) -> Vec<WeightedEdge> {
-    let neighbors_and_edge_weight = (0..graph.num_vertices)
+    let neighbors_and_edge_weight = (0..graph.num_vertices())
         .into_par_iter()
         .filter(|&head| head as Vertex != vertex)
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
@@ -298,19 +355,13 @@ fn contract(
     edges
 }
 
-fn edge_diff(graph: &ArrayGraph, heuristic: &dyn DistanceHeuristic, vertex: Vertex) -> i64 {
-    let neighbors_and_edge_weight = (0..graph.num_vertices)
+fn edge_diff(graph: &dyn SimplestGraph, heuristic: &dyn DistanceHeuristic, vertex: Vertex) -> i64 {
+    let neighbors_and_edge_weight = (0..graph.num_vertices())
         .into_par_iter()
         .filter(|&head| head as Vertex != vertex)
         .map(|head| (head as Vertex, graph.get_weight(vertex, head as Vertex)))
         .filter(|&(_vertex, edge_weight)| edge_weight != Distance::MAX)
         .collect::<Vec<_>>();
-
-    //  assert_eq!(
-    //      neighbors_and_edge_weight.len(),
-    //      test_graph.neighbors(vertex).len()
-    //  );
-    // println!("num neighbors {}", neighbors_and_edge_weight.len());
 
     let new_edges: i64 = neighbors_and_edge_weight
         .par_iter()
@@ -322,12 +373,6 @@ fn edge_diff(graph: &ArrayGraph, heuristic: &dyn DistanceHeuristic, vertex: Vert
                 }
 
                 let distance = graph.get_weight(tail, head);
-                // assert_eq!(
-                //     test_graph
-                //         .get_weight(&Edge { tail, head })
-                //         .unwrap_or(Distance::MAX),
-                //     distance
-                // );
 
                 if distance == Distance::MAX
                     && heuristic.is_less_or_equal_upper_bound(

@@ -70,6 +70,16 @@ impl<G: Graph> ReversibleGraph<G> {
         self.out_graph.get_weight(edge)
     }
 
+    pub fn make_bidirectional(&mut self) {
+        if !self.out_graph().is_bidirectional() {
+            let edges = self.out_graph().all_edges();
+            for edge in edges.iter() {
+                self.set_weight(&edge.remove_weight(), Some(edge.weight));
+                self.set_weight(&edge.remove_weight().reversed(), Some(edge.weight));
+            }
+        }
+    }
+
     pub fn disconnect(&mut self, vertex: Vertex) {
         for edge in self.in_graph.edges(vertex) {
             self.out_graph
