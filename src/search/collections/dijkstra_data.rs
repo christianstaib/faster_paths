@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::graphs::{Distance, Graph, Vertex};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Path {
     pub vertices: Vec<Vertex>,
     pub distance: Distance,
