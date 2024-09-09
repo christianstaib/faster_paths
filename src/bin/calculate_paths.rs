@@ -5,8 +5,9 @@ use std::{
 };
 
 use clap::Parser;
-use faster_paths::{graphs::Vertex, reading_pathfinder, FileType};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use faster_paths::{graphs::Vertex, reading_pathfinder, utility::get_progressbar, FileType};
+use indicatif::ParallelProgressIterator;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -37,10 +38,11 @@ fn main() {
     let test_cases: Vec<(Vertex, Vertex)> = serde_json::from_reader(reader).unwrap();
 
     let paths = test_cases
-        .into_par_iter()
-        .map(|(source, target)| pathfinder.shortest_path(source, target))
+        .par_iter()
+        .progress_with(get_progressbar("getting paths", test_cases.len() as u64))
+        .map(|&(source, target)| pathfinder.shortest_path(source, target))
         .collect::<Vec<_>>();
 
     let writer = BufWriter::new(File::create(&args.paths).unwrap());
-    serde_json::to_writer(writer, &paths);
+    serde_json::to_writer(writer, &paths).unwrap();
 }
