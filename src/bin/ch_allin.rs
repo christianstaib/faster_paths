@@ -232,6 +232,10 @@ impl SimplestGraph for HashGraph {
         let min = std::cmp::min(tail, head);
         let max = std::cmp::max(tail, head);
 
+        if weight == Distance::MAX {
+            return self.edges_map.remove(&(min, max)).unwrap_or(Distance::MAX);
+        }
+
         self.edges_map
             .insert((min, max), weight)
             .unwrap_or(Distance::MAX)
