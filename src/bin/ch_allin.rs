@@ -75,7 +75,7 @@ fn main() {
         .map(|edge| ((edge.tail, edge.head), edge.weight))
         .collect();
 
-    let landmarks = Landmarks::random(&graph_org, 10 * rayon::current_num_threads() as u32);
+    let landmarks = Landmarks::random(&graph_org, 1 * rayon::current_num_threads() as u32);
 
     let shortcuts = HashMap::new();
 
@@ -117,11 +117,6 @@ fn main() {
         }
 
         let this_edges = contract(&mut graph, &landmarks, vertex);
-        // .into_par_iter()
-        // .filter(|edge| {
-        //     edge.weight < *edges.get(&(edge.tail,
-        // edge.head)).unwrap_or(&Distance::MAX) })
-        // .collect::<Vec<_>>();
 
         this_edges.into_iter().for_each(|edge| {
             edges.insert((edge.tail, edge.head), edge.weight);
@@ -305,7 +300,6 @@ fn contract(
     let edges = neighbors_and_edge_weight
         .par_iter()
         .map(|&(tail, tail_weight)| {
-            let mut sub_edges = Vec::new();
             let mut to_update = Vec::new();
 
             for &(head, head_weight) in neighbors_and_edge_weight.iter() {
@@ -318,21 +312,17 @@ fn contract(
                     if heuristic.is_less_or_equal_upper_bound(tail, head, alternative_weight) {
                         to_update.push((tail, head, alternative_weight));
                         // graph.set_weight(tail, head, alternative_weight);
-                        sub_edges.push(WeightedEdge::new(tail, head, alternative_weight));
-                        sub_edges.push(WeightedEdge::new(head, tail, alternative_weight));
                     }
                 }
             }
 
-            (to_update, sub_edges)
+            to_update
         })
-        // .flatten()
+        .flatten()
         .collect::<Vec<_>>();
 
-    edges.into_iter().for_each(|(to_update, _sub_edges)| {
-        for (tail, head, weight) in to_update {
-            graph.set_weight(tail, head, weight);
-        }
+    edges.into_iter().for_each(|(tail, head, weight)| {
+        graph.set_weight(tail, head, weight);
     });
 
     neighbors_and_edge_weight
@@ -372,11 +362,11 @@ fn edge_diff(graph: &dyn SimplestGraph, heuristic: &dyn DistanceHeuristic, verte
                 let distance = graph.get_weight(tail, head);
 
                 if distance == Distance::MAX
-                    && heuristic.is_less_or_equal_upper_bound(
-                        tail,
-                        head,
-                        _tail_weight + _head_weight,
-                    )
+                // && heuristic.is_less_or_equal_upper_bound(
+                //     tail,
+                //     head,
+                //     _tail_weight + _head_weight,
+                // )
                 {
                     new_edges += 1;
                 }
