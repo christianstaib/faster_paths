@@ -1,6 +1,6 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashMap, HashSet},
     fs::File,
     io::{BufReader, BufWriter, Write},
     path::PathBuf,
@@ -82,13 +82,10 @@ fn main() {
     let mut graph = HashGraph::new(graph_org.out_graph());
 
     let mut diffs = (0..graph.num_vertices)
-        .into_par_iter()
-        .progress_with(get_progressbar("init queue", graph.num_vertices as u64))
-        .map(|vertex| {
-            let diff = edge_diff(&graph, &landmarks, vertex as Vertex);
-            Reverse((diff, vertex as Vertex))
-        })
+        .map(|vertex| Reverse((0, vertex as Vertex)))
         .collect::<BinaryHeap<_>>();
+
+    update_queue(&mut diffs, &graph);
 
     println!(
         "min diff {}",
@@ -101,14 +98,17 @@ fn main() {
 
     let mut writer = BufWriter::new(File::create("all_in.txt").unwrap());
 
+    let stepts_in_between = generate_steps_in_between(diffs.len() as u32, 10)
+        .into_iter()
+        .collect::<HashSet<u32>>();
+
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("contracting", diffs.len() as u64);
     while let Some(Reverse((_old_diff, vertex))) = diffs.pop() {
-        // let new_diff = edge_diff(&graph, graph_org.out_graph(), vertex);
-        // if new_diff > old_diff {
-        //     diffs.push(Reverse((new_diff, vertex)));
-        //     continue;
-        // }
+        if stepts_in_between.contains(&(diffs.len() as u32)) {
+            update_queue(&mut diffs, &graph);
+        }
+
         pb.inc(1);
         level_to_vertex.push(vertex);
 
@@ -141,6 +141,18 @@ fn main() {
     let tests = generate_test_cases(graph_org.out_graph(), 1_000);
     let average_duration = benchmark_and_test_distance(&tests, &ch).unwrap();
     println!("Average duration was {:?}", average_duration);
+}
+
+fn update_queue(diffs: &mut BinaryHeap<Reverse<(i64, u32)>>, graph: &HashGraph) {
+    let diffs_len = diffs.len() as u64;
+    *diffs = diffs
+        .par_iter()
+        .progress_with(get_progressbar("update queue", diffs_len))
+        .map(|&Reverse((_old_diff, vertex))| {
+            let diff = edge_diff(graph, vertex as Vertex);
+            Reverse((diff, vertex as Vertex))
+        })
+        .collect();
 }
 
 fn get_index(tail: Vertex, head: Vertex) -> usize {
@@ -263,6 +275,13 @@ impl ArrayGraph {
     }
 }
 
+fn generate_steps_in_between(max_value: u32, num_steps: usize) -> Vec<u32> {
+    let max_value_f64 = max_value as f64; // Convert max_value to f64 for precise calculations
+    (1..=num_steps)
+        .map(|step_index| (step_index as f64 * (max_value_f64 / (num_steps + 1) as f64)) as u32)
+        .collect()
+}
+
 impl SimplestGraph for ArrayGraph {
     fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance {
         if tail == head {
@@ -342,7 +361,7 @@ fn contract(
         .collect()
 }
 
-fn edge_diff(graph: &dyn SimplestGraph, heuristic: &dyn DistanceHeuristic, vertex: Vertex) -> i64 {
+fn edge_diff(graph: &dyn SimplestGraph, vertex: Vertex) -> i64 {
     let neighbors_and_edge_weight = (0..graph.num_vertices())
         .into_par_iter()
         .filter(|&head| head as Vertex != vertex)
@@ -361,13 +380,7 @@ fn edge_diff(graph: &dyn SimplestGraph, heuristic: &dyn DistanceHeuristic, verte
 
                 let distance = graph.get_weight(tail, head);
 
-                if distance == Distance::MAX
-                // && heuristic.is_less_or_equal_upper_bound(
-                //     tail,
-                //     head,
-                //     _tail_weight + _head_weight,
-                // )
-                {
+                if distance == Distance::MAX {
                     new_edges += 1;
                 }
             }
