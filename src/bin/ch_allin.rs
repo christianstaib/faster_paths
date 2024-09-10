@@ -75,7 +75,7 @@ fn main() {
         .map(|edge| ((edge.tail, edge.head), edge.weight))
         .collect();
 
-    let landmarks = Landmarks::random(&graph_org, 0 * rayon::current_num_threads() as u32);
+    let landmarks = Landmarks::random(&graph_org, 10 * rayon::current_num_threads() as u32);
 
     let shortcuts = HashMap::new();
 
@@ -116,12 +116,12 @@ fn main() {
             println!("{} remaining", diffs.len());
         }
 
-        let this_edges = contract(&mut graph, &landmarks, vertex)
-            .into_par_iter()
-            .filter(|edge| {
-                edge.weight < *edges.get(&(edge.tail, edge.head)).unwrap_or(&Distance::MAX)
-            })
-            .collect::<Vec<_>>();
+        let this_edges = contract(&mut graph, &landmarks, vertex);
+        // .into_par_iter()
+        // .filter(|edge| {
+        //     edge.weight < *edges.get(&(edge.tail,
+        // edge.head)).unwrap_or(&Distance::MAX) })
+        // .collect::<Vec<_>>();
 
         this_edges.into_iter().for_each(|edge| {
             edges.insert((edge.tail, edge.head), edge.weight);
@@ -159,7 +159,7 @@ pub trait SimplestGraph: Send + Sync {
 
     fn get_weight(&self, tail: Vertex, head: Vertex) -> Distance;
 
-    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance);
+    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) -> Distance;
 }
 
 pub struct HashGraph {
@@ -210,15 +210,17 @@ impl SimplestGraph for HashGraph {
         *self.edges_map.get(&(min, max)).unwrap_or(&Distance::MAX)
     }
 
-    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
+    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) -> Distance {
         if tail == head {
-            return;
+            return 0;
         }
 
         let min = std::cmp::min(tail, head);
         let max = std::cmp::max(tail, head);
 
-        self.edges_map.insert((min, max), weight);
+        self.edges_map
+            .insert((min, max), weight)
+            .unwrap_or(Distance::MAX)
     }
 
     fn num_vertices(&self) -> usize {
@@ -274,11 +276,13 @@ impl SimplestGraph for ArrayGraph {
         self.array[get_index(tail, head)]
     }
 
-    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) {
+    fn set_weight(&mut self, tail: Vertex, head: Vertex, weight: Distance) -> Distance {
         if tail == head {
-            return;
+            return 0;
         }
-        self.array[get_index(tail, head)] = weight
+        let old = self.array[get_index(tail, head)];
+        self.array[get_index(tail, head)] = weight;
+        old
     }
 
     fn num_vertices(&self) -> usize {
@@ -325,22 +329,27 @@ fn contract(
         // .flatten()
         .collect::<Vec<_>>();
 
-    let edges = edges
-        .into_iter()
-        .map(|(to_update, sub_edges)| {
-            for (tail, head, weight) in to_update {
-                graph.set_weight(tail, head, weight);
-            }
-            sub_edges
-        })
-        .flatten()
-        .collect();
+    edges.into_iter().for_each(|(to_update, _sub_edges)| {
+        for (tail, head, weight) in to_update {
+            graph.set_weight(tail, head, weight);
+        }
+    });
 
     neighbors_and_edge_weight
         .iter()
-        .for_each(|&(head, _)| graph.set_weight(vertex, head, Distance::MAX));
+        .filter_map(|&(head, _)| {
+            let old = graph.set_weight(vertex, head, Distance::MAX);
+            if old == Distance::MAX {
+                return None;
+            }
 
-    edges
+            Some(vec![
+                WeightedEdge::new(vertex, head, old),
+                WeightedEdge::new(head, vertex, old),
+            ])
+        })
+        .flatten()
+        .collect()
 }
 
 fn edge_diff(graph: &dyn SimplestGraph, heuristic: &dyn DistanceHeuristic, vertex: Vertex) -> i64 {
