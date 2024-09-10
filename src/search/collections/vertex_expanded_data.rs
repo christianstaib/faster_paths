@@ -2,7 +2,6 @@ use std::{collections::HashSet, usize};
 
 use fixedbitset::FixedBitSet;
 
-use super::vertex_distance_queue::VertexDistanceKeyedPriorityQueue;
 use crate::graphs::{Graph, Vertex};
 
 pub trait VertexExpandedData {

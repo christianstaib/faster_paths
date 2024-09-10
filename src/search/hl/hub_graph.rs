@@ -1,8 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::HashMap,
-    time::{Duration, Instant},
-};
+use std::{cmp::Ordering, collections::HashMap};
 
 use indicatif::ProgressIterator;
 use itertools::Itertools;

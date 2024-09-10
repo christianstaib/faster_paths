@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use indicatif::{ParallelProgressIterator, ProgressBar};
 use itertools::Itertools;
-use rayon::{current_thread_index, prelude::*};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::hub_graph::HubLabelEntry;

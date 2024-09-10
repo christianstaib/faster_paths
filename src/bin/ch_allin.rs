@@ -36,6 +36,10 @@ struct Args {
 
     /// Infile in .fmi format
     #[arg(short, long)]
+    landmarks: u32,
+
+    /// Infile in .fmi format
+    #[arg(short, long)]
     contracted_graph: PathBuf,
 }
 
@@ -75,7 +79,10 @@ fn main() {
         .map(|edge| ((edge.tail, edge.head), edge.weight))
         .collect();
 
-    let landmarks = Landmarks::random(&graph_org, 1 * rayon::current_num_threads() as u32);
+    let landmarks = Landmarks::random(
+        &graph_org,
+        args.landmarks * rayon::current_num_threads() as u32,
+    );
 
     let shortcuts = HashMap::new();
 
@@ -98,7 +105,7 @@ fn main() {
 
     let mut writer = BufWriter::new(File::create("all_in.txt").unwrap());
 
-    let stepts_in_between = generate_steps_in_between(diffs.len() as u32, 10)
+    let stepts_in_between = generate_steps_in_between(diffs.len() as u32, 4)
         .into_iter()
         .collect::<HashSet<u32>>();
 
