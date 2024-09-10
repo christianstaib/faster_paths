@@ -86,7 +86,7 @@ fn main() {
 
     let shortcuts = HashMap::new();
 
-    let mut graph = ArrayGraph::new(graph_org.out_graph());
+    let mut graph = HashGraph::new(graph_org.out_graph());
 
     let mut diffs = (0..graph.num_vertices)
         .map(|vertex| Reverse((0, vertex as Vertex)))
