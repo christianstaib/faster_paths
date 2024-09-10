@@ -79,7 +79,7 @@ fn main() {
 
     let shortcuts = HashMap::new();
 
-    let mut graph = HashGraph::new(graph_org.out_graph());
+    let mut graph = ArrayGraph::new(graph_org.out_graph());
 
     let mut diffs = (0..graph.num_vertices)
         .map(|vertex| Reverse((0, vertex as Vertex)))
@@ -143,7 +143,7 @@ fn main() {
     println!("Average duration was {:?}", average_duration);
 }
 
-fn update_queue(diffs: &mut BinaryHeap<Reverse<(i64, u32)>>, graph: &HashGraph) {
+fn update_queue(diffs: &mut BinaryHeap<Reverse<(i64, u32)>>, graph: &dyn SimplestGraph) {
     let diffs_len = diffs.len() as u64;
     *diffs = diffs
         .par_iter()
