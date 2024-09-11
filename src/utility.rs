@@ -11,7 +11,11 @@ use rayon::prelude::*;
 
 use crate::{
     graphs::{Graph, Vertex},
-    search::{dijkstra::dijkstra_one_to_one_path_wrapped, path::ShortestPathTestCase, PathFinding},
+    search::{
+        dijkstra::dijkstra_one_to_one_path_wrapped,
+        path::{self, ShortestPathTestCase},
+        PathFinding,
+    },
 };
 
 pub fn get_progressbar(job_name: &str, len: u64) -> ProgressBar {
@@ -34,7 +38,7 @@ pub fn get_progressspinner(job_name: &str) -> ProgressBar {
     bar
 }
 
-/// Computes paths in a graph using Dijkstra's algorithm.
+/// Computes paths of len > 2 in a graph.
 pub fn get_paths(
     pathfinder: &dyn PathFinding,
     vertices: &Vec<Vertex>,
@@ -57,6 +61,7 @@ pub fn get_paths(
             },
         )
         .flatten()
+        .filter(|path| path.vertices.len() > 2)
         .take_any(number_of_searches as usize)
         .progress_with(pb)
         .map(|path| path.vertices)

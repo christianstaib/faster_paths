@@ -49,7 +49,8 @@ struct Args {
 fn main() {
     let args = Args::parse();
     // Build graph
-    let mut graph_org: ReversibleGraph<VecVecGraph> = ReversibleGraph::from_fmi_file(&args.graph);
+    let reader = BufReader::new(File::open(args.graph).unwrap());
+    let mut graph_org: ReversibleGraph<VecVecGraph> = bincode::deserialize_from(reader).unwrap();
 
     // Read vertex_to_level
     let reader = BufReader::new(File::open(&args.level_to_vertex).unwrap());
