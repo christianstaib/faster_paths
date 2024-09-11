@@ -206,7 +206,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
 
         // Get the vertex that hits the most paths.
         let vertex = hits
-            .iter()
+            .par_iter()
             .enumerate()
             .max_by_key(|&(_vertex, hits)| hits)
             .map(|(vertex, _)| vertex as Vertex)
