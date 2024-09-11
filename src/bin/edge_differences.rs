@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, WeightedEdge},
-    search::{hl::hub_graph::HubGraph, PathFinding, PathfinderHeuristic},
+    search::{hl::hub_graph::HubGraph, PathFinding},
 };
 use itertools::Itertools;
 use rand::prelude::*;
@@ -35,10 +35,6 @@ fn main() {
     let hub_graph: HubGraph = {
         let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
         bincode::deserialize_from(reader).unwrap()
-    };
-
-    let _heuristic = PathfinderHeuristic {
-        pathfinder: &hub_graph,
     };
 
     let mut edge_differences = vec![false; graph.number_of_vertices() as usize];

@@ -3,7 +3,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 use clap::Parser;
 use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph},
-    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, PathfinderHeuristic},
+    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph},
     utility::{benchmark_and_test_path, generate_test_cases},
 };
 
@@ -35,15 +35,11 @@ fn main() {
     let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
     let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
-    let heuristic = PathfinderHeuristic {
-        pathfinder: &hub_graph,
-    };
-
     // Create contracted_graph
     let contracted_graph = ContractedGraph::by_contraction_top_down_with_heuristic(
         &graph,
         contracted_graph.level_to_vertex(),
-        &heuristic,
+        &hub_graph,
     );
 
     // // Write contracted_graph to file
