@@ -83,7 +83,7 @@ fn main() {
         num_samples,
     );
     println!(
-        "average hl label size will be approximately {:.1}. (averaged over {} out of {} vertices)",
+        "average ch edge degree will be approximately {:.1}. (averaged over {} out of {} vertices)",
         average_ch_vertex_degree,
         num_samples,
         graph.out_graph().number_of_vertices()
