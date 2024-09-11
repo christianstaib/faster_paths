@@ -16,6 +16,7 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     graph: PathBuf,
+
     /// Infile in .fmi format
     #[arg(short, long)]
     contracted_graph: PathBuf,
@@ -25,8 +26,7 @@ fn main() {
     let args = Args::parse();
 
     // Build graph
-    let edges = read_edges_from_fmi_file(&args.graph);
-    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+    let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(&args.graph);
 
     // Create contracted_graph
     let contracted_graph = ContractedGraph::with_dijkstra_witness_search(&graph, u32::MAX);

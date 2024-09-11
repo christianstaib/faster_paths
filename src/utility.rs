@@ -1,5 +1,8 @@
 use std::{
     collections::HashSet,
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::Path,
     sync::atomic::AtomicU64,
     time::{Duration, Instant},
 };
@@ -8,6 +11,7 @@ use indicatif::*;
 use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     graphs::{Graph, Level, Vertex},
@@ -405,4 +409,46 @@ pub fn generate_test_cases(
         )
         .take_any(number_of_testcases as usize)
         .collect()
+}
+
+pub fn write_json_with_spinnner<T>(name: &str, path: &Path, value: &T)
+where
+    T: Serialize,
+{
+    let pb = get_progressspinner(format!("Writing {} as json", name).as_str());
+    let writer = BufWriter::new(File::create(path).unwrap());
+    serde_json::to_writer(writer, value).unwrap();
+    pb.finish_and_clear();
+}
+
+pub fn read_json_with_spinnner<T>(name: &str, path: &Path) -> T
+where
+    T: for<'a> Deserialize<'a>,
+{
+    let pb = get_progressspinner(format!("Reading {} from json", name).as_str());
+    let reader = BufReader::new(File::open(path).unwrap());
+    let t = serde_json::from_reader(reader).unwrap();
+    pb.finish_and_clear();
+    t
+}
+
+pub fn write_bincode_with_spinnner<T>(name: &str, path: &Path, value: &T)
+where
+    T: Serialize,
+{
+    let pb = get_progressspinner(format!("Writing {} as bincode", name).as_str());
+    let writer = BufWriter::new(File::create(path).unwrap());
+    bincode::serialize_into(writer, value).unwrap();
+    pb.finish_and_clear();
+}
+
+pub fn read_bincode_with_spinnner<T>(name: &str, path: &Path) -> T
+where
+    T: for<'a> Deserialize<'a>,
+{
+    let pb = get_progressspinner(format!("Reading {} as bincode", name).as_str());
+    let reader = BufReader::new(File::open(path).unwrap());
+    let t = bincode::deserialize_from(reader).unwrap();
+    pb.finish_and_clear();
+    t
 }

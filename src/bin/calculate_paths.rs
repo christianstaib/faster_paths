@@ -1,28 +1,26 @@
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use clap::Parser;
-use faster_paths::{graphs::Vertex, reading_pathfinder, utility::get_progressbar, FileType};
+use faster_paths::{
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
+    search::PathFinding,
+    utility::{get_progressbar, write_json_with_spinnner},
+};
 use indicatif::ParallelProgressIterator;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use itertools::Itertools;
+use rand::prelude::*;
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input file
+    /// Infile in .fmi format
     #[arg(short, long)]
-    file: PathBuf,
-
-    /// Type of the input file
-    #[arg(short = 't', long, value_enum, default_value = "fmi")]
-    file_type: FileType,
+    graph: PathBuf,
 
     /// Path of test cases
     #[arg(short, long)]
-    test_cases: PathBuf,
+    num_paths: u32,
 
     /// Path of test cases
     #[arg(short, long)]
@@ -32,17 +30,29 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let pathfinder = reading_pathfinder(&args.file.as_path(), &args.file_type);
+    let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(&args.graph);
 
-    let reader = BufReader::new(File::open(&args.test_cases).unwrap());
-    let test_cases: Vec<(Vertex, Vertex)> = serde_json::from_reader(reader).unwrap();
+    let pb = get_progressbar("Getting paths", args.num_paths as u64);
 
-    let paths = test_cases
-        .par_iter()
-        .progress_with(get_progressbar("getting paths", test_cases.len() as u64))
-        .map(|&(source, target)| pathfinder.shortest_path(source, target))
+    let vertices = graph.out_graph().vertices().collect_vec();
+    let paths = (0..)
+        .par_bridge()
+        .map_init(
+            || thread_rng(),
+            |rng, _| {
+                let (source, target): (Vertex, Vertex) = vertices
+                    .choose_multiple(rng, 2)
+                    .cloned()
+                    .collect_tuple()
+                    .unwrap();
+
+                graph.shortest_path(source, target)
+            },
+        )
+        .flatten()
+        .take_any(args.num_paths as usize)
+        .progress_with(pb)
         .collect::<Vec<_>>();
 
-    let writer = BufWriter::new(File::create(&args.paths).unwrap());
-    serde_json::to_writer(writer, &paths).unwrap();
+    write_json_with_spinnner("paths", &args.paths, &paths);
 }
