@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use crate::{
     graphs::{Graph, Level, Vertex},
     search::{
-        dijkstra::dijkstra_one_to_one_path_wrapped,
+        ch::brute_force::get_ch_edges_wrapped, dijkstra::dijkstra_one_to_one_path_wrapped,
         hl::half_hub_graph::get_hub_label_with_brute_force_wrapped, path::ShortestPathTestCase,
         PathFinding,
     },
@@ -107,7 +107,52 @@ pub fn get_paths_large(
     paths
 }
 
-pub fn average_label_size(graph: &dyn Graph, vertex_to_level: &Vec<Level>, num_labels: u32) -> f32 {
+/// Calculates how many paths a given a level (and therfore a vertex) hits in %.
+pub fn hit_percentage(paths: &Vec<Vec<Vertex>>, level_to_vertex: &Vec<Vertex>) -> Vec<f32> {
+    let mut hit_percentage = Vec::new();
+    let mut active_paths = paths.iter().collect_vec();
+
+    let pb = get_progressbar("Getting hit percentages", level_to_vertex.len() as u64);
+
+    // highest level first
+    for &hitting_vertex in level_to_vertex.iter().rev().progress_with(pb) {
+        active_paths = active_paths
+            .into_par_iter()
+            .filter(|path| !path.contains(&hitting_vertex))
+            .collect();
+
+        hit_percentage.push((paths.len() - active_paths.len()) as f32 / paths.len() as f32)
+    }
+
+    hit_percentage
+}
+
+pub fn average_ch_vertex_degree(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<Level>,
+    num_vertices: u32,
+) -> f32 {
+    let vertices = graph.non_trivial_vertices();
+
+    let vertices = vertices
+        .choose_multiple(&mut thread_rng(), num_vertices as usize)
+        .cloned()
+        .collect_vec();
+
+    let edges = vertices
+        .par_iter()
+        .progress_with(get_progressbar("Getting labels", vertices.len() as u64))
+        .map(|&vertex| get_ch_edges_wrapped(graph, &vertex_to_level, vertex).0)
+        .collect::<Vec<_>>();
+
+    edges.iter().flatten().count() as f32 / edges.len() as f32
+}
+
+pub fn average_hl_label_size(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<Level>,
+    num_labels: u32,
+) -> f32 {
     let vertices = graph.non_trivial_vertices();
 
     let vertices = vertices

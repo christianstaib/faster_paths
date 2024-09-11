@@ -7,7 +7,7 @@ use faster_paths::{
         Vertex,
     },
     search::ch::contracted_graph::vertex_to_level,
-    utility::average_label_size,
+    utility::average_hl_label_size,
 };
 
 // Predict average label size by brute forcing a number of labels.
@@ -40,6 +40,6 @@ fn main() {
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
     let average_label_size =
-        average_label_size(graph.out_graph(), &vertex_to_level, args.num_labels);
+        average_hl_label_size(graph.out_graph(), &vertex_to_level, args.num_labels);
     println!("average label size is {:.1}", average_label_size);
 }

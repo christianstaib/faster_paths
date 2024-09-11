@@ -5,12 +5,11 @@ use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
     reading_pathfinder,
     search::ch::contracted_graph::vertex_to_level,
-    utility::{average_label_size, get_paths, get_progressbar, level_to_vertex},
+    utility::{
+        average_ch_vertex_degree, average_hl_label_size, get_paths, hit_percentage, level_to_vertex,
+    },
     FileType,
 };
-use indicatif::ProgressIterator;
-use itertools::Itertools;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -60,31 +59,33 @@ fn main() {
     let writer = BufWriter::new(File::create(args.level_to_vertex).unwrap());
     serde_json::to_writer(writer, &level_to_vertex).unwrap();
 
-    if let Some(hit_percentage) = &args.hit_percentage {
-        let writer = BufWriter::new(File::create(&hit_percentage).unwrap());
-        serde_json::to_writer(writer, &hitable(&paths, &level_to_vertex)).unwrap();
+    if let Some(hit_percentage_path) = &args.hit_percentage {
+        let writer = BufWriter::new(File::create(&hit_percentage_path).unwrap());
+        serde_json::to_writer(writer, &hit_percentage(&paths, &level_to_vertex)).unwrap();
     }
 
-    let average_label_size =
-        average_label_size(graph.out_graph(), &vertex_to_level(&level_to_vertex), 1_000);
-    println!("average label size is {:.1}", average_label_size);
-}
+    let num_samples = 1_000;
+    let average_hl_label_size = average_hl_label_size(
+        graph.out_graph(),
+        &vertex_to_level(&level_to_vertex),
+        num_samples,
+    );
+    println!(
+        "average hl label size will be approximately {:.1}. (averaged over {} out of {} vertices)",
+        average_hl_label_size,
+        num_samples,
+        graph.out_graph().number_of_vertices()
+    );
 
-pub fn hitable(paths: &Vec<Vec<Vertex>>, level_to_vertex: &Vec<Vertex>) -> Vec<f32> {
-    let mut hit_percentage = Vec::new();
-    let mut active_paths = paths.iter().collect_vec();
-
-    let pb = get_progressbar("Getting hit percentages", level_to_vertex.len() as u64);
-
-    // highest level first
-    for &hitting_vertex in level_to_vertex.iter().rev().progress_with(pb) {
-        active_paths = active_paths
-            .into_par_iter()
-            .filter(|path| !path.contains(&hitting_vertex))
-            .collect();
-
-        hit_percentage.push((paths.len() - active_paths.len()) as f32 / paths.len() as f32)
-    }
-
-    hit_percentage
+    let average_ch_vertex_degree = average_ch_vertex_degree(
+        graph.out_graph(),
+        &vertex_to_level(&level_to_vertex),
+        num_samples,
+    );
+    println!(
+        "average hl label size will be approximately {:.1}. (averaged over {} out of {} vertices)",
+        average_ch_vertex_degree,
+        num_samples,
+        graph.out_graph().number_of_vertices()
+    );
 }

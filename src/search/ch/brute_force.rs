@@ -128,6 +128,21 @@ pub fn create_shortcuts(
     shortcuts
 }
 
+pub fn get_ch_edges_wrapped(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<u32>,
+    source: Vertex,
+) -> (Vec<WeightedEdge>, Vec<((Vertex, Vertex), Vertex)>) {
+    get_ch_edges(
+        graph,
+        &mut DijkstraDataVec::new(graph),
+        &mut VertexExpandedDataBitSet::new(graph),
+        &mut VertexDistanceQueueBinaryHeap::new(),
+        vertex_to_level,
+        source,
+    )
+}
+
 pub fn get_ch_edges(
     graph: &dyn Graph,
     data: &mut dyn DijkstraData,
