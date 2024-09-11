@@ -4,18 +4,11 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Graph, Vertex,
+        Vertex,
     },
-    search::{
-        ch::contracted_graph::vertex_to_level,
-        hl::half_hub_graph::get_hub_label_with_brute_force_wrapped,
-    },
-    utility::get_progressbar,
+    search::ch::contracted_graph::vertex_to_level,
+    utility::average_label_size,
 };
-use indicatif::ParallelProgressIterator;
-use itertools::Itertools;
-use rand::prelude::*;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 // Predict average label size by brute forcing a number of labels.
 #[derive(Parser, Debug)]
@@ -46,29 +39,7 @@ fn main() {
     let level_to_vertex: Vec<Vertex> = serde_json::from_reader(reader).unwrap();
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-    let vertices = graph.out_graph().non_trivial_vertices();
-
-    let vertices = vertices
-        .choose_multiple(&mut thread_rng(), args.num_labels as usize)
-        .cloned()
-        .collect_vec();
-
-    let labels = vertices
-        .par_iter()
-        .progress_with(get_progressbar("Getting labels", vertices.len() as u64))
-        .map(|&vertex| {
-            vec![
-                get_hub_label_with_brute_force_wrapped(graph.out_graph(), &vertex_to_level, vertex)
-                    .0,
-                get_hub_label_with_brute_force_wrapped(graph.in_graph(), &vertex_to_level, vertex)
-                    .0,
-            ]
-        })
-        .flatten()
-        .collect::<Vec<_>>();
-
-    println!(
-        "Average label size is {}",
-        labels.iter().flatten().count() as f32 / labels.len() as f32
-    );
+    let average_label_size =
+        average_label_size(graph.out_graph(), &vertex_to_level, args.num_labels);
+    println!("average label size is {:.1}", average_label_size);
 }

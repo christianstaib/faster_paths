@@ -4,7 +4,8 @@ use clap::Parser;
 use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
     reading_pathfinder,
-    utility::{get_paths, get_progressbar, level_to_vertex},
+    search::ch::contracted_graph::vertex_to_level,
+    utility::{average_label_size, get_paths, get_progressbar, level_to_vertex},
     FileType,
 };
 use indicatif::ProgressIterator;
@@ -63,6 +64,10 @@ fn main() {
         let writer = BufWriter::new(File::create(&hit_percentage).unwrap());
         serde_json::to_writer(writer, &hitable(&paths, &level_to_vertex)).unwrap();
     }
+
+    let average_label_size =
+        average_label_size(graph.out_graph(), &vertex_to_level(&level_to_vertex), 1_000);
+    println!("average label size is {:.1}", average_label_size);
 }
 
 pub fn hitable(paths: &Vec<Vec<Vertex>>, level_to_vertex: &Vec<Vertex>) -> Vec<f32> {

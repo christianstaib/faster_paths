@@ -10,10 +10,10 @@ use rand::prelude::*;
 use rayon::prelude::*;
 
 use crate::{
-    graphs::{Graph, Vertex},
+    graphs::{Graph, Level, Vertex},
     search::{
         dijkstra::dijkstra_one_to_one_path_wrapped,
-        path::{self, ShortestPathTestCase},
+        hl::half_hub_graph::get_hub_label_with_brute_force_wrapped, path::ShortestPathTestCase,
         PathFinding,
     },
 };
@@ -105,6 +105,23 @@ pub fn get_paths_large(
     pb.finish_and_clear();
 
     paths
+}
+
+pub fn average_label_size(graph: &dyn Graph, vertex_to_level: &Vec<Level>, num_labels: u32) -> f32 {
+    let vertices = graph.non_trivial_vertices();
+
+    let vertices = vertices
+        .choose_multiple(&mut thread_rng(), num_labels as usize)
+        .cloned()
+        .collect_vec();
+
+    let labels = vertices
+        .par_iter()
+        .progress_with(get_progressbar("Getting labels", vertices.len() as u64))
+        .map(|&vertex| get_hub_label_with_brute_force_wrapped(graph, &vertex_to_level, vertex).0)
+        .collect::<Vec<_>>();
+
+    labels.iter().flatten().count() as f32 / labels.len() as f32
 }
 
 /// Constructs a vector of vertices ordered by their level, where each level is
