@@ -41,20 +41,16 @@ pub struct TrivialHeuristic {}
 
 impl DistanceHeuristic for TrivialHeuristic {}
 
-pub struct PathfinderHeuristic<'a> {
-    pub pathfinder: &'a dyn PathFinding,
-}
-
-impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
+impl<T> DistanceHeuristic for T
+where
+    T: PathFinding,
+{
     fn lower_bound(&self, source: Vertex, target: Vertex) -> Distance {
-        self.pathfinder
-            .shortest_path_distance(source, target)
-            .unwrap_or(0)
+        self.shortest_path_distance(source, target).unwrap_or(0)
     }
 
     fn upper_bound(&self, source: Vertex, target: Vertex) -> Distance {
-        self.pathfinder
-            .shortest_path_distance(source, target)
+        self.shortest_path_distance(source, target)
             .unwrap_or(Distance::MAX)
     }
 }
