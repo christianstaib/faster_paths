@@ -19,9 +19,11 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     graph: PathBuf,
+
     /// Infile in .fmi format
     #[arg(short, long)]
     hub_graph: PathBuf,
+
     #[arg(short, long)]
     edge_differences: PathBuf,
 }

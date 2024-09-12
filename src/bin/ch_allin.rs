@@ -88,17 +88,12 @@ fn main() {
     //     .into_iter()
     //     .collect::<HashSet<u32>>();
 
-    let mut vertices = graph_org.out_graph().vertices().collect::<HashSet<_>>();
+    let mut vertices = graph_org.out_graph().vertices().collect::<Vec<_>>();
+    vertices.sort_by_cached_key(|&vertex| Reverse(graph_org.out_graph().edges(vertex).len()));
 
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("contracting", vertices.len() as u64);
-    while !vertices.is_empty() {
-        let vertex = *vertices
-            .par_iter()
-            .max_by_key(|&&vertex| graph_org.out_graph().edges(vertex).len())
-            .unwrap();
-        vertices.remove(&vertex);
-
+    while let Some(vertex) = vertices.pop() {
         pb.inc(1);
         level_to_vertex.push(vertex);
 
