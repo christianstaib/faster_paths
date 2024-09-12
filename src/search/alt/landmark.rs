@@ -13,7 +13,7 @@ use crate::{
 };
 
 pub struct Landmarks {
-    landmarks: Vec<Landmark>,
+    pub landmarks: Vec<Landmark>,
 }
 
 impl Landmarks {
@@ -71,8 +71,9 @@ impl DistanceHeuristic for Landmarks {
 }
 
 pub struct Landmark {
-    distance_to: Vec<Distance>,
-    distance_from: Vec<Distance>,
+    pub vertex: Vertex,
+    pub distance_to: Vec<Distance>,
+    pub distance_from: Vec<Distance>,
 }
 
 impl Landmark {
@@ -88,6 +89,7 @@ impl Landmark {
             .collect_vec();
 
         Landmark {
+            vertex,
             distance_to,
             distance_from,
         }

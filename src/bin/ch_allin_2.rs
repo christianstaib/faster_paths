@@ -8,9 +8,10 @@ use faster_paths::{
     search::{
         alt::landmark::Landmarks, collections::dijkstra_data::Path, DistanceHeuristic, PathFinding,
     },
-    utility::{read_bincode_with_spinnner, read_json_with_spinnner},
+    utility::{level_to_vertex, read_bincode_with_spinnner, read_json_with_spinnner},
 };
 use indicatif::ParallelProgressIterator;
+use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]
@@ -42,6 +43,12 @@ fn main() {
     let simple_graph: ReversibleGraph<VecVecGraph> =
         read_bincode_with_spinnner("simple graph", &args.simple_graph.as_path());
 
+    println!(
+        "true {}, simple {}",
+        graph.shortest_path_distance(123, 2345).unwrap(),
+        simple_graph.shortest_path_distance(123, 2345).unwrap()
+    );
+
     println!("Simple graph used as upper bound");
     research_diff(&simple_graph, &paths);
 
@@ -53,7 +60,13 @@ fn main() {
 }
 
 fn research_landmarks(graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) {
-    let landmarks = Landmarks::random(&graph, 100);
+    let path_vertices_only = paths.iter().map(|path| path.vertices.clone()).collect_vec();
+    let level_to_vertex: Vec<Vertex> =
+        level_to_vertex(&path_vertices_only, graph.number_of_vertices());
+    let landmarks = Landmarks::new(
+        &graph,
+        &level_to_vertex.into_iter().rev().take(20).collect_vec(),
+    );
 
     let distance_pairs = paths
         .into_par_iter()
@@ -92,12 +105,12 @@ fn research_landmarks(graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) {
         println!(
             "{:>2} {:>.5}%",
             hops,
-            (diffs.iter().sum::<f32>() / diffs.len() as f32) - 100.0
+            diffs.iter().sum::<f32>() / diffs.len() as f32
         );
     }
     println!(
-        "total diff is {:>.5}",
-        (total_diffs.iter().sum::<f32>() / total_diffs.len() as f32) - 100.0
+        "average diff is {:>.4}%",
+        total_diffs.iter().sum::<f32>() / total_diffs.len() as f32
     );
 }
 
@@ -113,11 +126,11 @@ fn research_diff(simple_graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>)
                 .shortest_path_distance(source, target)
                 .unwrap_or(Distance::MAX);
 
-            assert!(simple_graph_distance >= shortest_path.distance);
+            assert!(simple_graph_distance >= shortest_path.distance * 100);
 
             (
                 shortest_path.vertices.len(),
-                shortest_path.distance,
+                shortest_path.distance * 100,
                 simple_graph_distance,
             )
         })
@@ -141,12 +154,12 @@ fn research_diff(simple_graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>)
         println!(
             "{:>2} {:>.5}%",
             hops,
-            (diffs.iter().sum::<f32>() / diffs.len() as f32) - 100.0
+            ((diffs.iter().sum::<f32>() / diffs.len() as f32) - 1.0) * 100.0
         );
     }
     println!(
-        "total diff is {:>.4}",
-        (total_diffs.iter().sum::<f32>() / total_diffs.len() as f32) - 100.0
+        "average diff is {:>.4}",
+        ((total_diffs.iter().sum::<f32>() / total_diffs.len() as f32) - 1.0) * 100.0
     );
 }
 
@@ -155,7 +168,13 @@ fn research_diff_landmarks_combined(
     simple_graph: &ReversibleGraph<VecVecGraph>,
     paths: &Vec<Path>,
 ) {
-    let landmarks = Landmarks::random(&graph, 100);
+    let path_vertices_only = paths.iter().map(|path| path.vertices.clone()).collect_vec();
+    let level_to_vertex: Vec<Vertex> =
+        level_to_vertex(&path_vertices_only, graph.number_of_vertices());
+    let landmarks = Landmarks::new(
+        &graph,
+        &level_to_vertex.into_iter().rev().take(20).collect_vec(),
+    );
 
     let distance_pairs = paths
         .into_par_iter()
@@ -167,15 +186,15 @@ fn research_diff_landmarks_combined(
             let simple_graph_distance = simple_graph
                 .shortest_path_distance(source, target)
                 .unwrap_or(Distance::MAX);
-            let landmark_distance = landmarks.upper_bound(source, target);
+            let landmark_distance = landmarks.upper_bound(source, target) * 100;
 
             let min_upper_bound = std::cmp::min(simple_graph_distance, landmark_distance);
 
-            assert!(min_upper_bound >= shortest_path.distance);
+            assert!(min_upper_bound >= shortest_path.distance * 100);
 
             (
                 shortest_path.vertices.len(),
-                shortest_path.distance,
+                shortest_path.distance * 100,
                 simple_graph_distance,
             )
         })
@@ -199,11 +218,11 @@ fn research_diff_landmarks_combined(
         println!(
             "{:>2} {:>.5}%",
             hops,
-            (diffs.iter().sum::<f32>() / diffs.len() as f32) - 100.0
+            diffs.iter().sum::<f32>() / diffs.len() as f32
         );
     }
     println!(
-        "total diff is {:>.5}",
-        (total_diffs.iter().sum::<f32>() / total_diffs.len() as f32) - 100.0
+        "average diff is {:>.5}",
+        total_diffs.iter().sum::<f32>() / total_diffs.len() as f32
     );
 }

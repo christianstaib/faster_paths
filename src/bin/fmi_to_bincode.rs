@@ -2,7 +2,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::graphs::{
-    read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
+    read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph,
 };
 
 /// Reading a .bincode file is way faster than a .fmi file
@@ -24,6 +24,8 @@ fn main() {
     let edges = read_edges_from_fmi_file(&args.graph_fmi);
     let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
     println!("Reading fmi graph took {:?}", start.elapsed());
+
+    println!("{}", graph.out_graph().is_bidirectional());
 
     let start = Instant::now();
     let writer = BufWriter::new(File::create(&args.graph_bincode).unwrap());
