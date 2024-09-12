@@ -17,6 +17,7 @@ use crate::{search::path::ShortestPathTestCase, utility::get_progressbar};
 pub mod pathfinding;
 pub mod reversible_graph;
 pub mod vec_graph;
+pub mod vec_hash_graph;
 pub mod vec_vec_graph;
 
 pub type Vertex = u32;

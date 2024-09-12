@@ -6,11 +6,14 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
-        WeightedEdge,
+        reversible_graph::ReversibleGraph, vec_hash_graph::VecHashGraph,
+        vec_vec_graph::VecVecGraph, Distance, Graph, Vertex, WeightedEdge,
     },
-    search::{hl::hub_graph::HubGraph, DistanceHeuristic},
-    utility::{get_progressbar, read_bincode_with_spinnner, write_json_with_spinnner},
+    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, DistanceHeuristic},
+    utility::{
+        benchmark_and_test_distance, generate_test_cases, get_progressbar,
+        read_bincode_with_spinnner, write_json_with_spinnner,
+    },
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
@@ -29,14 +32,16 @@ struct Args {
 
     /// Infile in .fmi format
     #[arg(short, long)]
-    edge_diff: PathBuf,
+    ch: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let mut graph: ReversibleGraph<VecVecGraph> =
+    let graph_org: ReversibleGraph<VecVecGraph> =
         read_bincode_with_spinnner("graph", &args.graph.as_path());
+    let mut graph: ReversibleGraph<VecHashGraph> =
+        ReversibleGraph::from_edges(&graph_org.out_graph().all_edges());
 
     let simple_graph_hl: HubGraph =
         read_bincode_with_spinnner("simple hub graph", &args.simple_graph_hl);
@@ -51,13 +56,11 @@ fn main() {
             .sum::<usize>()
     );
 
-    let mut edges = HashMap::new();
-    for edge in graph.out_graph().all_edges() {
-        edges.insert((edge.tail, edge.head), edge.weight);
-    }
+    let mut edges = Vec::new();
 
     let mut vertices = graph.out_graph().vertices().collect::<HashSet<_>>();
 
+    let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("Contracting", vertices.len() as u64);
     while !vertices.is_empty() {
         let vertex = *vertices
@@ -67,48 +70,23 @@ fn main() {
             })
             .unwrap();
         vertices.remove(&vertex);
+        level_to_vertex.push(vertex);
 
         let potentially_new_edges = potentially_new_edges(&mut graph, &simple_graph_hl, vertex);
-        contract(&mut graph, vertex, &potentially_new_edges);
+        edges.extend(contract(&mut graph, vertex, &potentially_new_edges));
 
         pb.inc(1);
     }
     pb.finish_and_clear();
 
-    let pb = get_progressbar("gett edge diff", vertices.len() as u64);
-    let edge_diffs = vertices
-        .par_iter()
-        .progress_with(pb)
-        .map(|&vertex| {
-            let mut new_edges = 0;
-            let in_edges = graph.in_graph().edges(vertex).collect_vec();
-            let out_edges = graph.out_graph().edges(vertex).collect_vec();
+    assert!(graph.out_graph().all_edges().is_empty());
 
-            for in_edge in in_edges.iter() {
-                for out_edge in out_edges.iter() {
-                    let alterntive_weight = in_edge.weight + out_edge.weight;
-                    if alterntive_weight <= simple_graph_hl.upper_bound(in_edge.head, out_edge.head)
-                    {
-                        if alterntive_weight
-                            <= *edges
-                                .get(&(in_edge.head, out_edge.head))
-                                .unwrap_or(&Distance::MAX)
-                        {
-                            new_edges += 1
-                        }
-                    }
-                }
-            }
+    let ch = ContractedGraph::new(level_to_vertex, edges, HashMap::new());
 
-            let diff = new_edges
-                - graph.in_graph().edges(vertex).len() as i32
-                - graph.out_graph().edges(vertex).len() as i32;
-
-            diff
-        })
-        .collect::<Vec<_>>();
-
-    write_json_with_spinnner("edge differences", &args.edge_diff, &edge_diffs);
+    // Benchmark and test correctness
+    let tests = generate_test_cases(graph_org.out_graph(), 1_000);
+    let average_duration = benchmark_and_test_distance(&tests, &ch).unwrap();
+    println!("Average duration was {:?}", average_duration);
 }
 
 pub fn potentially_new_edges<T: Graph>(
