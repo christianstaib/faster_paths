@@ -7,9 +7,9 @@ use crate::{
     graphs::{reversible_graph::ReversibleGraph, Distance, Graph, Vertex},
     search::{
         collections::dijkstra_data::DijkstraData, dijkstra::dijkstra_one_to_all_wraped,
-        DistanceHeuristic,
+        DistanceHeuristic, PathFinding,
     },
-    utility::get_progressbar,
+    utility::{get_paths, get_progressbar, level_to_vertex},
 };
 
 pub struct Landmarks {
@@ -28,6 +28,28 @@ impl Landmarks {
             .collect();
 
         Landmarks { landmarks }
+    }
+
+    pub fn hitting_set<G: Graph + Default>(
+        graph: &ReversibleGraph<G>,
+        number_of_paths: u32,
+        number_of_landmarks: u32,
+    ) -> Landmarks {
+        let paths = get_paths(
+            graph.out_graph(),
+            &graph.out_graph().vertices().collect_vec(),
+            number_of_paths,
+        );
+        let level_to_vertex: Vec<Vertex> = level_to_vertex(&paths, graph.number_of_vertices());
+        Landmarks::new(
+            graph,
+            &level_to_vertex
+                .iter()
+                .rev()
+                .take(number_of_landmarks as usize)
+                .cloned()
+                .collect_vec(),
+        )
     }
 
     pub fn random<G: Graph + Default>(

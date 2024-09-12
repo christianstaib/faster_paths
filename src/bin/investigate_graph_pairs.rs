@@ -1,14 +1,10 @@
-use std::{mem::offset_of, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{
-        reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph, Vertex,
-    },
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Distance, Graph},
     search::{
-        alt::landmark::{self, Landmarks},
-        collections::dijkstra_data::Path,
-        DistanceHeuristic, PathFinding,
+        alt::landmark::Landmarks, collections::dijkstra_data::Path, DistanceHeuristic, PathFinding,
     },
     utility::{read_bincode_with_spinnner, read_json_with_spinnner},
 };
@@ -82,11 +78,11 @@ fn simple_graph_bound(simple_graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<P
             let target = *shortest_path.vertices.last().unwrap();
 
             let simple_shortest_path = simple_graph.shortest_path(source, target).unwrap();
-            let simple_graph_distance = simple_shortest_path.distance;
+            let upper_bound = simple_shortest_path.distance;
 
-            assert!(simple_graph_distance >= shortest_path.distance,);
+            assert!(upper_bound >= shortest_path.distance,);
 
-            simple_graph_distance
+            upper_bound
         })
         .collect::<Vec<_>>();
 
@@ -103,11 +99,11 @@ fn landmarks_bound(graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) {
             let source = *shortest_path.vertices.first().unwrap();
             let target = *shortest_path.vertices.last().unwrap();
 
-            let landmark_distance = landmarks.upper_bound(source, target);
+            let uppwer_bound = landmarks.upper_bound(source, target);
 
-            assert!(landmark_distance >= shortest_path.distance,);
+            assert!(uppwer_bound >= shortest_path.distance,);
 
-            landmark_distance
+            uppwer_bound
         })
         .collect::<Vec<_>>();
 
@@ -128,16 +124,16 @@ fn simple_graph_and_landmarks_bound(
             let source = *shortest_path.vertices.first().unwrap();
             let target = *shortest_path.vertices.last().unwrap();
 
-            let simple_graph_distance = simple_graph
+            let simple_graph_upper_bound = simple_graph
                 .shortest_path_distance(source, target)
                 .unwrap_or(Distance::MAX);
-            let landmark_distance = landmarks.upper_bound(source, target);
+            let landmark_upper_bound = landmarks.upper_bound(source, target);
 
-            let min_upper_bound = std::cmp::min(simple_graph_distance, landmark_distance);
+            let min_upper_bound = std::cmp::min(simple_graph_upper_bound, landmark_upper_bound);
 
             assert!(min_upper_bound >= shortest_path.distance);
 
-            simple_graph_distance
+            min_upper_bound
         })
         .collect::<Vec<_>>();
 
