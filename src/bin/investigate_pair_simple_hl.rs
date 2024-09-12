@@ -11,7 +11,7 @@ use faster_paths::{
     },
     search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, DistanceHeuristic},
     utility::{
-        benchmark_and_test_distance, generate_test_cases, get_paths, get_progressbar,
+        benchmark_and_test_distance, generate_test_cases, get_paths, get_progressbar, hitting_set,
         level_to_vertex, read_bincode_with_spinnner, write_json_with_spinnner,
     },
 };
@@ -60,15 +60,9 @@ fn main() {
     let paths = get_paths(
         graph.out_graph(),
         &graph.out_graph().non_trivial_vertices(),
-        2000,
+        10_000,
     );
-    let mut hitting_set: Vec<Vertex> =
-        level_to_vertex(&paths, graph.out_graph().number_of_vertices())
-            .iter()
-            .rev()
-            .take(100)
-            .cloned()
-            .collect_vec();
+    let mut hitting_set: Vec<Vertex> = hitting_set(&paths, graph.out_graph().number_of_vertices());
 
     let mut edges = Vec::new();
 
