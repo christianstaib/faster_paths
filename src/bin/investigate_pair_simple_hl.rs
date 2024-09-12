@@ -11,8 +11,8 @@ use faster_paths::{
     },
     search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, DistanceHeuristic},
     utility::{
-        benchmark_and_test_distance, generate_test_cases, get_progressbar,
-        read_bincode_with_spinnner, write_json_with_spinnner,
+        benchmark_and_test_distance, generate_test_cases, get_paths, get_progressbar,
+        level_to_vertex, read_bincode_with_spinnner, write_json_with_spinnner,
     },
 };
 use indicatif::ParallelProgressIterator;
@@ -55,10 +55,27 @@ fn main() {
                 * graph.in_graph().edges(vertex).len())
             .sum::<usize>()
     );
+    //
+    // Get paths and level_to_vertex
+    let paths = get_paths(
+        graph.out_graph(),
+        &graph.out_graph().non_trivial_vertices(),
+        2000,
+    );
+    let mut hitting_set: Vec<Vertex> =
+        level_to_vertex(&paths, graph.out_graph().number_of_vertices())
+            .iter()
+            .rev()
+            .take(100)
+            .cloned()
+            .collect_vec();
 
     let mut edges = Vec::new();
 
     let mut vertices = graph.out_graph().vertices().collect::<HashSet<_>>();
+    hitting_set.iter().for_each(|vertex| {
+        vertices.remove(vertex);
+    });
 
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("Contracting", vertices.len() as u64);
@@ -74,6 +91,10 @@ fn main() {
 
         let potentially_new_edges = potentially_new_edges(&mut graph, &simple_graph_hl, vertex);
         edges.extend(contract(&mut graph, vertex, &potentially_new_edges));
+
+        if vertices.is_empty() && !hitting_set.is_empty() {
+            vertices.extend(hitting_set.drain(..));
+        }
 
         pb.inc(1);
     }
