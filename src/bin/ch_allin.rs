@@ -14,11 +14,14 @@ use faster_paths::{
         WeightedEdge,
     },
     search::{
-        alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, DistanceHeuristic,
-        PathFinding,
+        alt::landmark::Landmarks,
+        ch::contracted_graph::ContractedGraph,
+        hl::hub_graph::{self, HubGraph},
+        DistanceHeuristic, PathFinding,
     },
     utility::{
         benchmark_and_test_distance, benchmark_and_test_path, generate_test_cases, get_progressbar,
+        read_bincode_with_spinnner,
     },
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
@@ -36,17 +39,16 @@ struct Args {
 
     /// Infile in .fmi format
     #[arg(short, long)]
-    landmarks: u32,
-
-    /// Infile in .fmi format
-    #[arg(short, long)]
-    contracted_graph: PathBuf,
+    hub_graph: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
     // Build graph
-    let mut graph_org: ReversibleGraph<VecVecGraph> = ReversibleGraph::from_fmi_file(&args.graph);
+    let mut graph_org: ReversibleGraph<VecVecGraph> =
+        read_bincode_with_spinnner("graph", &args.graph);
+
+    let mut hub_graph: HubGraph = read_bincode_with_spinnner("graph", &args.hub_graph);
 
     graph_org.make_bidirectional();
     println!(
@@ -61,51 +63,46 @@ fn main() {
         .map(|edge| ((edge.tail, edge.head), edge.weight))
         .collect();
 
-    let landmarks = Landmarks::random(
-        &graph_org,
-        args.landmarks * rayon::current_num_threads() as u32,
-    );
-
     let shortcuts = HashMap::new();
 
     let mut graph = HashGraph::new(graph_org.out_graph());
 
-    let mut diffs = (0..graph.num_vertices)
-        .map(|vertex| Reverse((0, vertex as Vertex)))
-        .collect::<BinaryHeap<_>>();
+    // let mut diffs = (0..graph.num_vertices)
+    //     .map(|vertex| Reverse((0, vertex as Vertex)))
+    //     .collect::<BinaryHeap<_>>();
 
-    update_queue(&mut diffs, &graph);
+    // update_queue(&mut diffs, &graph);
 
-    println!(
-        "min diff {}",
-        diffs
-            .iter()
-            .map(|Reverse((diff, _vertex))| diff)
-            .min()
-            .unwrap()
-    );
+    // println!(
+    //     "min diff {}",
+    //     diffs
+    //         .iter()
+    //         .map(|Reverse((diff, _vertex))| diff)
+    //         .min()
+    //         .unwrap()
+    // );
 
     let mut writer = BufWriter::new(File::create("all_in.txt").unwrap());
 
-    let stepts_in_between = generate_steps_in_between(diffs.len() as u32, 4)
-        .into_iter()
-        .collect::<HashSet<u32>>();
+    // let stepts_in_between = generate_steps_in_between(diffs.len() as u32, 4)
+    //     .into_iter()
+    //     .collect::<HashSet<u32>>();
+
+    let mut vertices = graph_org.out_graph().vertices().collect::<HashSet<_>>();
 
     let mut level_to_vertex = Vec::new();
-    let pb = get_progressbar("contracting", diffs.len() as u64);
-    while let Some(Reverse((_old_diff, vertex))) = diffs.pop() {
-        if stepts_in_between.contains(&(diffs.len() as u32)) {
-            update_queue(&mut diffs, &graph);
-        }
+    let pb = get_progressbar("contracting", vertices.len() as u64);
+    while !vertices.is_empty() {
+        let vertex = *vertices
+            .par_iter()
+            .max_by_key(|&&vertex| graph_org.out_graph().edges(vertex).len())
+            .unwrap();
+        vertices.remove(&vertex);
 
         pb.inc(1);
         level_to_vertex.push(vertex);
 
-        if diffs.len() % 1_000 == 0 {
-            println!("{} remaining", diffs.len());
-        }
-
-        let this_edges = contract(&mut graph, &landmarks, vertex);
+        let this_edges = contract(&mut graph, &hub_graph, vertex);
 
         this_edges.into_iter().for_each(|edge| {
             edges.insert((edge.tail, edge.head), edge.weight);
@@ -123,8 +120,8 @@ fn main() {
     println!("upward edges {}", ch.upward_graph().number_of_edges());
     println!("downward edges {}", ch.downward_graph().number_of_edges());
 
-    let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
-    bincode::serialize_into(writer, &ch).unwrap();
+    // let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
+    // bincode::serialize_into(writer, &ch).unwrap();
 
     // Benchmark and test correctness
     let tests = generate_test_cases(graph_org.out_graph(), 1_000);
