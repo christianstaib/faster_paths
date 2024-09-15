@@ -1,4 +1,8 @@
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
 
 use clap::Parser;
 use faster_paths::{
@@ -25,6 +29,10 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     paths: PathBuf,
+
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    data: PathBuf,
 }
 
 fn main() {
@@ -43,10 +51,29 @@ fn main() {
     check_if_upper_bound(&graph, &simple_graph);
 
     println!("Simple graph used as upper bound");
-    simple_graph_bound(&simple_graph, &paths);
+    let simple_graph_bound = simple_graph_bound(&simple_graph, &paths);
 
     println!("Landmarks used as upper bound");
-    landmarks_bound(&graph, &paths);
+    let landmarks_bound = landmarks_bound(&graph, &paths);
+
+    let mut writer = BufWriter::new(File::create(args.data.as_path()).unwrap());
+    writeln!(
+        writer,
+        "distance,hops,simple_graph_upper_bound,landmark_upper_bound"
+    )
+    .unwrap();
+    for i in 0..paths.len() {
+        writeln!(
+            writer,
+            "{},{},{},{}",
+            paths[i].distance,
+            paths[i].vertices.len(),
+            simple_graph_bound[i],
+            landmarks_bound[i]
+        )
+        .unwrap();
+    }
+    writer.flush().unwrap();
 
     println!("Min of both used as upper bound");
     simple_graph_and_landmarks_bound(&graph, &simple_graph, &paths);
@@ -69,7 +96,10 @@ fn check_if_upper_bound(
     }
 }
 
-fn simple_graph_bound(simple_graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) {
+fn simple_graph_bound(
+    simple_graph: &ReversibleGraph<VecVecGraph>,
+    paths: &Vec<Path>,
+) -> Vec<Distance> {
     let distance_pairs = paths
         .into_par_iter()
         .progress()
@@ -87,9 +117,11 @@ fn simple_graph_bound(simple_graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<P
         .collect::<Vec<_>>();
 
     print_results(&distance_pairs, paths);
+
+    distance_pairs
 }
 
-fn landmarks_bound(graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) {
+fn landmarks_bound(graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) -> Vec<Distance> {
     let landmarks = Landmarks::random(&graph, 100);
 
     let distance_pairs = paths
@@ -108,6 +140,8 @@ fn landmarks_bound(graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) {
         .collect::<Vec<_>>();
 
     print_results(&distance_pairs, paths);
+
+    distance_pairs
 }
 
 fn simple_graph_and_landmarks_bound(
