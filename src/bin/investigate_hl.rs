@@ -37,6 +37,8 @@ fn main() {
         hub_graph.number_of_entries() as f64 / hub_graph.forward.number_of_vertices() as f64
     );
 
+    println!("shortcuts {}", hub_graph.shortcuts.len());
+
     let vertices = (0..hub_graph.number_of_vertices()).collect_vec();
     let mut rng = thread_rng();
     let pairs: Vec<(Vertex, Vertex)> = (0..args.num_runs)

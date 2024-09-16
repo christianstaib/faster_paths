@@ -21,7 +21,7 @@ use crate::{
 pub struct HubGraph {
     pub forward: HalfHubGraph,
     pub backward: HalfHubGraph,
-    shortcuts: HashMap<(Vertex, Vertex), Vertex>,
+    pub shortcuts: HashMap<(Vertex, Vertex), Vertex>,
     level_to_vertex: Vec<Vertex>,
     vertex_to_level: Vec<Level>,
 }
