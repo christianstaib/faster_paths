@@ -14,7 +14,7 @@ use faster_paths::{
         },
         dijkstra::dijkstra_one_to_one,
     },
-    utility::{benchmark_path, gen_tests_cases, get_progressbar},
+    utility::{benchmark_distances, benchmark_path, gen_tests_cases, get_progressbar},
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
@@ -80,7 +80,16 @@ fn main() {
     println!("Value over {} sequential searches", m);
     let sources_and_targets = gen_tests_cases(graph.out_graph(), m);
     let avg_dijkstra_duration = benchmark_path(graph.out_graph(), &sources_and_targets);
-    println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
+    println!(
+        "Average dijkstra duration for path creation is {:?}",
+        avg_dijkstra_duration
+    );
+
+    let avg_dijkstra_duration = benchmark_distances(graph.out_graph(), &sources_and_targets);
+    println!(
+        "Average dijkstra duration for path distance is {:?}",
+        avg_dijkstra_duration
+    );
 }
 
 fn get_dijkstra_info(graph: &ReversibleGraph<VecVecGraph>, n: u64) -> (f32, f32, f32) {
