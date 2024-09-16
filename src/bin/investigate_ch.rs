@@ -36,15 +36,6 @@ fn main() {
         "Contracted graph has {} shortcuts",
         contracted_graph.shortcuts().len()
     );
-    println!(
-        "Contracted graph has {} shortcuts",
-        contracted_graph
-            .shortcuts()
-            .keys()
-            .par_bridge()
-            .filter(|&&(source, tail)| contracted_graph.shortcuts().contains_key(&(tail, source)))
-            .count()
-    );
 
     let vertices = (0..contracted_graph.number_of_vertices()).collect_vec();
     let mut rng = thread_rng();
@@ -59,12 +50,12 @@ fn main() {
         .collect_vec();
 
     println!(
-        "getting random paths takes {:?} on average",
-        benchmark_path(&contracted_graph, &pairs)
+        "getting random paths distances takes {:?} on average",
+        benchmark_distances(&contracted_graph, &pairs)
     );
 
     println!(
-        "getting random paths distances takes {:?} on average",
-        benchmark_distances(&contracted_graph, &pairs)
+        "getting random paths takes {:?} on average",
+        benchmark_path(&contracted_graph, &pairs)
     );
 }
