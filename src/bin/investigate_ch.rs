@@ -11,6 +11,7 @@ use faster_paths::{
 };
 use itertools::Itertools;
 use rand::prelude::*;
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -40,6 +41,7 @@ fn main() {
         contracted_graph
             .shortcuts()
             .keys()
+            .par_bridge()
             .filter(|&&(source, tail)| !contracted_graph.shortcuts().contains_key(&(tail, source)))
             .count()
     );
