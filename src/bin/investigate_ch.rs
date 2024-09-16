@@ -42,7 +42,7 @@ fn main() {
             .shortcuts()
             .keys()
             .par_bridge()
-            .filter(|&&(source, tail)| !contracted_graph.shortcuts().contains_key(&(tail, source)))
+            .filter(|&&(source, tail)| contracted_graph.shortcuts().contains_key(&(tail, source)))
             .count()
     );
 
