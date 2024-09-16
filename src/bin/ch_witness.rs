@@ -2,9 +2,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{
-        read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-    },
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph},
     search::ch::contracted_graph::ContractedGraph,
     utility::{benchmark_and_test_path, generate_test_cases},
 };

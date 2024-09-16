@@ -309,7 +309,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     level_to_vertex
 }
 
-pub fn benchmark(
+pub fn benchmark_path(
     pathfinder: &dyn PathFinding,
     sources_and_targets: &[(Vertex, Vertex)],
 ) -> Duration {
@@ -320,14 +320,39 @@ pub fn benchmark(
         .progress_with(pb)
         .map(|&(source, target)| {
             let start = Instant::now();
-            let path = pathfinder.shortest_path(source, target);
-            (path, start.elapsed())
+            let _path = pathfinder.shortest_path(source, target);
+            start.elapsed()
         })
         .collect_vec();
 
     let average_duration = path_and_duration
         .iter()
-        .map(|(_path, duration)| duration)
+        .map(|duration| duration)
+        .sum::<Duration>()
+        / path_and_duration.len() as u32;
+
+    average_duration
+}
+
+pub fn benchmark_distances(
+    pathfinder: &dyn PathFinding,
+    sources_and_targets: &[(Vertex, Vertex)],
+) -> Duration {
+    let pb = get_progressbar("Benchmarking", sources_and_targets.len() as u64);
+
+    let path_and_duration = sources_and_targets
+        .into_iter()
+        .progress_with(pb)
+        .map(|&(source, target)| {
+            let start = Instant::now();
+            let _path = pathfinder.shortest_path_distance(source, target);
+            start.elapsed()
+        })
+        .collect_vec();
+
+    let average_duration = path_and_duration
+        .iter()
+        .map(|duration| duration)
         .sum::<Duration>()
         / path_and_duration.len() as u32;
 

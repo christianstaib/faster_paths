@@ -14,7 +14,7 @@ use faster_paths::{
         },
         dijkstra::dijkstra_one_to_one,
     },
-    utility::{benchmark, gen_tests_cases, get_progressbar},
+    utility::{benchmark_path, gen_tests_cases, get_progressbar},
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
@@ -27,6 +27,7 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     graph: PathBuf,
+
     /// Infile in .fmi format
     #[arg(short, long)]
     degrees_out: PathBuf,
@@ -57,7 +58,15 @@ fn main() {
         "non trivial vertices: {}",
         graph.out_graph().non_trivial_vertices().len()
     );
-    println!("degree is {}", graph.out_graph().average_degree());
+    println!("average degree is {}", graph.out_graph().average_degree());
+    println!(
+        "sum of squared degree {}",
+        graph
+            .out_graph()
+            .vertices()
+            .map(|vertex| graph.out_graph().edges(vertex).len().pow(2) as u128)
+            .sum::<u128>()
+    );
 
     let n = 10_000;
     let (avg_path_len, avg_dijkstra_rank, avg_queue_pops) = get_dijkstra_info(&graph, n);
@@ -70,7 +79,7 @@ fn main() {
     let m = 1_000;
     println!("Value over {} sequential searches", m);
     let sources_and_targets = gen_tests_cases(graph.out_graph(), m);
-    let avg_dijkstra_duration = benchmark(graph.out_graph(), &sources_and_targets);
+    let avg_dijkstra_duration = benchmark_path(graph.out_graph(), &sources_and_targets);
     println!("Average dijkstra duration is {:?}", avg_dijkstra_duration);
 }
 

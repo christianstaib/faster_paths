@@ -113,7 +113,11 @@ pub trait Graph: Send + Sync {
     }
 
     fn average_degree(&self) -> f32 {
-        self.number_of_edges() as f32 / self.non_trivial_vertices().len() as f32
+        self.vertices()
+            .map(|vertex| self.edges(vertex).len() as f32)
+            .sum::<f32>()
+            / self.number_of_vertices() as f32
+        // self.number_of_edges() as f32 / self.number_of_vertices() as f32
     }
 
     fn number_of_edges(&self) -> u32 {
