@@ -3,7 +3,10 @@ use std::path::PathBuf;
 use clap::Parser;
 use faster_paths::{
     graphs::Vertex,
-    search::{ch::contracted_graph::ContractedGraph, PathFinding},
+    search::{
+        ch::contracted_graph::{self, ContractedGraph},
+        PathFinding,
+    },
     utility::{benchmark_distances, benchmark_path, read_bincode_with_spinnner},
 };
 use itertools::Itertools;
@@ -31,6 +34,14 @@ fn main() {
     println!(
         "Contracted graph has {} shortcuts",
         contracted_graph.shortcuts().len()
+    );
+    println!(
+        "Contracted graph has {} shortcuts",
+        contracted_graph
+            .shortcuts()
+            .keys()
+            .filter(|&&(source, tail)| !contracted_graph.shortcuts().contains_key(&(tail, source)))
+            .count()
     );
 
     let vertices = (0..contracted_graph.number_of_vertices()).collect_vec();
