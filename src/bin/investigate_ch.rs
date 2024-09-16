@@ -15,6 +15,10 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     contracted_graph: PathBuf,
+
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    num_runs: u32,
 }
 
 fn main() {
@@ -31,7 +35,7 @@ fn main() {
 
     let vertices = (0..contracted_graph.number_of_vertices()).collect_vec();
     let mut rng = thread_rng();
-    let pairs: Vec<(Vertex, Vertex)> = (0..100_000)
+    let pairs: Vec<(Vertex, Vertex)> = (0..args.num_runs)
         .map(|_| {
             vertices
                 .choose_multiple(&mut rng, 2)
