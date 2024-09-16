@@ -68,7 +68,10 @@ pub fn get_paths(
         .filter(|path| path.vertices.len() > 2)
         .take_any(number_of_searches as usize)
         .progress_with(pb)
-        .map(|path| path.vertices)
+        .map(|mut path| {
+            path.vertices.shrink_to_fit();
+            path.vertices
+        })
         .collect()
 }
 
