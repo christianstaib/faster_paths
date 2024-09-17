@@ -2,9 +2,11 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
+    graphs::Vertex,
+    reading_pathfinder,
     search::PathFinding,
     utility::{get_progressbar, write_json_with_spinnner},
+    FileType,
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
@@ -14,9 +16,13 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Infile in .fmi format
+    /// Input file
     #[arg(short, long)]
-    graph: PathBuf,
+    file: PathBuf,
+
+    /// Type of the input file
+    #[arg(short = 't', long, value_enum, default_value = "fmi")]
+    file_type: FileType,
 
     /// Path of test cases
     #[arg(short, long)]
@@ -30,11 +36,11 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(&args.graph);
+    let pathfinder = reading_pathfinder(&args.file.as_path(), &args.file_type);
 
     let pb = get_progressbar("Getting paths", args.num_paths as u64);
 
-    let vertices = graph.out_graph().vertices().collect_vec();
+    let vertices = (0..pathfinder.number_of_vertices()).collect_vec();
     let paths = (0..)
         .par_bridge()
         .map_init(
@@ -46,7 +52,7 @@ fn main() {
                     .collect_tuple()
                     .unwrap();
 
-                graph.shortest_path(source, target)
+                pathfinder.shortest_path(source, target)
             },
         )
         .flatten()

@@ -20,6 +20,7 @@ use faster_paths::{
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
+use rand::prelude::*;
 use rayon::iter::{
     IntoParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
 };
@@ -51,85 +52,47 @@ fn main() {
     let simple_graph_hl: HubGraph =
         read_bincode_with_spinnner("simple hub graph", &args.simple_graph_hl);
 
-    println!(
-        "{} comparisions needed",
-        graph
-            .out_graph()
-            .vertices()
-            .map(|vertex| graph.out_graph().edges(vertex).len()
-                * graph.in_graph().edges(vertex).len())
-            .sum::<usize>()
-    );
     let mut edges = Vec::new();
 
-    let upper_lim_degree = 2_000;
-
-    let mut vertices = graph
-        .out_graph()
-        .vertices()
-        .progress()
-        .par_bridge()
-        .filter(|&vertex| graph_org.out_graph().edges(vertex).len() < upper_lim_degree)
-        .map(|vertex| {
-            let potentially_new_edges = potentially_new_edges(&graph, &simple_graph_hl, vertex);
-            (
-                vertex,
-                edge_difference(&graph, vertex, &potentially_new_edges),
-            )
-        })
-        .collect::<HashMap<Vertex, i32>>();
+    let mut vertices = graph.out_graph().vertices().collect_vec();
 
     let mut level_to_vertex = Vec::new();
     let pb = get_progressbar("Contracting", graph.number_of_vertices() as u64);
     while !vertices.is_empty() {
-        // let len_vertices = vertices.len() as u64;
-        // vertices = vertices
-        //     .into_par_iter()
-        //     .progress_count(len_vertices)
-        //     .filter(|&vertex| graph.out_graph().edges(vertex).len() < 2000)
-        //     .collect::<HashSet<_>>();
+        let sample = vertices
+            .choose_multiple(&mut thread_rng(), rayon::current_num_threads())
+            .cloned()
+            .collect_vec();
 
-        let vertex = *vertices
-            .par_iter()
-            .min_by_key(|&(_vertex, diff)| diff)
-            .unwrap()
-            .0;
+        let sample = sample
+            .into_par_iter()
+            .map(|vertex| {
+                let potentially_new_edges = potentially_new_edges(&graph, &simple_graph_hl, vertex);
+                let edge_diff = edge_difference(&graph, vertex, &potentially_new_edges);
+                (vertex, edge_diff, potentially_new_edges)
+            })
+            .collect::<Vec<_>>();
 
-        vertices.remove(&vertex);
+        let (vertex, _edge_diff, potentially_new_edges) = sample
+            .into_iter()
+            .min_by_key(|(_vertex, edge_diff, _potentially_new_edges)| *edge_diff)
+            .unwrap();
+
+        let idx = vertices.binary_search(&vertex).ok().unwrap();
+        vertices.remove(idx);
         level_to_vertex.push(vertex);
 
-        let neighbors = graph
-            .out_graph()
-            .edges(vertex)
-            .map(|edge| edge.head)
-            .collect::<HashSet<_>>();
-
-        let len_vertices = vertices.len() as u64;
-        vertices = vertices
-            .into_par_iter()
-            .filter(|&(vertex, _old_diff)| graph.out_graph().edges(vertex).len() < upper_lim_degree)
-            .map(|(vertex, old_diff)| {
-                if neighbors.contains(&vertex) {
-                    let potentially_new_edges =
-                        potentially_new_edges(&graph, &simple_graph_hl, vertex);
-                    return (
-                        vertex,
-                        edge_difference(&graph, vertex, &potentially_new_edges),
-                    );
-                }
-
-                (vertex, old_diff)
-            })
-            .collect::<HashMap<_, _>>();
-
-        let potentially_new_edges = potentially_new_edges(&mut graph, &simple_graph_hl, vertex);
         edges.extend(contract(&mut graph, vertex, &potentially_new_edges));
 
         pb.inc(1);
     }
     pb.finish_and_clear();
 
-    assert!(graph.out_graph().all_edges().is_empty());
+    println!("num edges {}", graph.out_graph().number_of_edges());
+    for edge in graph.out_graph().all_edges() {
+        println!("{:?}", edge);
+    }
+    // assert!(graph.out_graph().all_edges().is_empty());
 
     let ch = ContractedGraph::new(level_to_vertex, edges, HashMap::new());
 

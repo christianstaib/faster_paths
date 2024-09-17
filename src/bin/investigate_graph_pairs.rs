@@ -122,7 +122,7 @@ fn simple_graph_bound(
 }
 
 fn landmarks_bound(graph: &ReversibleGraph<VecVecGraph>, paths: &Vec<Path>) -> Vec<Distance> {
-    let landmarks = Landmarks::random(&graph, 100);
+    let landmarks = Landmarks::hitting_set(&graph, 2_000, 100);
 
     let distance_pairs = paths
         .into_par_iter()
