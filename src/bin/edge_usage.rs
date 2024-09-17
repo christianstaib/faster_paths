@@ -80,6 +80,9 @@ fn main() {
     let mut writer = BufWriter::new(File::create(&args.edge_usage.as_path()).unwrap());
     writeln!(writer, "source,tail,hits").unwrap();
     for (edge, hits) in edge_map.into_iter().progress_with(pb) {
+        if hits == 0 {
+            continue;
+        }
         writeln!(writer, "{},{},{}", edge.0, edge.1, hits).unwrap();
     }
     writer.flush().unwrap();
