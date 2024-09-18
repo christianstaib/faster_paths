@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    path::PathBuf,
-};
+use std::{collections::HashMap, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
@@ -14,16 +11,13 @@ use faster_paths::{
         PathFinding,
     },
     utility::{
-        benchmark_and_test_distance, generate_test_cases, get_paths, get_progressbar, hitting_set,
-        level_to_vertex, read_bincode_with_spinnner, write_json_with_spinnner,
+        benchmark_and_test_distance, generate_test_cases, get_progressbar,
+        read_bincode_with_spinnner,
     },
 };
-use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
 use rand::prelude::*;
-use rayon::iter::{
-    IntoParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
-};
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
