@@ -47,6 +47,8 @@ pub fn get_paths(
     pathfinder: &dyn PathFinding,
     vertices: &Vec<Vertex>,
     number_of_searches: u32,
+    min_len: usize,
+    max_len: usize,
 ) -> Vec<Vec<Vertex>> {
     let pb = get_progressbar("Getting many paths", number_of_searches as u64);
 
@@ -65,7 +67,7 @@ pub fn get_paths(
             },
         )
         .flatten()
-        .filter(|path| path.vertices.len() > 2)
+        .filter(|path| path.vertices.len() >= min_len && path.vertices.len() <= max_len)
         .take_any(number_of_searches as usize)
         .progress_with(pb)
         .map(|mut path| {

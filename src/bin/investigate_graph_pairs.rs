@@ -66,6 +66,8 @@ fn main() {
         &graph_hl,
         &graph.out_graph().non_trivial_vertices(),
         100_000,
+        0,
+        usize::MAX,
     );
     let level_to_vertex: Vec<Vertex> =
         level_to_vertex(&paths_landmarks, graph.number_of_vertices());

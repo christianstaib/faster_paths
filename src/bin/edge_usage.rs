@@ -54,6 +54,8 @@ fn main() {
         &*pathfinder,
         &graph.out_graph().non_trivial_vertices(),
         args.number_of_searches,
+        0,
+        usize::MAX,
     );
 
     let mut edge_map = graph

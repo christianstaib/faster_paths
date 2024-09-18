@@ -39,6 +39,8 @@ impl Landmarks {
             graph.out_graph(),
             &graph.out_graph().vertices().collect_vec(),
             number_of_paths,
+            0,
+            usize::MAX,
         );
         let level_to_vertex: Vec<Vertex> = level_to_vertex(&paths, graph.number_of_vertices());
         Landmarks::new(

@@ -52,6 +52,8 @@ fn main() {
         &*pathfinder,
         &graph.out_graph().non_trivial_vertices(),
         args.number_of_searches,
+        0,
+        usize::MAX,
     );
     let level_to_vertex: Vec<Vertex> = level_to_vertex(&paths, pathfinder.number_of_vertices());
 
