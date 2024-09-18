@@ -100,7 +100,7 @@ fn main() {
             paths[i].distance,
             paths[i].vertices.len(),
             simple_graph_bound[i],
-            (1..=max_num_landmarks)
+            (0..max_num_landmarks)
                 .map(|n| landmarks_bounds[n][i].to_string())
                 .join(",")
         )
