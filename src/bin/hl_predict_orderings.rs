@@ -55,14 +55,14 @@ fn main() {
     orderings.push(("hitting-set, then hits", level_to_vertex.clone()));
 
     let level_to_vertex: Vec<Vertex> =
-        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), |_vertex| {
+        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), false, |_vertex| {
             let mut rng = thread_rng();
             rng.gen::<u32>()
         });
     orderings.push(("hitting-set, then random", level_to_vertex.clone()));
 
     let level_to_vertex: Vec<Vertex> =
-        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), |&vertex| {
+        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), false, |&vertex| {
             graph.out_graph().edges(vertex).len()
         });
     orderings.push((
@@ -70,8 +70,17 @@ fn main() {
         level_to_vertex.clone(),
     ));
 
+    let level_to_vertex: Vec<Vertex> =
+        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), true, |&vertex| {
+            graph.out_graph().edges(vertex).len()
+        });
+    orderings.push((
+        "hitting-set, then degree (small to large), then hits",
+        level_to_vertex.clone(),
+    ));
+
     let mut level_to_vertex: Vec<Vertex> =
-        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), |&vertex| {
+        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), false, |&vertex| {
             Reverse(graph.out_graph().edges(vertex).len())
         });
     orderings.push((

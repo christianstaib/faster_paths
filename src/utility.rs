@@ -252,6 +252,7 @@ pub fn hitting_set(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex
 pub fn level_to_vertex_with_ord<F, K>(
     paths: &[Vec<Vertex>],
     number_of_vertices: u32,
+    sort_hit_first: bool,
     order: F,
 ) -> Vec<Vertex>
 where
@@ -261,6 +262,8 @@ where
     let mut level_to_vertex = Vec::new();
     let mut active_paths: Vec<usize> = (0..paths.len()).collect();
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
+
+    let mut all_hits = vec![0; number_of_vertices as usize];
 
     let pb = get_progressbar("Generating level_to_vertex vector", paths.len() as u64);
     while !active_paths.is_empty() {
@@ -287,6 +290,11 @@ where
                     hits
                 },
             );
+
+        all_hits
+            .par_iter_mut()
+            .zip(hits.par_iter())
+            .for_each(|(all, this)| *all += this);
 
         // Get the vertex that hits the most paths.
         let vertex = hits
@@ -317,6 +325,12 @@ where
     pb.finish_and_clear();
 
     let mut active_vertices = active_vertices.into_iter().collect_vec();
+    active_vertices.shuffle(&mut thread_rng());
+
+    if sort_hit_first {
+        active_vertices.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
+    }
+
     active_vertices.sort_by_cached_key(|vertex| order(vertex));
 
     // Insert the remaining vertices at the front, e.g. assign them the lowest
@@ -397,6 +411,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     pb.finish_and_clear();
 
     let mut active_vertices = active_vertices.into_iter().collect_vec();
+
     active_vertices.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
 
     // Insert the remaining vertices at the front, e.g. assign them the lowest
