@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, path::PathBuf, time::Instant};
+use std::{cmp::Reverse, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
@@ -9,7 +9,6 @@ use faster_paths::{
         level_to_vertex_with_ord, read_bincode_with_spinnner,
     },
 };
-use itertools::Itertools;
 use rand::prelude::*;
 
 // Predict average label size by brute forcing a number of labels.
