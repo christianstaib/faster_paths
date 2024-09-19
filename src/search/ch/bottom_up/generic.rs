@@ -1,6 +1,6 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashMap, HashSet},
 };
 
 use indicatif::{ParallelProgressIterator, ProgressIterator};
@@ -142,12 +142,26 @@ pub fn edge_difference<G: Graph>(
     new_and_updated_edges: &HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
     vertex: Vertex,
 ) -> i32 {
-    new_and_updated_edges
-        .values()
-        .map(|(new_edges, _updated_edges)| new_edges.len() as i32)
-        .sum::<i32>()
-        - graph.in_graph().edges(vertex).len() as i32
-        - graph.out_graph().edges(vertex).len() as i32
+    let mut neighbors_newedges_map = graph
+        .out_graph()
+        .edges(vertex)
+        .map(|x| (x.head, -1))
+        .collect::<HashMap<_, _>>();
+
+    for (x, (new, _)) in new_and_updated_edges.iter() {
+        *neighbors_newedges_map.get_mut(x).unwrap() += new.len() as i64;
+    }
+
+    let p = 1;
+
+    neighbors_newedges_map
+        .iter()
+        .map(|(n, diff)| {
+            let old = graph.out_graph().edges(*n).len() as i64;
+
+            (old + diff).pow(p) - old.pow(p)
+        })
+        .sum::<i64>() as i32
 }
 
 pub fn new_edge_map<G: Graph>(graph: &ReversibleGraph<G>) -> Vec<WeightedEdge> {
