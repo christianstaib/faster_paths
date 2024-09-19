@@ -14,9 +14,11 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     graph: PathBuf,
+
     /// Infile in .fmi format
     #[arg(short, long)]
     hub_graph: PathBuf,
+
     /// Infile in .fmi format
     #[arg(short, long)]
     contracted_graph: PathBuf,
@@ -38,7 +40,7 @@ fn main() {
     // Create contracted_graph
     let contracted_graph = ContractedGraph::by_contraction_top_down_with_heuristic(
         &graph,
-        contracted_graph.level_to_vertex(),
+        &hub_graph.level_to_vertex,
         &hub_graph,
     );
 

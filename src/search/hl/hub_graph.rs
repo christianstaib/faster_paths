@@ -22,8 +22,8 @@ pub struct HubGraph {
     pub forward: HalfHubGraph,
     pub backward: HalfHubGraph,
     pub shortcuts: HashMap<(Vertex, Vertex), Vertex>,
-    level_to_vertex: Vec<Vertex>,
-    vertex_to_level: Vec<Level>,
+    pub level_to_vertex: Vec<Vertex>,
+    pub vertex_to_level: Vec<Level>,
 }
 
 impl HubGraph {
