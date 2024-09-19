@@ -1,4 +1,5 @@
 use std::{
+    cmp::Reverse,
     collections::HashSet,
     fs::File,
     io::{BufReader, BufWriter},
@@ -248,7 +249,15 @@ pub fn hitting_set(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex
 /// determined by the vertex that hits the most paths. The function processes
 /// paths in parallel, iteratively selecting the most frequent vertex and
 /// updating active paths until all paths are exhausted.
-pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex> {
+pub fn level_to_vertex_with_ord<F, K>(
+    paths: &[Vec<Vertex>],
+    number_of_vertices: u32,
+    order: F,
+) -> Vec<Vertex>
+where
+    F: Fn(&Vertex) -> K,
+    K: Ord,
+{
     let mut level_to_vertex = Vec::new();
     let mut active_paths: Vec<usize> = (0..paths.len()).collect();
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
@@ -306,6 +315,89 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
         pb.set_position((paths.len() - active_paths.len()) as u64);
     }
     pb.finish_and_clear();
+
+    let mut active_vertices = active_vertices.into_iter().collect_vec();
+    active_vertices.sort_by_cached_key(|vertex| order(vertex));
+
+    // Insert the remaining vertices at the front, e.g. assign them the lowest
+    // levels.
+    level_to_vertex.splice(0..0, active_vertices);
+
+    level_to_vertex
+}
+
+/// Constructs a vector of vertices ordered by their level, where each level is
+/// determined by the vertex that hits the most paths. The function processes
+/// paths in parallel, iteratively selecting the most frequent vertex and
+/// updating active paths until all paths are exhausted.
+pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex> {
+    let mut level_to_vertex = Vec::new();
+    let mut active_paths: Vec<usize> = (0..paths.len()).collect();
+    let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
+
+    let mut all_hits = vec![0; number_of_vertices as usize];
+
+    let pb = get_progressbar("Generating level_to_vertex vector", paths.len() as u64);
+    while !active_paths.is_empty() {
+        let hits = active_paths
+            // Split the active_paths into chunks for parallel processing.
+            .par_chunks(active_paths.len().div_ceil(rayon::current_num_threads()))
+            // For each chunk, calculate how frequently each vertex appears across the active paths.
+            .map(|indices| {
+                let mut partial_hits = vec![0; number_of_vertices as usize];
+                for &index in indices {
+                    for &vertex in paths[index].iter() {
+                        partial_hits[vertex as usize] += 1;
+                    }
+                }
+                partial_hits
+            })
+            // Sum the results from all threads to get the total hit count for each vertex.
+            .reduce(
+                || vec![0; number_of_vertices as usize],
+                |mut hits, partial_hits| {
+                    for index in 0..number_of_vertices as usize {
+                        hits[index] += partial_hits[index]
+                    }
+                    hits
+                },
+            );
+
+        all_hits
+            .par_iter_mut()
+            .zip(hits.par_iter())
+            .for_each(|(all, this)| *all += this);
+
+        // Get the vertex that hits the most paths.
+        let vertex = hits
+            .par_iter()
+            .enumerate()
+            .max_by_key(|&(_vertex, hits)| hits)
+            .map(|(vertex, _)| vertex as Vertex)
+            .expect("hits cannot be empty if number_of_vertices > 0");
+
+        // There is no real max hitting vertex anymore.
+        if hits[vertex as usize] == 1 {
+            break;
+        }
+
+        // The level of this vertex is 1 lower than the previous one.
+        level_to_vertex.insert(0, vertex);
+
+        active_vertices.remove(&(vertex));
+
+        // Remove paths that are hit by vertex.
+        active_paths = active_paths
+            .into_par_iter()
+            .filter(|&index| !paths[index].contains(&vertex))
+            .collect();
+
+        pb.set_position((paths.len() - active_paths.len()) as u64);
+    }
+    pb.finish_and_clear();
+
+    let mut active_vertices = active_vertices.into_iter().collect_vec();
+    active_vertices.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
 
     // Insert the remaining vertices at the front, e.g. assign them the lowest
     // levels.

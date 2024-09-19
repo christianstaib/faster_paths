@@ -2,12 +2,12 @@ use std::{cmp::Reverse, path::PathBuf, time::Instant};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{
-        read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Graph,
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
+    search::{ch::contracted_graph::vertex_to_level, hl::hub_graph::HubGraph, PathFinding},
+    utility::{
+        average_ch_vertex_degree, average_hl_label_size, get_paths, level_to_vertex,
+        level_to_vertex_with_ord, read_bincode_with_spinnner,
     },
-    search::{ch::contracted_graph::vertex_to_level, PathFinding},
-    utility::{average_ch_vertex_degree, average_hl_label_size},
 };
 use itertools::Itertools;
 use rand::prelude::*;
@@ -20,21 +20,65 @@ struct Args {
     #[arg(short, long)]
     graph: PathBuf,
 
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    hub_graph: PathBuf,
+
     /// Number of labels to calculate
     #[arg(short, long)]
-    num_labels: u32,
+    labels: u32,
+
+    /// Number of labels to calculate
+    #[arg(short, long)]
+    paths: u32,
 }
 
 fn main() {
     let args = Args::parse();
 
     // Build graph
-    let edges = read_edges_from_fmi_file(&args.graph);
-    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+    let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(&args.graph);
 
-    let mut level_to_vertex = graph.out_graph().vertices().collect_vec();
+    let hub_graph: HubGraph = read_bincode_with_spinnner("hub graph", &args.hub_graph.as_path());
+
+    // Get paths and level_to_vertex
+    let paths = get_paths(
+        &hub_graph,
+        &graph.out_graph().non_trivial_vertices(),
+        args.paths,
+        3,
+        usize::MAX,
+    );
 
     let mut orderings = Vec::new();
+
+    let level_to_vertex: Vec<Vertex> = level_to_vertex(&paths, hub_graph.number_of_vertices());
+    orderings.push(("hitting-set, then hits", level_to_vertex.clone()));
+
+    let level_to_vertex: Vec<Vertex> =
+        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), |_vertex| {
+            let mut rng = thread_rng();
+            rng.gen::<u32>()
+        });
+    orderings.push(("hitting-set, then random", level_to_vertex.clone()));
+
+    let level_to_vertex: Vec<Vertex> =
+        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), |&vertex| {
+            graph.out_graph().edges(vertex).len()
+        });
+    orderings.push((
+        "hitting-set, then degree (small to large)",
+        level_to_vertex.clone(),
+    ));
+
+    let mut level_to_vertex: Vec<Vertex> =
+        level_to_vertex_with_ord(&paths, hub_graph.number_of_vertices(), |&vertex| {
+            Reverse(graph.out_graph().edges(vertex).len())
+        });
+    orderings.push((
+        "hitting-set, then degree (large to small)",
+        level_to_vertex.clone(),
+    ));
 
     level_to_vertex.shuffle(&mut thread_rng());
     orderings.push(("random", level_to_vertex.clone()));
@@ -46,29 +90,23 @@ fn main() {
     level_to_vertex.sort_by_key(|&vertex| Reverse(graph.out_graph().edges(vertex).len()));
     orderings.push(("degree (large to small)", level_to_vertex.clone()));
 
-    for (name, level_to_vertex) in orderings {
-        let start = Instant::now();
+    println!("hl:");
+    for (name, level_to_vertex) in orderings.iter() {
         let average_hl_label_size = average_hl_label_size(
             graph.out_graph(),
             &vertex_to_level(&level_to_vertex),
-            args.num_labels,
+            args.labels,
         );
-        let duration = start.elapsed();
-        println!(
-            "{}: average hl label size will be approximately {:.1}. Full calculation will take {:?}",
-            name, average_hl_label_size, duration / args.num_labels * graph.number_of_vertices()
-        );
+        println!("{:<50} {:>6.2} ", name, average_hl_label_size);
+    }
 
-        let start = Instant::now();
+    println!("\nch:");
+    for (name, level_to_vertex) in orderings.iter() {
         let average_ch_vertex_degree = average_ch_vertex_degree(
             graph.out_graph(),
             &vertex_to_level(&level_to_vertex),
-            args.num_labels,
+            args.labels,
         );
-        let duration = start.elapsed();
-        println!(
-            "{}: average ch edge degree will be approximately {:.1}. Full calculation will take {:?} ",
-            name, average_ch_vertex_degree, duration / args.num_labels * graph.number_of_vertices()
-        );
+        println!("{:<50} {:>6.2} ", name, average_ch_vertex_degree,);
     }
 }

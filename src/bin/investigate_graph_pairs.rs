@@ -66,7 +66,7 @@ fn main() {
         &graph_hl,
         &graph.out_graph().non_trivial_vertices(),
         100_000,
-        0,
+        3,
         usize::MAX,
     );
     let level_to_vertex: Vec<Vertex> =
@@ -75,7 +75,7 @@ fn main() {
     println!("Simple graph used as upper bound");
     let simple_graph_bound = simple_graph_bound(&simple_graph_hl, &paths);
 
-    let max_num_landmarks = 100;
+    let max_num_landmarks = 10;
     let landmarks_bounds = (1..=max_num_landmarks)
         .map(|n| {
             let landmarks = Landmarks::new(
@@ -91,8 +91,11 @@ fn main() {
     let mut writer = BufWriter::new(File::create(args.data.as_path()).unwrap());
     writeln!(
         writer,
-        "distance,hops,simple_graph_upper_bound,{:?}",
-        (1..=max_num_landmarks).map(|n| n.to_string()).join(",")
+        "distance,hops,simple_graph_upper_bound,{}",
+        (1..=max_num_landmarks)
+            .map(|n| n.to_string())
+            .join(",")
+            .to_string()
     )
     .unwrap();
     for i in 0..paths.len() {
