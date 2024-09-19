@@ -5,6 +5,7 @@ use std::{
 
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use itertools::Itertools;
+use log::info;
 use rand::{prelude::*, thread_rng};
 use rayon::prelude::*;
 
@@ -63,6 +64,7 @@ where
         + Send
         + Sync,
 {
+    info!("Setting up queue");
     let mut queue = new_queue_generic(&graph, &shortcut_generation);
 
     let mut edges = new_edge_map(&graph);
@@ -73,7 +75,13 @@ where
     let number_of_vertices = graph.out_graph().number_of_vertices() as u64;
     let pb = get_progressbar("Contracting", number_of_vertices);
 
+    info!("Start contracting");
     while let Some(Reverse((old_edge_difference, vertex))) = queue.pop() {
+        info!(
+            "Contracting {}. {:>2.2}% remaining",
+            vertex,
+            queue.len() as f32 / number_of_vertices as f32 * 100.0
+        );
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
         let new_edge_difference = edge_difference(&graph, &new_and_updated_edges, vertex);
         if new_edge_difference > old_edge_difference {
@@ -89,6 +97,7 @@ where
         graph.insert_and_update(&new_and_updated_edges);
     }
     pb.finish_and_clear();
+    info!("Finished contracting");
 
     (level_to_vertex, edges, shortcuts)
 }

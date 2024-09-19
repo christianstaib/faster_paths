@@ -7,13 +7,12 @@ use faster_paths::{
         Distance, Vertex,
     },
     search::{
-        alt::landmark::{self, Landmarks},
-        ch::contracted_graph::ContractedGraph,
-        hl::hub_graph::{self, HubGraph},
+        alt::landmark::Landmarks, ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph,
         DistanceHeuristic, PathFinding,
     },
     utility::{benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner},
 };
+use log::{info, warn};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -73,6 +72,7 @@ impl<'a> DistanceHeuristic for PathfinderHeuristic<'a> {
 
 fn main() {
     let args = Args::parse();
+    env_logger::init();
 
     // Build graph
     let edges = read_edges_from_fmi_file(&args.graph);
