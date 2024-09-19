@@ -1,9 +1,11 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::{BinaryHeap, HashMap},
 };
 
 use indicatif::{ParallelProgressIterator, ProgressIterator};
+use itertools::Itertools;
+use rand::{prelude::*, thread_rng};
 use rayon::prelude::*;
 
 use crate::{
@@ -106,9 +108,10 @@ where
         graph.out_graph().number_of_vertices() as u64,
     );
 
-    graph
-        .out_graph()
-        .vertices()
+    let mut vertices = graph.out_graph().vertices().collect_vec();
+    vertices.shuffle(&mut thread_rng());
+
+    vertices
         .into_par_iter()
         .progress_with(pb)
         .map(|vertex| {
