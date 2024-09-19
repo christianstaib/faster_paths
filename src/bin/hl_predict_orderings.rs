@@ -27,6 +27,10 @@ struct Args {
     #[arg(short, long)]
     labels: u32,
 
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    simple_hub_graph: Option<PathBuf>,
+
     /// Number of labels to calculate
     #[arg(short, long)]
     paths: u32,
@@ -50,6 +54,14 @@ fn main() {
     );
 
     let mut orderings = Vec::new();
+
+    if let Some(simple_hub_graph) = args.simple_hub_graph {
+        let simple_hub_graph: HubGraph =
+            read_bincode_with_spinnner("hub graph", &simple_hub_graph.as_path());
+        let level_to_vertex: Vec<Vertex> =
+            level_to_vertex(&paths, simple_hub_graph.number_of_vertices());
+        orderings.push(("simple ordering", level_to_vertex.clone()));
+    }
 
     let level_to_vertex: Vec<Vertex> = level_to_vertex(&paths, hub_graph.number_of_vertices());
     orderings.push(("hitting-set, then hits", level_to_vertex.clone()));
