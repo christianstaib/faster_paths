@@ -105,7 +105,7 @@ fn main() {
             &vertex_to_level(&level_to_vertex),
             args.labels,
         );
-        println!("{:<50} {:>6.2} ", name, average_hl_label_size);
+        println!("{:<70} {:>6.2} ", name, average_hl_label_size);
     }
 
     println!("\nch:");
@@ -115,6 +115,6 @@ fn main() {
             &vertex_to_level(&level_to_vertex),
             args.labels,
         );
-        println!("{:<50} {:>6.2} ", name, average_ch_vertex_degree,);
+        println!("{:<70} {:>6.2} ", name, average_ch_vertex_degree,);
     }
 }
