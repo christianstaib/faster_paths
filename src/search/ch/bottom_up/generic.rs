@@ -164,7 +164,7 @@ pub fn edge_difference<G: Graph>(
         *neighbors_newedges_map.get_mut(x).unwrap() += new.len() as i64;
     }
 
-    let p = 1;
+    let p = 2;
 
     neighbors_newedges_map
         .iter()
