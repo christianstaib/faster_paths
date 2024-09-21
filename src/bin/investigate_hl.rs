@@ -3,16 +3,11 @@ use std::path::PathBuf;
 use clap::Parser;
 use faster_paths::{
     graphs::Vertex,
-    search::{
-        ch::contracted_graph::{self, ContractedGraph},
-        hl::hub_graph::HubGraph,
-        PathFinding,
-    },
+    search::{hl::hub_graph::HubGraph, PathFinding},
     utility::{benchmark_distances, benchmark_path, read_bincode_with_spinnner},
 };
 use itertools::Itertools;
 use rand::prelude::*;
-use rayon::iter::{ParallelBridge, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
