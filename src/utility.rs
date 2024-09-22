@@ -427,7 +427,8 @@ pub fn benchmark_path(
 ) -> Duration {
     let pb = get_progressbar("Benchmarking", sources_and_targets.len() as u64);
 
-    let path_and_duration = sources_and_targets
+    let start = Instant::now();
+    let _path_and_duration = sources_and_targets
         .into_iter()
         .progress_with(pb)
         .map(|&(source, target)| {
@@ -436,14 +437,7 @@ pub fn benchmark_path(
             start.elapsed()
         })
         .collect_vec();
-
-    let average_duration = path_and_duration
-        .iter()
-        .map(|duration| duration.as_secs_f64())
-        .sum::<f64>()
-        / path_and_duration.len() as f64;
-
-    Duration::from_secs_f64(average_duration)
+    start.elapsed() / sources_and_targets.len() as u32
 }
 
 pub fn benchmark_distances(
@@ -452,7 +446,8 @@ pub fn benchmark_distances(
 ) -> Duration {
     let pb = get_progressbar("Benchmarking", sources_and_targets.len() as u64);
 
-    let path_and_duration = sources_and_targets
+    let start = Instant::now();
+    let _path_and_duration = sources_and_targets
         .into_iter()
         .progress_with(pb)
         .map(|&(source, target)| {
@@ -461,14 +456,7 @@ pub fn benchmark_distances(
             start.elapsed()
         })
         .collect_vec();
-
-    let average_duration = path_and_duration
-        .iter()
-        .map(|duration| duration.as_secs_f64())
-        .sum::<f64>()
-        / path_and_duration.len() as f64;
-
-    Duration::from_secs_f64(average_duration)
+    start.elapsed() / sources_and_targets.len() as u32
 }
 
 /// Non trivial unequal pairs
