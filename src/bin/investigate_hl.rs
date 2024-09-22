@@ -47,12 +47,11 @@ fn main() {
         .collect_vec();
 
     println!(
-        "getting random paths distances takes {:?} on average",
-        benchmark_distances(&hub_graph, &pairs)
-    );
-
-    println!(
         "getting random paths takes {:?} on average",
         benchmark_path(&hub_graph, &pairs)
+    );
+    println!(
+        "getting random paths distances takes {:?} on average",
+        benchmark_distances(&hub_graph, &pairs)
     );
 }
