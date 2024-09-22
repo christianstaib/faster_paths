@@ -54,6 +54,18 @@ fn main() {
         benchmark_distances(&contracted_graph, &pairs)
     );
 
+    let vertices = (0..contracted_graph.number_of_vertices()).collect_vec();
+    let mut rng = thread_rng();
+    let pairs: Vec<(Vertex, Vertex)> = (0..args.num_runs)
+        .map(|_| {
+            vertices
+                .choose_multiple(&mut rng, 2)
+                .cloned()
+                .collect_tuple()
+                .unwrap()
+        })
+        .collect_vec();
+
     println!(
         "getting random paths takes {:?} on average",
         benchmark_path(&contracted_graph, &pairs)
