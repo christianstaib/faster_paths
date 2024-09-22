@@ -439,11 +439,11 @@ pub fn benchmark_path(
 
     let average_duration = path_and_duration
         .iter()
-        .map(|duration| duration)
-        .sum::<Duration>()
-        / path_and_duration.len() as u32;
+        .map(|duration| duration.as_secs_f64())
+        .sum::<f64>()
+        / path_and_duration.len() as f64;
 
-    average_duration
+    Duration::from_secs_f64(average_duration)
 }
 
 pub fn benchmark_distances(
@@ -464,11 +464,11 @@ pub fn benchmark_distances(
 
     let average_duration = path_and_duration
         .iter()
-        .map(|duration| duration)
-        .sum::<Duration>()
-        / path_and_duration.len() as u32;
+        .map(|duration| duration.as_secs_f64())
+        .sum::<f64>()
+        / path_and_duration.len() as f64;
 
-    average_duration
+    Duration::from_secs_f64(average_duration)
 }
 
 /// Non trivial unequal pairs

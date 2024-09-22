@@ -1,4 +1,9 @@
-use std::{fs::File, io::BufWriter, path::PathBuf};
+use std::{
+    fs::File,
+    io::BufWriter,
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use clap::Parser;
 use faster_paths::{
@@ -12,14 +17,14 @@ use faster_paths::{
             vertex_distance_queue::{VertexDistanceQueue, VertexDistanceQueueBinaryHeap},
             vertex_expanded_data::{VertexExpandedData, VertexExpandedDataHashSet},
         },
-        dijkstra::dijkstra_one_to_one,
+        dijkstra::{dijkstra_one_to_all_wraped, dijkstra_one_to_one},
     },
     utility::{benchmark_distances, benchmark_path, gen_tests_cases, get_progressbar},
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use rand::prelude::*;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -54,6 +59,7 @@ fn main() {
         serde_json::to_writer(writer, &out_degrees).unwrap();
     }
 
+    let vertices = graph.out_graph().vertices().collect_vec();
     println!(
         "non trivial vertices: {}",
         graph.out_graph().non_trivial_vertices().len()
@@ -75,6 +81,21 @@ fn main() {
     println!("average path hops len {}", avg_path_len);
     println!("average dijkstra_rank {}", avg_dijkstra_rank);
     println!("average queue pops {}", avg_queue_pops);
+
+    let start = Instant::now();
+    (0..n).into_par_iter().for_each_init(
+        || thread_rng(),
+        |mut rng, _| {
+            let source = vertices.choose(&mut rng).cloned().unwrap();
+
+            dijkstra_one_to_all_wraped(graph.out_graph(), source);
+        },
+    );
+    let pred_time = start.elapsed().as_secs_f64() * 2.0 / n as f64 * vertices.len() as f64;
+    println!(
+        "2xDijsktra per node for all nodes would take {:?}",
+        Duration::from_secs_f64(pred_time)
+    );
 
     let m = 1_000;
     println!("Value over {} sequential searches", m);
