@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::Parser;
 use faster_paths::{
@@ -9,7 +9,7 @@ use faster_paths::{
     search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph},
     utility::{
         benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner,
-        read_json_with_spinnner,
+        read_json_with_spinnner, write_bincode_with_spinnner,
     },
 };
 
@@ -28,6 +28,10 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     level_to_vertex: PathBuf,
+
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    contracted_graph: PathBuf,
 }
 
 fn main() {
@@ -51,13 +55,16 @@ fn main() {
         &hub_graph,
     );
 
-    // // Write contracted_graph to file
-    // let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
-    // bincode::serialize_into(writer, &contracted_graph).unwrap();
-
     // Benchmark and test correctness
     let tests = generate_test_cases(graph.out_graph(), 1_000);
     let average_duration =
         benchmark_and_test_path(graph.out_graph(), &tests, &contracted_graph).unwrap();
     println!("Average duration was {:?}", average_duration);
+
+    // Write contracted_graph to file
+    write_bincode_with_spinnner(
+        "contracted_graph",
+        &args.contracted_graph.as_path(),
+        &contracted_graph,
+    );
 }
