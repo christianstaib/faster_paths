@@ -15,6 +15,7 @@ use faster_paths::{
     },
     utility::read_json_with_spinnner,
 };
+use itertools::Itertools;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -40,7 +41,7 @@ fn main() {
     let vertex_to_level = vertex_to_level(&level_to_vertex);
 
     let mut data = DijkstraDataVec::new(graph.out_graph());
-    let (_edges, _shortcutes, alive_setteled, setteled) = get_ch_edges_debug(
+    let (_edges, _shortcutes, alive_setteled, setteled, seen) = get_ch_edges_debug(
         graph.out_graph(),
         &mut data,
         &mut VertexExpandedDataBitSet::new(graph.out_graph()),
@@ -48,6 +49,9 @@ fn main() {
         &vertex_to_level,
         1234,
     );
+
     println!("{:?}", alive_setteled);
     println!("{:?}", setteled);
+    println!("{:?}", seen);
+    println!("{:?}", _edges.iter().map(|edge| edge.head).collect_vec());
 }

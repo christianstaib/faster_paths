@@ -244,11 +244,13 @@ pub fn get_ch_edges_debug(
 ) -> (
     Vec<WeightedEdge>,
     Vec<((Vertex, Vertex), Vertex)>,
-    HashSet<(Vertex, Vertex)>,
-    HashSet<(Vertex, Vertex)>,
+    Vec<(Vertex, Vertex)>,
+    Vec<(Vertex, Vertex)>,
+    Vec<(Vertex, Vertex)>,
 ) {
-    let mut alive_setteled = HashSet::new();
-    let mut setteled = HashSet::new();
+    let mut alive_setteled = Vec::new();
+    let mut setteled = Vec::new();
+    let mut seen = HashSet::new();
     // Maps (vertex -> (max level on path from source to vertex, associated vertex))
     //
     // A vertex is a head of a ch edge if its levels equals the max level on its
@@ -278,9 +280,9 @@ pub fn get_ch_edges_debug(
         }
 
         if alive.contains(&tail) {
-            alive_setteled.insert((tail, data.get_predecessor(tail).unwrap_or(tail)));
+            alive_setteled.push((tail, data.get_predecessor(tail).unwrap_or(tail)));
         } else {
-            setteled.insert((tail, data.get_predecessor(tail).unwrap_or(tail)));
+            setteled.push((tail, data.get_predecessor(tail).unwrap_or(tail)));
         }
 
         let (max_level_tail, max_level_tail_vertex) = max_level[&tail];
@@ -319,6 +321,8 @@ pub fn get_ch_edges_debug(
                 data.set_predecessor(edge.head, tail);
                 queue.insert(edge.head, alternative_distance_head);
 
+                seen.insert(edge.head);
+
                 let level_head = vertex_to_level[edge.head as usize];
                 if level_head > max_level_tail {
                     max_level.insert(edge.head, (level_head, edge.head));
@@ -335,5 +339,17 @@ pub fn get_ch_edges_debug(
         alive.remove(&tail);
     }
 
-    (edges, shortcuts, alive_setteled, setteled)
+    for (x, _) in alive_setteled.iter() {
+        seen.remove(x);
+    }
+    for (x, _) in setteled.iter() {
+        seen.remove(x);
+    }
+
+    let seen = seen
+        .into_iter()
+        .map(|v| (v, data.get_predecessor(v).unwrap()))
+        .collect_vec();
+
+    (edges, shortcuts, alive_setteled, setteled, seen)
 }

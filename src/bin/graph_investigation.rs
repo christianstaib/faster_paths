@@ -97,7 +97,7 @@ fn main() {
         Duration::from_secs_f64(pred_time)
     );
 
-    let m = 1_000;
+    let m = 1_00;
     println!("Value over {} sequential searches", m);
     let sources_and_targets = gen_tests_cases(graph.out_graph(), m);
     let avg_dijkstra_duration = benchmark_path(graph.out_graph(), &sources_and_targets);
