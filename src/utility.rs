@@ -425,18 +425,12 @@ pub fn benchmark_path(
     pathfinder: &dyn PathFinding,
     sources_and_targets: &[(Vertex, Vertex)],
 ) -> Duration {
-    let pb = get_progressbar("Benchmarking", sources_and_targets.len() as u64);
-
     let start = Instant::now();
     let _path_and_duration = sources_and_targets
         .into_iter()
-        .progress_with(pb)
-        .map(|&(source, target)| {
-            let start = Instant::now();
+        .for_each(|&(source, target)| {
             let _path = pathfinder.shortest_path(source, target);
-            start.elapsed()
-        })
-        .collect_vec();
+        });
     start.elapsed() / sources_and_targets.len() as u32
 }
 
@@ -444,18 +438,12 @@ pub fn benchmark_distances(
     pathfinder: &dyn PathFinding,
     sources_and_targets: &[(Vertex, Vertex)],
 ) -> Duration {
-    let pb = get_progressbar("Benchmarking", sources_and_targets.len() as u64);
-
     let start = Instant::now();
     let _path_and_duration = sources_and_targets
         .into_iter()
-        .progress_with(pb)
-        .map(|&(source, target)| {
-            let start = Instant::now();
+        .for_each(|&(source, target)| {
             let _path = pathfinder.shortest_path_distance(source, target);
-            start.elapsed()
-        })
-        .collect_vec();
+        });
     start.elapsed() / sources_and_targets.len() as u32
 }
 
