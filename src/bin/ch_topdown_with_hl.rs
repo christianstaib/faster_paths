@@ -2,7 +2,10 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Vertex},
+    graphs::{
+        reversible_graph::ReversibleGraph, vec_hash_graph::VecHashGraph,
+        vec_vec_graph::VecVecGraph, Graph, Vertex,
+    },
     search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph},
     utility::{
         benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner,
@@ -34,6 +37,8 @@ fn main() {
     // Build graph
     let graph: ReversibleGraph<VecVecGraph> =
         read_bincode_with_spinnner("graph", &args.graph.as_path());
+    let graph: ReversibleGraph<VecHashGraph> =
+        ReversibleGraph::from_edges(&graph.out_graph().all_edges());
 
     let hub_graph: HubGraph = read_bincode_with_spinnner("hub graph", &args.hub_graph.as_path());
     let level_to_vertex: Vec<Vertex> =
