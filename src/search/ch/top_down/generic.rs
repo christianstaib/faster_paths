@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 use indicatif::ProgressIterator;
+use log::info;
 
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Graph, Level, TaillessEdge, Vertex, WeightedEdge},
@@ -35,15 +36,21 @@ where
     let pb = get_progressbar("Contracting", number_of_vertices);
 
     for &vertex in level_to_vertex.iter().progress_with(pb) {
+        let start = Instant::now();
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
-        println!(
-            "num edges {}, edge diff {}",
-            graph.out_graph().number_of_edges(),
-            edge_difference(&graph, &new_and_updated_edges, vertex)
-        );
+        info!("creating edges took {:?}", start.elapsed());
+
+        let start = Instant::now();
         update_edge_map(&mut edges, &mut shortcuts, vertex, &new_and_updated_edges);
+        info!("updating edge map {:?}", start.elapsed());
+
+        let start = Instant::now();
         graph.disconnect(vertex);
+        info!("disonecting took {:?}", start.elapsed());
+
+        let start = Instant::now();
         graph.insert_and_update(&new_and_updated_edges);
+        info!("insert and update took {:?}", start.elapsed());
     }
 
     (level_to_vertex.clone(), edges, shortcuts)
