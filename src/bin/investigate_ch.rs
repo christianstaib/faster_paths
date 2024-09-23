@@ -2,9 +2,11 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use faster_paths::{
-    graphs::Vertex,
+    graphs::{Distance, Vertex},
     search::{
         ch::contracted_graph::{self, ContractedGraph},
+        dijkstra::dijkstra_one_to_all_wraped,
+        shortcuts::replace_shortcuts_slowly,
         PathFinding,
     },
     utility::{benchmark_distances, benchmark_path, read_bincode_with_spinnner},
@@ -31,6 +33,35 @@ fn main() {
     // Read contracted_graph
     let contracted_graph: ContractedGraph =
         read_bincode_with_spinnner("contrated graph", &args.contracted_graph.as_path());
+
+    let source = 1234;
+
+    let x = dijkstra_one_to_all_wraped(contracted_graph.upward_graph(), source);
+    let max_dist = *x
+        .distances
+        .iter()
+        .filter(|&&dist| dist != Distance::MAX)
+        .max()
+        .unwrap() as f32;
+
+    let mut paths = Vec::new();
+    let mut dists = Vec::new();
+    for v in contracted_graph.upward_graph().vertices() {
+        let pre = x.predecessors[v as usize];
+        if pre != Vertex::MAX {
+            let mut path = vec![pre, v];
+            replace_shortcuts_slowly(&mut path, contracted_graph.shortcuts());
+            dists.push(
+                path.iter()
+                    .map(|&v| x.distances[v as usize] as f32 / max_dist)
+                    .collect_vec(),
+            );
+            paths.push(path);
+        }
+    }
+    println!("{:?}", paths);
+    println!("\n\n\n");
+    println!("{:?}", dists);
 
     println!(
         "Contracted graph has {} shortcuts",

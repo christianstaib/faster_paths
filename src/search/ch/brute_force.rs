@@ -233,3 +233,107 @@ pub fn get_ch_edges(
 
     (edges, shortcuts)
 }
+
+pub fn get_ch_edges_debug(
+    graph: &dyn Graph,
+    data: &mut dyn DijkstraData,
+    expanded: &mut dyn VertexExpandedData,
+    queue: &mut dyn VertexDistanceQueue,
+    vertex_to_level: &Vec<u32>,
+    source: Vertex,
+) -> (
+    Vec<WeightedEdge>,
+    Vec<((Vertex, Vertex), Vertex)>,
+    HashSet<(Vertex, Vertex)>,
+    HashSet<(Vertex, Vertex)>,
+) {
+    let mut alive_setteled = HashSet::new();
+    let mut setteled = HashSet::new();
+    // Maps (vertex -> (max level on path from source to vertex, associated vertex))
+    //
+    // A vertex is a head of a ch edge if its levels equals the max level on its
+    // path from the source. The tail of this ch edge is is the vertex with the
+    // max level on the path to the head's predecessor
+    let mut max_level: HashMap<Vertex, (Level, Vertex)> = HashMap::new();
+    max_level.insert(source, (vertex_to_level[source as usize], source));
+
+    // Keeps track of vertices that potentially could be the head of a ch edge with
+    // a tail in source. If there are no more alive vertices, the search can be
+    // stopped early.
+    let mut alive = HashSet::from([source]);
+    alive.insert(source);
+
+    data.set_distance(source, 0);
+    queue.insert(source, 0);
+
+    let mut edges = Vec::new();
+    let mut shortcuts = Vec::new();
+
+    while let Some((tail, distance_tail)) = queue.pop() {
+        if expanded.expand(tail) {
+            continue;
+        }
+        if alive.is_empty() {
+            break;
+        }
+
+        if alive.contains(&tail) {
+            alive_setteled.insert((tail, data.get_predecessor(tail).unwrap_or(tail)));
+        } else {
+            setteled.insert((tail, data.get_predecessor(tail).unwrap_or(tail)));
+        }
+
+        let (max_level_tail, max_level_tail_vertex) = max_level[&tail];
+        let level_tail = vertex_to_level[tail as usize];
+
+        // Check if tail is a head of a ch edge
+        if max_level_tail == level_tail {
+            // Dont create a edge from source to source. source has no predecessor
+            if let Some(predecessor) = data.get_predecessor(tail) {
+                let shortcut_tail = max_level.get(&predecessor).unwrap().1;
+                let shortcut_head = tail;
+
+                // Only add edge if its tail is source. This function only returns edges with a
+                // tail in source.
+                if shortcut_tail == source {
+                    edges.push(WeightedEdge::new(
+                        shortcut_tail,
+                        shortcut_head,
+                        data.get_distance(tail),
+                    ));
+
+                    let path = data.get_path(shortcut_head).unwrap().vertices;
+                    shortcuts.extend(create_shortcuts(&path, vertex_to_level));
+                }
+                alive.remove(&tail);
+            }
+        }
+
+        let tail_is_alive = alive.contains(&tail);
+
+        for edge in graph.edges(tail) {
+            let current_distance_head = data.get_distance(edge.head);
+            let alternative_distance_head = distance_tail + edge.weight;
+            if alternative_distance_head < current_distance_head {
+                data.set_distance(edge.head, alternative_distance_head);
+                data.set_predecessor(edge.head, tail);
+                queue.insert(edge.head, alternative_distance_head);
+
+                let level_head = vertex_to_level[edge.head as usize];
+                if level_head > max_level_tail {
+                    max_level.insert(edge.head, (level_head, edge.head));
+                } else {
+                    max_level.insert(edge.head, (max_level_tail, max_level_tail_vertex));
+                }
+
+                if tail_is_alive {
+                    alive.insert(edge.head);
+                }
+            }
+        }
+
+        alive.remove(&tail);
+    }
+
+    (edges, shortcuts, alive_setteled, setteled)
+}

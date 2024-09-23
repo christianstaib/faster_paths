@@ -62,8 +62,8 @@ pub trait DijkstraData {
 /// Struct to store predecessors and distances in a single vector.
 pub struct DijkstraDataVec {
     // A vector storing tuples of (predecessor, distance) for each vertex.
-    predecessors: Vec<Vertex>,
-    distances: Vec<Distance>,
+    pub predecessors: Vec<Vertex>,
+    pub distances: Vec<Distance>,
 }
 
 impl DijkstraDataVec {

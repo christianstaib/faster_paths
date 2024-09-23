@@ -35,7 +35,7 @@ struct Args {
 
     /// Infile in .fmi format
     #[arg(short, long)]
-    degrees_out: PathBuf,
+    degrees_out: Option<PathBuf>,
 }
 
 fn main() {
@@ -49,13 +49,13 @@ fn main() {
         graph.out_graph().is_bidirectional()
     );
 
-    {
+    if let Some(degrees_out) = args.degrees_out.as_ref() {
         let out_degrees = graph
             .out_graph()
             .vertices()
             .map(|vertex| graph.out_graph().edges(vertex).len())
             .collect_vec();
-        let writer = BufWriter::new(File::create(&args.degrees_out).unwrap());
+        let writer = BufWriter::new(File::create(&degrees_out).unwrap());
         serde_json::to_writer(writer, &out_degrees).unwrap();
     }
 
