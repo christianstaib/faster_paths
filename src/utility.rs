@@ -426,7 +426,7 @@ pub fn benchmark_path(
     sources_and_targets: &[(Vertex, Vertex)],
 ) -> Duration {
     let start = Instant::now();
-    let _path_and_duration = sources_and_targets
+    sources_and_targets
         .into_iter()
         .for_each(|&(source, target)| {
             let _path = pathfinder.shortest_path(source, target);
@@ -439,7 +439,7 @@ pub fn benchmark_distances(
     sources_and_targets: &[(Vertex, Vertex)],
 ) -> Duration {
     let start = Instant::now();
-    let _path_and_duration = sources_and_targets
+    sources_and_targets
         .into_iter()
         .for_each(|&(source, target)| {
             let _path = pathfinder.shortest_path_distance(source, target);
