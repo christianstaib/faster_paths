@@ -38,7 +38,14 @@ where
     for &vertex in level_to_vertex.iter().progress_with(pb) {
         let start = Instant::now();
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
-        info!("creating edges took {:?}", start.elapsed());
+        info!(
+            "creating edges took {:?}, will insert {:?} edges",
+            start.elapsed(),
+            new_and_updated_edges
+                .iter()
+                .map(|(_, (new, _))| new.len())
+                .sum::<usize>()
+        );
 
         let start = Instant::now();
         update_edge_map(&mut edges, &mut shortcuts, vertex, &new_and_updated_edges);
