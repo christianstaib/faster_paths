@@ -35,16 +35,25 @@ where
     let number_of_vertices = graph.out_graph().number_of_vertices() as u64;
     let pb = get_progressbar("Contracting", number_of_vertices);
 
+    let mut edge_num = graph.out_graph().number_of_edges() as i32;
     for &vertex in level_to_vertex.iter().progress_with(pb) {
         let start = Instant::now();
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
+        let new_edges = new_and_updated_edges
+            .iter()
+            .map(|(_, (new, _))| new.len())
+            .sum::<usize>();
+
+        let edge_diff = new_edges as i32
+            - graph.in_graph().edges(vertex).len() as i32
+            - graph.out_graph().edges(vertex).len() as i32;
+        edge_num += edge_diff;
         info!(
-            "creating edges took {:?}, will insert {:?} edges",
+            "creating edges took {:?}, will insert {:?} edges (edge diff {:?}, new edge_num {:?})",
             start.elapsed(),
-            new_and_updated_edges
-                .iter()
-                .map(|(_, (new, _))| new.len())
-                .sum::<usize>()
+            new_edges,
+            edge_diff,
+            edge_num
         );
 
         let start = Instant::now();
