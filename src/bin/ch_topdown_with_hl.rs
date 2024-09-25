@@ -23,6 +23,10 @@ struct Args {
 
     /// Infile in .fmi format
     #[arg(short, long)]
+    hub_graph: PathBuf,
+
+    /// Infile in .fmi format
+    #[arg(short, long)]
     level_to_vertex: PathBuf,
 
     /// Infile in .fmi format
@@ -40,6 +44,8 @@ fn main() {
     let graph: ReversibleGraph<VecHashGraph> =
         ReversibleGraph::from_edges(&graph.out_graph().all_edges());
 
+    let hub_graph: HubGraph = read_bincode_with_spinnner("hub graph", &args.hub_graph.as_path());
+
     let level_to_vertex: Vec<Vertex> =
         read_json_with_spinnner("level to vertex", &args.level_to_vertex.as_path());
 
@@ -47,7 +53,7 @@ fn main() {
     let contracted_graph = ContractedGraph::by_contraction_top_down_with_heuristic(
         &graph,
         &level_to_vertex,
-        &TrivialHeuristic {},
+        &hub_graph,
     );
 
     // Benchmark and test correctness

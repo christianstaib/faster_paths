@@ -6,7 +6,7 @@ use faster_paths::{
         reversible_graph::ReversibleGraph, vec_hash_graph::VecHashGraph,
         vec_vec_graph::VecVecGraph, Graph, Vertex,
     },
-    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, TrivialHeuristic},
+    search::{ch::contracted_graph::ContractedGraph, TrivialHeuristic},
     utility::{
         benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner,
         read_json_with_spinnner, write_bincode_with_spinnner,
@@ -20,10 +20,6 @@ struct Args {
     /// Infile in .fmi format
     #[arg(short, long)]
     graph: PathBuf,
-
-    /// Infile in .fmi format
-    #[arg(short, long)]
-    hub_graph: PathBuf,
 
     /// Infile in .fmi format
     #[arg(short, long)]
@@ -44,8 +40,6 @@ fn main() {
     let graph: ReversibleGraph<VecHashGraph> =
         ReversibleGraph::from_edges(&graph.out_graph().all_edges());
 
-    let hub_graph: HubGraph = read_bincode_with_spinnner("hub graph", &args.hub_graph.as_path());
-
     let level_to_vertex: Vec<Vertex> =
         read_json_with_spinnner("level to vertex", &args.level_to_vertex.as_path());
 
@@ -53,7 +47,7 @@ fn main() {
     let contracted_graph = ContractedGraph::by_contraction_top_down_with_heuristic(
         &graph,
         &level_to_vertex,
-        &hub_graph,
+        &TrivialHeuristic {},
     );
 
     // Benchmark and test correctness
