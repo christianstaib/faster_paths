@@ -6,7 +6,7 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
     },
     reading_pathfinder,
-    utility::{benchmark_path, gen_tests_cases},
+    utility::{benchmark_distances, benchmark_path, gen_tests_cases},
     FileType,
 };
 
@@ -42,6 +42,6 @@ fn main() {
 
     let sources_and_targets = gen_tests_cases(graph.out_graph(), args.number_of_benchmarks);
 
-    let average_duration = benchmark_path(&*pathfinder, &sources_and_targets);
-    println!("average duration was {:?}", average_duration);
+    let average_duration = benchmark_distances(&*pathfinder, &sources_and_targets);
+    println!("average spd duration was {:?}", average_duration);
 }
