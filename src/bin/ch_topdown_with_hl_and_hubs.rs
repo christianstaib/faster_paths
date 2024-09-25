@@ -96,15 +96,10 @@ impl DistanceHeuristic for CombindedHeuristic {
         target: Vertex,
         distance: Distance,
     ) -> bool {
-        if self
-            .hub_graph
+        self.hub_graph
             .is_less_or_equal_upper_bound(source, target, distance)
-        {
-            return self
+            && self
                 .landmarks
-                .is_less_or_equal_upper_bound(source, target, distance);
-        }
-
-        false
+                .is_less_or_equal_upper_bound(source, target, distance)
     }
 }
