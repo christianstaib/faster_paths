@@ -5,7 +5,7 @@ use log::info;
 
 use crate::{
     graphs::{reversible_graph::ReversibleGraph, Graph, Level, TaillessEdge, Vertex, WeightedEdge},
-    search::ch::bottom_up::generic::{edge_difference, update_edge_map},
+    search::ch::bottom_up::generic::update_edge_map,
     utility::get_progressbar,
 };
 
@@ -35,7 +35,7 @@ where
     let number_of_vertices = graph.out_graph().number_of_vertices() as u64;
     let pb = get_progressbar("Contracting", number_of_vertices);
 
-    let mut edge_num = graph.out_graph().number_of_edges() as i32;
+    let mut edge_num = graph.out_graph().number_of_edges() as i64;
     for &vertex in level_to_vertex.iter().progress_with(pb) {
         let start = Instant::now();
         let new_and_updated_edges = shortcut_generation(&graph, vertex);
@@ -44,9 +44,9 @@ where
             .map(|(_, (new, _))| new.len())
             .sum::<usize>();
 
-        let edge_diff = new_edges as i32
-            - graph.in_graph().edges(vertex).len() as i32
-            - graph.out_graph().edges(vertex).len() as i32;
+        let edge_diff = new_edges as i64
+            - graph.in_graph().edges(vertex).len() as i64
+            - graph.out_graph().edges(vertex).len() as i64;
         edge_num += edge_diff;
         info!(
             "creating edges took {:?}, will insert {:?} edges (edge diff {:?}, new edge_num {:?})",
