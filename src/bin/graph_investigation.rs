@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::BufWriter,
+    io::{BufWriter, Write},
     path::PathBuf,
     time::{Duration, Instant},
 };
@@ -48,6 +48,24 @@ fn main() {
         "Is graph bidirectional? {}",
         graph.out_graph().is_bidirectional()
     );
+
+    let mut bi_edge = 0;
+    let mut nonbi_edge = 0;
+    let mut writer = BufWriter::new(File::create("missing_edges.txt").unwrap());
+    graph.out_graph().all_edges().into_iter().for_each(|edge| {
+        let other = graph.get_weight(&edge.remove_weight().reversed());
+        if other != None {
+            bi_edge += 1;
+        } else {
+            nonbi_edge += 1;
+        }
+
+        if other != Some(edge.weight) {
+            writeln!(writer, "{} {} {} 0 0", edge.head, edge.tail, edge.weight).unwrap();
+        }
+    });
+    writer.flush().unwrap();
+    println!("{} {}", bi_edge, nonbi_edge);
 
     if let Some(degrees_out) = args.degrees_out.as_ref() {
         let out_degrees = graph
