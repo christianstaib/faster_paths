@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf};
+use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf, sync::atomic::AtomicU32};
 
 use clap::Parser;
 use faster_paths::{
@@ -60,6 +60,8 @@ fn main() {
     let mut all_hits = vec![0; number_of_vertices as usize];
     let vertices = graph.out_graph().vertices().collect_vec();
 
+    let seen_paths = AtomicU32::new(0);
+
     let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
         let paths = (0..)
@@ -77,11 +79,14 @@ fn main() {
                 },
             )
             .flatten()
-            .filter(|path| path.vertices.iter().all(|v| !hitting_set_set.contains(v)))
+            .filter(|path| {
+                seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                path.vertices.iter().all(|v| !hitting_set_set.contains(v))
+            })
             .take_any(args.m as usize)
             .collect::<Vec<_>>();
 
-        let mut hits = paths
+        let hits = paths
             // Split the active_paths into chunks for parallel processing.
             .par_chunks(paths.len().div_ceil(rayon::current_num_threads()))
             // For each chunk, calculate how frequently each vertex appears across the active paths.
@@ -129,6 +134,11 @@ fn main() {
         active_vertices.remove(&vertex);
         pb.inc(1);
     }
+
+    println!(
+        "seen {} paths",
+        seen_paths.load(std::sync::atomic::Ordering::Relaxed)
+    );
 
     let mut active_vertices = active_vertices.into_iter().collect_vec();
 
