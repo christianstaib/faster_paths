@@ -31,6 +31,10 @@ struct Args {
     #[arg(short, long, default_value = "100000")]
     number_of_searches: u32,
 
+    /// Number of seartes.
+    #[arg(short, long, default_value = "100000")]
+    m: u32,
+
     /// Path to the output file where the vertex to level mapping will be
     /// stored.
     #[arg(short, long)]
@@ -76,7 +80,7 @@ fn main() {
             )
             .flatten()
             .filter(|path| path.vertices.iter().all(|v| !hitting_set_set.contains(v)))
-            .take_any(10_000)
+            .take_any(args.m as usize)
             .collect::<Vec<_>>();
 
         let mut hits = paths
