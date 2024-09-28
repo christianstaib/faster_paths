@@ -71,6 +71,8 @@ fn main() {
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
         let vertices = active_vertices.iter().cloned().collect_vec();
 
+        let this_seen_paths = AtomicU32::new(0);
+
         let paths = (0..)
             .par_bridge()
             .map_init(
@@ -88,6 +90,7 @@ fn main() {
             .flatten()
             .filter(|path| {
                 seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 path.vertices.iter().all(|v| !hitting_set_set.contains(v))
             })
             .take_any(args.m as usize)
@@ -153,8 +156,9 @@ fn main() {
                 &verticesx,
             );
             println!(
-            "seen {:>9} paths. hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
+            "seen {:>9} paths. hitting {:>2.5}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
             seen_paths.load(std::sync::atomic::Ordering::Relaxed),
+            100.0-((args.m as f32 / this_seen_paths.load(std::sync::atomic::Ordering::Relaxed) as f32) * 100.0),
             hitting_set_set.len(),
             average_hl_label_size,
             verticesx.len(),
