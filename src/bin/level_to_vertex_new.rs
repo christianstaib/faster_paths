@@ -5,7 +5,7 @@ use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
     reading_pathfinder,
     search::{ch::contracted_graph::vertex_to_level, PathFinding},
-    utility::{average_hl_label_size, get_progressbar},
+    utility::{average_hl_label_size, average_hl_label_size_vertices, get_progressbar},
     FileType,
 };
 use itertools::Itertools;
@@ -58,12 +58,19 @@ fn main() {
     let mut hitting_set_set = HashSet::new();
     let mut level_to_vertex = Vec::new();
     let mut all_hits = vec![0; number_of_vertices as usize];
-    let vertices = graph.out_graph().vertices().collect_vec();
 
     let seen_paths = AtomicU32::new(0);
 
+    let vertices = (0..graph.number_of_vertices()).collect_vec();
+    let verticesx = vertices
+        .choose_multiple(&mut thread_rng(), 1_000)
+        .cloned()
+        .collect_vec();
+
     let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
+        let vertices = active_vertices.iter().cloned().collect_vec();
+
         let paths = (0..)
             .par_bridge()
             .map_init(
@@ -133,6 +140,26 @@ fn main() {
         hitting_set_set.insert(vertex);
         active_vertices.remove(&vertex);
         pb.inc(1);
+
+        if pb.position() % 1_000 == 0 {
+            let mut active_verticesx = active_vertices.iter().cloned().collect_vec();
+            active_verticesx.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
+            let mut level_to_vertex = level_to_vertex.clone();
+            level_to_vertex.splice(0..0, active_verticesx);
+
+            let average_hl_label_size = average_hl_label_size_vertices(
+                graph.out_graph(),
+                &vertex_to_level(&level_to_vertex),
+                &verticesx,
+            );
+            println!(
+            "seen {:>9} paths. hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
+            seen_paths.load(std::sync::atomic::Ordering::Relaxed),
+            hitting_set_set.len(),
+            average_hl_label_size,
+            verticesx.len(),
+            graph.number_of_vertices());
+        }
     }
 
     println!(
@@ -141,11 +168,7 @@ fn main() {
     );
 
     let mut active_vertices = active_vertices.into_iter().collect_vec();
-
     active_vertices.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
-
-    // Insert the remaining vertices at the front, e.g. assign them the lowest
-    // levels.
     level_to_vertex.splice(0..0, active_vertices);
 
     // Write level_to_vertex to file
