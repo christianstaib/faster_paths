@@ -80,7 +80,7 @@ fn main() {
             },
         )
         .flatten()
-        .take_any(100 * args.m as usize)
+        .take_any(10_000 * args.m as usize)
         .collect::<Vec<_>>();
 
     let all_hits = paths
