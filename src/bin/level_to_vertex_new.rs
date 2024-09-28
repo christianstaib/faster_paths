@@ -60,9 +60,7 @@ fn main() {
     let mut all_hits = vec![0; number_of_vertices as usize];
     let vertices = graph.out_graph().vertices().collect_vec();
 
-    let n = 10_000;
-
-    let pb = get_progressbar("hitting-set ", graph.number_of_vertices() as u64);
+    let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
         let paths = (0..)
             .par_bridge()
