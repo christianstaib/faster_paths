@@ -158,6 +158,20 @@ pub fn average_ch_vertex_degree(
     edges.iter().flatten().count() as f32 / edges.len() as f32
 }
 
+pub fn average_hl_label_size_vertices(
+    graph: &dyn Graph,
+    vertex_to_level: &Vec<Level>,
+    vertices: &[Vertex],
+) -> f32 {
+    let labels = vertices
+        .par_iter()
+        .progress_with(get_progressbar("Getting labels", vertices.len() as u64))
+        .map(|&vertex| get_hub_label_with_brute_force_wrapped(graph, &vertex_to_level, vertex).0)
+        .collect::<Vec<_>>();
+
+    labels.iter().flatten().count() as f32 / labels.len() as f32
+}
+
 pub fn average_hl_label_size(
     graph: &dyn Graph,
     vertex_to_level: &Vec<Level>,
