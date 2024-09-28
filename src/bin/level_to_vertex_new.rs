@@ -57,8 +57,6 @@ fn main() {
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
     let mut hitting_set_set = HashSet::new();
     let mut level_to_vertex = Vec::new();
-    let mut all_hits = vec![0; number_of_vertices as usize];
-
     let seen_paths = AtomicU32::new(0);
 
     let vertices = (0..graph.number_of_vertices()).collect_vec();
@@ -66,6 +64,48 @@ fn main() {
         .choose_multiple(&mut thread_rng(), 1_000)
         .cloned()
         .collect_vec();
+
+    let paths = (0..)
+        .par_bridge()
+        .map_init(
+            || thread_rng(),
+            |rng, _| {
+                let (source, target) = vertices
+                    .choose_multiple(rng, 2)
+                    .into_iter()
+                    .cloned()
+                    .collect_tuple()
+                    .unwrap();
+                pathfinder.shortest_path(source, target)
+            },
+        )
+        .flatten()
+        .take_any(100 * args.m as usize)
+        .collect::<Vec<_>>();
+
+    let all_hits = paths
+        // Split the active_paths into chunks for parallel processing.
+        .par_chunks(paths.len().div_ceil(rayon::current_num_threads()))
+        // For each chunk, calculate how frequently each vertex appears across the active paths.
+        .map(|paths| {
+            let mut partial_hits = vec![0; number_of_vertices as usize];
+            for path in paths.iter() {
+                for &vertex in path.vertices.iter() {
+                    partial_hits[vertex as usize] += 1;
+                }
+            }
+            partial_hits
+        })
+        // Sum the results from all threads to get the total hit count for each vertex.
+        .reduce(
+            || vec![0; number_of_vertices as usize],
+            |mut hits, partial_hits| {
+                for index in 0..number_of_vertices as usize {
+                    hits[index] += partial_hits[index]
+                }
+                hits
+            },
+        );
 
     let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
@@ -120,11 +160,6 @@ fn main() {
                 },
             );
 
-        all_hits
-            .par_iter_mut()
-            .zip(hits.par_iter())
-            .for_each(|(all, this)| *all += this);
-
         let vertex = hits
             .par_iter()
             .enumerate()
@@ -146,8 +181,9 @@ fn main() {
 
         if pb.position() % 1_000 == 0 {
             let mut active_verticesx = active_vertices.iter().cloned().collect_vec();
-            // active_verticesx.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
-            active_verticesx.sort_by_cached_key(|&vertex| graph.out_graph().edges(vertex).len());
+            active_verticesx.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
+            // active_verticesx.sort_by_cached_key(|&vertex|
+            // graph.out_graph().edges(vertex).len());
             let mut level_to_vertex = level_to_vertex.clone();
             level_to_vertex.splice(0..0, active_verticesx);
 
