@@ -146,7 +146,8 @@ fn main() {
 
         if pb.position() % 1_000 == 0 {
             let mut active_verticesx = active_vertices.iter().cloned().collect_vec();
-            active_verticesx.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
+            // active_verticesx.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
+            active_verticesx.sort_by_cached_key(|&vertex| graph.out_graph().edges(vertex).len());
             let mut level_to_vertex = level_to_vertex.clone();
             level_to_vertex.splice(0..0, active_verticesx);
 
