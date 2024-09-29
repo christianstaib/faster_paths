@@ -114,7 +114,7 @@ fn main() {
             println!(
             "seen {:>9} paths. hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
             seen_paths,
-            100.0-((args.m as f32 / (seen_paths) as f32) * 100.0),
+            100.0-(((args.m - paths.len()) as f32 / (seen_paths) as f32) * 100.0),
             hitting_set_set.len(),
             average_hl_label_size,
             verticesx.len(),

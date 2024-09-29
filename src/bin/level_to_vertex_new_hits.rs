@@ -111,6 +111,66 @@ fn main() {
                 }
             });
 
+        if !this_illegal.is_empty() {
+            let hits = this_illegal
+                // Split the active_paths into chunks for parallel processing.
+                .par_chunks(this_illegal.len().div_ceil(rayon::current_num_threads()))
+                // For each chunk, calculate how frequently each vertex appears across the active
+                // paths.
+                .map(|paths| {
+                    let mut partial_hits = vec![0; number_of_vertices as usize];
+                    for path in paths.iter() {
+                        for &vertex in path.vertices.iter() {
+                            partial_hits[vertex as usize] += 1;
+                        }
+                    }
+                    partial_hits
+                })
+                // Sum the results from all threads to get the total hit count for each vertex.
+                .reduce(
+                    || vec![0; number_of_vertices as usize],
+                    |mut hits, partial_hits| {
+                        for index in 0..number_of_vertices as usize {
+                            hits[index] += partial_hits[index]
+                        }
+                        hits
+                    },
+                );
+            all_hits
+                .par_iter_mut()
+                .zip(hits.par_iter())
+                .for_each(|(all, this)| *all += this);
+
+            let hits = this_legal
+                // Split the active_paths into chunks for parallel processing.
+                .par_chunks(this_legal.len().div_ceil(rayon::current_num_threads()))
+                // For each chunk, calculate how frequently each vertex appears across the active
+                // paths.
+                .map(|paths| {
+                    let mut partial_hits = vec![0; number_of_vertices as usize];
+                    for path in paths.iter() {
+                        for &vertex in path.vertices.iter() {
+                            partial_hits[vertex as usize] += 1;
+                        }
+                    }
+                    partial_hits
+                })
+                // Sum the results from all threads to get the total hit count for each vertex.
+                .reduce(
+                    || vec![0; number_of_vertices as usize],
+                    |mut hits, partial_hits| {
+                        for index in 0..number_of_vertices as usize {
+                            hits[index] += partial_hits[index]
+                        }
+                        hits
+                    },
+                );
+            all_hits
+                .par_iter_mut()
+                .zip(hits.par_iter())
+                .for_each(|(all, this)| *all += this);
+        }
+
         let this_legal_len = this_legal.len();
         seen_paths += this_legal.len() as u32 + this_illegal.len() as u32;
         paths.extend(this_legal);
@@ -145,38 +205,6 @@ fn main() {
             .max_by_key(|&(_vertex, hits)| hits)
             .map(|(vertex, _)| vertex as Vertex)
             .expect("hits cannot be empty if number_of_vertices > 0");
-
-        if !this_illegal.is_empty() {
-            let hits = this_illegal
-                // Split the active_paths into chunks for parallel processing.
-                .par_chunks(this_illegal.len().div_ceil(rayon::current_num_threads()))
-                // For each chunk, calculate how frequently each vertex appears across the active
-                // paths.
-                .map(|paths| {
-                    let mut partial_hits = vec![0; number_of_vertices as usize];
-                    for path in paths.iter() {
-                        for &vertex in path.vertices.iter() {
-                            partial_hits[vertex as usize] += 1;
-                        }
-                    }
-                    partial_hits
-                })
-                // Sum the results from all threads to get the total hit count for each vertex.
-                .reduce(
-                    || vec![0; number_of_vertices as usize],
-                    |mut hits, partial_hits| {
-                        for index in 0..number_of_vertices as usize {
-                            hits[index] += partial_hits[index]
-                        }
-                        hits
-                    },
-                );
-
-            all_hits
-                .par_iter_mut()
-                .zip(hits.par_iter())
-                .for_each(|(all, this)| *all += this);
-        }
 
         level_to_vertex.insert(0, vertex);
         hitting_set_set.insert(vertex);
