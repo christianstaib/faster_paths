@@ -2,13 +2,13 @@ use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf, sync::at
 
 use clap::Parser;
 use faster_paths::{
-    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Graph, Vertex},
+    graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Vertex},
     reading_pathfinder,
     search::{ch::contracted_graph::vertex_to_level, PathFinding},
     utility::{average_hl_label_size, average_hl_label_size_vertices, get_progressbar},
     FileType,
 };
-use itertools::Itertools;
+use itertools::{Either, Itertools};
 use rand::prelude::*;
 use rayon::prelude::*;
 
@@ -61,7 +61,7 @@ fn main() {
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
     let mut hitting_set_set = HashSet::new();
     let mut level_to_vertex = Vec::new();
-    let seen_paths = AtomicU32::new(0);
+    let mut seen_paths = 0;
 
     let vertices = (0..graph.number_of_vertices()).collect_vec();
     let verticesx = vertices
@@ -87,7 +87,7 @@ fn main() {
         .take_any(args.m as usize)
         .collect::<Vec<_>>();
 
-    let all_hits = paths
+    let mut all_hits = paths
         // Split the active_paths into chunks for parallel processing.
         .par_chunks(paths.len().div_ceil(rayon::current_num_threads()))
         // For each chunk, calculate how frequently each vertex appears across the active paths.
@@ -115,42 +115,47 @@ fn main() {
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
         let vertices = active_vertices.iter().cloned().collect_vec();
 
-        let this_seen_paths = AtomicU32::new(0);
         let this_legal_paths = AtomicU32::new(0);
 
-        paths.extend(
-            (0..)
-                .par_bridge()
-                .map_init(
-                    || thread_rng(),
-                    |rng, _| {
-                        let (source, target) = vertices
-                            .choose_multiple(rng, 2)
-                            .into_iter()
-                            .cloned()
-                            .collect_tuple()
-                            .unwrap();
-                        pathfinder.shortest_path(source, target)
-                    },
-                )
-                .flatten()
-                .filter(|path| {
-                    this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                    let legal = path.vertices.iter().all(|v| !hitting_set_set.contains(v));
+        let (this_legal, this_illegal): (Vec<_>, Vec<_>) = (0..)
+            .par_bridge()
+            .map_init(
+                || thread_rng(),
+                |rng, _| {
+                    let (source, target) = vertices
+                        .choose_multiple(rng, 2)
+                        .into_iter()
+                        .cloned()
+                        .collect_tuple()
+                        .unwrap();
+                    pathfinder.shortest_path(source, target)
+                },
+            )
+            .flatten()
+            .map(|path| {
+                let legal = path.vertices.iter().all(|v| !hitting_set_set.contains(v));
+                (legal, path)
+            })
+            .take_any_while(|(legal, _path)| {
+                if *legal {
+                    return (this_legal_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+                        as u32)
+                        < (args.m as u32 - paths.len() as u32);
+                }
 
-                    if legal {
-                        this_legal_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                    }
+                true
+            })
+            .partition_map(|(legal, path)| {
+                if legal {
+                    Either::Left(path)
+                } else {
+                    Either::Right(path)
+                }
+            });
 
-                    legal
-                })
-                .take_any(args.m as usize - paths.len())
-                .collect::<Vec<_>>(),
-        );
-        seen_paths.fetch_add(
-            this_seen_paths.load(std::sync::atomic::Ordering::Relaxed),
-            std::sync::atomic::Ordering::Relaxed,
-        );
+        let this_legal_len = this_legal.len();
+        seen_paths += this_legal.len() as u32 + this_illegal.len() as u32;
+        paths.extend(this_legal);
 
         let hits = paths
             // Split the active_paths into chunks for parallel processing.
@@ -183,6 +188,38 @@ fn main() {
             .map(|(vertex, _)| vertex as Vertex)
             .expect("hits cannot be empty if number_of_vertices > 0");
 
+        if !this_illegal.is_empty() {
+            let hits = this_illegal
+                // Split the active_paths into chunks for parallel processing.
+                .par_chunks(this_illegal.len().div_ceil(rayon::current_num_threads()))
+                // For each chunk, calculate how frequently each vertex appears across the active
+                // paths.
+                .map(|paths| {
+                    let mut partial_hits = vec![0; number_of_vertices as usize];
+                    for path in paths.iter() {
+                        for &vertex in path.vertices.iter() {
+                            partial_hits[vertex as usize] += 1;
+                        }
+                    }
+                    partial_hits
+                })
+                // Sum the results from all threads to get the total hit count for each vertex.
+                .reduce(
+                    || vec![0; number_of_vertices as usize],
+                    |mut hits, partial_hits| {
+                        for index in 0..number_of_vertices as usize {
+                            hits[index] += partial_hits[index]
+                        }
+                        hits
+                    },
+                );
+
+            all_hits
+                .par_iter_mut()
+                .zip(hits.par_iter())
+                .for_each(|(all, this)| *all += this);
+        }
+
         // hits.sort_unstable();
         // println!(
         //     "seen {} paths. {:?}",
@@ -202,8 +239,9 @@ fn main() {
 
         if pb.position() % args.every_label as u64 == 0 {
             let mut active_verticesx = active_vertices.iter().cloned().collect_vec();
-            // active_verticesx.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
-            active_verticesx.sort_by_cached_key(|&vertex| graph.out_graph().edges(vertex).len());
+            active_verticesx.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
+            // active_verticesx.sort_by_cached_key(|&vertex|
+            // graph.out_graph().edges(vertex).len());
             let mut level_to_vertex = level_to_vertex.clone();
             level_to_vertex.splice(0..0, active_verticesx);
 
@@ -214,19 +252,14 @@ fn main() {
             );
             println!(
             "seen {:>9} paths. hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
-            seen_paths.load(std::sync::atomic::Ordering::Relaxed),
-            100.0-((this_legal_paths.load(std::sync::atomic::Ordering::Relaxed) as f32 / this_seen_paths.load(std::sync::atomic::Ordering::Relaxed) as f32) * 100.0),
+            seen_paths,
+            100.0-((this_legal_len as f32 / (this_legal_len + this_illegal.len()) as f32) * 100.0),
             hitting_set_set.len(),
             average_hl_label_size,
             verticesx.len(),
             graph.number_of_vertices());
         }
     }
-
-    println!(
-        "seen {} paths",
-        seen_paths.load(std::sync::atomic::Ordering::Relaxed)
-    );
 
     let mut active_vertices = active_vertices.into_iter().collect_vec();
     active_vertices.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
