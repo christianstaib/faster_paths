@@ -70,58 +70,18 @@ fn main() {
 
     let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
-        let vertices = active_vertices.iter().cloned().collect_vec();
+        let needed_legal_paths = args.m - paths.len();
 
-        let this_seen_paths = AtomicU32::new(0);
+        let this_seen_paths = fill_paths(
+            &active_vertices,
+            &pathfinder,
+            &hitting_set_set,
+            needed_legal_paths,
+            &mut paths,
+        );
+        seen_paths += this_seen_paths;
 
-        let this_legal = (0..)
-            .par_bridge()
-            .map_init(
-                || thread_rng(),
-                |rng, _| {
-                    let (source, target) = vertices
-                        .choose_multiple(rng, 2)
-                        .into_iter()
-                        .cloned()
-                        .collect_tuple()
-                        .unwrap();
-                    pathfinder.shortest_path(source, target)
-                },
-            )
-            .flatten()
-            .filter(|path| {
-                this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                path.vertices.iter().all(|v| !hitting_set_set.contains(v))
-            })
-            .take_any(args.m - paths.len())
-            .collect::<Vec<_>>();
-        let this_legal_len = this_legal.len();
-        seen_paths += this_seen_paths.load(std::sync::atomic::Ordering::Relaxed);
-        paths.extend(this_legal);
-
-        let hits = paths
-            // Split the active_paths into chunks for parallel processing.
-            .par_chunks(paths.len().div_ceil(rayon::current_num_threads()))
-            // For each chunk, calculate how frequently each vertex appears across the active paths.
-            .map(|paths| {
-                let mut partial_hits = vec![0; number_of_vertices as usize];
-                for path in paths.iter() {
-                    for &vertex in path.vertices.iter() {
-                        partial_hits[vertex as usize] += 1;
-                    }
-                }
-                partial_hits
-            })
-            // Sum the results from all threads to get the total hit count for each vertex.
-            .reduce(
-                || vec![0; number_of_vertices as usize],
-                |mut hits, partial_hits| {
-                    for index in 0..number_of_vertices as usize {
-                        hits[index] += partial_hits[index]
-                    }
-                    hits
-                },
-            );
+        let hits = get_hits(&paths, number_of_vertices);
 
         let vertex = hits
             .par_iter()
@@ -182,4 +142,70 @@ fn main() {
         num_samples,
         graph.number_of_vertices()
     );
+}
+
+fn get_hits(
+    paths: &Vec<faster_paths::search::collections::dijkstra_data::Path>,
+    number_of_vertices: u32,
+) -> Vec<i32> {
+    let hits = paths
+        // Split the active_paths into chunks for parallel processing.
+        .par_chunks(paths.len().div_ceil(rayon::current_num_threads()))
+        // For each chunk, calculate how frequently each vertex appears across the active paths.
+        .map(|paths| {
+            let mut partial_hits = vec![0; number_of_vertices as usize];
+            for path in paths.iter() {
+                for &vertex in path.vertices.iter() {
+                    partial_hits[vertex as usize] += 1;
+                }
+            }
+            partial_hits
+        })
+        // Sum the results from all threads to get the total hit count for each vertex.
+        .reduce(
+            || vec![0; number_of_vertices as usize],
+            |mut hits, partial_hits| {
+                for index in 0..number_of_vertices as usize {
+                    hits[index] += partial_hits[index]
+                }
+                hits
+            },
+        );
+    hits
+}
+
+fn fill_paths(
+    active_vertices: &HashSet<u32>,
+    pathfinder: &Box<dyn PathFinding>,
+    hitting_set_set: &HashSet<u32>,
+    needed_legal_paths: usize,
+    paths: &mut Vec<faster_paths::search::collections::dijkstra_data::Path>,
+) -> u32 {
+    let this_seen_paths = AtomicU32::new(0);
+    let vertices = active_vertices.iter().cloned().collect_vec();
+    let this_legal = (0..)
+        .par_bridge()
+        .map_init(
+            || thread_rng(),
+            |rng, _| {
+                let (source, target) = vertices
+                    .choose_multiple(rng, 2)
+                    .into_iter()
+                    .cloned()
+                    .collect_tuple()
+                    .unwrap();
+                pathfinder.shortest_path(source, target)
+            },
+        )
+        .flatten()
+        .filter(|path| {
+            this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            path.vertices.iter().all(|v| !hitting_set_set.contains(v))
+        })
+        .take_any(needed_legal_paths)
+        .collect::<Vec<_>>();
+
+    let this_seen_paths = this_seen_paths.load(std::sync::atomic::Ordering::Relaxed);
+    paths.extend(this_legal);
+    this_seen_paths
 }

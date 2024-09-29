@@ -67,7 +67,7 @@ fn main() {
         .collect_vec();
 
     let mut paths = Vec::new();
-    let mut all_hits: Vec<u32> = Vec::new();
+    let mut all_hits: Vec<u32> = vec![0; graph.number_of_vertices() as usize];
 
     let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
@@ -177,13 +177,6 @@ fn main() {
                 .zip(hits.par_iter())
                 .for_each(|(all, this)| *all += this);
         }
-
-        // hits.sort_unstable();
-        // println!(
-        //     "seen {} paths. {:?}",
-        //     n * hitting_set_set.len() as u32,
-        //     hits.iter().rev().take(10).collect_vec()
-        // );
 
         level_to_vertex.insert(0, vertex);
         hitting_set_set.insert(vertex);
