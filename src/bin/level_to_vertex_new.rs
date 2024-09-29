@@ -112,6 +112,7 @@ fn main() {
         let vertices = active_vertices.iter().cloned().collect_vec();
 
         let this_seen_paths = AtomicU32::new(0);
+        let this_legal_paths = AtomicU32::new(0);
 
         paths.extend(
             (0..)
@@ -130,12 +131,21 @@ fn main() {
                 )
                 .flatten()
                 .filter(|path| {
-                    seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                    path.vertices.iter().all(|v| !hitting_set_set.contains(v))
+                    let legal = path.vertices.iter().all(|v| !hitting_set_set.contains(v));
+
+                    if legal {
+                        this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    }
+
+                    legal
                 })
                 .take_any(args.m as usize - paths.len())
                 .collect::<Vec<_>>(),
+        );
+        seen_paths.fetch_add(
+            this_seen_paths.load(std::sync::atomic::Ordering::Relaxed),
+            std::sync::atomic::Ordering::Relaxed,
         );
 
         let hits = paths
@@ -202,7 +212,7 @@ fn main() {
             println!(
             "seen {:>9} paths. hitting {:>2.5}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
             seen_paths.load(std::sync::atomic::Ordering::Relaxed),
-            100.0-((args.m as f32 / this_seen_paths.load(std::sync::atomic::Ordering::Relaxed) as f32) * 100.0),
+            100.0-((this_legal_paths.load(std::sync::atomic::Ordering::Relaxed) as f32 / this_seen_paths.load(std::sync::atomic::Ordering::Relaxed) as f32) * 100.0),
             hitting_set_set.len(),
             average_hl_label_size,
             verticesx.len(),
