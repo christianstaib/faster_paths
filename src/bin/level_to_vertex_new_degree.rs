@@ -133,7 +133,7 @@ fn main() {
                 "",
                 Path::new(
                     format!(
-                        "{}_ltv_hits_{}_{}.json",
+                        "{}_ltv_degree_{}_{}.json",
                         args.graph.file_stem().unwrap().to_str().unwrap(),
                         pb.position(),
                         average_hl_label_size.round() as u32
