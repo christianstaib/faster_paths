@@ -8,7 +8,7 @@ use faster_paths::{
     utility::{average_hl_label_size, average_hl_label_size_vertices, get_progressbar},
     FileType,
 };
-use itertools::{Either, Itertools};
+use itertools::Itertools;
 use rand::prelude::*;
 use rayon::prelude::*;
 
