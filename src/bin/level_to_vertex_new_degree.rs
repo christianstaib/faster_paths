@@ -96,6 +96,7 @@ fn main() {
             .take_any(args.m - paths.len())
             .collect::<Vec<_>>();
         let this_legal_len = this_legal.len();
+        seen_paths += this_seen_paths.load(std::sync::atomic::Ordering::Relaxed);
         paths.extend(this_legal);
 
         let hits = paths
@@ -153,7 +154,7 @@ fn main() {
             println!(
             "seen {:>9} paths. hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
             seen_paths,
-            100.0-((this_legal_len as f32 / (this_seen_paths.load(std::sync::atomic::Ordering::Relaxed)) as f32) * 100.0),
+            100.0-((args.m as f32 / (seen_paths) as f32) * 100.0),
             hitting_set_set.len(),
             average_hl_label_size,
             verticesx.len(),
