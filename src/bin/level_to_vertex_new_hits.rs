@@ -1,11 +1,20 @@
-use std::{collections::HashSet, fs::File, io::BufWriter, path::PathBuf, sync::atomic::AtomicU32};
+use std::{
+    collections::HashSet,
+    fs::File,
+    io::BufWriter,
+    path::{Path, PathBuf},
+    sync::atomic::AtomicU32,
+};
 
 use clap::Parser;
 use faster_paths::{
     graphs::{reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph, Vertex},
     reading_pathfinder,
     search::{ch::contracted_graph::vertex_to_level, PathFinding},
-    utility::{average_hl_label_size, average_hl_label_size_vertices, get_progressbar},
+    utility::{
+        average_hl_label_size, average_hl_label_size_vertices, get_progressbar,
+        write_json_with_spinnner,
+    },
     FileType,
 };
 use itertools::{Either, Itertools};
@@ -237,6 +246,20 @@ fn main() {
             average_hl_label_size,
             verticesx.len(),
             graph.number_of_vertices());
+
+            write_json_with_spinnner(
+                "",
+                Path::new(
+                    format!(
+                        "{}_ltv_hits_{}_{}.json",
+                        args.graph.file_stem().unwrap().to_str().unwrap(),
+                        pb.position(),
+                        average_hl_label_size.round() as u32
+                    )
+                    .as_str(),
+                ),
+                &level_to_vertex,
+            )
         }
     }
 
