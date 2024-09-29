@@ -69,47 +69,9 @@ fn main() {
         .cloned()
         .collect_vec();
 
-    let mut paths = (0..)
-        .par_bridge()
-        .map_init(
-            || thread_rng(),
-            |rng, _| {
-                let (source, target) = vertices
-                    .choose_multiple(rng, 2)
-                    .into_iter()
-                    .cloned()
-                    .collect_tuple()
-                    .unwrap();
-                pathfinder.shortest_path(source, target)
-            },
-        )
-        .flatten()
-        .take_any(args.m as usize)
-        .collect::<Vec<_>>();
+    let mut paths = Vec::new();
 
-    let mut all_hits = paths
-        // Split the active_paths into chunks for parallel processing.
-        .par_chunks(paths.len().div_ceil(rayon::current_num_threads()))
-        // For each chunk, calculate how frequently each vertex appears across the active paths.
-        .map(|paths| {
-            let mut partial_hits = vec![0; number_of_vertices as usize];
-            for path in paths.iter() {
-                for &vertex in path.vertices.iter() {
-                    partial_hits[vertex as usize] += 1;
-                }
-            }
-            partial_hits
-        })
-        // Sum the results from all threads to get the total hit count for each vertex.
-        .reduce(
-            || vec![0; number_of_vertices as usize],
-            |mut hits, partial_hits| {
-                for index in 0..number_of_vertices as usize {
-                    hits[index] += partial_hits[index]
-                }
-                hits
-            },
-        );
+    let mut all_hits: Vec<u32> = Vec::new();
 
     let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
