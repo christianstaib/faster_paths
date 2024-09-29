@@ -135,7 +135,7 @@ fn main() {
                     let legal = path.vertices.iter().all(|v| !hitting_set_set.contains(v));
 
                     if legal {
-                        this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        this_legal_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     }
 
                     legal
