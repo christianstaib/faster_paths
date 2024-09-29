@@ -210,7 +210,7 @@ fn main() {
                 &verticesx,
             );
             println!(
-            "seen {:>9} paths. hitting {:>2.5}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
+            "seen {:>9} paths. hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
             seen_paths.load(std::sync::atomic::Ordering::Relaxed),
             100.0-((this_legal_paths.load(std::sync::atomic::Ordering::Relaxed) as f32 / this_seen_paths.load(std::sync::atomic::Ordering::Relaxed) as f32) * 100.0),
             hitting_set_set.len(),
