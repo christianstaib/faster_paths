@@ -65,7 +65,7 @@ fn main() {
         .cloned()
         .collect_vec();
 
-    let paths = (0..)
+    let mut paths = (0..)
         .par_bridge()
         .map_init(
             || thread_rng(),
@@ -80,7 +80,7 @@ fn main() {
             },
         )
         .flatten()
-        .take_any(10_000 * args.m as usize)
+        .take_any(args.m as usize)
         .collect::<Vec<_>>();
 
     let all_hits = paths
@@ -113,28 +113,30 @@ fn main() {
 
         let this_seen_paths = AtomicU32::new(0);
 
-        let paths = (0..)
-            .par_bridge()
-            .map_init(
-                || thread_rng(),
-                |rng, _| {
-                    let (source, target) = vertices
-                        .choose_multiple(rng, 2)
-                        .into_iter()
-                        .cloned()
-                        .collect_tuple()
-                        .unwrap();
-                    pathfinder.shortest_path(source, target)
-                },
-            )
-            .flatten()
-            .filter(|path| {
-                seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                path.vertices.iter().all(|v| !hitting_set_set.contains(v))
-            })
-            .take_any(args.m as usize)
-            .collect::<Vec<_>>();
+        paths.extend(
+            (0..)
+                .par_bridge()
+                .map_init(
+                    || thread_rng(),
+                    |rng, _| {
+                        let (source, target) = vertices
+                            .choose_multiple(rng, 2)
+                            .into_iter()
+                            .cloned()
+                            .collect_tuple()
+                            .unwrap();
+                        pathfinder.shortest_path(source, target)
+                    },
+                )
+                .flatten()
+                .filter(|path| {
+                    seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    this_seen_paths.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    path.vertices.iter().all(|v| !hitting_set_set.contains(v))
+                })
+                .take_any(args.m as usize - paths.len())
+                .collect::<Vec<_>>(),
+        );
 
         let hits = paths
             // Split the active_paths into chunks for parallel processing.
@@ -178,6 +180,11 @@ fn main() {
         hitting_set_set.insert(vertex);
         active_vertices.remove(&vertex);
         pb.inc(1);
+
+        paths = paths
+            .into_par_iter()
+            .filter(|path| path.vertices.iter().all(|&v| v != vertex))
+            .collect::<Vec<_>>();
 
         if pb.position() % 1_000 == 0 {
             let mut active_verticesx = active_vertices.iter().cloned().collect_vec();

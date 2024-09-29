@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufWriter, Write},
+    io::BufWriter,
     path::PathBuf,
     time::{Duration, Instant},
 };
