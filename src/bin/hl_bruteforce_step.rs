@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
@@ -10,9 +11,13 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
         Graph, Vertex,
     },
-    search::hl::hub_graph::HubGraph,
-    utility::{benchmark_and_test_path, generate_test_cases},
+    search::{
+        ch::contracted_graph::vertex_to_level,
+        hl::half_hub_graph::get_hub_label_with_brute_force_wrapped, PathFinding,
+    },
 };
+use indicatif::ParallelProgressIterator;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -43,27 +48,45 @@ fn main() {
 
     // Build graph
     let edges = read_edges_from_fmi_file(&args.graph);
-    let mut graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
-    graph.make_bidirectional();
+    let graph = ReversibleGraph::<VecVecGraph>::from_edges(&edges);
+    println!(
+        "graph is bidirectional {}?",
+        graph.out_graph().is_bidirectional()
+    );
 
     //
     // Read vertex_to_level
     let reader = BufReader::new(File::open(&args.level_to_vertex).unwrap());
     let level_to_vertex: Vec<Vertex> = serde_json::from_reader(reader).unwrap();
+    let vertex_to_level = vertex_to_level(&level_to_vertex);
 
-    // Create hub_graph
-    let hub_graph = HubGraph::by_brute_force(&graph, &level_to_vertex);
-    println!(
-        "Average label size forward label {}",
-        hub_graph.number_of_entries() as f64
-            / graph.out_graph().non_trivial_vertices().len() as f64
+    let labels_and_shortcuts = ((args.step_size * args.part)..(args.step_size * (args.part + 1)))
+        .into_par_iter()
+        .progress()
+        .filter(|&vertex| vertex < graph.number_of_vertices())
+        .map(|vertex| {
+            (
+                vertex,
+                get_hub_label_with_brute_force_wrapped(graph.out_graph(), &vertex_to_level, vertex),
+            )
+        })
+        .collect::<Vec<_>>();
+
+    let mut all_labels = HashMap::new();
+    let mut all_shortcuts = HashMap::new();
+
+    for (vertex, (label, shortcuts)) in labels_and_shortcuts.into_iter() {
+        all_labels.insert(vertex, label);
+        all_shortcuts.extend(shortcuts);
+    }
+
+    let data = (all_labels, all_shortcuts);
+    let writer = BufWriter::new(
+        File::create(
+            args.dir
+                .join(format!("{}_{}.bincode", args.step_size, args.part)),
+        )
+        .unwrap(),
     );
-
-    let writer = BufWriter::new(File::create(&args.hub_graph).unwrap());
-    bincode::serialize_into(writer, &hub_graph).unwrap();
-
-    // Benchmark and test correctness
-    let tests = generate_test_cases(graph.out_graph(), 1_000);
-    let average_duration = benchmark_and_test_path(graph.out_graph(), &tests, &hub_graph).unwrap();
-    println!("All correct. Average duration was {:?}", average_duration);
+    bincode::serialize_into(writer, &data).unwrap();
 }
