@@ -37,8 +37,8 @@ fn main() {
     // Build graph
     let graph: ReversibleGraph<VecVecGraph> =
         read_bincode_with_spinnner("graph", &args.graph.as_path());
-    let graph: ReversibleGraph<VecHashGraph> =
-        ReversibleGraph::from_edges(&graph.out_graph().all_edges());
+    // let graph: ReversibleGraph<VecHashGraph> =
+    //     ReversibleGraph::from_edges(&graph.out_graph().all_edges());
 
     let level_to_vertex: Vec<Vertex> =
         read_json_with_spinnner("level to vertex", &args.level_to_vertex.as_path());
