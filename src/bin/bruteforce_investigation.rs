@@ -41,7 +41,13 @@ fn main() {
     // Read vertex_to_level
     let level_to_vertex: Vec<Vertex> =
         read_json_with_spinnner("level to vertex", args.level_to_vertex.as_path());
+    assert!(level_to_vertex
+        .iter()
+        .all(|&v| v < graph.number_of_vertices()));
     let vertex_to_level = vertex_to_level(&level_to_vertex);
+    assert!(level_to_vertex
+        .iter()
+        .all(|&v| v < graph.number_of_vertices()));
 
     let visited = graph
         .out_graph()
