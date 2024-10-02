@@ -76,7 +76,7 @@ fn main() {
         .collect_vec();
 
     let mut paths = Vec::new();
-    let mut all_hits: Vec<u32> = vec![0; graph.number_of_vertices() as usize];
+    let mut all_hits: Vec<u64> = vec![0; graph.number_of_vertices() as usize];
 
     let pb = get_progressbar("hitting-set ", args.number_of_searches as u64);
     while !active_vertices.is_empty() && pb.position() < args.number_of_searches as u64 {
