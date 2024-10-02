@@ -67,7 +67,7 @@ fn main() {
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
     let mut hitting_set_set = HashSet::new();
     let mut level_to_vertex = Vec::new();
-    let mut seen_paths = 0;
+    let mut seen_paths: u64 = 0;
 
     let vertices = (0..graph.number_of_vertices()).collect_vec();
     let verticesx = vertices
@@ -181,7 +181,7 @@ fn main() {
         }
 
         let this_legal_len = this_legal.len();
-        seen_paths += this_legal.len() as u32 + this_illegal.len() as u32;
+        seen_paths += this_legal.len() as u64 + this_illegal.len() as u64;
         paths.extend(this_legal);
 
         let hits = paths
