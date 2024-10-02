@@ -3,7 +3,7 @@ use std::{
     fs::File,
     io::BufWriter,
     path::{Path, PathBuf},
-    sync::atomic::AtomicU32,
+    sync::atomic::AtomicU64,
 };
 
 use clap::Parser;
@@ -67,7 +67,7 @@ fn main() {
     let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
     let mut hitting_set_set = HashSet::new();
     let mut level_to_vertex = Vec::new();
-    let mut seen_paths = 0;
+    let mut seen_paths: u64 = 0;
 
     let vertices = (0..graph.number_of_vertices()).collect_vec();
     let verticesx = vertices
@@ -121,9 +121,10 @@ fn main() {
                 &verticesx,
             );
             println!(
-            "seen {:>9} paths. hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
+            "seen {:>9} paths. not hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
             seen_paths,
-            100.0-(((args.m - paths.len()) as f64 / (seen_paths) as f64) * 100.0),
+            ((paths.len()) as f64 / (seen_paths) as f64) * 100.0,
+            // 100.0-(((args.m - paths.len()) as f64 / (seen_paths) as f64) * 100.0),
             hitting_set_set.len(),
             average_hl_label_size,
             verticesx.len(),
@@ -203,8 +204,8 @@ fn fill_paths(
     hitting_set_set: &HashSet<u32>,
     needed_legal_paths: usize,
     paths: &mut Vec<faster_paths::search::collections::dijkstra_data::Path>,
-) -> u32 {
-    let this_seen_paths = AtomicU32::new(0);
+) -> u64 {
+    let this_seen_paths = AtomicU64::new(0);
     let vertices = active_vertices.iter().cloned().collect_vec();
     let this_legal = (0..)
         .par_bridge()
