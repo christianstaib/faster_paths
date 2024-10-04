@@ -121,7 +121,7 @@ fn main() {
                 &verticesx,
             );
             println!(
-            "seen {:>9} paths. not hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.1}. (averaged over {} out of {} vertices)",
+            "seen {:>9} paths. not hitting {:>2.20}%, hs contains {:>4} vertices, average hl label size {:>3.9}. (averaged over {} out of {} vertices)",
             seen_paths,
             ((paths.len()) as f64 / (seen_paths) as f64) * 100.0,
             // 100.0-(((args.m - paths.len()) as f64 / (seen_paths) as f64) * 100.0),
