@@ -168,6 +168,16 @@ fn get_dijkstra_info(graph: &ReversibleGraph<VecVecGraph>, n: u64) -> (f32, f32,
                 queue.clear();
                 expanded.clear();
 
+                let distance = path
+                    .as_ref()
+                    .and_then(|path| graph.out_graph().get_path_distance(&path.vertices));
+                if distance != path.as_ref().map(|path| path.distance) {
+                    println!(
+                        "overflow ({} -> {})",
+                        *source_and_target[0], *source_and_target[1]
+                    );
+                }
+
                 (path, dijkstra_rank, queue_pops)
             },
         )
