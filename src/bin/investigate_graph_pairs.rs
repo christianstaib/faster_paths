@@ -207,7 +207,7 @@ fn simple_graph_and_landmarks_bound(
     print_results(&distance_pairs, paths);
 }
 
-fn print_results(distance_pairs: &Vec<u32>, paths: &Vec<Path>) {
+fn print_results(distance_pairs: &Vec<Distance>, paths: &Vec<Path>) {
     let mut diffs_per_hops = Vec::new();
     for (&upper_bound_distance, path) in distance_pairs.iter().zip(paths.iter()) {
         let hops = path.vertices.len();

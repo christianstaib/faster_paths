@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
+use super::{Distance, Edge, Graph, Vertex, WeightedEdge};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct VecHashGraph {
@@ -42,7 +42,7 @@ impl Graph for VecHashGraph {
         // Define a struct for iterating over edges with the same tail. Struct is needed
         // as tail would otherwise not live enough.
         struct EdgeIterator<'a> {
-            edge_iter: std::collections::hash_map::Iter<'a, u32, u32>,
+            edge_iter: std::collections::hash_map::Iter<'a, Vertex, Distance>,
             tail: Vertex,
         }
 
