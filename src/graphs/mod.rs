@@ -22,7 +22,7 @@ pub mod vec_vec_graph;
 
 pub type Vertex = u32;
 pub type EdgeId = u32;
-pub type Distance = u32;
+pub type Distance = u64;
 
 pub type Level = u32;
 
