@@ -24,7 +24,7 @@ struct Args {
     #[arg(short, long)]
     level_to_vertex: PathBuf,
     /// Infile in .fmi format
-    #[arg(short, long)]
+    #[arg(short = 'u', long)]
     hub_graph: PathBuf,
 }
 
