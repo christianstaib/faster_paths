@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, time::Instant};
 
 use indicatif::ProgressIterator;
 use itertools::Itertools;
@@ -102,7 +102,7 @@ impl HubGraph {
         forward_labels
             .iter_mut()
             .chain(backward_labels.iter_mut())
-            .for_each(|label| set_predecessor(label));
+            .for_each(set_predecessor);
 
         let forward = HalfHubGraph::new(&forward_labels);
         let backward = HalfHubGraph::new(&backward_labels);
@@ -158,8 +158,13 @@ fn create_label(
         .collect::<Vec<_>>();
     neighbor_labels.push((None, labels_direction1.get(vertex as usize).unwrap()));
 
+    let start = Instant::now();
     let mut forward_label = get_hub_label_by_merging(&neighbor_labels);
+    let merging_duration = start.elapsed();
+    let start = Instant::now();
     prune_label(&mut forward_label, labels_direction2);
+    let pruning_duration = start.elapsed();
+    println!("{:?} {:?}", merging_duration, pruning_duration);
     labels_direction1[vertex as usize] = forward_label;
 }
 
