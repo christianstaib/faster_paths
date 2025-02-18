@@ -14,7 +14,6 @@ use faster_paths::{
 };
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use iter::{IntoParallelIterator, ParallelIterator};
-use itertools::*;
 use rayon::*;
 
 /// Does a single threaded benchmark.
@@ -47,7 +46,8 @@ fn main() {
         .map(|(s, t)| {
             let d = graph
                 .shortest_path_distance(s, t)
-                .unwrap_or(u32::MAX as u64);
+                .map(|x| x as i64)
+                .unwrap_or(-1);
 
             (s, t, d)
         })
