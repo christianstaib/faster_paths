@@ -1,35 +1,69 @@
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::Parser;
-use faster_paths::hl::{directed_hub_graph::DirectedHubGraph, HubGraphTrait};
+use faster_paths::{
+    graphs::Vertex,
+    search::{hl::hub_graph::HubGraph, PathFinding},
+    utility::{benchmark_distances, benchmark_path, read_bincode_with_spinnner},
+};
+use itertools::Itertools;
+use rand::prelude::*;
 
-/// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Outfile in .bincode format
+    /// Infile in .fmi format
     #[arg(short, long)]
     hub_graph: PathBuf,
+
+    /// Infile in .fmi format
+    #[arg(short, long)]
+    num_runs: u32,
 }
 
 fn main() {
     let args = Args::parse();
 
-    println!("Loading hub graph");
-    let reader = BufReader::new(File::open(&args.hub_graph).unwrap());
-    let hub_graph: DirectedHubGraph = bincode::deserialize_from(reader).unwrap();
+    // Read contracted_graph
+    let hub_graph: HubGraph = read_bincode_with_spinnner("hubgraph", &args.hub_graph.as_path());
 
     println!(
-        "the hl graph has {} vertices.",
-        hub_graph.number_of_vertices()
+        "average label size {}",
+        hub_graph.number_of_entries() as f64 / hub_graph.forward.number_of_vertices() as f64
     );
 
-    let num_label_entries = (0..hub_graph.number_of_vertices())
-        .map(|vertex| hub_graph.forward_label(vertex).len() as u64)
-        .sum::<u64>();
+    println!("shortcuts {}", hub_graph.shortcuts.len());
+
+    let vertices = (0..hub_graph.number_of_vertices()).collect_vec();
+    let mut rng = thread_rng();
+    let pairs: Vec<(Vertex, Vertex)> = (0..args.num_runs)
+        .map(|_| {
+            vertices
+                .choose_multiple(&mut rng, 2)
+                .cloned()
+                .collect_tuple()
+                .unwrap()
+        })
+        .collect_vec();
     println!(
-        "the hl forward labels consists of {} entries (avg entries per vertex: {})",
-        num_label_entries,
-        num_label_entries as f32 / hub_graph.number_of_vertices() as f32
+        "getting random paths distances takes {:?} on average",
+        benchmark_distances(&hub_graph, &pairs)
+    );
+
+    let vertices = (0..hub_graph.number_of_vertices()).collect_vec();
+    let mut rng = thread_rng();
+    let pairs: Vec<(Vertex, Vertex)> = (0..args.num_runs)
+        .map(|_| {
+            vertices
+                .choose_multiple(&mut rng, 2)
+                .cloned()
+                .collect_tuple()
+                .unwrap()
+        })
+        .collect_vec();
+
+    println!(
+        "getting random paths takes {:?} on average",
+        benchmark_path(&hub_graph, &pairs)
     );
 }

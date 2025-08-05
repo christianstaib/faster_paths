@@ -1,112 +1,89 @@
-use std::{slice::Iter, usize};
-
-use indicatif::ProgressIterator;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use super::{
-    edge::{TaillessWeightedEdge, WeightedEdge},
-    Graph, VertexId,
-};
+use super::{Distance, Edge, Graph, TaillessEdge, Vertex, WeightedEdge};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct VecGraph {
-    pub edges: Vec<Vec<TaillessWeightedEdge>>,
+    edges: Vec<TaillessEdge>,
+    indices: Vec<(u32, u32)>,
 }
 
-impl Default for VecGraph {
-    fn default() -> Self {
-        Self::new()
+impl VecGraph {
+    pub fn new(edges: &[WeightedEdge], level_to_vertex: &Vec<Vertex>) -> Self {
+        let mut edges_map = edges
+            .iter()
+            .map(|edge| (edge.tail, edge.remove_tail()))
+            .into_group_map();
+
+        let mut edges = Vec::new();
+        let mut indices = vec![(0, 0); level_to_vertex.len()];
+
+        for vertex in level_to_vertex {
+            let start_index = edges.len() as u32;
+            let mut end_index = edges.len() as u32;
+
+            if let Some(mut edges_from_map) = edges_map.remove(vertex) {
+                edges_from_map.sort_unstable_by_key(|edge| edge.head);
+                end_index += edges_from_map.len() as u32;
+                edges.extend(edges_from_map);
+            }
+
+            indices[*vertex as usize] = (start_index, end_index);
+        }
+
+        Self { edges, indices }
     }
 }
 
 impl Graph for VecGraph {
-    fn out_edges(
-        &self,
-        source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
-        struct OutEdgeIterator<'a> {
-            source: VertexId,
-            tailless_edge_iterator: Iter<'a, TaillessWeightedEdge>,
+    fn number_of_vertices(&self) -> u32 {
+        self.indices.len() as u32
+    }
+
+    fn edges(&self, tail: Vertex) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
+        let &(start_index, stop_index) = self.indices.get(tail as usize).unwrap_or(&(0, 0));
+
+        struct EdgeIterator<'a> {
+            edge_iter: std::slice::Iter<'a, TaillessEdge>,
+            tail: Vertex,
         }
 
-        impl<'a> Iterator for OutEdgeIterator<'a> {
+        impl<'a> Iterator for EdgeIterator<'a> {
             type Item = WeightedEdge;
 
+            // Returns the next edge in the iterator, setting the tail vertex.
             fn next(&mut self) -> Option<Self::Item> {
-                let edge = self.tailless_edge_iterator.next()?;
-                edge.set_tail(self.source)
+                self.edge_iter
+                    .next()
+                    .map(|tailless_edge| tailless_edge.set_tail(self.tail))
             }
         }
 
-        impl<'a> ExactSizeIterator for OutEdgeIterator<'a> {
+        // Implentig ExactSizeIterator for EdgeIterator
+        impl<'a> ExactSizeIterator for EdgeIterator<'a> {
             fn len(&self) -> usize {
-                self.tailless_edge_iterator.len()
+                self.edge_iter.len()
             }
         }
 
-        let tailless_edge_iterator = if let Some(edges) = self.edges.get(source as usize) {
-            edges.iter()
-        } else {
-            [].iter()
-        };
-
-        let edge_iterator = OutEdgeIterator {
-            source,
-            tailless_edge_iterator,
-        };
-
-        Box::new(edge_iterator)
+        Box::new(EdgeIterator {
+            edge_iter: self.edges[start_index as usize..stop_index as usize].iter(),
+            tail,
+        })
     }
 
-    fn in_edges(
-        &self,
-        _source: VertexId,
-    ) -> Box<dyn ExactSizeIterator<Item = WeightedEdge> + Send + '_> {
-        unimplemented!("this graph is not reversable");
-    }
-
-    fn number_of_vertices(&self) -> u32 {
-        self.edges.len() as u32
-    }
-
-    fn number_of_edges(&self) -> u32 {
-        self.edges.iter().map(Vec::len).sum::<usize>() as u32
-    }
-
-    fn set_edge(&mut self, edge: &WeightedEdge) {
-        if (self.edges.len() as u32) <= edge.tail() {
-            self.edges.resize((edge.tail() + 1) as usize, Vec::new());
-        }
-
-        match self.edges[edge.tail() as usize]
-            .binary_search_by_key(&edge.head(), |out_edge| out_edge.head())
+    fn get_weight(&self, edge: &Edge) -> Option<Distance> {
+        let &(start_index, stop_index) = self.indices.get(edge.tail as usize).unwrap_or(&(0, 0));
+        if let Ok(index) = self.edges[start_index as usize..stop_index as usize]
+            .binary_search_by_key(&edge.head, |edge| edge.head)
         {
-            Ok(idx) => {
-                if edge.weight() < self.edges[edge.tail() as usize][idx].weight() {
-                    self.edges[edge.tail() as usize][idx].set_weight(edge.weight());
-                }
-            }
-            Err(idx) => self.edges[edge.tail() as usize].insert(idx, edge.tailless()),
+            return Some(self.edges[index].weight);
         }
+        None
     }
 
-    fn remove_vertex(&mut self, vertex: VertexId) {
-        if let Some(edges) = self.edges.get_mut(vertex as usize) {
-            edges.clear();
-        }
-    }
-}
-
-impl VecGraph {
-    pub fn new() -> Self {
-        VecGraph { edges: Vec::new() }
-    }
-
-    pub fn from_edges(edges: &[WeightedEdge]) -> VecGraph {
-        let mut graph = VecGraph::new();
-        edges.iter().progress().for_each(|edge| {
-            graph.set_edge(edge);
-        });
-        graph
+    fn set_weight(&mut self, _edge: &Edge, _weight: Option<Distance>) {
+        unimplemented!("This is a read only graph");
     }
 }
