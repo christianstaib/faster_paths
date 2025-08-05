@@ -239,10 +239,12 @@ pub fn read_edges_from_fmi_file(file: &Path) -> Vec<WeightedEdge> {
                 .parse()
                 .unwrap_or_else(|_| panic!("unable to parse head in line {}", line));
             let weight: Distance = values
-                .next()
-                .unwrap_or_else(|| panic!("no weight found in line {}", line))
-                .parse()
-                .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line));
+    .next()
+    .unwrap_or_else(|| panic!("no weight found in line {}", line))
+    .parse::<f64>()                                       // parse as float
+    .unwrap_or_else(|_| panic!("unable to parse weight in line {}", line))
+    .round()                                              // round to nearest
+    as Distance;
             if tail == head {
                 return None;
             }
