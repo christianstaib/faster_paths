@@ -1,6 +1,6 @@
 use std::{
     path::PathBuf,
-    sync::{atomic::AtomicI32, Arc, Mutex},
+    sync::atomic::AtomicI32,
 };
 
 use clap::Parser;
@@ -11,12 +11,9 @@ use faster_paths::{
     },
     search::{
         alt::landmark::Landmarks,
-        ch::{
-            bottom_up::{generic::edge_difference, heuristic::par_simulate_contraction_heuristic},
-            contracted_graph::ContractedGraph,
-        },
-        hl::hub_graph::{self, HubGraph},
-        DistanceHeuristic, TrivialHeuristic,
+        ch::contracted_graph::ContractedGraph,
+        hl::hub_graph::HubGraph,
+        DistanceHeuristic,
     },
     utility::{
         benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner,
@@ -25,7 +22,7 @@ use faster_paths::{
 };
 use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
-use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

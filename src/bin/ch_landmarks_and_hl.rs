@@ -12,7 +12,6 @@ use faster_paths::{
     },
     utility::{benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner},
 };
-use log::{info, warn};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

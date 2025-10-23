@@ -6,7 +6,7 @@ use faster_paths::{
         reversible_graph::ReversibleGraph, vec_hash_graph::VecHashGraph,
         vec_vec_graph::VecVecGraph, Graph, Vertex,
     },
-    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph, TrivialHeuristic},
+    search::{ch::contracted_graph::ContractedGraph, hl::hub_graph::HubGraph},
     utility::{
         benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner,
         read_json_with_spinnner, write_bincode_with_spinnner,

@@ -6,11 +6,10 @@ use std::{
 use clap::Parser;
 use faster_paths::{
     graphs::Vertex,
-    search::{hl::hub_graph::HubGraph, shortcuts::replace_shortcuts_slowly, PathFinding},
+    search::{hl::hub_graph::HubGraph, PathFinding},
     utility::read_bincode_with_spinnner,
 };
 use indicatif::ProgressIterator;
-use itertools::Itertools;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -99,7 +98,7 @@ fn fun_name(h1: HubGraph, min_vertex: u32) {
         .iter()
         .filter(|entry| entry.vertex != min_vertex)
         .map(|entry| {
-            let mut path = vec![
+            let path = vec![
                 h1_label[entry.predecessor_index.unwrap() as usize].vertex,
                 entry.vertex,
             ];

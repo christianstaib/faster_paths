@@ -14,15 +14,14 @@ use faster_paths::{
     search::{
         ch::contracted_graph::vertex_to_level,
         hl::{
-            half_hub_graph::{get_hub_label_with_brute_force_wrapped, HalfHubGraph},
+            half_hub_graph::HalfHubGraph,
             hub_graph::{HubGraph, HubLabelEntry},
         },
         PathFinding,
     },
     utility::{benchmark_and_test_path, generate_test_cases, read_bincode_with_spinnner},
 };
-use indicatif::ParallelProgressIterator;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::ParallelIterator;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

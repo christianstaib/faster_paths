@@ -17,7 +17,6 @@ use faster_paths::{
     utility::{read_json_with_spinnner, write_json_with_spinnner},
 };
 use indicatif::ParallelProgressIterator;
-use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Parser, Debug)]

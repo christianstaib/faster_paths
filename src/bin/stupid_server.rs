@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use actix_web::{
     web::{self, JsonConfig},
@@ -8,9 +8,7 @@ use clap::Parser;
 use faster_paths::{
     graphs::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
-        Vertex,
     },
-    search::ch::contracted_graph::vertex_to_level,
     utility::average_hl_label_size,
 };
 use serde::{Deserialize, Serialize};

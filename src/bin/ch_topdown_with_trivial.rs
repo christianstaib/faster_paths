@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use clap::Parser;
 use faster_paths::{
     graphs::{
-        reversible_graph::ReversibleGraph, vec_hash_graph::VecHashGraph,
-        vec_vec_graph::VecVecGraph, Graph, Vertex,
+        reversible_graph::ReversibleGraph,
+        vec_vec_graph::VecVecGraph, Vertex,
     },
     search::{ch::contracted_graph::ContractedGraph, TrivialHeuristic},
     utility::{

@@ -6,7 +6,7 @@ use faster_paths::{
         read_edges_from_fmi_file, reversible_graph::ReversibleGraph, vec_vec_graph::VecVecGraph,
     },
     reading_pathfinder,
-    utility::{benchmark_distances, benchmark_path, gen_tests_cases},
+    utility::{benchmark_distances, gen_tests_cases},
     FileType,
 };
 
