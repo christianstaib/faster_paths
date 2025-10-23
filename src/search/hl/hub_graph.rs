@@ -158,13 +158,8 @@ fn create_label(
         .collect::<Vec<_>>();
     neighbor_labels.push((None, labels_direction1.get(vertex as usize).unwrap()));
 
-    let start = Instant::now();
     let mut forward_label = get_hub_label_by_merging(&neighbor_labels);
-    let merging_duration = start.elapsed();
-    let start = Instant::now();
     prune_label(&mut forward_label, labels_direction2);
-    let pruning_duration = start.elapsed();
-    println!("{:?} {:?}", merging_duration, pruning_duration);
     labels_direction1[vertex as usize] = forward_label;
 }
 
