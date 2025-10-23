@@ -126,7 +126,7 @@ fn read_graph(path: &Path, is_visibility: bool) -> RawGraphData {
 
             let mut vertex_data = vertex_string.split_whitespace();
             let id1 = vertex_data.next().unwrap().parse::<Vertex>().unwrap();
-            let _id2 = vertex_data.next().unwrap().parse::<Vertex>().unwrap();
+            let _id2 = vertex_data.next().unwrap().parse::<u64>().unwrap();
             let lat = vertex_data.next().unwrap().parse::<f64>().unwrap();
             let lon = vertex_data.next().unwrap().parse::<f64>().unwrap();
             vertices.insert(id1, (lat, lon));
@@ -144,13 +144,9 @@ fn read_graph(path: &Path, is_visibility: bool) -> RawGraphData {
             let tail = edge_data.next().unwrap().parse::<Vertex>().unwrap();
             let head = edge_data.next().unwrap().parse::<Vertex>().unwrap();
             let weight_string = edge_data.next().unwrap();
-            let weight = {
-                if is_visibility {
-                    (weight_string.parse::<f64>().unwrap() * 100.0).floor() as Distance
-                } else {
+            let weight = 
                     weight_string.parse::<Distance>().unwrap()
-                }
-            };
+            ;
 
             let current_weight = *edges.get(&(tail, head)).unwrap_or(&Distance::MAX);
             if weight < current_weight {
