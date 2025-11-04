@@ -360,25 +360,30 @@ where
 pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex> {
     let n = number_of_vertices as usize;
 
-    println!("Counting");
     // hits[v] = number of active paths containing v
     let mut hits: Vec<usize> = vec![0; n];
-    for path in paths.iter().progress() {
+    for path in paths
+        .iter()
+        .progress_with(get_progressbar("Getting many paths", paths.len() as u64))
+    {
         for &v in path {
             hits[v as usize] += 1;
         }
     }
 
-    println!("Create empty vec");
     // active_vertices[v] = active paths containing v
     let mut active_paths: Vec<Vec<usize>> = vec![Vec::new(); n];
 
-    for i in (0..hits.len()).progress() {
+    for i in (0..hits.len()).progress_with(get_progressbar("Create empty vec", paths.len() as u64))
+    {
         active_paths[i].reserve(hits[i]);
     }
 
-    println!("pushing");
-    for (p_idx, path) in paths.iter().enumerate().progress() {
+    for (p_idx, path) in paths
+        .iter()
+        .enumerate()
+        .progress_with(get_progressbar("Pushing", paths.len() as u64))
+    {
         for &v in path {
             active_paths[v as usize].push(p_idx);
         }
