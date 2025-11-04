@@ -67,17 +67,17 @@ fn main() {
     }
 
     let num_samples = 1_000;
-    let average_hl_label_size = average_hl_label_size(
-        graph.out_graph(),
-        &vertex_to_level(&level_to_vertex),
-        num_samples,
-    );
-    println!(
-        "average hl label size will be approximately {:.1}. (averaged over {} out of {} vertices)",
-        average_hl_label_size,
-        num_samples,
-        graph.out_graph().number_of_vertices()
-    );
+    // let average_hl_label_size = average_hl_label_size(
+    //     graph.out_graph(),
+    //     &vertex_to_level(&level_to_vertex),
+    //     num_samples,
+    // );
+    // println!(
+    //     "average hl label size will be approximately {:.1}. (averaged over {} out
+    // of {} vertices)",     average_hl_label_size,
+    //     num_samples,
+    //     graph.out_graph().number_of_vertices()
+    // );
 
     let average_ch_vertex_degree = average_ch_vertex_degree(
         graph.out_graph(),

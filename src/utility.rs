@@ -358,82 +358,100 @@ where
 /// paths in parallel, iteratively selecting the most frequent vertex and
 /// updating active paths until all paths are exhausted.
 pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex> {
-    let mut level_to_vertex = Vec::new();
-    let mut active_paths: Vec<usize> = (0..paths.len()).collect();
-    let mut active_vertices: HashSet<Vertex> = HashSet::from_iter(0..number_of_vertices);
+    let n = number_of_vertices as usize;
 
-    let mut all_hits = vec![0; number_of_vertices as usize];
+    // For each vertex, the indices of paths that contain it.
+    let mut paths_containing_vertex: Vec<Vec<usize>> = vec![Vec::new(); n];
+    for (p_idx, path) in paths.iter().enumerate() {
+        for &v in path {
+            debug_assert!((v as usize) < n);
+            paths_containing_vertex[v as usize].push(p_idx);
+        }
+    }
 
-    let pb = get_progressbar("Generating level_to_vertex vector", paths.len() as u64);
-    while !active_paths.is_empty() {
-        let hits = active_paths
-            // Split the active_paths into chunks for parallel processing.
-            .par_chunks(active_paths.len().div_ceil(rayon::current_num_threads()))
-            // For each chunk, calculate how frequently each vertex appears across the active paths.
-            .map(|indices| {
-                let mut partial_hits = vec![0; number_of_vertices as usize];
-                for &index in indices {
-                    for &vertex in paths[index].iter() {
-                        partial_hits[vertex as usize] += 1;
-                    }
-                }
-                partial_hits
-            })
-            // Sum the results from all threads to get the total hit count for each vertex.
-            .reduce(
-                || vec![0; number_of_vertices as usize],
-                |mut hits, partial_hits| {
-                    for index in 0..number_of_vertices as usize {
-                        hits[index] += partial_hits[index]
-                    }
-                    hits
-                },
-            );
+    // hits[v] = number of active paths containing v
+    let mut hits: Vec<u32> = paths_containing_vertex
+        .iter()
+        .map(|ps| ps.len() as u32)
+        .collect();
 
-        all_hits
-            .par_iter_mut()
-            .zip(hits.par_iter())
-            .for_each(|(all, this)| *all += this);
+    // Track which paths/vertices are still in play.
+    let mut path_active = vec![true; paths.len()];
+    let mut picked = vec![false; n];
 
-        // Get the vertex that hits the most paths.
-        let vertex = hits
+    // Will hold the greedy-picked vertices; we reverse at the end.
+    let mut level_vertices = Vec::with_capacity(n);
+
+    let mut active_paths_count = paths.len();
+
+    let pb = get_progressbar(
+        "Generating level_to_vertex vector",
+        active_paths_count as u64,
+    );
+
+    loop {
+        // Parallel argmax over hits, skipping already picked vertices.
+        let best = hits
             .par_iter()
             .enumerate()
-            .max_by_key(|&(_vertex, hits)| hits)
-            .map(|(vertex, _)| vertex as Vertex)
-            .expect("hits cannot be empty if number_of_vertices > 0");
+            .filter(|(i, _)| !picked[*i])
+            .map(|(i, &h)| (i, h))
+            .max_by_key(|&(_, h)| h);
 
-        // There is no real max hitting vertex anymore.
-        if hits[vertex as usize] == 1 {
+        let (best_idx, best_hits) = match best {
+            Some(b) => b,
+            None => break, // no candidates left
+        };
+
+        // Same stop condition as before.
+        if best_hits <= 1 {
             break;
         }
 
-        // The level of this vertex is 1 lower than the previous one.
-        level_to_vertex.insert(0, vertex);
+        picked[best_idx] = true;
+        let vertex = best_idx as Vertex;
+        level_vertices.push(vertex);
 
-        active_vertices.remove(&(vertex));
+        // Remove all active paths containing this vertex and update hits.
+        for &p_idx in &paths_containing_vertex[best_idx] {
+            if !path_active[p_idx] {
+                continue;
+            }
+            path_active[p_idx] = false;
+            active_paths_count -= 1;
 
-        // Remove paths that are hit by vertex.
-        active_paths = active_paths
-            .into_par_iter()
-            .filter(|&index| !paths[index].contains(&vertex))
-            .collect();
+            // Every vertex in this path appears in one less active path now.
+            for &v in &paths[p_idx] {
+                hits[v as usize] -= 1;
+            }
+        }
 
-        pb.set_position((paths.len() - active_paths.len()) as u64);
+        pb.set_position((paths.len() - active_paths_count) as u64);
     }
+
     pb.finish_and_clear();
 
-    let mut active_vertices = active_vertices.into_iter().collect_vec();
+    // Remaining vertices: never picked in the greedy phase.
+    let mut remaining: Vec<Vertex> = (0..number_of_vertices)
+        .map(|v| v as Vertex)
+        .filter(|&v| !picked[v as usize])
+        .collect();
 
-    active_vertices.sort_by_cached_key(|vertex| all_hits[*vertex as usize]);
+    // Cheap heuristic: sort remaining by original degree (how many paths they were
+    // in). This roughly mimics “importance” without maintaining a full all_hits
+    // array.
+    remaining.sort_unstable_by_key(|&v| paths_containing_vertex[v as usize].len());
 
-    // Insert the remaining vertices at the front, e.g. assign them the lowest
-    // levels.
-    level_to_vertex.splice(0..0, active_vertices);
+    // Previously you inserted greedy-picked vertices at the front; that corresponds
+    // to reversing them once at the end.
+    level_vertices.reverse();
 
-    level_to_vertex
+    let mut result = Vec::with_capacity(n);
+    result.extend(remaining);
+    result.extend(level_vertices);
+
+    result
 }
-
 pub fn benchmark_path(
     pathfinder: &dyn PathFinding,
     sources_and_targets: &[(Vertex, Vertex)],
