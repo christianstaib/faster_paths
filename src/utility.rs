@@ -361,33 +361,28 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     let n = number_of_vertices as usize;
 
     println!("Counting");
-    let mut sizes: Vec<usize> = vec![0; n];
+    // hits[v] = number of active paths containing v
+    let mut hits: Vec<usize> = vec![0; n];
     for path in paths.iter().progress() {
         for &v in path {
-            sizes[v as usize] += 1;
+            hits[v as usize] += 1;
         }
     }
 
     println!("Create empty vec");
-    // For each vertex, the indices of paths that contain it.
-    let mut paths_containing_vertex: Vec<Vec<usize>> = vec![Vec::new(); n];
+    // active_vertices[v] = active paths containing v
+    let mut active_paths: Vec<Vec<usize>> = vec![Vec::new(); n];
 
-    for i in 0..sizes.len() {
-        paths_containing_vertex[i].reserve(sizes[i]);
+    for i in (0..hits.len()).progress() {
+        active_paths[i].reserve(hits[i]);
     }
 
     println!("pushing");
     for (p_idx, path) in paths.iter().enumerate().progress() {
         for &v in path {
-            paths_containing_vertex[v as usize].push(p_idx);
+            active_paths[v as usize].push(p_idx);
         }
     }
-
-    // hits[v] = number of active paths containing v
-    let mut hits: Vec<u32> = paths_containing_vertex
-        .iter()
-        .map(|ps| ps.len() as u32)
-        .collect();
 
     // Track which paths/vertices are still in play.
     let mut path_active = vec![true; paths.len()];
@@ -427,7 +422,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
         level_vertices.push(vertex);
 
         // Remove all active paths containing this vertex and update hits.
-        for &p_idx in &paths_containing_vertex[best_idx] {
+        for &p_idx in &active_paths[best_idx] {
             if !path_active[p_idx] {
                 continue;
             }
@@ -454,7 +449,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     // Cheap heuristic: sort remaining by original degree (how many paths they were
     // in). This roughly mimics “importance” without maintaining a full all_hits
     // array.
-    remaining.sort_unstable_by_key(|&v| paths_containing_vertex[v as usize].len());
+    remaining.sort_unstable_by_key(|&v| active_paths[v as usize].len());
 
     // Previously you inserted greedy-picked vertices at the front; that corresponds
     // to reversing them once at the end.
