@@ -360,11 +360,25 @@ where
 pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Vertex> {
     let n = number_of_vertices as usize;
 
+    println!("Counting");
+    let mut sizes: Vec<usize> = vec![0; n];
+    for path in paths.iter().progress() {
+        for &v in path {
+            sizes[v as usize] += 1;
+        }
+    }
+
+    println!("Create empty vec");
     // For each vertex, the indices of paths that contain it.
     let mut paths_containing_vertex: Vec<Vec<usize>> = vec![Vec::new(); n];
+
+    for i in 0..sizes.len() {
+        paths_containing_vertex[i].reserve(sizes[i]);
+    }
+
+    println!("pushing");
     for (p_idx, path) in paths.iter().enumerate().progress() {
         for &v in path {
-            debug_assert!((v as usize) < n);
             paths_containing_vertex[v as usize].push(p_idx);
         }
     }
