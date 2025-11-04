@@ -152,16 +152,14 @@ pub fn update_edge_map(
 pub fn edge_difference<G: Graph>(
     graph: &ReversibleGraph<G>,
     new_and_updated_edges: &HashMap<Vertex, (Vec<TaillessEdge>, Vec<TaillessEdge>)>,
-    vertex: Vertex,
+    _vertex: Vertex,
 ) -> i32 {
-    let mut neighbors_newedges_map = graph
-        .out_graph()
-        .edges(vertex)
-        .map(|x| (x.head, -1))
-        .collect::<HashMap<_, _>>();
+    // For each tail u, we remove one edge u→v and add `new.len()` edges u→*
+    let mut neighbors_newedges_map: HashMap<Vertex, i64> = HashMap::new();
 
-    for (x, (new, _)) in new_and_updated_edges.iter() {
-        *neighbors_newedges_map.get_mut(x).unwrap() += new.len() as i64;
+    for (&tail, (new, _)) in new_and_updated_edges.iter() {
+        let diff = neighbors_newedges_map.entry(tail).or_insert(-1); // -1: u→v removed
+        *diff += new.len() as i64; // +#shortcuts from u
     }
 
     let p = 1;
@@ -170,7 +168,6 @@ pub fn edge_difference<G: Graph>(
         .iter()
         .map(|(n, diff)| {
             let old = graph.out_graph().edges(*n).len() as i64;
-
             (old + diff).pow(p) - old.pow(p)
         })
         .sum::<i64>() as i32

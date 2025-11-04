@@ -27,7 +27,7 @@ fn main() {
     let graph = ReversibleGraph::<VecVecGraph>::from_fmi_file(&args.graph);
 
     // Create contracted_graph
-    let contracted_graph = ContractedGraph::with_dijkstra_witness_search(&graph, u32::MAX);
+    let contracted_graph = ContractedGraph::with_dijkstra_witness_search(&graph, 16);
 
     // Write contracted_graph to file
     let writer = BufWriter::new(File::create(&args.contracted_graph).unwrap());
