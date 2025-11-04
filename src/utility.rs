@@ -379,15 +379,18 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
         active_paths[i].reserve(hits[i]);
     }
 
-    for (p_idx, path) in paths
-        .iter()
-        .enumerate()
-        .progress_with(get_progressbar("Pushing", paths.len() as u64))
-    {
+    let start = Instant::now();
+    let total_pushes: usize = hits.iter().sum(); // or sum of path.len()
+    let pb = get_progressbar("Pushing", total_pushes as u64);
+    for (p_idx, path) in paths.iter().enumerate() {
         for &v in path {
             active_paths[v as usize].push(p_idx);
         }
+        pb.inc(path.len() as u64);
     }
+    pb.finish();
+    let elapsed = start.elapsed();
+    println!("Elapsed time: {:.6} seconds", elapsed.as_secs_f64());
 
     // Track which paths/vertices are still in play.
     let mut path_active = vec![true; paths.len()];
