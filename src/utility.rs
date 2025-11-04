@@ -361,30 +361,13 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     let n = number_of_vertices as usize;
 
     // For each vertex, the indices of paths that contain it.
-    let mut paths_containing_vertex: Vec<Vec<usize>> = paths
-        .par_iter()
-        .progress()
-        .enumerate()
-        .fold(
-            || vec![Vec::<usize>::new(); n],
-            |mut local, (p_idx, path)| {
-                for &v in path {
-                    debug_assert!((v as usize) < n);
-                    local[v as usize].push(p_idx);
-                }
-                local
-            },
-        )
-        .reduce(
-            || vec![Vec::<usize>::new(); n],
-            |mut a, b| {
-                // Merge local results
-                for (a_list, b_list) in a.iter_mut().zip(b) {
-                    a_list.extend(b_list);
-                }
-                a
-            },
-        );
+    let mut paths_containing_vertex: Vec<Vec<usize>> = vec![Vec::new(); n];
+    for (p_idx, path) in paths.iter().enumerate().progress() {
+        for &v in path {
+            debug_assert!((v as usize) < n);
+            paths_containing_vertex[v as usize].push(p_idx);
+        }
+    }
 
     // hits[v] = number of active paths containing v
     let mut hits: Vec<u32> = paths_containing_vertex
