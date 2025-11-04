@@ -364,7 +364,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     let mut hits: Vec<usize> = vec![0; n];
     for path in paths
         .iter()
-        .progress_with(get_progressbar("Getting many paths", paths.len() as u64))
+        .progress_with(get_progressbar("Getting hits", paths.len() as u64))
     {
         for &v in path {
             hits[v as usize] += 1;
@@ -372,7 +372,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     }
 
     // active_vertices[v] = active paths containing v
-    let mut active_paths: Vec<Vec<usize>> = vec![Vec::new(); n];
+    let mut active_paths: Vec<Vec<u32>> = vec![Vec::new(); n];
 
     for i in (0..hits.len()).progress_with(get_progressbar("Create empty vec", paths.len() as u64))
     {
@@ -384,7 +384,7 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     let pb = get_progressbar("Pushing", total_pushes as u64);
     for (p_idx, path) in paths.iter().enumerate() {
         for &v in path {
-            active_paths[v as usize].push(p_idx);
+            active_paths[v as usize].push(p_idx as u32);
         }
         pb.inc(path.len() as u64);
     }
@@ -435,14 +435,14 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
 
         // Remove all active paths containing this vertex and update hits.
         for &p_idx in &active_paths[best_idx] {
-            if !path_active[p_idx] {
+            if !path_active[p_idx as usize] {
                 continue;
             }
-            path_active[p_idx] = false;
+            path_active[p_idx as usize] = false;
             active_paths_count -= 1;
 
             // Every vertex in this path appears in one less active path now.
-            for &v in &paths[p_idx] {
+            for &v in &paths[p_idx as usize] {
                 hits[v as usize] -= 1;
             }
         }
