@@ -390,7 +390,11 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     }
     pb.finish();
     let elapsed = start.elapsed();
-    println!("Elapsed time: {:.6} seconds", elapsed.as_secs_f64());
+    println!(
+        "Elapsed time: {:.6} seconds for {} elems",
+        elapsed.as_secs_f64(),
+        total_pushes
+    );
 
     // Track which paths/vertices are still in play.
     let mut path_active = vec![true; paths.len()];
