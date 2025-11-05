@@ -46,6 +46,8 @@ fn main() {
         if ret != 0 {
             eprintln!("mlockall failed: {}", std::io::Error::last_os_error());
             // Optional: std::process::exit(1);
+        } else {
+            println!("mlockall worked :)");
         }
     }
 
