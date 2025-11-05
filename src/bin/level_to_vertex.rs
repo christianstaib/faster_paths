@@ -10,6 +10,7 @@ use faster_paths::{
     },
     FileType,
 };
+use libc::{mlockall, MCL_CURRENT, MCL_FUTURE};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -40,6 +41,14 @@ struct Args {
 }
 
 fn main() {
+    unsafe {
+        let ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+        if ret != 0 {
+            eprintln!("mlockall failed: {}", std::io::Error::last_os_error());
+            // Optional: std::process::exit(1);
+        }
+    }
+
     let args = Args::parse();
 
     // Build graph
