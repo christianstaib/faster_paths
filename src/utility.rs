@@ -374,10 +374,16 @@ pub fn level_to_vertex(paths: &[Vec<Vertex>], number_of_vertices: u32) -> Vec<Ve
     // active_vertices[v] = active paths containing v
     let mut active_paths: Vec<Vec<u32>> = vec![Vec::new(); n];
 
-    for i in (0..hits.len()).progress_with(get_progressbar("Create empty vec", paths.len() as u64))
-    {
-        active_paths[i].reserve(hits[i]);
-    }
+    active_paths
+        .par_iter_mut()
+        .zip(hits.par_iter()) // or .zip(hits.iter())
+        .progress_with(get_progressbar(
+            "Create empty vec",
+            paths.len() as u64, // or active_paths.len() as u64
+        ))
+        .for_each(|(path, &hit)| {
+            path.reserve(hit);
+        });
 
     let start = Instant::now();
     let total_pushes: usize = hits.iter().sum(); // or sum of path.len()
