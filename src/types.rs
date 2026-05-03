@@ -1,0 +1,33 @@
+use std::ops::Add;
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+pub struct VertexId(u32);
+
+impl VertexId {
+    pub fn new(_0: u32) -> Self {
+        Self(_0)
+    }
+
+    pub fn as_usize(self) -> usize {
+        self.0 as usize
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+pub struct Distance(u32);
+
+impl Add for Distance {
+    type Output = Distance;
+
+    fn add(self, rhs: Distance) -> Self::Output {
+        Distance(self.0 + rhs.0)
+    }
+}
+
+impl Distance {
+    pub const ZERO: Self = Self(0);
+
+    pub fn new(_0: u32) -> Self {
+        Self(_0)
+    }
+}

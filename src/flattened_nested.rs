@@ -1,0 +1,38 @@
+#[derive(Debug, Clone, Default)]
+pub struct FlattenedNested<T> {
+    flat: Vec<T>,
+    offsets: Vec<usize>,
+}
+
+impl<T> FlattenedNested<T> {
+    pub fn new(nested: Vec<Vec<T>>) -> Self {
+        let total = nested.iter().map(Vec::len).sum();
+
+        let mut flat = Vec::with_capacity(total);
+        let mut offsets = Vec::with_capacity(nested.len() + 1);
+
+        offsets.push(0);
+
+        for inner in nested {
+            flat.extend(inner);
+            offsets.push(flat.len());
+        }
+
+        Self { flat, offsets }
+    }
+
+    pub fn nested(&self, idx: usize) -> &[T] {
+        let begin = self.offsets[idx];
+        let end = self.offsets[idx + 1];
+
+        &self.flat[begin..end]
+    }
+
+    pub fn num_nested(&self) -> usize {
+        self.offsets.len().saturating_sub(1)
+    }
+
+    pub fn num_flat(&self) -> usize {
+        self.flat.len()
+    }
+}
