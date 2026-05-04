@@ -1,18 +1,19 @@
 use crate::types::{Distance, VertexId};
 
-/// An edge is stored either in the up_graph or down_graph of Data.
-/// In both cases it is directed upwards, i.e. level(head_) > level(tail_).
+/// An edge is stored either in the `up_graph` or `down_graph` of a
+/// `ContractionHierarchy`.
+///
+/// In both graphs the stored edge is directed upward, i.e.
+/// `level(head) > level(tail)`.
 ///
 /// If the edge is *not* a shortcut:
-/// - child1_ is set to the sentinel INVALID_INDEX.
+/// - `skipped` is `None`.
 ///
 /// If the edge *is* a shortcut:
-/// - child1_ is the index of the edge in the *other* direction (middle -> tail_).
-/// - child2_ is the index of the edge in the *same* direction (middle -> head_).
-///
-/// tail <------------- (skiped) -------------> head
-///       child_edge_1            child_edge_2
-
+/// - `skipped` is `Some(middle)`, where `middle` is the contracted vertex that
+///   was skipped by this shortcut.
+/// - the child edge in the *other* graph is an edge `middle -> tail`.
+/// - the child edge in the *same* graph is an edge `middle -> head`.
 #[derive(Clone, Copy)]
 pub struct Edge {
     tail: VertexId,

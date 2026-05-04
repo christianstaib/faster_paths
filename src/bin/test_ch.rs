@@ -1,13 +1,12 @@
 use ch::ch::contraction_hierarchy::ContractionHierarchy;
 use ch::ch::edge::Edge;
-use ch::ch::pathfinder::Pathfinder;
+use ch::ch::pathfinder::ContractionHierarchyPathfinder;
 use ch::flattened_nested::FlattenedNested;
 use ch::fmi_helper::{read_fmi_ch, read_tests};
 use ch::path::PathDistance;
-use ch::search_state::hash_search_state::HashSearchState;
+use ch::pathfinder::ShortestPathFinder;
 use ch::types::{Distance, VertexId};
 use clap::Parser;
-use std::collections::BinaryHeap;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -27,12 +26,7 @@ fn main() {
 
     let ch = read_fmi_ch(&args.graph_in).unwrap();
     let tests = read_tests(&args.test_in).unwrap();
-    let mut pathfinder = Pathfinder::new(
-        &ch,
-        BinaryHeap::new(),
-        HashSearchState::new(),
-        HashSearchState::new(),
-    );
+    let mut pathfinder = ContractionHierarchyPathfinder::new(&ch);
 
     let mut failures = 0;
     for test in &tests {
@@ -52,7 +46,7 @@ fn main() {
 
 fn validate_path(
     ch: &ContractionHierarchy,
-    pathfinder: &mut Pathfinder<'_>,
+    pathfinder: &mut ContractionHierarchyPathfinder<'_>,
     test: &PathDistance,
 ) -> Result<(), String> {
     let path = pathfinder.path(test.query());

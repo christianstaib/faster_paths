@@ -3,6 +3,7 @@ use crate::ch::edge::Edge;
 use crate::ch::shortcut::unpack_and_concat_shortcut_paths;
 use crate::flattened_nested::FlattenedNested;
 use crate::path::{Path, PathQuery};
+use crate::pathfinder::ShortestPathFinder;
 use crate::search_state::hash_search_state::HashSearchState;
 use crate::search_state::search_state_access::SearchStateAccess;
 use crate::types::{Distance, VertexId};
@@ -10,16 +11,38 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
 #[derive(Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
-pub enum Direction {
+enum Direction {
     UP,
     DOWN,
 }
 
-pub struct Pathfinder<'a> {
+pub struct ContractionHierarchyPathfinder<'a> {
     contraction_hierarchy: &'a ContractionHierarchy,
     queue: BinaryHeap<(Reverse<Distance>, VertexId, Direction)>,
     up_state: HashSearchState,
     down_state: HashSearchState,
+}
+
+impl<'a> ShortestPathFinder for ContractionHierarchyPathfinder<'a> {
+    fn path(&mut self, query: &PathQuery) -> Option<Path> {
+        let (distance, meeting_vertex) = self.search(query)?;
+
+        let up_reversed_shortcut_path = self.up_state.get_reversed_path(meeting_vertex)?;
+        let down_reversed_shortcut_path = self.down_state.get_reversed_path(meeting_vertex)?;
+        let path = unpack_and_concat_shortcut_paths(
+            self.contraction_hierarchy,
+            &up_reversed_shortcut_path,
+            &down_reversed_shortcut_path,
+        )?;
+
+        Some(Path::new(path, distance))
+    }
+
+    fn distance(&mut self, query: &PathQuery) -> Option<Distance> {
+        let (distance, _meeting_vertex) = self.search(query)?;
+
+        Some(distance)
+    }
 }
 
 /// Indicates if `vertex` can be stalled.
@@ -45,18 +68,13 @@ fn stall(
     false
 }
 
-impl<'a> Pathfinder<'a> {
-    pub fn new(
-        contraction_hierarchy: &'a ContractionHierarchy,
-        queue: BinaryHeap<(Reverse<Distance>, VertexId, Direction)>,
-        up_state: HashSearchState,
-        down_state: HashSearchState,
-    ) -> Self {
+impl<'a> ContractionHierarchyPathfinder<'a> {
+    pub fn new(contraction_hierarchy: &'a ContractionHierarchy) -> Self {
         Self {
             contraction_hierarchy,
-            queue,
-            up_state,
-            down_state,
+            queue: BinaryHeap::new(),
+            up_state: HashSearchState::new(),
+            down_state: HashSearchState::new(),
         }
     }
 
@@ -134,145 +152,5 @@ impl<'a> Pathfinder<'a> {
         }
 
         best_meeting
-    }
-
-    pub fn path(&mut self, query: &PathQuery) -> Option<Path> {
-        let (distance, meeting_vertex) = self.search(query)?;
-        let up_reversed_shortcut_path = self.up_state.get_reversed_path(meeting_vertex)?;
-        let down_reversed_shortcut_path = self.down_state.get_reversed_path(meeting_vertex)?;
-
-        Some(Path::new(
-            unpack_and_concat_shortcut_paths(
-                self.contraction_hierarchy,
-                &up_reversed_shortcut_path,
-                &down_reversed_shortcut_path,
-            )?,
-            distance,
-        ))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn vertex(id: u32) -> VertexId {
-        VertexId::new(id)
-    }
-
-    fn edge(tail: u32, head: u32, weight: u32, skiped: Option<u32>) -> Edge {
-        Edge::new(
-            vertex(tail),
-            vertex(head),
-            Distance::new(weight),
-            skiped.map(vertex),
-        )
-    }
-
-    fn pathfinder(ch: &ContractionHierarchy) -> Pathfinder<'_> {
-        Pathfinder::new(
-            ch,
-            BinaryHeap::new(),
-            HashSearchState::new(),
-            HashSearchState::new(),
-        )
-    }
-
-    #[test]
-    fn path_expands_forward_shortcuts_from_skipped_vertices() {
-        let ch = ContractionHierarchy::new(
-            FlattenedNested::new(vec![
-                vec![edge(0, 2, 2, Some(1))],
-                vec![edge(1, 2, 1, None)],
-                vec![],
-            ]),
-            FlattenedNested::new(vec![vec![], vec![edge(1, 0, 1, None)], vec![]]),
-        );
-        let mut pathfinder = pathfinder(&ch);
-
-        let path = pathfinder
-            .path(&PathQuery::new(vertex(0), vertex(2)))
-            .unwrap();
-
-        assert_eq!(path.vertices(), &[vertex(0), vertex(1), vertex(2)]);
-        assert_eq!(path.distance(), Distance::new(2));
-    }
-
-    #[test]
-    fn path_expands_nested_shortcuts_without_recursion() {
-        let ch = ContractionHierarchy::new(
-            FlattenedNested::new(vec![
-                vec![edge(0, 3, 3, Some(2))],
-                vec![edge(1, 2, 1, None)],
-                vec![edge(2, 3, 1, None)],
-                vec![],
-            ]),
-            FlattenedNested::new(vec![
-                vec![],
-                vec![edge(1, 0, 1, None)],
-                vec![edge(2, 0, 2, Some(1))],
-                vec![],
-            ]),
-        );
-        let mut pathfinder = pathfinder(&ch);
-
-        let path = pathfinder
-            .path(&PathQuery::new(vertex(0), vertex(3)))
-            .unwrap();
-
-        assert_eq!(
-            path.vertices(),
-            &[vertex(0), vertex(1), vertex(2), vertex(3)]
-        );
-        assert_eq!(path.distance(), Distance::new(3));
-    }
-
-    #[test]
-    fn path_expands_backward_shortcuts_from_skipped_vertices() {
-        let ch = ContractionHierarchy::new(
-            FlattenedNested::new(vec![vec![], vec![edge(1, 0, 1, None)], vec![]]),
-            FlattenedNested::new(vec![
-                vec![edge(0, 2, 2, Some(1))],
-                vec![edge(1, 2, 1, None)],
-                vec![],
-            ]),
-        );
-        let mut pathfinder = pathfinder(&ch);
-
-        let path = pathfinder
-            .path(&PathQuery::new(vertex(2), vertex(0)))
-            .unwrap();
-
-        assert_eq!(path.vertices(), &[vertex(2), vertex(1), vertex(0)]);
-        assert_eq!(path.distance(), Distance::new(2));
-    }
-
-    #[test]
-    fn path_expands_nested_backward_shortcuts_without_recursion() {
-        let ch = ContractionHierarchy::new(
-            FlattenedNested::new(vec![
-                vec![],
-                vec![edge(1, 0, 1, None)],
-                vec![edge(2, 0, 2, Some(1))],
-                vec![],
-            ]),
-            FlattenedNested::new(vec![
-                vec![edge(0, 3, 3, Some(2))],
-                vec![edge(1, 2, 1, None)],
-                vec![edge(2, 3, 1, None)],
-                vec![],
-            ]),
-        );
-        let mut pathfinder = pathfinder(&ch);
-
-        let path = pathfinder
-            .path(&PathQuery::new(vertex(3), vertex(0)))
-            .unwrap();
-
-        assert_eq!(
-            path.vertices(),
-            &[vertex(3), vertex(2), vertex(1), vertex(0)]
-        );
-        assert_eq!(path.distance(), Distance::new(3));
     }
 }

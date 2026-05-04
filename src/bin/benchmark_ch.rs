@@ -1,8 +1,6 @@
-use ch::ch::pathfinder::Pathfinder;
+use ch::ch::pathfinder::ContractionHierarchyPathfinder;
 use ch::fmi_helper::{read_fmi_ch, read_tests};
-use ch::search_state::hash_search_state::HashSearchState;
 use clap::Parser;
-use std::collections::BinaryHeap;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -24,12 +22,7 @@ fn main() {
     // Parse the ChGraph from the file
     let graph = read_fmi_ch(&args.graph_in).unwrap();
 
-    let mut pathfiner = Pathfinder::new(
-        &graph,
-        BinaryHeap::new(),
-        HashSearchState::new(),
-        HashSearchState::new(),
-    );
+    let mut pathfiner = ContractionHierarchyPathfinder::new(&graph);
 
     let tests = read_tests(&args.test_in).unwrap();
 

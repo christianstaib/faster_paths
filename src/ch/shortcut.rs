@@ -6,11 +6,11 @@ use crate::{
 
 /// Finds an edge from `tail` to `head` in `graph`.
 ///
-/// If multiple such edges exist, an arbitrary matching edge may be returned.
-/// Returns `None` if no matching edge exists.
+/// If multiple matching edges exist, an arbitrary one may be returned.
+/// Returns `None` if no such edge exists.
 ///
-/// Assumes that the outgoing edges of `tail` are sorted by their head vertex,
-/// since the lookup is performed using binary search.
+/// The outgoing edges of `tail` must be sorted by their head vertex, because the
+/// lookup is performed using binary search.
 fn find_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId) -> Option<&Edge> {
     let edges = graph.nested(tail.as_usize());
 
@@ -20,12 +20,14 @@ fn find_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId) -> O
         .map(|idx| &edges[idx])
 }
 
-/// Reconstructs the full shortest path ending at `meeting_vertex`.
+/// Unpacks the upward and downward shortcut paths and concatenates them.
 ///
-/// Retrieves and unpacks both the upward and downward search paths,
-/// expanding any shortcut edges back into their constituent vertices.
-/// Returns `None` if `meeting_vertex` is unreachable in either search states or the unpacking
-/// of the shortcuts failed due to an incorrect contraction hierarchy.
+/// Both input paths are expected to be reversed shortcut paths starting at the
+/// meeting vertex.
+///
+/// Returns the fully unpacked vertex path from source to target, or `None` if
+/// one of the shortcut paths is empty, an expected edge is missing, or a shortcut
+/// cannot be unpacked with the given contraction hierarchy.
 pub fn unpack_and_concat_shortcut_paths(
     contraction_hierarchy: &ContractionHierarchy,
     up_reversed_shortcut_path: &Vec<VertexId>,
@@ -54,9 +56,8 @@ pub fn unpack_and_concat_shortcut_paths(
 
 /// Expands a reversed shortcut path into the corresponding non-reversed vertex path.
 ///
-/// The input path is interpreted in `dir1_graph`. Shortcut edges are unpacked
-/// iteratively using both graph directions. Returns `None` if an expected edge
-/// is not found or the input is empty.
+/// Shortcut edges are unpacked iteratively using both graphs. Returns `None` if
+/// an expected edge is not found or the input is empty.
 pub fn unpack_shortcuts(
     dir1_graph: &FlattenedNested<Edge>,
     dir2_graph: &FlattenedNested<Edge>,
