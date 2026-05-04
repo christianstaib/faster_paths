@@ -25,7 +25,7 @@ fn main() {
         println!(
             "{:?} -> {:?} = {:?}",
             edge.tail(),
-            edge.target(),
+            edge.head(),
             edge.weight()
         );
     }
@@ -44,7 +44,7 @@ pub fn sum_path(path: &[VertexId], graph: &FlattenedNested<ch::edge::Edge>) -> O
 
         let edges = graph.nested(tail.as_usize());
 
-        if let Some(index) = edges.binary_search_by_key(&head, |edge| edge.target()).ok() {
+        if let Some(index) = edges.binary_search_by_key(&head, |edge| edge.head()).ok() {
             sum = sum + edges[index].weight();
         } else {
             return None;

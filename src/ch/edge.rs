@@ -43,7 +43,7 @@ impl Edge {
         self.weight
     }
 
-    pub fn skiped(&self) -> Option<VertexId> {
+    pub fn skipped(&self) -> Option<VertexId> {
         self.skiped
     }
 }

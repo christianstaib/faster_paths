@@ -12,7 +12,8 @@ pub trait SearchStateAccess {
 
     fn clear(&mut self);
 
-    fn get_path(&self, target: VertexId) -> Option<Vec<VertexId>> {
+    /// If target is reachable, returns the reversed path, e.g. [target, ..., source], otherwise None.
+    fn get_reversed_path(&self, target: VertexId) -> Option<Vec<VertexId>> {
         self.get_distance(target)?;
 
         let mut path = Vec::new();
@@ -25,7 +26,6 @@ pub trait SearchStateAccess {
             path.push(current);
         }
 
-        path.reverse();
         Some(path)
     }
 }

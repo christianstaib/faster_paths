@@ -2,7 +2,7 @@ use crate::types::{Distance, VertexId};
 
 pub struct Edge {
     tail: VertexId,
-    target: VertexId,
+    head: VertexId,
     weight: Distance,
 }
 
@@ -10,7 +10,7 @@ impl Edge {
     pub fn new(tail: VertexId, target: VertexId, weight: Distance) -> Self {
         Self {
             tail,
-            target,
+            head: target,
             weight,
         }
     }
@@ -19,8 +19,8 @@ impl Edge {
         self.tail
     }
 
-    pub fn target(&self) -> VertexId {
-        self.target
+    pub fn head(&self) -> VertexId {
+        self.head
     }
 
     pub fn weight(&self) -> Distance {
