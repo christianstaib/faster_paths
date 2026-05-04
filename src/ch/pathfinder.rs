@@ -1,6 +1,7 @@
 use crate::ch::contraction_hierarchy::ContractionHierarchy;
 use crate::ch::edge::Edge;
 use crate::flattened_nested::FlattenedNested;
+use crate::path::{Path, PathQuery};
 use crate::search_state::hash_search_state::HashSearchState;
 use crate::search_state::search_state_access::SearchStateAccess;
 use crate::types::{Distance, VertexId};
@@ -58,19 +59,19 @@ impl<'a> Pathfinder<'a> {
         }
     }
 
-    pub fn search(&mut self, source: VertexId, target: VertexId) -> Option<(Distance, VertexId)> {
+    pub fn search(&mut self, query: &PathQuery) -> Option<(Distance, VertexId)> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
-            .push((Reverse(Distance::ZERO), source, Direction::UP));
+            .push((Reverse(Distance::ZERO), query.source(), Direction::UP));
         self.queue
-            .push((Reverse(Distance::ZERO), target, Direction::DOWN));
+            .push((Reverse(Distance::ZERO), query.target(), Direction::DOWN));
 
         self.up_state.clear();
-        self.up_state.set_distance(source, Distance::ZERO);
+        self.up_state.set_distance(query.source(), Distance::ZERO);
 
         self.down_state.clear();
-        self.down_state.set_distance(target, Distance::ZERO);
+        self.down_state.set_distance(query.target(), Distance::ZERO);
 
         let mut best_meeting: Option<(Distance, VertexId)> = None;
 
@@ -99,12 +100,14 @@ impl<'a> Pathfinder<'a> {
                 )
             };
 
-            // Skip the vertex if it has already been expanded or if it can be proven
-            // that dir1_dist_tail is not optimal.
+            // Skip the vertex if it has already been expanded.
             if dir1_state.is_expanded(tail) {
                 continue;
             }
             dir1_state.set_expanded(tail);
+
+            // Skip if dir1_dist_tail is not optimal, as this implies that every new_best_distance
+            // would not be optimal.
             if stall(dir1_state, dir2_graph, tail, dir1_dist_tail) {
                 continue;
             }
@@ -130,5 +133,16 @@ impl<'a> Pathfinder<'a> {
         }
 
         best_meeting
+    }
+
+    pub fn path(&mut self, query: &PathQuery) -> Option<Path> {
+        let (distance, vertex) = self.search(query)?;
+        let mut up_path = self.up_state.get_path(vertex)?;
+        let down_path = self.down_state.get_path(vertex)?;
+
+        up_path.reverse();
+        up_path.extend(down_path);
+
+        Some(Path::new(up_path, distance))
     }
 }

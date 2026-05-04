@@ -4,8 +4,8 @@ use std::ops::Add;
 pub struct VertexId(u32);
 
 impl VertexId {
-    pub fn new(_0: u32) -> Self {
-        Self(_0)
+    pub fn new(vertex_id: u32) -> Self {
+        Self(vertex_id)
     }
 
     pub fn as_usize(self) -> usize {
@@ -27,7 +27,7 @@ impl Add for Distance {
 impl Distance {
     pub const ZERO: Self = Self(0);
 
-    pub fn new(_0: u32) -> Self {
-        Self(_0)
+    pub fn new(distance: u32) -> Self {
+        Self(distance)
     }
 }
