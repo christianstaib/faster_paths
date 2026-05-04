@@ -1,6 +1,7 @@
 use crate::types::{Distance, VertexId};
 
 /// Stores a query for a path from source to target.
+#[derive(Clone, Copy, Debug)]
 pub struct PathQuery {
     source: VertexId,
     target: VertexId,
@@ -22,6 +23,7 @@ impl PathQuery {
 
 /// Stores a PathQuery as well as the expected shotests path distance, which is given as an
 /// optional, as there might be no path between source and target.
+#[derive(Clone, Copy, Debug)]
 pub struct PathDistance {
     query: PathQuery,
     distance: Option<Distance>,
@@ -44,6 +46,7 @@ impl PathDistance {
 /// Stores a path and the distance the paths represents. The first vertex from vertices is the
 /// source vertex of the path, the last one the target vertex. As this represents an existing path,
 /// vertices shall be non empty.
+#[derive(Clone, Debug)]
 pub struct Path {
     vertices: Vec<VertexId>,
     distance: Distance,

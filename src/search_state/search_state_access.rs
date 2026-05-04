@@ -10,6 +10,12 @@ pub trait SearchStateAccess {
     fn is_expanded(&self, vertex: VertexId) -> bool;
     fn set_expanded(&mut self, vertex: VertexId);
 
+    fn test_and_set_expanded(&mut self, vertex: VertexId) -> bool {
+        let is_expanded = self.is_expanded(vertex);
+        self.set_expanded(vertex);
+        is_expanded
+    }
+
     fn clear(&mut self);
 
     /// If target is reachable, returns the reversed path, e.g. [target, ..., source], otherwise None.

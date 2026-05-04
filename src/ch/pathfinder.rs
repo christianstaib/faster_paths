@@ -102,32 +102,28 @@ impl<'a> ContractionHierarchyPathfinder<'a> {
             }
 
             // Set up the variables to use the same code for both directions.
-            let dir1_is_upward = dir1 == Direction::UP;
-            let (dir1_state, dir2_state, dir1_graph, dir2_graph) = if dir1_is_upward {
-                (
+            let (dir1_state, dir2_state, dir1_graph, dir2_graph) = match dir1 {
+                Direction::UP => (
                     &mut self.up_state,
                     &self.down_state,
                     self.contraction_hierarchy.up_graph(),
                     self.contraction_hierarchy.down_graph(),
-                )
-            } else {
-                (
+                ),
+                Direction::DOWN => (
                     &mut self.down_state,
                     &self.up_state,
                     self.contraction_hierarchy.down_graph(),
                     self.contraction_hierarchy.up_graph(),
-                )
+                ),
             };
 
             // Skip the vertex if it has already been expanded.
-            if dir1_state.is_expanded(tail) {
-                continue;
-            }
-            dir1_state.set_expanded(tail);
 
             // Skip if dir1_dist_tail is not optimal, as this implies that every new_best_distance
             // would not be optimal.
-            if stall(dir1_state, dir2_graph, tail, dir1_dist_tail) {
+            if dir1_state.test_and_set_expanded(tail)
+                || stall(dir1_state, dir2_graph, tail, dir1_dist_tail)
+            {
                 continue;
             }
 
