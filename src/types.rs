@@ -30,4 +30,8 @@ impl Distance {
     pub fn new(distance: u32) -> Self {
         Self(distance)
     }
+
+    pub fn as_u32(self) -> u32 {
+        self.0
+    }
 }

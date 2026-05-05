@@ -1,5 +1,6 @@
 use ch::ch::pathfinder::ContractionHierarchyPathfinder;
-use ch::fmi_helper::{read_fmi_ch, read_tests};
+use ch::fmi::fmi_ch_reader::read_fmi_ch;
+use ch::fmi::fmi_test_reader::read_tests;
 use clap::Parser;
 use std::path::PathBuf;
 use std::time::Instant;

@@ -1,6 +1,6 @@
 use ch::{
     flattened_nested::FlattenedNested,
-    fmi_helper::read_fmi_graph,
+    fmi::fmi_graph_reader::read_fmi_graph,
     types::{Distance, VertexId},
 };
 use clap::Parser;

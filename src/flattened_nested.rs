@@ -21,9 +21,13 @@ impl<T> FlattenedNested<T> {
         Self { flat, offsets }
     }
 
-    pub fn nested(&self, idx: usize) -> &[T] {
-        let begin = self.offsets[idx];
-        let end = self.offsets[idx + 1];
+    pub fn nested(&self, index: usize) -> &[T] {
+        if index >= self.num_nested() {
+            return &self.flat[0..0];
+        }
+
+        let begin = self.offsets[index];
+        let end = self.offsets[index + 1];
 
         &self.flat[begin..end]
     }

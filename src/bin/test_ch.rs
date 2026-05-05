@@ -1,8 +1,9 @@
-use ch::ch::contraction_hierarchy::ContractionHierarchy;
-use ch::ch::edge::Edge;
 use ch::ch::pathfinder::ContractionHierarchyPathfinder;
+use ch::edge::Edge;
 use ch::flattened_nested::FlattenedNested;
-use ch::fmi_helper::{read_fmi_ch, read_tests};
+use ch::fmi::fmi_ch_reader::read_fmi_ch;
+use ch::fmi::fmi_graph_reader::read_fmi_graph;
+use ch::fmi::fmi_test_reader::read_tests;
 use ch::path::{Path, PathDistance, PathQuery};
 use ch::pathfinder::ShortestPathFinder;
 use ch::types::{Distance, VertexId};
@@ -12,6 +13,10 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// CH graph in .fmi format
+    #[arg(short, long)]
+    ch_in: PathBuf,
+
     /// CH graph in .fmi format
     #[arg(short, long)]
     graph_in: PathBuf,
@@ -24,26 +29,27 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let ch = read_fmi_ch(&args.graph_in).unwrap();
-    let graph = leaf_graph(&ch);
+    let ch = read_fmi_ch(&args.ch_in).unwrap();
+    let graph = read_fmi_graph(&args.graph_in).unwrap();
     let tests = read_tests(&args.test_in).unwrap();
+
     let mut pathfinder = ContractionHierarchyPathfinder::new(&ch);
 
-    let mut failures = 0;
-    for test in &tests {
-        let path = pathfinder.path(test.query());
-        if let Err(message) = validate_path(&graph, test, &path) {
-            failures += 1;
-            eprintln!("{message}");
-        }
-    }
+    let failures = tests
+        .iter()
+        .filter_map(|test| {
+            let path = pathfinder.path(test.query());
+            validate_path(&graph, test, &path).err()
+        })
+        .inspect(|message| eprintln!("{message}"))
+        .count();
 
-    if failures == 0 {
-        println!("All {} paths correct.", tests.len());
-    } else {
-        println!("{failures} of {} paths failed.", tests.len());
+    if failures > 0 {
+        eprintln!("{failures} of {} paths failed.", tests.len());
         std::process::exit(1);
     }
+
+    println!("All {} paths correct.", tests.len());
 }
 
 fn validate_distance(test: &PathDistance, actual: &Option<Distance>) -> Result<(), String> {
@@ -75,40 +81,6 @@ fn validate_distance(test: &PathDistance, actual: &Option<Distance>) -> Result<(
             }
         }
     }
-}
-
-fn leaf_graph(ch: &ContractionHierarchy) -> FlattenedNested<Edge> {
-    let mut graph = vec![Vec::new(); ch.up_graph().num_nested().max(ch.down_graph().num_nested())];
-
-    for tail in 0..ch.up_graph().num_nested() {
-        for edge in ch.up_graph().nested(tail) {
-            if edge.skipped().is_none() {
-                push_leaf_edge(&mut graph, *edge);
-            }
-        }
-    }
-
-    for tail in 0..ch.down_graph().num_nested() {
-        for edge in ch.down_graph().nested(tail) {
-            if edge.skipped().is_none() {
-                push_leaf_edge(
-                    &mut graph,
-                    Edge::new(edge.head(), edge.tail(), edge.weight(), None),
-                );
-            }
-        }
-    }
-
-    FlattenedNested::new(graph)
-}
-
-fn push_leaf_edge(graph: &mut Vec<Vec<Edge>>, edge: Edge) {
-    let tail = edge.tail().as_usize();
-    if graph.len() <= tail {
-        graph.resize_with(tail + 1, Vec::new);
-    }
-
-    graph[tail].push(edge);
 }
 
 fn validate_path(
@@ -173,8 +145,8 @@ fn validate_found_path(
 
     if sum != expected {
         return Err(format!(
-            "{:?}. Expanded path sum mismatch: expected {:?}, but got {:?}; path {:?}.",
-            query, expected, sum, vertices,
+            "{:?}. Expanded path sum mismatch: expected {:?}, but got {:?}",
+            query, expected, sum
         ));
     }
 
@@ -207,5 +179,6 @@ fn find_leaf_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId)
     graph
         .nested(tail.as_usize())
         .iter()
-        .find(|edge| edge.head() == head && edge.skipped().is_none())
+        .filter(|edge| edge.head() == head)
+        .min_by_key(|edge| edge.weight())
 }
