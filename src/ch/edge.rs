@@ -48,19 +48,7 @@ impl Edge {
         self.skiped
     }
 
-    pub fn set_weight(&mut self, weight: Distance) {
-        self.weight = weight;
-    }
-
-    pub fn set_skiped(&mut self, skiped: Option<VertexId>) {
-        self.skiped = skiped;
-    }
-
-    pub fn set_tail(&mut self, tail: VertexId) {
-        self.tail = tail;
-    }
-
-    pub fn set_head(&mut self, head: VertexId) {
-        self.head = head;
+    pub fn reversed(&self) -> Self {
+        Edge::new(self.head, self.tail, self.weight, self.skiped)
     }
 }

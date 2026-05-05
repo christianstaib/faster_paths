@@ -139,11 +139,13 @@ impl<'a> ContractionHierarchyPathfinder<'a> {
             for edge in dir1_graph.nested(tail.as_usize()) {
                 let new_distance = dir1_dist_tail + edge.weight();
                 let current_distance = dir1_state.get_distance(edge.head());
-                if current_distance.is_none_or(|distance| new_distance < distance) {
-                    dir1_state.set_distance(edge.head(), new_distance);
-                    dir1_state.set_predecessor(edge.head(), tail);
-                    self.queue.push((Reverse(new_distance), edge.head(), dir1));
+                if !current_distance.is_none_or(|distance| new_distance < distance) {
+                    continue;
                 }
+
+                dir1_state.set_distance(edge.head(), new_distance);
+                dir1_state.set_predecessor(edge.head(), tail);
+                self.queue.push((Reverse(new_distance), edge.head(), dir1));
             }
         }
 

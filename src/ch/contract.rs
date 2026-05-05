@@ -9,17 +9,15 @@ use indicatif::{ParallelProgressIterator, ProgressBar};
 use rayon::prelude::*;
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashMap, HashSet},
 };
 
-const WITNESS_SEARCH_CAPACITY: usize = 256;
-const MAX_WITNESS_HOPS: usize = 100;
+const MAX_WITNESS_HOPS: u32 = 10;
 
 pub fn contract(graph: &FlattenedNested<Edge>) -> ContractionHierarchy {
-    let mut working_graph = build_working_graph(graph);
-    let levels = contract_vertices(&mut working_graph);
+    let working_graph = build_working_graph(graph);
 
-    build_hierarchy(&working_graph, &levels)
+    contract_vertices_sequential(working_graph)
 }
 
 fn build_working_graph(graph: &FlattenedNested<Edge>) -> WorkingGraph {
@@ -34,19 +32,19 @@ fn build_working_graph(graph: &FlattenedNested<Edge>) -> WorkingGraph {
     working_graph
 }
 
-fn contract_vertices(graph: &mut WorkingGraph) -> Vec<usize> {
-    let vertex_count = graph.num_vertices();
-    let mut levels = vec![0; vertex_count];
-    let mut queue = initial_queue(graph);
-    let progress = ProgressBar::new(vertex_count as u64);
+fn contract_vertices_sequential(mut graph: WorkingGraph) -> ContractionHierarchy {
+    let mut levels = vec![0; graph.num_vertices()];
+
+    let mut queue = initial_queue(&graph);
+    let progress = ProgressBar::new(queue.len() as u64);
 
     let mut next_level = 0;
-    while let Some((Reverse(queued_difference), vertex)) = queue.pop() {
-        let shortcuts = generate_shortcuts(graph, vertex);
-        let difference = edge_difference(graph, vertex, shortcuts.len());
+    while let Some((Reverse(queued_edge_difference), vertex)) = queue.pop() {
+        let shortcuts = generate_shortcuts(&graph, vertex, MAX_WITNESS_HOPS);
 
-        if difference > queued_difference {
-            queue.push((Reverse(difference), vertex));
+        let current_edge_difference = edge_difference(&graph, vertex, shortcuts.len());
+        if current_edge_difference > queued_edge_difference {
+            queue.push((Reverse(current_edge_difference), vertex));
             continue;
         }
 
@@ -56,22 +54,44 @@ fn contract_vertices(graph: &mut WorkingGraph) -> Vec<usize> {
         }
 
         levels[vertex.as_usize()] = next_level;
-
         next_level += 1;
         progress.inc(1);
     }
     progress.finish();
 
-    levels
+    build_hierarchy(&graph, &levels)
+}
+
+fn build_hierarchy(graph: &WorkingGraph, levels: &[usize]) -> ContractionHierarchy {
+    let mut up_graph = vec![Vec::new(); levels.len()];
+    let mut down_graph = vec![Vec::new(); levels.len()];
+
+    for &edge in graph.contracted_edges() {
+        if levels[edge.tail().as_usize()] < levels[edge.head().as_usize()] {
+            up_graph[edge.tail().as_usize()].push(edge);
+        } else {
+            down_graph[edge.head().as_usize()].push(edge.reversed());
+        }
+    }
+
+    up_graph
+        .iter_mut()
+        .chain(down_graph.iter_mut())
+        .for_each(|edges| edges.sort_by_key(|edge| edge.head()));
+
+    ContractionHierarchy::new(
+        FlattenedNested::new(up_graph),
+        FlattenedNested::new(down_graph),
+    )
 }
 
 fn initial_queue(graph: &WorkingGraph) -> BinaryHeap<(Reverse<i64>, VertexId)> {
-    (0..graph.num_vertices())
+    (0..graph.num_vertices() as u32)
         .into_par_iter()
         .progress()
-        .map(|index| {
-            let vertex = VertexId::new(index as u32);
-            let shortcut_count = generate_shortcuts(graph, vertex).len();
+        .map(VertexId::new)
+        .map(|vertex| {
+            let shortcut_count = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS).len();
 
             (
                 Reverse(edge_difference(graph, vertex, shortcut_count)),
@@ -83,56 +103,59 @@ fn initial_queue(graph: &WorkingGraph) -> BinaryHeap<(Reverse<i64>, VertexId)> {
 
 fn edge_difference(graph: &WorkingGraph, vertex: VertexId, shortcut_count: usize) -> i64 {
     let degree = graph.get_out(vertex).len() + graph.get_in(vertex).len();
-
     shortcut_count as i64 - degree as i64
 }
 
-fn generate_shortcuts(graph: &WorkingGraph, vertex: VertexId) -> Vec<ChEdge> {
-    let mut shortcuts = Vec::new();
-    let outgoing = graph.get_out(vertex);
+/// Computes the shortcuts necessary to maintain the shortest path distances in `graph` if vertex
+/// would be disconnected and also possibly some more.
+///
+/// A shortcut u -> w for u -> v -> w is necessary iff (u, v, w) is the only shortest u-v-path.
+/// This function relaxes this condition by limiting the search space size with max_hops.
+fn generate_shortcuts(graph: &WorkingGraph, vertex: VertexId, max_hops: u32) -> Vec<ChEdge> {
+    let out_edges = graph.get_out(vertex);
 
-    for &(tail, tail_weight) in graph.get_in(vertex) {
-        let targets = outgoing
-            .iter()
-            .map(|edge| edge.head())
-            .filter(|&head| tail != head)
-            .collect::<Vec<_>>();
+    let targets = out_edges
+        .iter()
+        .map(|edge| edge.head())
+        .collect::<HashSet<_>>();
 
-        if targets.is_empty() {
-            continue;
-        }
+    graph
+        .get_in(vertex)
+        .iter()
+        .flat_map(|&(tail, tail_weight)| {
+            let distances = bounded_dijkstra(graph, tail, &targets, max_hops);
 
-        let distances = witness_distances(graph, tail, &targets);
+            out_edges.iter().filter_map(move |edge| {
+                let head = edge.head();
 
-        for edge in outgoing {
-            let head = edge.head();
+                if tail == head {
+                    return None;
+                }
 
-            if tail == head {
-                continue;
-            }
+                let weight = tail_weight + edge.weight();
 
-            let weight = tail_weight + edge.weight();
-            if distances
-                .get(&head)
-                .is_none_or(|&witness_distance| witness_distance >= weight)
-            {
-                let shortcut = ChEdge::new(tail, head, weight, Some(vertex));
-                insert_shortcut(&mut shortcuts, shortcut);
-            }
-        }
-    }
-
-    shortcuts
+                distances
+                    .get(&head)
+                    .is_none_or(|&witness_distance| witness_distance >= weight)
+                    .then(|| ChEdge::new(tail, head, weight, Some(vertex)))
+            })
+        })
+        .collect()
 }
 
-fn witness_distances(
+/// Computes shortest path distances from `source` to `targets`.
+///
+/// Stops once every target has been settled or once only vertices with hop distance > `max_hops` remain. The returned map may contain non-target vertices.
+fn bounded_dijkstra(
     graph: &WorkingGraph,
     source: VertexId,
-    targets: &[VertexId],
+    targets: &HashSet<VertexId>,
+    max_hops: u32,
 ) -> HashMap<VertexId, Distance> {
-    let mut distances = HashMap::with_capacity(WITNESS_SEARCH_CAPACITY);
-    let mut hops = HashMap::with_capacity(WITNESS_SEARCH_CAPACITY);
-    let mut queue = BinaryHeap::with_capacity(WITNESS_SEARCH_CAPACITY);
+    let mut distances = HashMap::new();
+    let mut hops = HashMap::new();
+    let mut queue = BinaryHeap::new();
+    let mut expanded = HashSet::new();
 
     let mut remaining_targets = targets.len();
 
@@ -141,10 +164,7 @@ fn witness_distances(
     queue.push((Reverse(Distance::ZERO), source));
 
     while let Some((Reverse(distance), vertex)) = queue.pop() {
-        if distances
-            .get(&vertex)
-            .is_some_and(|&best_distance| distance > best_distance)
-        {
+        if !expanded.insert(vertex) {
             continue;
         }
 
@@ -156,69 +176,25 @@ fn witness_distances(
         }
 
         let hop_count = hops[&vertex];
-        if hop_count > MAX_WITNESS_HOPS {
+        if hop_count > max_hops {
             continue;
         }
 
         for edge in graph.get_out(vertex) {
-            let head = edge.head();
-            let next_distance = distance + edge.weight();
+            let new_distance = distance + edge.weight();
 
             if distances
-                .get(&head)
-                .is_some_and(|&best_distance| best_distance <= next_distance)
+                .get(&edge.head())
+                .is_some_and(|&best_distance| new_distance >= best_distance)
             {
                 continue;
             }
 
-            distances.insert(head, next_distance);
-            hops.insert(head, hop_count + 1);
-            queue.push((Reverse(next_distance), head));
+            distances.insert(edge.head(), new_distance);
+            hops.insert(edge.head(), hop_count + 1);
+            queue.push((Reverse(new_distance), edge.head()));
         }
     }
 
     distances
-}
-
-fn build_hierarchy(graph: &WorkingGraph, levels: &[usize]) -> ContractionHierarchy {
-    let mut up = vec![Vec::new(); levels.len()];
-    let mut down = vec![Vec::new(); levels.len()];
-
-    for &edge in graph.contracted_edges() {
-        let tail = edge.tail();
-        let head = edge.head();
-        let tail_index = tail.as_usize();
-        let head_index = head.as_usize();
-
-        if levels[tail_index] < levels[head_index] {
-            up[tail_index].push(edge);
-        } else {
-            let edge = ChEdge::new(head, tail, edge.weight(), edge.skipped());
-            down[head_index].push(edge);
-        }
-    }
-
-    sort_edges_by_head(&mut up);
-    sort_edges_by_head(&mut down);
-
-    ContractionHierarchy::new(FlattenedNested::new(up), FlattenedNested::new(down))
-}
-
-fn insert_shortcut(shortcuts: &mut Vec<ChEdge>, edge: ChEdge) {
-    match shortcuts
-        .iter_mut()
-        .find(|shortcut| shortcut.tail() == edge.tail() && shortcut.head() == edge.head())
-    {
-        Some(shortcut) if edge.weight() < shortcut.weight() => {
-            *shortcut = edge;
-        }
-        Some(_) => {}
-        None => shortcuts.push(edge),
-    }
-}
-
-fn sort_edges_by_head(graph: &mut [Vec<ChEdge>]) {
-    for edges in graph {
-        edges.sort_by_key(|edge| edge.head());
-    }
 }
