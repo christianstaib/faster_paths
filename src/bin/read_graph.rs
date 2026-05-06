@@ -22,12 +22,7 @@ fn main() {
         read_fmi_graph(&args.graph_in).unwrap();
 
     for edge in graph.nested(5) {
-        println!(
-            "{:?} -> {:?} = {:?}",
-            edge.tail(),
-            edge.head(),
-            edge.weight()
-        );
+        println!("{:?} -> {:?} = {:?}", edge.tail, edge.head, edge.weight);
     }
 
     let path = vec![VertexId::new(5), VertexId::new(14595642)];
@@ -44,8 +39,8 @@ pub fn sum_path(path: &[VertexId], graph: &FlattenedNested<ch::edge::Edge>) -> O
 
         let edges = graph.nested(tail.as_usize());
 
-        if let Some(index) = edges.binary_search_by_key(&head, |edge| edge.head()).ok() {
-            sum = sum + edges[index].weight();
+        if let Some(index) = edges.binary_search_by_key(&head, |edge| edge.head).ok() {
+            sum = sum + edges[index].weight;
         } else {
             return None;
         }

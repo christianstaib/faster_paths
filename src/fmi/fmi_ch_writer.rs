@@ -18,10 +18,10 @@ fn write_edges<W: Write>(
             writeln!(
                 out,
                 "{} {} {} {}",
-                edge.tail().as_usize(),
-                edge.head().as_usize(),
-                edge.weight().as_u32(),
-                skipped(edge.skipped()),
+                edge.tail.as_usize(),
+                edge.head.as_usize(),
+                edge.weight.as_u32(),
+                skipped(edge.skipped),
             )?;
         }
     }

@@ -168,7 +168,7 @@ fn leaf_edge_weight(
     tail: VertexId,
     head: VertexId,
 ) -> Option<Distance> {
-    find_leaf_edge(graph, tail, head).map(Edge::weight)
+    find_leaf_edge(graph, tail, head).map(|edge| edge.weight)
 }
 
 fn find_leaf_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId) -> Option<&Edge> {
@@ -179,6 +179,6 @@ fn find_leaf_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId)
     graph
         .nested(tail.as_usize())
         .iter()
-        .filter(|edge| edge.head() == head)
-        .min_by_key(|edge| edge.weight())
+        .filter(|edge| edge.head == head)
+        .min_by_key(|edge| edge.weight)
 }

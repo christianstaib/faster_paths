@@ -15,7 +15,7 @@ fn find_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId) -> O
     let edges = graph.nested(tail.as_usize());
 
     edges
-        .binary_search_by_key(&head, |edge| edge.head())
+        .binary_search_by_key(&head, |edge| edge.head)
         .ok()
         .map(|idx| &edges[idx])
 }
@@ -76,18 +76,18 @@ pub fn unpack_shortcuts(
 
     let mut path = vec![*dir1_reversed_shortcut_path.first()?];
     while let Some((edge, dir)) = stack.pop() {
-        let Some(skipped) = edge.skipped() else {
+        let Some(skipped) = edge.skipped else {
             // Original edges contribute one vertex to the unpacked path.
             path.push(match dir {
-                Dir::Dir1 => edge.tail(),
-                Dir::Dir2 => edge.head(),
+                Dir::Dir1 => edge.tail,
+                Dir::Dir2 => edge.head,
             });
             continue;
         };
 
         let (dir1_child_head, dir2_child_head) = match dir {
-            Dir::Dir1 => (edge.head(), edge.tail()),
-            Dir::Dir2 => (edge.tail(), edge.head()),
+            Dir::Dir1 => (edge.head, edge.tail),
+            Dir::Dir2 => (edge.tail, edge.head),
         };
 
         // Push in reverse order because the stack is processed LIFO.

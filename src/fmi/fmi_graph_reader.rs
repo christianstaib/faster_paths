@@ -33,7 +33,7 @@ fn read_edges(
 
     for _ in 0..count {
         let edge = parse_edge(&next_data_line(lines)?)?;
-        let tail = edge.tail().as_usize();
+        let tail = edge.tail.as_usize();
 
         if graph.len() <= tail {
             graph.resize_with(tail + 1, Vec::new);

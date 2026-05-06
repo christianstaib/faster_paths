@@ -30,7 +30,7 @@ fn read_ch_edges(lines: &mut impl Iterator<Item = String>, count: usize) -> Opti
     for _ in 0..count {
         let edge = parse_ch_edge(&lines.next()?)?;
 
-        let tail = edge.tail().as_usize();
+        let tail = edge.tail.as_usize();
         if graph.len() <= tail {
             graph.resize_with(tail + 1, Vec::new);
         }

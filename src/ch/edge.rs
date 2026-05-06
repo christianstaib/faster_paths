@@ -16,39 +16,28 @@ use crate::types::{Distance, VertexId};
 /// - the child edge in the *same* graph is an edge `middle -> head`.
 #[derive(Clone, Copy)]
 pub struct Edge {
-    tail: VertexId,
-    head: VertexId,
-    weight: Distance,
-    skiped: Option<VertexId>,
+    pub tail: VertexId,
+    pub head: VertexId,
+    pub weight: Distance,
+    pub skipped: Option<VertexId>,
 }
 
 impl Edge {
-    pub fn new(tail: VertexId, head: VertexId, weight: Distance, skiped: Option<VertexId>) -> Self {
+    pub fn new(
+        tail: VertexId,
+        head: VertexId,
+        weight: Distance,
+        skipped: Option<VertexId>,
+    ) -> Self {
         Self {
             tail,
             head,
             weight,
-            skiped,
+            skipped,
         }
     }
 
-    pub fn tail(&self) -> VertexId {
-        self.tail
-    }
-
-    pub fn head(&self) -> VertexId {
-        self.head
-    }
-
-    pub fn weight(&self) -> Distance {
-        self.weight
-    }
-
-    pub fn skipped(&self) -> Option<VertexId> {
-        self.skiped
-    }
-
     pub fn reversed(&self) -> Self {
-        Edge::new(self.head, self.tail, self.weight, self.skiped)
+        Edge::new(self.head, self.tail, self.weight, self.skipped)
     }
 }

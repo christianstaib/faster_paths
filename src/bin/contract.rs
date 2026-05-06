@@ -1,5 +1,5 @@
 use ch::{
-    ch::contract::contract,
+    ch::contraction::sequential::contract_graph_sequential,
     fmi::{fmi_ch_writer::write_fmi_ch, fmi_graph_reader::read_fmi_graph},
 };
 use clap::Parser;
@@ -21,7 +21,7 @@ fn main() {
     let args = Args::parse();
     let graph = read_fmi_graph(&args.graph_in).unwrap();
 
-    let ch = contract(&graph);
+    let ch = contract_graph_sequential(&graph);
     let output = File::create(args.graph_out).unwrap();
 
     write_fmi_ch(BufWriter::new(output), &ch).unwrap();
