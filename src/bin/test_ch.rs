@@ -1,9 +1,9 @@
-use ch::ch::pathfinder::ContractionHierarchyPathfinder;
-use ch::edge::Edge;
+use ch::ch::ContractionHierarchyPathfinder;
 use ch::flattened_nested::FlattenedNested;
-use ch::fmi::fmi_ch_reader::read_fmi_ch;
-use ch::fmi::fmi_graph_reader::read_fmi_graph;
-use ch::fmi::fmi_test_reader::read_tests;
+use ch::fmi::read_fmi_ch;
+use ch::fmi::read_fmi_graph;
+use ch::fmi::read_tests;
+use ch::graph::Edge;
 use ch::path::{Path, PathDistance, PathQuery};
 use ch::pathfinder::ShortestPathFinder;
 use ch::types::{Distance, VertexId};

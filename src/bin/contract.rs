@@ -1,6 +1,6 @@
 use ch::{
-    ch::contraction::sequential::contract_graph_sequential,
-    fmi::{fmi_ch_writer::write_fmi_ch, fmi_graph_reader::read_fmi_graph},
+    ch::sequential::contract_graph_sequential,
+    fmi::{read_fmi_graph, write_fmi_ch},
 };
 use clap::Parser;
 use std::{fs::File, io::BufWriter, path::PathBuf};

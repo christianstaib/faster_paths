@@ -1,7 +1,7 @@
 use crate::{
     ch::ContractionEdge,
-    edge::Edge,
     flattened_nested::FlattenedNested,
+    graph::Edge,
     types::{Distance, VertexId},
 };
 

@@ -4,8 +4,8 @@ use std::{
 };
 
 use crate::{
-    ch::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
-    fast_graph::FastGraph,
+    ch::{ContractionEdge, ContractionHierarchy},
+    graph::FastGraph,
     types::{Distance, VertexId},
 };
 

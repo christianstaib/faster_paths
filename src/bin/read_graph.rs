@@ -1,6 +1,7 @@
 use ch::{
     flattened_nested::FlattenedNested,
-    fmi::fmi_graph_reader::read_fmi_graph,
+    fmi::read_fmi_graph,
+    graph::Edge,
     types::{Distance, VertexId},
 };
 use clap::Parser;
@@ -18,7 +19,7 @@ fn main() {
     let args = Args::parse();
 
     // Parse the ChGraph from the file
-    let graph: ch::flattened_nested::FlattenedNested<ch::edge::Edge> =
+    let graph: ch::flattened_nested::FlattenedNested<Edge> =
         read_fmi_graph(&args.graph_in).unwrap();
 
     for edge in graph.nested(5) {
@@ -30,7 +31,7 @@ fn main() {
     println!("{:?}", sum_path(&path, &graph));
 }
 
-pub fn sum_path(path: &[VertexId], graph: &FlattenedNested<ch::edge::Edge>) -> Option<Distance> {
+pub fn sum_path(path: &[VertexId], graph: &FlattenedNested<Edge>) -> Option<Distance> {
     let mut sum = Distance::ZERO;
 
     for window in path.windows(2) {

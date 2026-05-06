@@ -6,8 +6,8 @@ use crate::{
         },
         contraction_hierarchy::ContractionHierarchy,
     },
-    edge::Edge,
     flattened_nested::FlattenedNested,
+    graph::Edge,
     types::VertexId,
 };
 use indicatif::{ParallelProgressIterator, ProgressBar};

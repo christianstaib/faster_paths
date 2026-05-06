@@ -1,11 +1,12 @@
 use crate::ch::contraction_hierarchy::ContractionHierarchy;
 use crate::ch::edge::ContractionEdge;
 use crate::ch::shortcut::unpack_and_concat_shortcut_paths;
-use crate::fast_graph::FastGraph;
+use crate::graph::FastGraph;
+use crate::graph::GraphLike;
 use crate::path::{Path, PathQuery};
 use crate::pathfinder::ShortestPathFinder;
-use crate::search_state::hash_search_state::HashSearchState;
-use crate::search_state::search_state_access::SearchStateAccess;
+use crate::search_state::HashSearchState;
+use crate::search_state::SearchStateAccess;
 use crate::types::{Distance, VertexId};
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;

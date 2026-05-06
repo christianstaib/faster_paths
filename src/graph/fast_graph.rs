@@ -1,7 +1,8 @@
 use crate::{
-    edge_like::EdgeLike, flattened_nested::FlattenedNested, graph_like::GraphLike, types::VertexId,
+    edge_like::EdgeLike, flattened_nested::FlattenedNested, graph::GraphLike, types::VertexId,
 };
 
+/// A graph represented in Compressed Sparse Row (CSR) format.
 pub struct FastGraph<E: EdgeLike> {
     flattened_nested: FlattenedNested<E>,
 }
@@ -15,32 +16,20 @@ impl<E: EdgeLike> FastGraph<E> {
             flattened_nested: FlattenedNested::new(nested),
         }
     }
-
-    pub fn out_edges(&self, tail: VertexId) -> &[E] {
-        self.flattened_nested.nested(tail.as_usize())
-    }
-
-    pub fn num_vertices(&self) -> usize {
-        self.flattened_nested.num_nested()
-    }
-
-    pub fn num_edges(&self) -> usize {
-        self.flattened_nested.num_flat()
-    }
 }
 
 impl<E: EdgeLike> GraphLike for FastGraph<E> {
     type Edge = E;
 
     fn out_edges(&self, tail: VertexId) -> &[E] {
-        self.out_edges(tail)
+        self.flattened_nested.nested(tail.as_usize())
     }
 
     fn num_vertices(&self) -> usize {
-        self.num_vertices()
+        self.flattened_nested.num_nested()
     }
 
     fn num_edges(&self) -> usize {
-        self.num_edges()
+        self.flattened_nested.num_flat()
     }
 }

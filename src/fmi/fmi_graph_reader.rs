@@ -4,8 +4,8 @@ use std::{
 };
 
 use crate::{
-    edge::Edge,
     flattened_nested::FlattenedNested,
+    graph::Edge,
     types::{Distance, VertexId},
 };
 
