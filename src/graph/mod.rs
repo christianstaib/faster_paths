@@ -5,6 +5,7 @@ mod graph;
 mod graph_like;
 
 pub use edge::Edge;
+pub use edge::WeightedEdge;
 pub use edge_like::EdgeLike;
 pub use fast_graph::FastGraph;
 pub use graph::Graph;

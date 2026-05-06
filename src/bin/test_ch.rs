@@ -6,6 +6,7 @@ use ch::fmi::read_tests;
 use ch::graph::Edge;
 use ch::graph::EdgeLike;
 use ch::graph::GraphLike;
+use ch::graph::WeightedEdge;
 use ch::path::{Path, PathDistance, PathQuery};
 use ch::pathfinder::ShortestPathFinder;
 use ch::types::{Distance, VertexId};
@@ -54,8 +55,8 @@ fn main() {
     println!("All {} paths correct.", tests.len());
 }
 
-/// Sum up the edge weights of `path` in `graph`.
-fn sum_edge_weights<G: GraphLike>(graph: &G, path: &[VertexId]) -> Result<Distance, String>
+/// Sum up the edge weights of `path` in `graph`. If an edge is not found, it is returns as Err.
+fn sum_edge_weights<G: GraphLike>(graph: &G, path: &[VertexId]) -> Result<Distance, Edge>
 where
     <G as GraphLike>::Edge: Ord,
 {
@@ -70,7 +71,7 @@ where
                 .filter(|edge| edge.head() == head)
                 .map(|edge| edge.weight())
                 .min()
-                .ok_or_else(|| format!("No edge from {:?} to {:?}", tail, head))?;
+                .ok_or(Edge { tail, head })?;
 
             Ok(summed_distance + weight)
         })
@@ -108,7 +109,7 @@ fn validate_distance(test: &PathDistance, actual: &Option<Distance>) -> Result<(
 }
 
 fn validate_path(
-    graph: &FlattenedNested<Edge>,
+    graph: &FlattenedNested<WeightedEdge>,
     test: &PathDistance,
     path: &Option<Path>,
 ) -> Result<(), String> {
@@ -123,7 +124,7 @@ fn validate_path(
 }
 
 fn validate_found_path(
-    graph: &FlattenedNested<Edge>,
+    graph: &FlattenedNested<WeightedEdge>,
     path: &Path,
     query: &PathQuery,
     expected: Distance,
@@ -177,7 +178,7 @@ fn validate_found_path(
     Ok(())
 }
 
-fn sum_leaf_path(path: &[VertexId], graph: &FlattenedNested<Edge>) -> Option<Distance> {
+fn sum_leaf_path(path: &[VertexId], graph: &FlattenedNested<WeightedEdge>) -> Option<Distance> {
     let mut sum = Distance::ZERO;
 
     for window in path.windows(2) {
@@ -188,14 +189,18 @@ fn sum_leaf_path(path: &[VertexId], graph: &FlattenedNested<Edge>) -> Option<Dis
 }
 
 fn leaf_edge_weight(
-    graph: &FlattenedNested<Edge>,
+    graph: &FlattenedNested<WeightedEdge>,
     tail: VertexId,
     head: VertexId,
 ) -> Option<Distance> {
     find_leaf_edge(graph, tail, head).map(|edge| edge.weight)
 }
 
-fn find_leaf_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId) -> Option<&Edge> {
+fn find_leaf_edge(
+    graph: &FlattenedNested<WeightedEdge>,
+    tail: VertexId,
+    head: VertexId,
+) -> Option<&WeightedEdge> {
     if tail.as_usize() >= graph.num_nested() {
         return None;
     }

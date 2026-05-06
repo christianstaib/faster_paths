@@ -4,7 +4,7 @@ use std::collections::{BinaryHeap, HashMap, HashSet};
 use crate::contraction_hierachy::ContractionEdge;
 use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
 use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
-use crate::graph::{Edge, FastGraph};
+use crate::graph::{FastGraph, WeightedEdge};
 use crate::types::Distance;
 use crate::{flattened_nested::FlattenedNested, types::VertexId};
 
@@ -19,7 +19,7 @@ pub(super) fn edge_difference(
 }
 
 /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-pub(super) fn build_working_graph(graph: &FlattenedNested<Edge>) -> WorkingGraph {
+pub(super) fn build_working_graph(graph: &FlattenedNested<WeightedEdge>) -> WorkingGraph {
     let mut working_graph = WorkingGraph::new(graph);
 
     for bucket in 0..graph.num_nested() {

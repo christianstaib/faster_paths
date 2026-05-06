@@ -7,7 +7,7 @@ use crate::{
         contraction_hierarchy::ContractionHierarchy,
     },
     flattened_nested::FlattenedNested,
-    graph::Edge,
+    graph::WeightedEdge,
     types::VertexId,
 };
 use indicatif::{ParallelProgressIterator, ProgressBar};
@@ -16,7 +16,7 @@ use std::{cmp::Reverse, collections::BinaryHeap};
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
-pub fn contract_graph_sequential(graph: &FlattenedNested<Edge>) -> ContractionHierarchy {
+pub fn contract_graph_sequential(graph: &FlattenedNested<WeightedEdge>) -> ContractionHierarchy {
     let working_graph = build_working_graph(graph);
 
     contract_working_graph_sequential(working_graph)

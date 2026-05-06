@@ -5,11 +5,11 @@ use std::{
 
 use crate::{
     flattened_nested::FlattenedNested,
-    graph::Edge,
+    graph::WeightedEdge,
     types::{Distance, VertexId},
 };
 
-fn parse_edge(line: &str) -> Option<Edge> {
+fn parse_edge(line: &str) -> Option<WeightedEdge> {
     let parts = line.split_whitespace().collect::<Vec<_>>();
 
     if parts.len() < 3 {
@@ -20,14 +20,14 @@ fn parse_edge(line: &str) -> Option<Edge> {
     let head = VertexId::new(parts[1].parse().ok()?);
     let weight = Distance::new(parts[2].parse().ok()?);
 
-    Some(Edge::new(tail, head, weight))
+    Some(WeightedEdge::new(tail, head, weight))
 }
 
 fn read_edges(
     lines: &mut impl Iterator<Item = String>,
     count: usize,
     num_vertices: usize,
-) -> Option<Vec<Vec<Edge>>> {
+) -> Option<Vec<Vec<WeightedEdge>>> {
     let mut graph = Vec::new();
     graph.resize_with(num_vertices, Vec::new);
 
@@ -52,7 +52,7 @@ fn next_data_line(lines: &mut impl Iterator<Item = String>) -> Option<String> {
     })
 }
 
-fn graph_from_reader<R: Read>(reader: R) -> Option<FlattenedNested<Edge>> {
+fn graph_from_reader<R: Read>(reader: R) -> Option<FlattenedNested<WeightedEdge>> {
     let mut lines = BufReader::new(reader).lines().filter_map(Result::ok);
 
     let num_vertices: usize = next_data_line(&mut lines)?.trim().parse().ok()?;
@@ -69,7 +69,7 @@ fn graph_from_reader<R: Read>(reader: R) -> Option<FlattenedNested<Edge>> {
     )?))
 }
 
-pub fn read_fmi_graph(file: &std::path::Path) -> Option<FlattenedNested<Edge>> {
+pub fn read_fmi_graph(file: &std::path::Path) -> Option<FlattenedNested<WeightedEdge>> {
     let reader = BufReader::new(File::open(file).unwrap());
     graph_from_reader(reader)
 }

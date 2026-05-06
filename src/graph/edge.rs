@@ -7,10 +7,16 @@ use crate::{
 pub struct Edge {
     pub tail: VertexId,
     pub head: VertexId,
+}
+
+#[derive(Clone, Copy)]
+pub struct WeightedEdge {
+    pub tail: VertexId,
+    pub head: VertexId,
     pub weight: Distance,
 }
 
-impl Edge {
+impl WeightedEdge {
     pub fn new(tail: VertexId, target: VertexId, weight: Distance) -> Self {
         Self {
             tail,
@@ -20,7 +26,7 @@ impl Edge {
     }
 }
 
-impl EdgeLike for Edge {
+impl EdgeLike for WeightedEdge {
     fn tail(&self) -> VertexId {
         self.tail
     }
