@@ -1,9 +1,11 @@
 use ch::contraction_hierachy::ContractionHierarchyPathfinder;
+use ch::edge_like::EdgeLike;
 use ch::flattened_nested::FlattenedNested;
 use ch::fmi::read_fmi_ch;
 use ch::fmi::read_fmi_graph;
 use ch::fmi::read_tests;
 use ch::graph::Edge;
+use ch::graph::GraphLike;
 use ch::path::{Path, PathDistance, PathQuery};
 use ch::pathfinder::ShortestPathFinder;
 use ch::types::{Distance, VertexId};
@@ -50,6 +52,28 @@ fn main() {
     }
 
     println!("All {} paths correct.", tests.len());
+}
+
+/// Sum up the edge weights of `path` in `graph`.
+fn sum_edge_weights<G: GraphLike>(graph: &G, path: &[VertexId]) -> Result<Distance, String>
+where
+    <G as GraphLike>::Edge: Ord,
+{
+    path.windows(2)
+        .try_fold(Distance::ZERO, |summed_distance, potential_edge| {
+            let tail = potential_edge[0];
+            let head = potential_edge[1];
+
+            let weight = graph
+                .out_edges(tail)
+                .iter()
+                .filter(|edge| edge.head() == head)
+                .map(|edge| edge.weight())
+                .min()
+                .ok_or_else(|| format!("No edge from {:?} to {:?}", tail, head))?;
+
+            Ok(summed_distance + weight)
+        })
 }
 
 fn validate_distance(test: &PathDistance, actual: &Option<Distance>) -> Result<(), String> {
