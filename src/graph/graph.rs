@@ -1,4 +1,4 @@
-use crate::{edge_like::EdgeLike, graph::GraphLike, types::VertexId};
+use crate::{graph::GraphLike, graph::edge_like::EdgeLike, types::VertexId};
 
 /// A graph represented by adjacency lists.
 pub struct Graph<E: EdgeLike> {

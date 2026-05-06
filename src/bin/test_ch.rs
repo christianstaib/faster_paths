@@ -1,10 +1,10 @@
 use ch::contraction_hierachy::ContractionHierarchyPathfinder;
-use ch::edge_like::EdgeLike;
 use ch::flattened_nested::FlattenedNested;
 use ch::fmi::read_fmi_ch;
 use ch::fmi::read_fmi_graph;
 use ch::fmi::read_tests;
 use ch::graph::Edge;
+use ch::graph::EdgeLike;
 use ch::graph::GraphLike;
 use ch::path::{Path, PathDistance, PathQuery};
 use ch::pathfinder::ShortestPathFinder;

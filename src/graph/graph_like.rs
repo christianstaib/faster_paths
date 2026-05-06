@@ -1,4 +1,4 @@
-use crate::{edge_like::EdgeLike, types::VertexId};
+use crate::{graph::EdgeLike, types::VertexId};
 
 /// Common interface for graphs.
 pub trait GraphLike {

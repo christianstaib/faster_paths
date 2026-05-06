@@ -1,5 +1,5 @@
 use crate::{
-    edge_like::EdgeLike,
+    graph::edge_like::EdgeLike,
     types::{Distance, VertexId},
 };
 

@@ -1,5 +1,6 @@
 use crate::{
-    edge_like::EdgeLike, flattened_nested::FlattenedNested, graph::GraphLike, types::VertexId,
+    flattened_nested::FlattenedNested, graph::GraphLike, graph::edge_like::EdgeLike,
+    types::VertexId,
 };
 
 /// A graph represented in Compressed Sparse Row (CSR) format.

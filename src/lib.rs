@@ -2,7 +2,6 @@
 //!
 
 pub mod contraction_hierachy;
-pub mod edge_like;
 pub mod flattened_nested;
 pub mod fmi;
 pub mod graph;
