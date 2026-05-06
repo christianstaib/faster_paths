@@ -1,4 +1,4 @@
-use crate::{ch::edge::ContractionEdge, graph::FastGraph};
+use crate::{contraction_hierachy::edge::ContractionEdge, graph::FastGraph};
 
 pub struct ContractionHierarchy {
     up_graph: FastGraph<ContractionEdge>,

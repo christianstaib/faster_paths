@@ -1,4 +1,4 @@
-use ch::ch::ContractionHierarchyPathfinder;
+use ch::contraction_hierachy::ContractionHierarchyPathfinder;
 use ch::fmi::read_fmi_ch;
 use ch::fmi::read_tests;
 use clap::Parser;

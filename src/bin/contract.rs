@@ -1,5 +1,5 @@
 use ch::{
-    ch::sequential::contract_graph_sequential,
+    contraction_hierachy::contract_graph_sequential,
     fmi::{read_fmi_graph, write_fmi_ch},
 };
 use clap::Parser;

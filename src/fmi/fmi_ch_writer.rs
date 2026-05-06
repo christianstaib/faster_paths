@@ -1,6 +1,8 @@
 use std::io::{self, Write};
 
-use crate::{ch::ContractionHierarchy, graph::FastGraph, graph::GraphLike, types::VertexId};
+use crate::{
+    contraction_hierachy::ContractionHierarchy, graph::FastGraph, graph::GraphLike, types::VertexId,
+};
 
 pub fn write_fmi_ch<W: Write>(mut out: W, ch: &ContractionHierarchy) -> io::Result<()> {
     writeln!(out, "{}", ch.up_graph().num_edges())?;
@@ -11,7 +13,7 @@ pub fn write_fmi_ch<W: Write>(mut out: W, ch: &ContractionHierarchy) -> io::Resu
 
 fn write_edges<W: Write>(
     out: &mut W,
-    graph: &FastGraph<crate::ch::ContractionEdge>,
+    graph: &FastGraph<crate::contraction_hierachy::ContractionEdge>,
 ) -> io::Result<()> {
     for tail in 0..graph.num_vertices() {
         for edge in graph.out_edges(VertexId::new(tail as u32)) {

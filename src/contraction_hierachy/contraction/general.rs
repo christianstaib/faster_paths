@@ -1,9 +1,9 @@
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
-use crate::ch::ContractionEdge;
-use crate::ch::contraction::working_graph::WorkingGraph;
-use crate::ch::contraction_hierarchy::ContractionHierarchy;
+use crate::contraction_hierachy::ContractionEdge;
+use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
+use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
 use crate::graph::{Edge, FastGraph};
 use crate::types::Distance;
 use crate::{flattened_nested::FlattenedNested, types::VertexId};

@@ -1,6 +1,6 @@
-use crate::ch::contraction_hierarchy::ContractionHierarchy;
-use crate::ch::edge::ContractionEdge;
-use crate::ch::shortcut::unpack_and_concat_shortcut_paths;
+use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
+use crate::contraction_hierachy::edge::ContractionEdge;
+use crate::contraction_hierachy::shortcut::unpack_and_concat_shortcut_paths;
 use crate::graph::FastGraph;
 use crate::graph::GraphLike;
 use crate::path::{Path, PathQuery};

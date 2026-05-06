@@ -1,6 +1,6 @@
 use crate::graph::GraphLike;
 use crate::{
-    ch::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
+    contraction_hierachy::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
     graph::FastGraph,
     types::VertexId,
 };

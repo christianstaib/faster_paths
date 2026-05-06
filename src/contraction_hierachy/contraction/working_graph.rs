@@ -1,5 +1,5 @@
 use crate::{
-    ch::ContractionEdge,
+    contraction_hierachy::ContractionEdge,
     flattened_nested::FlattenedNested,
     graph::Edge,
     types::{Distance, VertexId},
