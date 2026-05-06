@@ -1,23 +1,26 @@
-use crate::{ch::edge::Edge, flattened_nested::FlattenedNested};
+use crate::{ch::edge::ContractionEdge, fast_graph::FastGraph};
 
 pub struct ContractionHierarchy {
-    up_graph: FlattenedNested<Edge>,
-    down_graph: FlattenedNested<Edge>,
+    up_graph: FastGraph<ContractionEdge>,
+    down_graph: FastGraph<ContractionEdge>,
 }
 
 impl ContractionHierarchy {
-    pub fn new(up_graph: FlattenedNested<Edge>, down_graph: FlattenedNested<Edge>) -> Self {
+    pub fn new(
+        up_graph: FastGraph<ContractionEdge>,
+        down_graph: FastGraph<ContractionEdge>,
+    ) -> Self {
         Self {
             up_graph,
             down_graph,
         }
     }
 
-    pub fn up_graph(&self) -> &FlattenedNested<Edge> {
+    pub fn up_graph(&self) -> &FastGraph<ContractionEdge> {
         &self.up_graph
     }
 
-    pub fn down_graph(&self) -> &FlattenedNested<Edge> {
+    pub fn down_graph(&self) -> &FastGraph<ContractionEdge> {
         &self.down_graph
     }
 }

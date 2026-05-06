@@ -5,7 +5,10 @@ pub struct FlattenedNested<T> {
 }
 
 impl<T> FlattenedNested<T> {
-    pub fn new(nested: Vec<Vec<T>>) -> Self {
+    pub fn new(nested: &Vec<Vec<T>>) -> Self
+    where
+        T: Copy,
+    {
         let total = nested.iter().map(Vec::len).sum();
 
         let mut flat = Vec::with_capacity(total);

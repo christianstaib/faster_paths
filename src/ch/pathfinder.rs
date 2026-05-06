@@ -1,7 +1,7 @@
 use crate::ch::contraction_hierarchy::ContractionHierarchy;
-use crate::ch::edge::Edge;
+use crate::ch::edge::ContractionEdge;
 use crate::ch::shortcut::unpack_and_concat_shortcut_paths;
-use crate::flattened_nested::FlattenedNested;
+use crate::fast_graph::FastGraph;
 use crate::path::{Path, PathQuery};
 use crate::pathfinder::ShortestPathFinder;
 use crate::search_state::hash_search_state::HashSearchState;
@@ -53,11 +53,11 @@ impl<'a> ShortestPathFinder for ContractionHierarchyPathfinder<'a> {
 /// it cannot be optimal and `vertex` can be stalled in dir1.
 fn stall(
     dir1_state: &HashSearchState,
-    dir2_graph: &FlattenedNested<Edge>,
+    dir2_graph: &FastGraph<ContractionEdge>,
     vertex: VertexId,
     dir1_dist_vertex: Distance,
 ) -> bool {
-    for edge in dir2_graph.nested(vertex.as_usize()) {
+    for edge in dir2_graph.out_edges(vertex) {
         if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head) {
             if dir1_dist_meeting_vertex + edge.weight < dir1_dist_vertex {
                 return true;
@@ -136,7 +136,7 @@ impl<'a> ContractionHierarchyPathfinder<'a> {
             }
 
             // Perform normal edge relaxation.
-            for edge in dir1_graph.nested(tail.as_usize()) {
+            for edge in dir1_graph.out_edges(tail) {
                 let new_distance = dir1_dist_tail + edge.weight;
                 let current_distance = dir1_state.get_distance(edge.head);
                 if !current_distance.is_none_or(|distance| new_distance < distance) {

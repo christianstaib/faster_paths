@@ -1,14 +1,14 @@
 use crate::{
-    Edge as ChEdge,
+    ch::ContractionEdge,
     edge::Edge,
     flattened_nested::FlattenedNested,
     types::{Distance, VertexId},
 };
 
 pub(super) struct WorkingGraph {
-    outgoing: Vec<Vec<ChEdge>>,
+    outgoing: Vec<Vec<ContractionEdge>>,
     incoming: Vec<Vec<(VertexId, Distance)>>,
-    contracted_edges: Vec<ChEdge>,
+    contracted_edges: Vec<ContractionEdge>,
 }
 
 impl WorkingGraph {
@@ -22,7 +22,12 @@ impl WorkingGraph {
 
         for bucket in 0..graph.num_nested() {
             for edge in graph.nested(bucket) {
-                working_graph.add_edge(ChEdge::new(edge.tail, edge.head, edge.weight, None));
+                working_graph.add_edge(ContractionEdge::new(
+                    edge.tail,
+                    edge.head,
+                    edge.weight,
+                    None,
+                ));
             }
         }
 
@@ -33,7 +38,7 @@ impl WorkingGraph {
         self.outgoing.len()
     }
 
-    pub(super) fn get_out(&self, vertex: VertexId) -> &[ChEdge] {
+    pub(super) fn get_out(&self, vertex: VertexId) -> &[ContractionEdge] {
         return &self.outgoing[vertex.as_usize()];
     }
 
@@ -42,7 +47,7 @@ impl WorkingGraph {
     }
 
     /// Insertes an edge into the graph and sets it as a in-neighbor for its tail.
-    pub(super) fn add_edge(&mut self, edge: ChEdge) {
+    pub(super) fn add_edge(&mut self, edge: ContractionEdge) {
         match self.outgoing[edge.tail.as_usize()]
             .binary_search_by(|old_edge| old_edge.head.cmp(&edge.head))
         {
@@ -99,7 +104,7 @@ impl WorkingGraph {
         }
     }
 
-    pub(super) fn contracted_edges(&self) -> &[ChEdge] {
+    pub(super) fn contracted_edges(&self) -> &[ContractionEdge] {
         &self.contracted_edges
     }
 }

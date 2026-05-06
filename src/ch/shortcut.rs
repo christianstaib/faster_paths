@@ -1,6 +1,6 @@
 use crate::{
-    ch::{contraction_hierarchy::ContractionHierarchy, edge::Edge},
-    flattened_nested::FlattenedNested,
+    ch::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
+    fast_graph::FastGraph,
     types::VertexId,
 };
 
@@ -11,8 +11,12 @@ use crate::{
 ///
 /// The outgoing edges of `tail` must be sorted by their head vertex, because the
 /// lookup is performed using binary search.
-fn find_edge(graph: &FlattenedNested<Edge>, tail: VertexId, head: VertexId) -> Option<&Edge> {
-    let edges = graph.nested(tail.as_usize());
+fn find_edge(
+    graph: &FastGraph<ContractionEdge>,
+    tail: VertexId,
+    head: VertexId,
+) -> Option<&ContractionEdge> {
+    let edges = graph.out_edges(tail);
 
     edges
         .binary_search_by_key(&head, |edge| edge.head)
@@ -59,8 +63,8 @@ pub fn unpack_and_concat_shortcut_paths(
 /// Shortcut edges are unpacked iteratively using both graphs. Returns `None` if
 /// an expected edge is not found or the input is empty.
 pub fn unpack_shortcuts(
-    dir1_graph: &FlattenedNested<Edge>,
-    dir2_graph: &FlattenedNested<Edge>,
+    dir1_graph: &FastGraph<ContractionEdge>,
+    dir2_graph: &FastGraph<ContractionEdge>,
     dir1_reversed_shortcut_path: &[VertexId],
 ) -> Option<Vec<VertexId>> {
     enum Dir {

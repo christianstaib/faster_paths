@@ -1,5 +1,9 @@
-use crate::types::{Distance, VertexId};
+use crate::{
+    edge_like::EdgeLike,
+    types::{Distance, VertexId},
+};
 
+#[derive(Clone, Copy)]
 pub struct Edge {
     pub tail: VertexId,
     pub head: VertexId,
@@ -13,5 +17,17 @@ impl Edge {
             head: target,
             weight,
         }
+    }
+}
+
+impl EdgeLike for Edge {
+    fn tail(&self) -> VertexId {
+        self.tail
+    }
+    fn head(&self) -> VertexId {
+        self.head
+    }
+    fn weight(&self) -> Distance {
+        self.weight
     }
 }

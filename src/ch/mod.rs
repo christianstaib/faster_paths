@@ -4,4 +4,4 @@ pub mod edge;
 pub mod pathfinder;
 pub mod shortcut;
 
-pub use edge::Edge;
+pub use edge::ContractionEdge;

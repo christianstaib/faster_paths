@@ -1,10 +1,11 @@
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
-use crate::Edge as ChEdge;
+use crate::ch::ContractionEdge;
 use crate::ch::contraction::working_graph::WorkingGraph;
 use crate::ch::contraction_hierarchy::ContractionHierarchy;
 use crate::edge::Edge;
+use crate::fast_graph::FastGraph;
 use crate::types::Distance;
 use crate::{flattened_nested::FlattenedNested, types::VertexId};
 
@@ -24,7 +25,12 @@ pub(super) fn build_working_graph(graph: &FlattenedNested<Edge>) -> WorkingGraph
 
     for bucket in 0..graph.num_nested() {
         for edge in graph.nested(bucket) {
-            working_graph.add_edge(ChEdge::new(edge.tail, edge.head, edge.weight, None));
+            working_graph.add_edge(ContractionEdge::new(
+                edge.tail,
+                edge.head,
+                edge.weight,
+                None,
+            ));
         }
     }
 
@@ -33,7 +39,7 @@ pub(super) fn build_working_graph(graph: &FlattenedNested<Edge>) -> WorkingGraph
 
 /// Given a list of `edges` which contains both up and down edges, separate them and build a
 /// contraction hierarchy.
-pub(super) fn build_hierarchy(edges: &[ChEdge], levels: &[usize]) -> ContractionHierarchy {
+pub(super) fn build_hierarchy(edges: &[ContractionEdge], levels: &[usize]) -> ContractionHierarchy {
     let mut up_graph = vec![Vec::new(); levels.len()];
     let mut down_graph = vec![Vec::new(); levels.len()];
 
@@ -50,10 +56,7 @@ pub(super) fn build_hierarchy(edges: &[ChEdge], levels: &[usize]) -> Contraction
         .chain(down_graph.iter_mut())
         .for_each(|edges| edges.sort_by_key(|edge| edge.head));
 
-    ContractionHierarchy::new(
-        FlattenedNested::new(up_graph),
-        FlattenedNested::new(down_graph),
-    )
+    ContractionHierarchy::new(FastGraph::new(&up_graph), FastGraph::new(&down_graph))
 }
 
 /// Computes the shortcuts necessary to maintain the shortest path distances in `graph` if vertex
@@ -65,7 +68,7 @@ pub(super) fn generate_shortcuts(
     graph: &WorkingGraph,
     vertex: VertexId,
     max_hops: u32,
-) -> Vec<ChEdge> {
+) -> Vec<ContractionEdge> {
     let targets = graph
         .get_out(vertex)
         .iter()
@@ -88,7 +91,7 @@ pub(super) fn generate_shortcuts(
                 distances
                     .get(&edge.head)
                     .is_none_or(|&witness_distance| witness_distance >= weight)
-                    .then(|| ChEdge::new(tail, edge.head, weight, Some(vertex)))
+                    .then(|| ContractionEdge::new(tail, edge.head, weight, Some(vertex)))
             })
         })
         .collect()

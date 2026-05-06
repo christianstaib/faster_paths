@@ -1,4 +1,7 @@
-use crate::types::{Distance, VertexId};
+use crate::{
+    edge_like::EdgeLike,
+    types::{Distance, VertexId},
+};
 
 /// An edge is stored either in the `up_graph` or `down_graph` of a
 /// `ContractionHierarchy`.
@@ -15,14 +18,14 @@ use crate::types::{Distance, VertexId};
 /// - the child edge in the *other* graph is an edge `middle -> tail`.
 /// - the child edge in the *same* graph is an edge `middle -> head`.
 #[derive(Clone, Copy)]
-pub struct Edge {
+pub struct ContractionEdge {
     pub tail: VertexId,
     pub head: VertexId,
     pub weight: Distance,
     pub skipped: Option<VertexId>,
 }
 
-impl Edge {
+impl ContractionEdge {
     pub fn new(
         tail: VertexId,
         head: VertexId,
@@ -38,6 +41,18 @@ impl Edge {
     }
 
     pub fn reversed(&self) -> Self {
-        Edge::new(self.head, self.tail, self.weight, self.skipped)
+        ContractionEdge::new(self.head, self.tail, self.weight, self.skipped)
+    }
+}
+
+impl EdgeLike for ContractionEdge {
+    fn tail(&self) -> VertexId {
+        self.tail
+    }
+    fn head(&self) -> VertexId {
+        self.head
+    }
+    fn weight(&self) -> Distance {
+        self.weight
     }
 }

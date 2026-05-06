@@ -4,12 +4,12 @@ use std::{
 };
 
 use crate::{
-    ch::{contraction_hierarchy::ContractionHierarchy, edge::Edge},
-    flattened_nested::FlattenedNested,
+    ch::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
+    fast_graph::FastGraph,
     types::{Distance, VertexId},
 };
 
-fn parse_ch_edge(line: &str) -> Option<Edge> {
+fn parse_ch_edge(line: &str) -> Option<ContractionEdge> {
     let parts = line.split_whitespace().collect::<Vec<_>>();
 
     if parts.len() != 4 {
@@ -21,10 +21,13 @@ fn parse_ch_edge(line: &str) -> Option<Edge> {
     let weight = Distance::new(parts[2].parse().ok()?);
     let skiped = parts[3].parse().ok().map(|x| VertexId::new(x));
 
-    Some(Edge::new(tail, head, weight, skiped))
+    Some(ContractionEdge::new(tail, head, weight, skiped))
 }
 
-fn read_ch_edges(lines: &mut impl Iterator<Item = String>, count: usize) -> Option<Vec<Vec<Edge>>> {
+fn read_ch_edges(
+    lines: &mut impl Iterator<Item = String>,
+    count: usize,
+) -> Option<Vec<Vec<ContractionEdge>>> {
     let mut graph = Vec::new();
 
     for _ in 0..count {
@@ -48,8 +51,8 @@ fn ch_from_reader<R: Read>(reader: R) -> Option<ContractionHierarchy> {
     let num_down_edges = lines.next()?.parse().ok()?;
 
     Some(ContractionHierarchy::new(
-        FlattenedNested::new(read_ch_edges(&mut lines, num_up_edges)?),
-        FlattenedNested::new(read_ch_edges(&mut lines, num_down_edges)?),
+        FastGraph::new(&read_ch_edges(&mut lines, num_up_edges)?),
+        FastGraph::new(&read_ch_edges(&mut lines, num_down_edges)?),
     ))
 }
 

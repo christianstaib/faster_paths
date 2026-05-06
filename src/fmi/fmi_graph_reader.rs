@@ -62,7 +62,7 @@ fn graph_from_reader<R: Read>(reader: R) -> Option<FlattenedNested<Edge>> {
         next_data_line(&mut lines)?;
     }
 
-    Some(FlattenedNested::new(read_edges(
+    Some(FlattenedNested::new(&read_edges(
         &mut lines,
         num_edges,
         num_vertices,
