@@ -4,9 +4,9 @@ use std::collections::{BinaryHeap, HashMap, HashSet};
 use crate::contraction_hierachy::ContractionEdge;
 use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
 use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
-use crate::graph::{FastGraph, WeightedEdge};
+use crate::graph::{FastGraph, GraphLike};
 use crate::types::Distance;
-use crate::{flattened_nested::FlattenedNested, types::VertexId};
+use crate::types::VertexId;
 
 /// Calculates the edge difference. Used in order to avoid calculation errors if always written out.
 pub(super) fn edge_difference(
@@ -19,21 +19,8 @@ pub(super) fn edge_difference(
 }
 
 /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-pub(super) fn build_working_graph(graph: &FlattenedNested<WeightedEdge>) -> WorkingGraph {
-    let mut working_graph = WorkingGraph::new(graph);
-
-    for bucket in 0..graph.num_nested() {
-        for edge in graph.nested(bucket) {
-            working_graph.add_edge(ContractionEdge::new(
-                edge.tail,
-                edge.head,
-                edge.weight,
-                None,
-            ));
-        }
-    }
-
-    working_graph
+pub(super) fn build_working_graph<G: GraphLike>(graph: &G) -> WorkingGraph {
+    WorkingGraph::new(graph)
 }
 
 /// Given a list of `edges` which contains both up and down edges, separate them and build a

@@ -1,9 +1,4 @@
-use ch::{
-    flattened_nested::FlattenedNested,
-    fmi::read_fmi_graph,
-    graph::WeightedEdge,
-    types::{Distance, VertexId},
-};
+use ch::{fmi::read_fmi_graph, graph::GraphLike, types::VertexId};
 use clap::Parser;
 use std::path::PathBuf;
 
@@ -19,33 +14,9 @@ fn main() {
     let args = Args::parse();
 
     // Parse the ChGraph from the file
-    let graph: ch::flattened_nested::FlattenedNested<WeightedEdge> =
-        read_fmi_graph(&args.graph_in).unwrap();
+    let graph = read_fmi_graph(&args.graph_in).unwrap();
 
-    for edge in graph.nested(5) {
+    for edge in graph.out_edges(VertexId::new(5)) {
         println!("{:?} -> {:?} = {:?}", edge.tail, edge.head, edge.weight);
     }
-
-    let path = vec![VertexId::new(5), VertexId::new(14595642)];
-
-    println!("{:?}", sum_path(&path, &graph));
-}
-
-pub fn sum_path(path: &[VertexId], graph: &FlattenedNested<WeightedEdge>) -> Option<Distance> {
-    let mut sum = Distance::ZERO;
-
-    for window in path.windows(2) {
-        let tail = window[0];
-        let head = window[1];
-
-        let edges = graph.nested(tail.as_usize());
-
-        if let Some(index) = edges.binary_search_by_key(&head, |edge| edge.head).ok() {
-            sum = sum + edges[index].weight;
-        } else {
-            return None;
-        }
-    }
-
-    Some(sum)
 }

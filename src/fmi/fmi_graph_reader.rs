@@ -4,8 +4,7 @@ use std::{
 };
 
 use crate::{
-    flattened_nested::FlattenedNested,
-    graph::WeightedEdge,
+    graph::{FastGraph, WeightedEdge},
     types::{Distance, VertexId},
 };
 
@@ -52,7 +51,7 @@ fn next_data_line(lines: &mut impl Iterator<Item = String>) -> Option<String> {
     })
 }
 
-fn graph_from_reader<R: Read>(reader: R) -> Option<FlattenedNested<WeightedEdge>> {
+fn graph_from_reader<R: Read>(reader: R) -> Option<FastGraph<WeightedEdge>> {
     let mut lines = BufReader::new(reader).lines().filter_map(Result::ok);
 
     let num_vertices: usize = next_data_line(&mut lines)?.trim().parse().ok()?;
@@ -62,14 +61,14 @@ fn graph_from_reader<R: Read>(reader: R) -> Option<FlattenedNested<WeightedEdge>
         next_data_line(&mut lines)?;
     }
 
-    Some(FlattenedNested::new(&read_edges(
+    Some(FastGraph::new(&read_edges(
         &mut lines,
         num_edges,
         num_vertices,
     )?))
 }
 
-pub fn read_fmi_graph(file: &std::path::Path) -> Option<FlattenedNested<WeightedEdge>> {
+pub fn read_fmi_graph(file: &std::path::Path) -> Option<FastGraph<WeightedEdge>> {
     let reader = BufReader::new(File::open(file).unwrap());
     graph_from_reader(reader)
 }

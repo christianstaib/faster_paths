@@ -12,6 +12,13 @@ pub trait GraphLike {
 
     /// Returns the number of edges in the graph.
     fn num_edges(&self) -> usize;
+
+    /// Returns all edges in the graph.
+    fn edges(&self) -> impl Iterator<Item = &Self::Edge> + '_ {
+        (0..self.num_vertices())
+            .map(|tail| VertexId::new(tail as u32))
+            .flat_map(|tail| self.out_edges(tail).iter())
+    }
 }
 
 impl<E: EdgeLike> GraphLike for FlattenedNested<E> {

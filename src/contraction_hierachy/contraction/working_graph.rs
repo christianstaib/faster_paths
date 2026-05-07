@@ -1,7 +1,6 @@
 use crate::{
     contraction_hierachy::ContractionEdge,
-    flattened_nested::FlattenedNested,
-    graph::WeightedEdge,
+    graph::{EdgeLike, GraphLike},
     types::{Distance, VertexId},
 };
 
@@ -13,22 +12,20 @@ pub(super) struct WorkingGraph {
 
 impl WorkingGraph {
     /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-    pub(super) fn new(graph: &FlattenedNested<WeightedEdge>) -> WorkingGraph {
+    pub(super) fn new<G: GraphLike>(graph: &G) -> WorkingGraph {
         let mut working_graph = Self {
-            outgoing: vec![Vec::new(); graph.num_nested()],
-            incoming: vec![Vec::new(); graph.num_nested()],
+            outgoing: vec![Vec::new(); graph.num_vertices()],
+            incoming: vec![Vec::new(); graph.num_vertices()],
             contracted_edges: Vec::new(),
         };
 
-        for bucket in 0..graph.num_nested() {
-            for edge in graph.nested(bucket) {
-                working_graph.add_edge(ContractionEdge::new(
-                    edge.tail,
-                    edge.head,
-                    edge.weight,
-                    None,
-                ));
-            }
+        for edge in graph.edges() {
+            working_graph.add_edge(ContractionEdge::new(
+                edge.tail(),
+                edge.head(),
+                edge.weight(),
+                None,
+            ));
         }
 
         working_graph

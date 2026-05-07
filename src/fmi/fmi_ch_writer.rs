@@ -14,17 +14,15 @@ pub fn write_fmi_ch<W: Write>(mut out: W, ch: &ContractionHierarchy) -> io::Resu
 }
 
 fn write_edges<W: Write>(out: &mut W, graph: &FastGraph<ContractionEdge>) -> io::Result<()> {
-    for tail in 0..graph.num_vertices() {
-        for edge in graph.out_edges(VertexId::new(tail as u32)) {
-            writeln!(
-                out,
-                "{} {} {} {}",
-                edge.tail.as_usize(),
-                edge.head.as_usize(),
-                edge.weight.as_u32(),
-                skipped(edge.skipped),
-            )?;
-        }
+    for edge in graph.edges() {
+        writeln!(
+            out,
+            "{} {} {} {}",
+            edge.tail.as_usize(),
+            edge.head.as_usize(),
+            edge.weight.as_u32(),
+            skipped(edge.skipped),
+        )?;
     }
 
     Ok(())
