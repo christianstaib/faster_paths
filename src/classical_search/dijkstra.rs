@@ -52,17 +52,15 @@ where
             }
 
             for edge in self.graph.out_edges(tail) {
-                let head = edge.head();
                 let new_distance = dist_tail + edge.weight();
-                let current_distance = self.up_state.get_distance(head);
-
-                if !current_distance.is_none_or(|distance| new_distance < distance) {
+                let current_distance = self.up_state.get_distance(edge.head());
+                if current_distance.is_some_and(|distance| new_distance >= distance) {
                     continue;
                 }
 
-                self.up_state.set_distance(head, new_distance);
-                self.up_state.set_predecessor(head, tail);
-                self.queue.push((Reverse(new_distance), head));
+                self.up_state.set_distance(edge.head(), new_distance);
+                self.up_state.set_predecessor(edge.head(), tail);
+                self.queue.push((Reverse(new_distance), edge.head()));
             }
         }
 
@@ -78,10 +76,10 @@ where
 
     fn path(&mut self, query: &PathQuery) -> Option<Path<Self::Distance>> {
         let distance = self.search(query)?;
-        let mut path = self.up_state.get_reversed_path(query.target)?;
-        path.reverse();
+        let mut vertices = self.up_state.get_reversed_path(query.target)?;
+        vertices.reverse();
 
-        Some(Path::new(path, distance))
+        Some(Path { vertices, distance })
     }
 
     fn distance(&mut self, query: &PathQuery) -> Option<Self::Distance> {

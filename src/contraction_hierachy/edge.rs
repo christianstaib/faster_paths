@@ -3,7 +3,7 @@ use crate::{
     types::{Distance, VertexId},
 };
 
-/// An edge is stored either in the `up_graph` or `down_graph` of a
+/// A ContractionEdge is stored either in the `up_graph` or `down_graph` of a
 /// `ContractionHierarchy`.
 ///
 /// In both graphs the stored edge is directed upward, i.e.
@@ -26,21 +26,11 @@ pub struct ContractionEdge<D> {
 }
 
 impl<D: Distance> ContractionEdge<D> {
-    // pub fn new(tail: VertexId, head: VertexId, weight: D, skipped: Option<VertexId>) -> Self {
-    //     Self {
-    //         tail,
-    //         head,
-    //         weight,
-    //         skipped,
-    //     }
-    // }
-
     pub fn reversed(&self) -> Self {
-        ContractionEdge {
+        Self {
             tail: self.head,
             head: self.tail,
-            weight: self.weight,
-            skipped: self.skipped,
+            ..*self
         }
     }
 }

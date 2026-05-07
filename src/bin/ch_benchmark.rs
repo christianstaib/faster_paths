@@ -45,9 +45,10 @@ fn main() {
         BenchmarkMode::Distance => tests
             .iter()
             .all(|test| pathfinder.distance(test.query()) == test.distance()),
-        BenchmarkMode::Path => tests.iter().all(|test| {
-            pathfinder.path(test.query()).map(|path| path.distance()) == test.distance()
-        }),
+
+        BenchmarkMode::Path => tests
+            .iter()
+            .all(|test| pathfinder.path(test.query()).map(|path| path.distance) == test.distance()),
     };
     let whole_duration = start.elapsed();
 

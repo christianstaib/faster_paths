@@ -39,7 +39,7 @@ pub fn validate_path<G: GraphLike>(
         (Some(found_path), None) => Err(format!(
             "{:?}. Expected no path, but found one with distance {:?}.",
             test.query(),
-            found_path.distance()
+            found_path.distance
         )),
 
         (Some(found_path), Some(expected_distance)) => {
@@ -78,16 +78,16 @@ fn validate_found_path<G: GraphLike>(
     path: &Path<<G::Edge as EdgeLike>::Distance>,
     expected_distance: <G::Edge as EdgeLike>::Distance,
 ) -> Result<(), String> {
-    if path.distance() != expected_distance {
+    if path.distance != expected_distance {
         return Err(format!(
             "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
             test.query(),
             expected_distance,
-            path.distance(),
+            path.distance,
         ));
     }
 
-    let vertices = path.vertices();
+    let vertices = &path.vertices;
     let query = test.query();
 
     if vertices.first() != Some(&query.source) {

@@ -30,3 +30,21 @@ pub fn read_tests<D: Distance + FromStr>(file: &std::path::Path) -> Option<Vec<P
 
     Some(tests)
 }
+
+pub fn read_queries(file: &std::path::Path) -> Option<Vec<PathQuery>> {
+    let mut tests = Vec::new();
+    let reader_test = BufReader::new(File::open(&file).unwrap());
+    let mut test_lines = reader_test.lines().flatten();
+    test_lines.next();
+    while let Some(line) = test_lines.next() {
+        let mut parts = line.split_whitespace();
+
+        let source = VertexId::new(parts.next().unwrap().parse().ok().unwrap());
+        let target = VertexId::new(parts.next().unwrap().parse().ok().unwrap());
+        let query = PathQuery { source, target };
+
+        tests.push(query);
+    }
+
+    Some(tests)
+}

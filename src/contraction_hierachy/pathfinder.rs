@@ -32,13 +32,13 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
 
         let up_reversed_shortcut_path = self.up_state.get_reversed_path(meeting_vertex)?;
         let down_reversed_shortcut_path = self.down_state.get_reversed_path(meeting_vertex)?;
-        let path = unpack_and_concat_shortcut_paths(
+        let vertices = unpack_and_concat_shortcut_paths(
             self.contraction_hierarchy,
             &up_reversed_shortcut_path,
             &down_reversed_shortcut_path,
         )?;
 
-        Some(Path::new(path, distance))
+        Some(Path { vertices, distance })
     }
 
     fn distance(&mut self, query: &PathQuery) -> Option<D> {
