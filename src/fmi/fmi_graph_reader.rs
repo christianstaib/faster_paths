@@ -19,7 +19,7 @@ fn parse_edge(line: &str) -> Option<WeightedEdge> {
     let head = VertexId::new(parts[1].parse().ok()?);
     let weight = Distance::new(parts[2].parse().ok()?);
 
-    Some(WeightedEdge::new(tail, head, weight))
+    Some(WeightedEdge { tail, head, weight })
 }
 
 fn read_edges(

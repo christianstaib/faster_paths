@@ -16,16 +16,6 @@ pub struct WeightedEdge {
     pub weight: Distance,
 }
 
-impl WeightedEdge {
-    pub fn new(tail: VertexId, target: VertexId, weight: Distance) -> Self {
-        Self {
-            tail,
-            head: target,
-            weight,
-        }
-    }
-}
-
 impl EdgeLike for WeightedEdge {
     fn tail(&self) -> VertexId {
         self.tail
