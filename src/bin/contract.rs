@@ -1,9 +1,9 @@
 use ch::{
     contraction_hierachy::contract_graph_sequential,
     fmi::{read_fmi_graph, write_fmi_ch},
-    graph::{FastGraph, WeightedEdge},
 };
 use clap::Parser;
+use ordered_float::OrderedFloat;
 use std::{fs::File, io::BufWriter, path::PathBuf};
 
 #[derive(Parser, Debug)]
@@ -18,9 +18,11 @@ struct Args {
     graph_out: PathBuf,
 }
 
+type DistanceType = OrderedFloat<f32>;
+
 fn main() {
     let args = Args::parse();
-    let graph: FastGraph<WeightedEdge<u32>> = read_fmi_graph(&args.graph_in).unwrap();
+    let graph = read_fmi_graph::<DistanceType>(&args.graph_in).unwrap();
 
     let ch = contract_graph_sequential(&graph);
     let output = File::create(args.graph_out).unwrap();

@@ -90,21 +90,21 @@ fn validate_found_path<G: GraphLike>(
     let vertices = path.vertices();
     let query = test.query();
 
-    if vertices.first() != Some(&query.source()) {
+    if vertices.first() != Some(&query.source) {
         return Err(format!(
             "{:?}. Path starts at {:?}, expected {:?}.",
             query,
             vertices.first(),
-            query.source(),
+            query.source,
         ));
     }
 
-    if vertices.last() != Some(&query.target()) {
+    if vertices.last() != Some(&query.target) {
         return Err(format!(
             "{:?}. Path ends at {:?}, expected {:?}.",
             query,
             vertices.last(),
-            query.target(),
+            query.target,
         ));
     }
 

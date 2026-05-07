@@ -19,7 +19,7 @@ pub fn read_tests<D: Distance + FromStr>(file: &std::path::Path) -> Option<Vec<P
 
         let source = VertexId::new(parts.next().unwrap().parse().ok().unwrap());
         let target = VertexId::new(parts.next().unwrap().parse().ok().unwrap());
-        let query = PathQuery::new(source, target);
+        let query = PathQuery { source, target };
 
         let distance: Option<D> = parts.next().unwrap().parse().ok();
 

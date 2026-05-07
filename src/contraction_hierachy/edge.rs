@@ -26,17 +26,22 @@ pub struct ContractionEdge<D> {
 }
 
 impl<D: Distance> ContractionEdge<D> {
-    pub fn new(tail: VertexId, head: VertexId, weight: D, skipped: Option<VertexId>) -> Self {
-        Self {
-            tail,
-            head,
-            weight,
-            skipped,
-        }
-    }
+    // pub fn new(tail: VertexId, head: VertexId, weight: D, skipped: Option<VertexId>) -> Self {
+    //     Self {
+    //         tail,
+    //         head,
+    //         weight,
+    //         skipped,
+    //     }
+    // }
 
     pub fn reversed(&self) -> Self {
-        ContractionEdge::new(self.head, self.tail, self.weight, self.skipped)
+        ContractionEdge {
+            tail: self.head,
+            head: self.tail,
+            weight: self.weight,
+            skipped: self.skipped,
+        }
     }
 }
 

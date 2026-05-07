@@ -1,40 +1,42 @@
-use ch::contraction_hierachy::{ContractionHierarchy, ContractionHierarchyPathfinder};
+use ch::contraction_hierachy::ContractionHierarchyPathfinder;
 use ch::fmi::read_fmi_ch;
 use ch::fmi::read_fmi_graph;
 use ch::fmi::read_tests;
-use ch::graph::{FastGraph, WeightedEdge};
-use ch::path::PathDistance;
 use ch::pathfinder::ShortestPathFinder;
 use ch::validation::validate_path;
 use clap::Parser;
+use ordered_float::OrderedFloat;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// CH graph in .fmi format
+    /// Infile in .fmi format
     #[arg(short, long)]
-    ch_in: PathBuf,
+    contraction_hierarchy: PathBuf,
 
     /// CH graph in .fmi format
     #[arg(short, long)]
-    graph_in: PathBuf,
+    graph: PathBuf,
 
-    /// Test queries in .txt format
+    /// Infile in .fmi format
     #[arg(short, long)]
-    test_in: PathBuf,
+    tests: PathBuf,
 }
+
+type DistanceType = OrderedFloat<f32>;
 
 fn main() {
     let args = Args::parse();
 
-    let ch: ContractionHierarchy<u32> = read_fmi_ch(&args.ch_in).unwrap();
-    let graph: FastGraph<WeightedEdge<u32>> = read_fmi_graph(&args.graph_in).unwrap();
-    let tests: Vec<PathDistance<u32>> = read_tests(&args.test_in).unwrap();
+    // Parse the ChGraph from the file
+    let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
+    let graph = read_fmi_graph(&args.graph).unwrap();
+    let tests = read_tests(&args.tests).unwrap();
 
-    let mut pathfinder = ContractionHierarchyPathfinder::new(&ch);
+    let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 
-    let failures = tests
+    let num_failures = tests
         .iter()
         .filter_map(|test| {
             let path = pathfinder.path(test.query());
@@ -43,8 +45,8 @@ fn main() {
         .inspect(|message| eprintln!("{message}"))
         .count();
 
-    if failures > 0 {
-        eprintln!("{failures} of {} paths failed.", tests.len());
+    if num_failures > 0 {
+        eprintln!("{} of {} paths failed.", num_failures, tests.len());
         std::process::exit(1);
     }
 

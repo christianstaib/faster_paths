@@ -82,7 +82,12 @@ pub(super) fn generate_shortcuts<D: Distance>(
                 distances
                     .get(&edge.head)
                     .is_none_or(|&witness_distance| witness_distance >= weight)
-                    .then(|| ContractionEdge::new(tail, edge.head, weight, Some(vertex)))
+                    .then(|| ContractionEdge {
+                        tail,
+                        head: edge.head,
+                        weight,
+                        skipped: Some(vertex),
+                    })
             })
         })
         .collect()

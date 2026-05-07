@@ -9,3 +9,4 @@ indicatif = { version = "0.18.4", features = ["rayon"] }
 num-traits = "0.2"
 rayon = "1.10"
 ordered-float = "4"
+rand = "0.10.1"

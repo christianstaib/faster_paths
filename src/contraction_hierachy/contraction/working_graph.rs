@@ -24,12 +24,12 @@ impl<D: Distance> WorkingGraph<D> {
         };
 
         for edge in graph.edges() {
-            working_graph.add_edge(ContractionEdge::new(
-                edge.tail(),
-                edge.head(),
-                edge.weight(),
-                None,
-            ));
+            working_graph.add_edge(ContractionEdge {
+                tail: edge.tail(),
+                head: edge.head(),
+                weight: edge.weight(),
+                skipped: None,
+            });
         }
 
         working_graph

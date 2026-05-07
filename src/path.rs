@@ -3,22 +3,8 @@ use crate::types::{Distance, VertexId};
 /// Stores a query for a path from source to target.
 #[derive(Clone, Copy, Debug)]
 pub struct PathQuery {
-    source: VertexId,
-    target: VertexId,
-}
-
-impl PathQuery {
-    pub fn new(source: VertexId, target: VertexId) -> Self {
-        Self { source, target }
-    }
-
-    pub fn source(&self) -> VertexId {
-        self.source
-    }
-
-    pub fn target(&self) -> VertexId {
-        self.target
-    }
+    pub source: VertexId,
+    pub target: VertexId,
 }
 
 /// Stores a PathQuery as well as the expected shotests path distance, which is given as an

@@ -85,15 +85,15 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
-            .push((Reverse(D::zero()), query.source(), Direction::UP));
+            .push((Reverse(D::zero()), query.source, Direction::UP));
         self.queue
-            .push((Reverse(D::zero()), query.target(), Direction::DOWN));
+            .push((Reverse(D::zero()), query.target, Direction::DOWN));
 
         self.up_state.clear();
-        self.up_state.set_distance(query.source(), D::zero());
+        self.up_state.set_distance(query.source, D::zero());
 
         self.down_state.clear();
-        self.down_state.set_distance(query.target(), D::zero());
+        self.down_state.set_distance(query.target, D::zero());
 
         let mut best_meeting: Option<(D, VertexId)> = None;
 
@@ -121,7 +121,6 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             };
 
             // Skip the vertex if it has already been expanded.
-
             // Skip if dir1_dist_tail is not optimal, as this implies that every new_best_distance
             // would not be optimal.
             if dir1_state.test_and_set_expanded(tail)
@@ -142,7 +141,8 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             for edge in dir1_graph.out_edges(tail) {
                 let new_distance = dir1_dist_tail + edge.weight;
                 let current_distance = dir1_state.get_distance(edge.head);
-                if !current_distance.is_none_or(|distance| new_distance < distance) {
+                if current_distance.is_some_and(|current_distance| new_distance >= current_distance)
+                {
                     continue;
                 }
 

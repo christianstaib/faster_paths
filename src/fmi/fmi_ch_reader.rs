@@ -22,7 +22,12 @@ fn parse_ch_edge<D: Distance + FromStr>(line: &str) -> Option<ContractionEdge<D>
     let weight = parts[2].parse().ok()?;
     let skipped = parse_skipped(parts[3]);
 
-    Some(ContractionEdge::new(tail, head, weight, skipped))
+    Some(ContractionEdge {
+        tail,
+        head,
+        weight,
+        skipped,
+    })
 }
 
 fn parse_skipped(raw: &str) -> Option<VertexId> {
