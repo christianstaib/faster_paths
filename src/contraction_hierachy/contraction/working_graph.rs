@@ -4,15 +4,19 @@ use crate::{
     types::{Distance, VertexId},
 };
 
-pub(super) struct WorkingGraph {
-    outgoing: Vec<Vec<ContractionEdge>>,
-    incoming: Vec<Vec<(VertexId, Distance)>>,
-    contracted_edges: Vec<ContractionEdge>,
+pub(super) struct WorkingGraph<D: Distance> {
+    outgoing: Vec<Vec<ContractionEdge<D>>>,
+    incoming: Vec<Vec<(VertexId, D)>>,
+    contracted_edges: Vec<ContractionEdge<D>>,
 }
 
-impl WorkingGraph {
+impl<D: Distance> WorkingGraph<D> {
     /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-    pub(super) fn new<G: GraphLike>(graph: &G) -> WorkingGraph {
+    pub(super) fn new<G>(graph: &G) -> WorkingGraph<D>
+    where
+        G: GraphLike,
+        G::Edge: EdgeLike<Distance = D>,
+    {
         let mut working_graph = Self {
             outgoing: vec![Vec::new(); graph.num_vertices()],
             incoming: vec![Vec::new(); graph.num_vertices()],
@@ -35,16 +39,16 @@ impl WorkingGraph {
         self.outgoing.len()
     }
 
-    pub(super) fn get_out(&self, vertex: VertexId) -> &[ContractionEdge] {
+    pub(super) fn get_out(&self, vertex: VertexId) -> &[ContractionEdge<D>] {
         return &self.outgoing[vertex.as_usize()];
     }
 
-    pub(super) fn get_in(&self, vertex: VertexId) -> &[(VertexId, Distance)] {
+    pub(super) fn get_in(&self, vertex: VertexId) -> &[(VertexId, D)] {
         return &self.incoming[vertex.as_usize()];
     }
 
     /// Insertes an edge into the graph and sets it as a in-neighbor for its tail.
-    pub(super) fn add_edge(&mut self, edge: ContractionEdge) {
+    pub(super) fn add_edge(&mut self, edge: ContractionEdge<D>) {
         match self.outgoing[edge.tail.as_usize()]
             .binary_search_by(|old_edge| old_edge.head.cmp(&edge.head))
         {
@@ -101,7 +105,7 @@ impl WorkingGraph {
         }
     }
 
-    pub(super) fn contracted_edges(&self) -> &[ContractionEdge] {
+    pub(super) fn contracted_edges(&self) -> &[ContractionEdge<D>] {
         &self.contracted_edges
     }
 }

@@ -6,8 +6,8 @@ use crate::{
         },
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::GraphLike,
-    types::VertexId,
+    graph::{EdgeLike, GraphLike},
+    types::{Distance, VertexId},
 };
 use indicatif::{ParallelProgressIterator, ProgressBar};
 use rayon::prelude::*;
@@ -15,13 +15,21 @@ use std::{cmp::Reverse, collections::BinaryHeap};
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
-pub fn contract_graph_sequential<G: GraphLike>(graph: &G) -> ContractionHierarchy {
+pub fn contract_graph_sequential<G>(
+    graph: &G,
+) -> ContractionHierarchy<<G::Edge as EdgeLike>::Distance>
+where
+    G: GraphLike,
+    <G::Edge as EdgeLike>::Distance: Sync,
+{
     let working_graph = build_working_graph(graph);
 
     contract_working_graph_sequential(working_graph)
 }
 
-fn contract_working_graph_sequential(mut graph: WorkingGraph) -> ContractionHierarchy {
+fn contract_working_graph_sequential<D: Distance + Sync>(
+    mut graph: WorkingGraph<D>,
+) -> ContractionHierarchy<D> {
     let mut levels = vec![0; graph.num_vertices()];
 
     let mut queue = initial_queue(&graph);
@@ -52,7 +60,9 @@ fn contract_working_graph_sequential(mut graph: WorkingGraph) -> ContractionHier
 }
 
 /// Initializes the binary heap used during the sequential contraction in parallel.
-fn initial_queue(graph: &WorkingGraph) -> BinaryHeap<(Reverse<i64>, VertexId)> {
+fn initial_queue<D: Distance + Sync>(
+    graph: &WorkingGraph<D>,
+) -> BinaryHeap<(Reverse<i64>, VertexId)> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
         .progress()

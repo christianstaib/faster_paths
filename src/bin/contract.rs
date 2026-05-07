@@ -1,6 +1,7 @@
 use ch::{
     contraction_hierachy::contract_graph_sequential,
     fmi::{read_fmi_graph, write_fmi_ch},
+    graph::{FastGraph, WeightedEdge},
 };
 use clap::Parser;
 use std::{fs::File, io::BufWriter, path::PathBuf};
@@ -19,7 +20,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let graph = read_fmi_graph(&args.graph_in).unwrap();
+    let graph: FastGraph<WeightedEdge<u32>> = read_fmi_graph(&args.graph_in).unwrap();
 
     let ch = contract_graph_sequential(&graph);
     let output = File::create(args.graph_out).unwrap();

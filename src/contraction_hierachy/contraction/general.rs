@@ -4,13 +4,13 @@ use std::collections::{BinaryHeap, HashMap, HashSet};
 use crate::contraction_hierachy::ContractionEdge;
 use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
 use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
-use crate::graph::{FastGraph, GraphLike};
+use crate::graph::{EdgeLike, FastGraph, GraphLike};
 use crate::types::Distance;
 use crate::types::VertexId;
 
 /// Calculates the edge difference. Used in order to avoid calculation errors if always written out.
-pub(super) fn edge_difference(
-    graph: &WorkingGraph,
+pub(super) fn edge_difference<D: Distance>(
+    graph: &WorkingGraph<D>,
     vertex: VertexId,
     shortcut_count: usize,
 ) -> i64 {
@@ -19,13 +19,18 @@ pub(super) fn edge_difference(
 }
 
 /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-pub(super) fn build_working_graph<G: GraphLike>(graph: &G) -> WorkingGraph {
+pub(super) fn build_working_graph<G: GraphLike>(
+    graph: &G,
+) -> WorkingGraph<<G::Edge as EdgeLike>::Distance> {
     WorkingGraph::new(graph)
 }
 
 /// Given a list of `edges` which contains both up and down edges, separate them and build a
 /// contraction hierarchy.
-pub(super) fn build_hierarchy(edges: &[ContractionEdge], levels: &[usize]) -> ContractionHierarchy {
+pub(super) fn build_hierarchy<D: Distance>(
+    edges: &[ContractionEdge<D>],
+    levels: &[usize],
+) -> ContractionHierarchy<D> {
     let mut up_graph = vec![Vec::new(); levels.len()];
     let mut down_graph = vec![Vec::new(); levels.len()];
 
@@ -50,11 +55,11 @@ pub(super) fn build_hierarchy(edges: &[ContractionEdge], levels: &[usize]) -> Co
 ///
 /// A shortcut u -> w for u -> v -> w is necessary iff (u, v, w) is the only shortest u-v-path.
 /// This function relaxes this condition by limiting the search space size with max_hops.
-pub(super) fn generate_shortcuts(
-    graph: &WorkingGraph,
+pub(super) fn generate_shortcuts<D: Distance>(
+    graph: &WorkingGraph<D>,
     vertex: VertexId,
     max_hops: u32,
-) -> Vec<ContractionEdge> {
+) -> Vec<ContractionEdge<D>> {
     let targets = graph
         .get_out(vertex)
         .iter()
@@ -86,12 +91,12 @@ pub(super) fn generate_shortcuts(
 /// Computes shortest path distances from `source` to `targets`.
 ///
 /// Stops once every target has been settled or once only vertices with hop distance > `max_hops` remain. The returned map may contain non-target vertices.
-pub(super) fn bounded_dijkstra(
-    graph: &WorkingGraph,
+pub(super) fn bounded_dijkstra<D: Distance>(
+    graph: &WorkingGraph<D>,
     source: VertexId,
     targets: &HashSet<VertexId>,
     max_hops: u32,
-) -> HashMap<VertexId, Distance> {
+) -> HashMap<VertexId, D> {
     let mut distances = HashMap::new();
     let mut hops = HashMap::new();
     let mut queue = BinaryHeap::new();
@@ -99,9 +104,9 @@ pub(super) fn bounded_dijkstra(
 
     let mut remaining_targets = targets.len();
 
-    distances.insert(source, Distance::ZERO);
+    distances.insert(source, D::zero());
     hops.insert(source, 0);
-    queue.push((Reverse(Distance::ZERO), source));
+    queue.push((Reverse(D::zero()), source));
 
     while let Some((Reverse(distance), vertex)) = queue.pop() {
         if !expanded.insert(vertex) {

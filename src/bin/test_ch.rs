@@ -1,7 +1,9 @@
-use ch::contraction_hierachy::ContractionHierarchyPathfinder;
+use ch::contraction_hierachy::{ContractionHierarchy, ContractionHierarchyPathfinder};
 use ch::fmi::read_fmi_ch;
 use ch::fmi::read_fmi_graph;
 use ch::fmi::read_tests;
+use ch::graph::{FastGraph, WeightedEdge};
+use ch::path::PathDistance;
 use ch::pathfinder::ShortestPathFinder;
 use ch::validation::validate_path;
 use clap::Parser;
@@ -26,9 +28,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let ch = read_fmi_ch(&args.ch_in).unwrap();
-    let graph = read_fmi_graph(&args.graph_in).unwrap();
-    let tests = read_tests(&args.test_in).unwrap();
+    let ch: ContractionHierarchy<u32> = read_fmi_ch(&args.ch_in).unwrap();
+    let graph: FastGraph<WeightedEdge<u32>> = read_fmi_graph(&args.graph_in).unwrap();
+    let tests: Vec<PathDistance<u32>> = read_tests(&args.test_in).unwrap();
 
     let mut pathfinder = ContractionHierarchyPathfinder::new(&ch);
 

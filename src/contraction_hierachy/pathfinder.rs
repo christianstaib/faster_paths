@@ -17,15 +17,17 @@ enum Direction {
     DOWN,
 }
 
-pub struct ContractionHierarchyPathfinder<'a> {
-    contraction_hierarchy: &'a ContractionHierarchy,
-    queue: BinaryHeap<(Reverse<Distance>, VertexId, Direction)>,
-    up_state: HashSearchState,
-    down_state: HashSearchState,
+pub struct ContractionHierarchyPathfinder<'a, D: Distance> {
+    contraction_hierarchy: &'a ContractionHierarchy<D>,
+    queue: BinaryHeap<(Reverse<D>, VertexId, Direction)>,
+    up_state: HashSearchState<D>,
+    down_state: HashSearchState<D>,
 }
 
-impl<'a> ShortestPathFinder for ContractionHierarchyPathfinder<'a> {
-    fn path(&mut self, query: &PathQuery) -> Option<Path> {
+impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, D> {
+    type Distance = D;
+
+    fn path(&mut self, query: &PathQuery) -> Option<Path<D>> {
         let (distance, meeting_vertex) = self.search(query)?;
 
         let up_reversed_shortcut_path = self.up_state.get_reversed_path(meeting_vertex)?;
@@ -39,7 +41,7 @@ impl<'a> ShortestPathFinder for ContractionHierarchyPathfinder<'a> {
         Some(Path::new(path, distance))
     }
 
-    fn distance(&mut self, query: &PathQuery) -> Option<Distance> {
+    fn distance(&mut self, query: &PathQuery) -> Option<D> {
         let (distance, _meeting_vertex) = self.search(query)?;
 
         Some(distance)
@@ -52,11 +54,11 @@ impl<'a> ShortestPathFinder for ContractionHierarchyPathfinder<'a> {
 /// This provides a lower bound to the distance from the implicitly given start
 /// vertex of dir1 to `vertex`. If `dir1_dist_vertex` violates this lower bound,
 /// it cannot be optimal and `vertex` can be stalled in dir1.
-fn stall(
-    dir1_state: &HashSearchState,
-    dir2_graph: &FastGraph<ContractionEdge>,
+fn stall<D: Distance>(
+    dir1_state: &HashSearchState<D>,
+    dir2_graph: &FastGraph<ContractionEdge<D>>,
     vertex: VertexId,
-    dir1_dist_vertex: Distance,
+    dir1_dist_vertex: D,
 ) -> bool {
     for edge in dir2_graph.out_edges(vertex) {
         if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head) {
@@ -69,8 +71,8 @@ fn stall(
     false
 }
 
-impl<'a> ContractionHierarchyPathfinder<'a> {
-    pub fn new(contraction_hierarchy: &'a ContractionHierarchy) -> Self {
+impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
+    pub fn new(contraction_hierarchy: &'a ContractionHierarchy<D>) -> Self {
         Self {
             contraction_hierarchy,
             queue: BinaryHeap::new(),
@@ -79,21 +81,21 @@ impl<'a> ContractionHierarchyPathfinder<'a> {
         }
     }
 
-    pub fn search(&mut self, query: &PathQuery) -> Option<(Distance, VertexId)> {
+    pub fn search(&mut self, query: &PathQuery) -> Option<(D, VertexId)> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
-            .push((Reverse(Distance::ZERO), query.source(), Direction::UP));
+            .push((Reverse(D::zero()), query.source(), Direction::UP));
         self.queue
-            .push((Reverse(Distance::ZERO), query.target(), Direction::DOWN));
+            .push((Reverse(D::zero()), query.target(), Direction::DOWN));
 
         self.up_state.clear();
-        self.up_state.set_distance(query.source(), Distance::ZERO);
+        self.up_state.set_distance(query.source(), D::zero());
 
         self.down_state.clear();
-        self.down_state.set_distance(query.target(), Distance::ZERO);
+        self.down_state.set_distance(query.target(), D::zero());
 
-        let mut best_meeting: Option<(Distance, VertexId)> = None;
+        let mut best_meeting: Option<(D, VertexId)> = None;
 
         while let Some((Reverse(dir1_dist_tail), tail, dir1)) = self.queue.pop() {
             // Once all distances in the queue are larger than the meeting distance,

@@ -2,7 +2,7 @@ use crate::graph::GraphLike;
 use crate::{
     contraction_hierachy::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
     graph::FastGraph,
-    types::VertexId,
+    types::{Distance, VertexId},
 };
 
 /// Finds an edge from `tail` to `head` in `graph`.
@@ -12,11 +12,11 @@ use crate::{
 ///
 /// The outgoing edges of `tail` must be sorted by their head vertex, because the
 /// lookup is performed using binary search.
-fn find_edge(
-    graph: &FastGraph<ContractionEdge>,
+fn find_edge<D: Distance>(
+    graph: &FastGraph<ContractionEdge<D>>,
     tail: VertexId,
     head: VertexId,
-) -> Option<&ContractionEdge> {
+) -> Option<&ContractionEdge<D>> {
     let edges = graph.out_edges(tail);
 
     edges
@@ -33,8 +33,8 @@ fn find_edge(
 /// Returns the fully unpacked vertex path from source to target, or `None` if
 /// one of the shortcut paths is empty, an expected edge is missing, or a shortcut
 /// cannot be unpacked with the given contraction hierarchy.
-pub fn unpack_and_concat_shortcut_paths(
-    contraction_hierarchy: &ContractionHierarchy,
+pub fn unpack_and_concat_shortcut_paths<D: Distance>(
+    contraction_hierarchy: &ContractionHierarchy<D>,
     up_reversed_shortcut_path: &Vec<VertexId>,
     down_reversed_shortcut_path: &Vec<VertexId>,
 ) -> Option<Vec<VertexId>> {
@@ -63,9 +63,9 @@ pub fn unpack_and_concat_shortcut_paths(
 ///
 /// Shortcut edges are unpacked iteratively using both graphs. Returns `None` if
 /// an expected edge is not found or the input is empty.
-pub fn unpack_shortcuts(
-    dir1_graph: &FastGraph<ContractionEdge>,
-    dir2_graph: &FastGraph<ContractionEdge>,
+pub fn unpack_shortcuts<D: Distance>(
+    dir1_graph: &FastGraph<ContractionEdge<D>>,
+    dir2_graph: &FastGraph<ContractionEdge<D>>,
     dir1_reversed_shortcut_path: &[VertexId],
 ) -> Option<Vec<VertexId>> {
     enum Dir {

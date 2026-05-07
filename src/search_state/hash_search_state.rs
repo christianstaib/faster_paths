@@ -5,13 +5,13 @@ use crate::{
     types::{Distance, VertexId},
 };
 
-pub struct HashSearchState {
-    distance: HashMap<VertexId, Distance>,
+pub struct HashSearchState<D: Distance> {
+    distance: HashMap<VertexId, D>,
     predecessor: HashMap<VertexId, VertexId>,
     expanded: HashSet<VertexId>,
 }
 
-impl HashSearchState {
+impl<D: Distance> HashSearchState<D> {
     pub fn new() -> Self {
         Self {
             distance: HashMap::new(),
@@ -21,12 +21,12 @@ impl HashSearchState {
     }
 }
 
-impl SearchStateAccess for HashSearchState {
-    fn get_distance(&self, vertex: VertexId) -> Option<Distance> {
+impl<D: Distance> SearchStateAccess<D> for HashSearchState<D> {
+    fn get_distance(&self, vertex: VertexId) -> Option<D> {
         self.distance.get(&vertex).copied()
     }
 
-    fn set_distance(&mut self, vertex: VertexId, distance: Distance) {
+    fn set_distance(&mut self, vertex: VertexId, distance: D) {
         self.distance.insert(vertex, distance);
     }
 

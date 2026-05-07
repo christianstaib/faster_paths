@@ -1,8 +1,8 @@
 use crate::types::{Distance, VertexId};
 
-pub trait SearchStateAccess {
-    fn get_distance(&self, vertex: VertexId) -> Option<Distance>;
-    fn set_distance(&mut self, vertex: VertexId, distance: Distance);
+pub trait SearchStateAccess<D: Distance> {
+    fn get_distance(&self, vertex: VertexId) -> Option<D>;
+    fn set_distance(&mut self, vertex: VertexId, distance: D);
 
     fn get_predecessor(&self, vertex: VertexId) -> Option<VertexId>;
     fn set_predecessor(&mut self, vertex: VertexId, predecessor: VertexId);

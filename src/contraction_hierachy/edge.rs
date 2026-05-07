@@ -17,21 +17,16 @@ use crate::{
 ///   was skipped by this shortcut.
 /// - the child edge in the *other* graph is an edge `middle -> tail`.
 /// - the child edge in the *same* graph is an edge `middle -> head`.
-#[derive(Clone, Copy)]
-pub struct ContractionEdge {
+#[derive(Clone, Copy, Debug)]
+pub struct ContractionEdge<D> {
     pub tail: VertexId,
     pub head: VertexId,
-    pub weight: Distance,
+    pub weight: D,
     pub skipped: Option<VertexId>,
 }
 
-impl ContractionEdge {
-    pub fn new(
-        tail: VertexId,
-        head: VertexId,
-        weight: Distance,
-        skipped: Option<VertexId>,
-    ) -> Self {
+impl<D: Distance> ContractionEdge<D> {
+    pub fn new(tail: VertexId, head: VertexId, weight: D, skipped: Option<VertexId>) -> Self {
         Self {
             tail,
             head,
@@ -45,14 +40,16 @@ impl ContractionEdge {
     }
 }
 
-impl EdgeLike for ContractionEdge {
+impl<D: Distance> EdgeLike for ContractionEdge<D> {
+    type Distance = D;
+
     fn tail(&self) -> VertexId {
         self.tail
     }
     fn head(&self) -> VertexId {
         self.head
     }
-    fn weight(&self) -> Distance {
+    fn weight(&self) -> Self::Distance {
         self.weight
     }
 }

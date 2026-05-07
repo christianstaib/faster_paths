@@ -4,7 +4,9 @@ use crate::{
 };
 
 pub trait ShortestPathFinder {
-    fn path(&mut self, query: &PathQuery) -> Option<Path>;
+    type Distance: Distance;
 
-    fn distance(&mut self, query: &PathQuery) -> Option<Distance>;
+    fn path(&mut self, query: &PathQuery) -> Option<Path<Self::Distance>>;
+
+    fn distance(&mut self, query: &PathQuery) -> Option<Self::Distance>;
 }

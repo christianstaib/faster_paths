@@ -3,10 +3,13 @@ use crate::{
     path::{Path, PathDistance},
     types::{Distance, VertexId},
 };
+use num_traits::Zero;
 
 /// Validates that `actual` matches the distance provided by `test`.
-#[allow(dead_code)]
-pub fn validate_distance(test: &PathDistance, actual: &Option<Distance>) -> Result<(), String> {
+pub fn validate_distance<D: Distance>(
+    test: &PathDistance<D>,
+    actual: &Option<D>,
+) -> Result<(), String> {
     if &test.distance() == actual {
         return Ok(());
     }
@@ -21,8 +24,8 @@ pub fn validate_distance(test: &PathDistance, actual: &Option<Distance>) -> Resu
 
 pub fn validate_path<G: GraphLike>(
     graph: &G,
-    test: &PathDistance,
-    path: &Option<Path>,
+    test: &PathDistance<<G::Edge as EdgeLike>::Distance>,
+    path: &Option<Path<<G::Edge as EdgeLike>::Distance>>,
 ) -> Result<(), String> {
     match (path, test.distance()) {
         (None, None) => Ok(()),
@@ -46,9 +49,13 @@ pub fn validate_path<G: GraphLike>(
 }
 
 /// Sum up the edge weights of `path` in `graph`. If an edge is missing, return it as `Err`.
-fn sum_edge_weights<G: GraphLike>(graph: &G, path: &[VertexId]) -> Result<Distance, Edge> {
-    path.windows(2)
-        .try_fold(Distance::ZERO, |summed_distance, potential_edge| {
+fn sum_edge_weights<G: GraphLike>(
+    graph: &G,
+    path: &[VertexId],
+) -> Result<<G::Edge as EdgeLike>::Distance, Edge> {
+    path.windows(2).try_fold(
+        <G::Edge as EdgeLike>::Distance::zero(),
+        |summed_distance, potential_edge| {
             let tail = potential_edge[0];
             let head = potential_edge[1];
 
@@ -61,14 +68,15 @@ fn sum_edge_weights<G: GraphLike>(graph: &G, path: &[VertexId]) -> Result<Distan
                 .ok_or(Edge { tail, head })?;
 
             Ok(summed_distance + weight)
-        })
+        },
+    )
 }
 
 fn validate_found_path<G: GraphLike>(
     graph: &G,
-    test: &PathDistance,
-    path: &Path,
-    expected_distance: Distance,
+    test: &PathDistance<<G::Edge as EdgeLike>::Distance>,
+    path: &Path<<G::Edge as EdgeLike>::Distance>,
+    expected_distance: <G::Edge as EdgeLike>::Distance,
 ) -> Result<(), String> {
     if path.distance() != expected_distance {
         return Err(format!(

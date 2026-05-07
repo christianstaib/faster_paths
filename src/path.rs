@@ -24,13 +24,13 @@ impl PathQuery {
 /// Stores a PathQuery as well as the expected shotests path distance, which is given as an
 /// optional, as there might be no path between source and target.
 #[derive(Clone, Copy, Debug)]
-pub struct PathDistance {
+pub struct PathDistance<D: Distance> {
     query: PathQuery,
-    distance: Option<Distance>,
+    distance: Option<D>,
 }
 
-impl PathDistance {
-    pub fn new(query: PathQuery, distance: Option<Distance>) -> Self {
+impl<D: Distance> PathDistance<D> {
+    pub fn new(query: PathQuery, distance: Option<D>) -> Self {
         Self { query, distance }
     }
 
@@ -38,7 +38,7 @@ impl PathDistance {
         &self.query
     }
 
-    pub fn distance(&self) -> Option<Distance> {
+    pub fn distance(&self) -> Option<D> {
         self.distance
     }
 }
@@ -47,13 +47,13 @@ impl PathDistance {
 /// source vertex of the path, the last one the target vertex. As this represents an existing path,
 /// vertices shall be non empty.
 #[derive(Clone, Debug)]
-pub struct Path {
+pub struct Path<D: Distance> {
     vertices: Vec<VertexId>,
-    distance: Distance,
+    distance: D,
 }
 
-impl Path {
-    pub fn new(vertices: Vec<VertexId>, distance: Distance) -> Self {
+impl<D: Distance> Path<D> {
+    pub fn new(vertices: Vec<VertexId>, distance: D) -> Self {
         Self { vertices, distance }
     }
 
@@ -61,7 +61,7 @@ impl Path {
         &self.vertices
     }
 
-    pub fn distance(&self) -> Distance {
+    pub fn distance(&self) -> D {
         self.distance
     }
 }

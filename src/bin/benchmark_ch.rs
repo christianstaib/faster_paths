@@ -1,6 +1,7 @@
 use ch::contraction_hierachy::ContractionHierarchyPathfinder;
 use ch::fmi::read_fmi_ch;
 use ch::fmi::read_tests;
+use ch::path::PathDistance;
 use clap::Parser;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -17,15 +18,17 @@ struct Args {
     test_in: PathBuf,
 }
 
+type DistanceType = u32;
+
 fn main() {
     let args = Args::parse();
 
     // Parse the ChGraph from the file
-    let graph = read_fmi_ch(&args.graph_in).unwrap();
+    let graph = read_fmi_ch::<DistanceType>(&args.graph_in).unwrap();
 
     let mut pathfiner = ContractionHierarchyPathfinder::new(&graph);
 
-    let tests = read_tests(&args.test_in).unwrap();
+    let tests: Vec<PathDistance<DistanceType>> = read_tests(&args.test_in).unwrap();
 
     let start = Instant::now();
     let correct = tests.iter().all(|test| {

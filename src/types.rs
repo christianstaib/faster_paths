@@ -1,4 +1,9 @@
-use std::ops::Add;
+use std::{
+    fmt::Debug,
+    ops::{Add, AddAssign},
+};
+
+use num_traits::Zero;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct VertexId(u32);
@@ -13,25 +18,6 @@ impl VertexId {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct Distance(u32);
+pub trait Distance: Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug {}
 
-impl Add for Distance {
-    type Output = Distance;
-
-    fn add(self, rhs: Distance) -> Self::Output {
-        Distance(self.0 + rhs.0)
-    }
-}
-
-impl Distance {
-    pub const ZERO: Self = Self(0);
-
-    pub fn new(distance: u32) -> Self {
-        Self(distance)
-    }
-
-    pub fn as_u32(self) -> u32 {
-        self.0
-    }
-}
+impl<D> Distance for D where D: Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug {}

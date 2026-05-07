@@ -9,21 +9,23 @@ pub struct Edge {
     pub head: VertexId,
 }
 
-#[derive(Clone, Copy)]
-pub struct WeightedEdge {
+#[derive(Clone, Copy, Debug)]
+pub struct WeightedEdge<D> {
     pub tail: VertexId,
     pub head: VertexId,
-    pub weight: Distance,
+    pub weight: D,
 }
 
-impl EdgeLike for WeightedEdge {
+impl<D: Distance> EdgeLike for WeightedEdge<D> {
+    type Distance = D;
+
     fn tail(&self) -> VertexId {
         self.tail
     }
     fn head(&self) -> VertexId {
         self.head
     }
-    fn weight(&self) -> Distance {
+    fn weight(&self) -> Self::Distance {
         self.weight
     }
 }
