@@ -17,9 +17,24 @@ enum Direction {
     DOWN,
 }
 
+#[derive(Eq, PartialEq)]
+struct Entry<D>(Reverse<D>, VertexId, Direction);
+
+impl<D: Ord> Ord for Entry<D> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
+impl<D: Ord> PartialOrd for Entry<D> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 pub struct ContractionHierarchyPathfinder<'a, D: Distance> {
     contraction_hierarchy: &'a ContractionHierarchy<D>,
-    queue: BinaryHeap<(Reverse<D>, VertexId, Direction)>,
+    queue: BinaryHeap<Entry<D>>,
     up_state: HashSearchState<D>,
     down_state: HashSearchState<D>,
 }
@@ -85,9 +100,9 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
-            .push((Reverse(D::zero()), query.source, Direction::UP));
+            .push(Entry(Reverse(D::zero()), query.source, Direction::UP));
         self.queue
-            .push((Reverse(D::zero()), query.target, Direction::DOWN));
+            .push(Entry(Reverse(D::zero()), query.target, Direction::DOWN));
 
         self.up_state.clear();
         self.up_state.set_distance(query.source, D::zero());
@@ -97,7 +112,7 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
 
         let mut best_meeting: Option<(D, VertexId)> = None;
 
-        while let Some((Reverse(dir1_dist_tail), tail, dir1)) = self.queue.pop() {
+        while let Some(Entry(Reverse(dir1_dist_tail), tail, dir1)) = self.queue.pop() {
             // Once all distances in the queue are larger than the meeting distance,
             // no shorter path can be found.
             if best_meeting.is_some_and(|(distance, _vertex)| dir1_dist_tail >= distance) {
@@ -148,7 +163,8 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
 
                 dir1_state.set_distance(edge.head, new_distance);
                 dir1_state.set_predecessor(edge.head, tail);
-                self.queue.push((Reverse(new_distance), edge.head, dir1));
+                self.queue
+                    .push(Entry(Reverse(new_distance), edge.head, dir1));
             }
         }
 

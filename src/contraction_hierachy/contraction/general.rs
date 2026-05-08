@@ -1,5 +1,6 @@
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::BinaryHeap;
 
 use crate::contraction_hierachy::ContractionEdge;
 use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
@@ -64,7 +65,7 @@ pub(super) fn generate_shortcuts<D: Distance>(
         .get_out(vertex)
         .iter()
         .map(|edge| edge.head)
-        .collect::<HashSet<_>>();
+        .collect::<FxHashSet<_>>();
 
     graph
         .get_in(vertex)
@@ -99,13 +100,13 @@ pub(super) fn generate_shortcuts<D: Distance>(
 pub(super) fn bounded_dijkstra<D: Distance>(
     graph: &WorkingGraph<D>,
     source: VertexId,
-    targets: &HashSet<VertexId>,
+    targets: &FxHashSet<VertexId>,
     max_hops: u32,
-) -> HashMap<VertexId, D> {
-    let mut distances = HashMap::new();
-    let mut hops = HashMap::new();
+) -> FxHashMap<VertexId, D> {
+    let mut distances = FxHashMap::default();
+    let mut hops = FxHashMap::default();
     let mut queue = BinaryHeap::new();
-    let mut expanded = HashSet::new();
+    let mut expanded = FxHashSet::default();
 
     let mut remaining_targets = targets.len();
 

@@ -11,7 +11,7 @@ use crate::{
 };
 use indicatif::{ParallelProgressIterator, ProgressBar};
 use rayon::prelude::*;
-use std::{cmp::Reverse, collections::BinaryHeap};
+use std::{cmp::Reverse, collections::BinaryHeap, time::Instant};
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
@@ -24,7 +24,11 @@ where
 {
     let working_graph = build_working_graph(graph);
 
-    contract_working_graph_sequential(working_graph)
+    let start = Instant::now();
+    let contraction_hierarchy = contract_working_graph_sequential(working_graph);
+    println!("Contraction took {:?}", start.elapsed());
+
+    contraction_hierarchy
 }
 
 fn contract_working_graph_sequential<D: Distance + Sync>(

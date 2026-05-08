@@ -3,7 +3,6 @@ use ch::fmi::read_fmi_ch;
 use ch::fmi::read_tests;
 use ch::pathfinder::ShortestPathFinder;
 use clap::{Parser, ValueEnum};
-use ordered_float::OrderedFloat;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -29,7 +28,7 @@ struct Args {
     mode: BenchmarkMode,
 }
 
-type DistanceType = OrderedFloat<f32>;
+type DistanceType = u32; //OrderedFloat<f32>;
 
 fn main() {
     let args = Args::parse();

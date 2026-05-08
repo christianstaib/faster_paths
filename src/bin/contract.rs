@@ -3,7 +3,6 @@ use ch::{
     fmi::{read_fmi_graph, write_fmi_ch},
 };
 use clap::Parser;
-use ordered_float::OrderedFloat;
 use std::{fs::File, io::BufWriter, path::PathBuf};
 
 #[derive(Parser, Debug)]
@@ -18,7 +17,7 @@ struct Args {
     graph_out: PathBuf,
 }
 
-type DistanceType = OrderedFloat<f32>;
+type DistanceType = u32;
 
 fn main() {
     let args = Args::parse();

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     search_state::search_state_access::SearchStateAccess,
@@ -6,17 +6,17 @@ use crate::{
 };
 
 pub struct HashSearchState<D: Distance> {
-    distance: HashMap<VertexId, D>,
-    predecessor: HashMap<VertexId, VertexId>,
-    expanded: HashSet<VertexId>,
+    distance: FxHashMap<VertexId, D>,
+    predecessor: FxHashMap<VertexId, VertexId>,
+    expanded: FxHashSet<VertexId>,
 }
 
 impl<D: Distance> HashSearchState<D> {
     pub fn new() -> Self {
         Self {
-            distance: HashMap::new(),
-            predecessor: HashMap::new(),
-            expanded: HashSet::new(),
+            distance: FxHashMap::default(),
+            predecessor: FxHashMap::default(),
+            expanded: FxHashSet::default(),
         }
     }
 }
@@ -47,8 +47,8 @@ impl<D: Distance> SearchStateAccess<D> for HashSearchState<D> {
     }
 
     fn clear(&mut self) {
-        self.distance = HashMap::new();
-        self.predecessor = HashMap::new();
-        self.expanded = HashSet::new();
+        self.distance = FxHashMap::default();
+        self.predecessor = FxHashMap::default();
+        self.expanded = FxHashSet::default();
     }
 }
