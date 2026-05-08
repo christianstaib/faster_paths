@@ -5,6 +5,7 @@ use ch::fmi::read_tests;
 use ch::pathfinder::ShortestPathFinder;
 use ch::validation::validate_path;
 use clap::Parser;
+use indicatif::ProgressIterator;
 use ordered_float::OrderedFloat;
 use std::path::PathBuf;
 
@@ -38,6 +39,7 @@ fn main() {
 
     let num_failures = tests
         .iter()
+        .progress()
         .filter_map(|test| {
             let path = pathfinder.path(test.query());
             validate_path(&graph, test, &path).err()

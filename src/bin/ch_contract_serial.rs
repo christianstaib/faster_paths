@@ -10,21 +10,21 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 struct Args {
     /// Input graph in .fmi format
     #[arg(short, long)]
-    graph_in: PathBuf,
+    graph: PathBuf,
 
     /// Output CH graph in .fmi format
     #[arg(short = 'o', long)]
-    graph_out: PathBuf,
+    contraction_hierarchy: PathBuf,
 }
 
 type DistanceType = u32;
 
 fn main() {
     let args = Args::parse();
-    let graph = read_fmi_graph::<DistanceType>(&args.graph_in).unwrap();
+    let graph = read_fmi_graph::<DistanceType>(&args.graph).unwrap();
 
-    let ch = contract_graph_sequential(&graph);
-    let output = File::create(args.graph_out).unwrap();
+    let contraction_hierarchy = contract_graph_sequential(&graph);
+    let output = File::create(args.contraction_hierarchy).unwrap();
 
-    write_fmi_ch(BufWriter::new(output), &ch).unwrap();
+    write_fmi_ch(BufWriter::new(output), &contraction_hierarchy).unwrap();
 }
