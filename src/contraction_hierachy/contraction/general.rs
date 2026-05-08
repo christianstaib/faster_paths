@@ -29,13 +29,13 @@ pub(super) fn build_working_graph<G: GraphLike>(
 /// Given a list of `edges` which contains both up and down edges, separate them and build a
 /// contraction hierarchy.
 pub(super) fn build_hierarchy<D: Distance>(
-    edges: &[ContractionEdge<D>],
+    contracted_edges: &Vec<ContractionEdge<D>>,
     levels: &[usize],
 ) -> ContractionHierarchy<D> {
     let mut up_graph = vec![Vec::new(); levels.len()];
     let mut down_graph = vec![Vec::new(); levels.len()];
 
-    for &edge in edges {
+    for &edge in contracted_edges {
         if levels[edge.tail.as_usize()] < levels[edge.head.as_usize()] {
             up_graph[edge.tail.as_usize()].push(edge);
         } else {
@@ -70,7 +70,9 @@ pub(super) fn generate_shortcuts<D: Distance>(
     graph
         .get_in(vertex)
         .iter()
-        .flat_map(|&(tail, tail_weight)| {
+        .flat_map(|incoming_edge| {
+            let tail = incoming_edge.tail;
+            let tail_weight = incoming_edge.weight;
             let distances = bounded_dijkstra(graph, tail, &targets, max_hops);
 
             graph.get_out(vertex).iter().filter_map(move |edge| {

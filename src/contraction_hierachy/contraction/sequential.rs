@@ -60,7 +60,7 @@ fn contract_working_graph_sequential<D: Distance + Sync>(
     }
     progress.finish();
 
-    build_hierarchy(graph.contracted_edges(), &levels)
+    build_hierarchy(&graph.get_edges(), &levels)
 }
 
 /// Initializes the binary heap used during the sequential contraction in parallel.
