@@ -25,7 +25,9 @@ pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabe
     for vertices in top_down_order {
         // Build labels in parallel
         let labels = vertices
-            .par_iter()
+            .iter()
+            .inspect(|_| bar.inc(1))
+            .par_bridge()
             .map(|&vertex| {
                 let mut up_label = merge_label(ch.up_graph(), &up_labels, vertex);
                 up_label = prune_label(&down_labels, &up_label);
@@ -47,7 +49,7 @@ pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabe
                 down_labels[vertex.as_usize()] = down_label;
             });
 
-        bar.inc(vertices.len() as u64);
+        // bar.inc(vertices.len() as u64);
     }
     bar.finish();
 

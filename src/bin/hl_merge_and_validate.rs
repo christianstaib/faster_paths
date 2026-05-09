@@ -8,7 +8,7 @@ use ch::{
 };
 use clap::Parser;
 use indicatif::ProgressIterator;
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Instant};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -30,7 +30,9 @@ fn main() {
     let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
     let tests = read_tests::<DistanceType>(&args.tests).unwrap();
 
+    let start = Instant::now();
     let hub_labeling = merge(&contraction_hierarchy);
+    println!("Merging took {:?}", start.elapsed());
 
     let avg_label_size = hub_labeling.up_hub_labeling.num_flat() as f32
         / hub_labeling.up_hub_labeling.num_nested() as f32;
