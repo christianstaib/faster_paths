@@ -7,7 +7,6 @@ use ch::{
 };
 use clap::Parser;
 use indicatif::ProgressIterator;
-use ordered_float::OrderedFloat;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -22,7 +21,7 @@ struct Args {
     tests: PathBuf,
 }
 
-type DistanceType = OrderedFloat<f32>;
+type DistanceType = u32;
 
 fn main() {
     let args = Args::parse();
@@ -31,6 +30,11 @@ fn main() {
     let tests = read_tests::<DistanceType>(&args.tests).unwrap();
 
     let hub_labeling = merge(&contraction_hierarchy);
+
+    let avg_label_size = hub_labeling.up_hub_labeling.num_flat() as f32
+        / hub_labeling.up_hub_labeling.num_nested() as f32;
+    println!("Average label size is {}", avg_label_size);
+
     let num_failures = validate_tests(&hub_labeling, &tests);
 
     if num_failures > 0 {
