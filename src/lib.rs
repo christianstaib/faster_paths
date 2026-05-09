@@ -6,6 +6,7 @@ pub mod contraction_hierachy;
 pub mod flattened_nested;
 pub mod fmi;
 pub mod graph;
+pub mod hub_labeling;
 pub mod path;
 pub mod pathfinder;
 pub mod search_state;

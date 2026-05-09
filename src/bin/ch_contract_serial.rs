@@ -13,7 +13,7 @@ struct Args {
     graph: PathBuf,
 
     /// Output CH graph in .fmi format
-    #[arg(short = 'o', long)]
+    #[arg(short, long)]
     contraction_hierarchy: PathBuf,
 }
 

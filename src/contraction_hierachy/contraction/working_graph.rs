@@ -7,6 +7,7 @@ use crate::{
 pub(super) struct WorkingGraph<D: Distance> {
     outgoing: Vec<Vec<ContractionEdge<D>>>,
     incoming: Vec<Vec<WeightedEdge<D>>>,
+    contracted_edges: Vec<ContractionEdge<D>>,
 }
 
 impl<D: Distance> WorkingGraph<D> {
@@ -19,6 +20,7 @@ impl<D: Distance> WorkingGraph<D> {
         let mut working_graph = Self {
             outgoing: vec![Vec::new(); graph.num_vertices()],
             incoming: vec![Vec::new(); graph.num_vertices()],
+            contracted_edges: Vec::new(),
         };
 
         for edge in graph.edges() {
@@ -41,11 +43,12 @@ impl<D: Distance> WorkingGraph<D> {
         return &self.outgoing[vertex.as_usize()];
     }
 
+    /// Returns reverse incoming adjacency, stored as `vertex -> predecessor`.
     pub(super) fn get_in(&self, vertex: VertexId) -> &[WeightedEdge<D>] {
         return &self.incoming[vertex.as_usize()];
     }
 
-    /// Inserts an edge into the graph and sets it as an in-neighbor for its head.
+    /// Inserts an edge into the graph and records its reverse adjacency for the head.
     pub(super) fn add_edge(&mut self, edge: ContractionEdge<D>) {
         match self.outgoing[edge.tail.as_usize()]
             .binary_search_by(|old_edge| old_edge.head.cmp(&edge.head))
@@ -57,7 +60,7 @@ impl<D: Distance> WorkingGraph<D> {
                 }
 
                 let in_idx = self.incoming[edge.head.as_usize()]
-                    .binary_search_by(|incoming_edge| incoming_edge.tail.cmp(&edge.tail))
+                    .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&edge.tail))
                     .expect("incoming edge missing although outgoing edge exists");
 
                 self.incoming[edge.head.as_usize()][in_idx].weight = edge.weight;
@@ -66,14 +69,14 @@ impl<D: Distance> WorkingGraph<D> {
 
             Err(out_idx) => {
                 let in_idx = self.incoming[edge.head.as_usize()]
-                    .binary_search_by(|incoming_edge| incoming_edge.tail.cmp(&edge.tail))
+                    .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&edge.tail))
                     .expect_err("incoming edge already exists although outgoing edge is missing");
 
                 self.incoming[edge.head.as_usize()].insert(
                     in_idx,
                     WeightedEdge {
-                        tail: edge.tail,
-                        head: edge.head,
+                        tail: edge.head,
+                        head: edge.tail,
                         weight: edge.weight,
                     },
                 );
@@ -82,23 +85,22 @@ impl<D: Distance> WorkingGraph<D> {
         }
     }
 
-    /// Removes all out edges (_ -> v) and all in edges (v <- _), e.g. makes it unreachable from
-    /// other vertices.
+    /// Removes all active incident edges of `vertex`.
     pub(super) fn contract_vertex(&mut self, vertex: VertexId) {
         let vertex_index = vertex.as_usize();
 
-        for edge in &self.outgoing[vertex_index] {
+        for edge in std::mem::take(&mut self.outgoing[vertex_index]) {
             let index = self.incoming[edge.head.as_usize()]
-                .binary_search_by(|incoming_edge| incoming_edge.tail.cmp(&vertex))
+                .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&vertex))
                 .expect("incoming edge missing although outgoing edge exists");
 
             self.incoming[edge.head.as_usize()].remove(index);
+            self.contracted_edges.push(edge);
         }
 
-        let mut incoming_edges = Vec::new();
         for incoming_edge in std::mem::take(&mut self.incoming[vertex_index]) {
             let edge = {
-                let outgoing = &mut self.outgoing[incoming_edge.tail.as_usize()];
+                let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
 
                 let index = outgoing
                     .binary_search_by(|edge| edge.head.cmp(&vertex))
@@ -107,14 +109,15 @@ impl<D: Distance> WorkingGraph<D> {
                 outgoing.remove(index)
             };
 
-            incoming_edges.push(edge);
+            self.contracted_edges.push(edge);
         }
-
-        self.outgoing[vertex_index].extend(incoming_edges);
-        self.outgoing[vertex_index].shrink_to_fit();
     }
 
     pub(super) fn get_edges(&self) -> Vec<ContractionEdge<D>> {
-        self.outgoing.iter().cloned().flatten().collect()
+        self.contracted_edges
+            .iter()
+            .copied()
+            .chain(self.outgoing.iter().flatten().copied())
+            .collect()
     }
 }

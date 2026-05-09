@@ -25,7 +25,7 @@ struct Args {
     tests: PathBuf,
 }
 
-type DistanceType = OrderedFloat<f32>;
+type DistanceType = u32;
 
 fn main() {
     let args = Args::parse();

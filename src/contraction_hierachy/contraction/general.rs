@@ -71,7 +71,7 @@ pub(super) fn generate_shortcuts<D: Distance>(
         .get_in(vertex)
         .iter()
         .flat_map(|incoming_edge| {
-            let tail = incoming_edge.tail;
+            let tail = incoming_edge.head;
             let tail_weight = incoming_edge.weight;
             let distances = bounded_dijkstra(graph, tail, &targets, max_hops);
 

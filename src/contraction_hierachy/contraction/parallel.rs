@@ -131,8 +131,8 @@ fn select_independent_candidates<D: Distance>(
         }
 
         for edge in graph.get_in(*vertex) {
-            if is_uncontracted(edge.tail, levels) {
-                blocked[edge.tail.as_usize()] = true;
+            if is_uncontracted(edge.head, levels) {
+                blocked[edge.head.as_usize()] = true;
             }
         }
     }

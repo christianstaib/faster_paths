@@ -1,4 +1,8 @@
-use crate::{contraction_hierachy::edge::ContractionEdge, graph::FastGraph, types::Distance};
+use crate::{
+    contraction_hierachy::edge::ContractionEdge,
+    graph::{FastGraph, GraphLike},
+    types::Distance,
+};
 
 pub struct ContractionHierarchy<D: Distance> {
     up_graph: FastGraph<ContractionEdge<D>>,
@@ -22,5 +26,9 @@ impl<D: Distance> ContractionHierarchy<D> {
 
     pub fn down_graph(&self) -> &FastGraph<ContractionEdge<D>> {
         &self.down_graph
+    }
+
+    pub fn num_vertices(&self) -> usize {
+        std::cmp::max(self.up_graph.num_vertices(), self.down_graph.num_vertices())
     }
 }
