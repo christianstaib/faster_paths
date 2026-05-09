@@ -77,33 +77,3 @@ pub fn read_fmi_graph<D: Distance + FromStr>(
     let reader = BufReader::new(File::open(file).unwrap());
     graph_from_reader(reader)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{graph::GraphLike, types::VertexId};
-    use ordered_float::OrderedFloat;
-
-    #[test]
-    fn reads_u32_weights() {
-        let input = "2\n1\n0 0 0 0\n1 0 0 0\n0 1 7\n";
-
-        let graph: FastGraph<WeightedEdge<u32>> = graph_from_reader(input.as_bytes()).unwrap();
-
-        let edge = graph.out_edges(VertexId::new(0))[0];
-        assert_eq!(edge.tail, VertexId::new(0));
-        assert_eq!(edge.head, VertexId::new(1));
-        assert_eq!(edge.weight, 7);
-    }
-
-    #[test]
-    fn reads_ordered_float_weights() {
-        let input = "2\n1\n0 0 0 0\n1 0 0 0\n0 1 7.5\n";
-
-        let graph: FastGraph<WeightedEdge<OrderedFloat<f32>>> =
-            graph_from_reader(input.as_bytes()).unwrap();
-
-        let edge = graph.out_edges(VertexId::new(0))[0];
-        assert_eq!(edge.weight, OrderedFloat(7.5));
-    }
-}

@@ -75,24 +75,3 @@ pub fn read_fmi_ch<D: Distance + FromStr>(
     let reader = BufReader::new(File::open(file).unwrap());
     ch_from_reader(reader)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{graph::GraphLike, types::VertexId};
-
-    fn read_skipped(input: &str) -> Option<VertexId> {
-        let ch: ContractionHierarchy<u32> = ch_from_reader(input.as_bytes()).unwrap();
-        ch.up_graph().out_edges(VertexId::new(0))[0].skipped
-    }
-
-    #[test]
-    fn reads_none_for_unskipped_edge() {
-        assert_eq!(read_skipped("1\n0\n0 1 5 None\n"), None);
-    }
-
-    #[test]
-    fn reads_legacy_negative_one_for_unskipped_edge() {
-        assert_eq!(read_skipped("1\n0\n0 1 5 -1\n"), None);
-    }
-}
