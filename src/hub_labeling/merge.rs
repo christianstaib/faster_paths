@@ -64,8 +64,8 @@ fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>
         .map(|vertex| {
             vec![LabelEntry {
                 hub: VertexId::new(vertex as u32),
-                weight: D::zero(),
-                predecessor: None,
+                distance: D::zero(),
+                predecessor_hub: None,
             }]
         })
         .collect()
@@ -81,8 +81,8 @@ fn merge_label<D: Distance>(
         vertex,
         LabelEntry {
             hub: vertex,
-            weight: D::zero(),
-            predecessor: None,
+            distance: D::zero(),
+            predecessor_hub: None,
         },
     );
 
@@ -90,11 +90,11 @@ fn merge_label<D: Distance>(
         for entry in dir1_labels[edge.head.as_usize()].iter() {
             let new_entry = LabelEntry {
                 hub: entry.hub,
-                weight: entry.weight + edge.weight,
-                predecessor: Some(entry.predecessor.unwrap_or(vertex)),
+                distance: entry.distance + edge.weight,
+                predecessor_hub: Some(entry.predecessor_hub.unwrap_or(vertex)),
             };
             if let Some(old_entry) = new_label.get_mut(&entry.hub) {
-                if new_entry.weight < old_entry.weight {
+                if new_entry.distance < old_entry.distance {
                     *old_entry = new_entry;
                 }
             } else {
@@ -108,6 +108,8 @@ fn merge_label<D: Distance>(
     new_label
 }
 
+/// Returns a pruned `dir1_label` by removing all entries whose distance is not equal to the true
+/// distance, as they can never contribute to a true shortest-distance query.
 fn prune_label<D: Distance>(
     dir2_labels: &[Vec<LabelEntry<D>>],
     dir1_label: &[LabelEntry<D>],
@@ -115,12 +117,11 @@ fn prune_label<D: Distance>(
     dir1_label
         .iter()
         .filter(|entry| {
-            let true_distance =
-                min_distance_intersection(&dir1_label, &dir2_labels[entry.hub.as_usize()])
-                    .unwrap()
-                    .0;
+            let dir2_label = &dir2_labels[entry.hub.as_usize()];
+            let (true_distance, _dir1_index, _dir2_index) =
+                min_distance_intersection(&dir1_label, dir2_label).unwrap();
 
-            entry.weight == true_distance
+            entry.distance == true_distance
         })
         .copied()
         .collect()

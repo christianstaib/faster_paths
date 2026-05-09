@@ -5,8 +5,8 @@ use crate::types::{Distance, VertexId};
 #[derive(Clone, Copy, Debug)]
 pub struct LabelEntry<D> {
     pub hub: VertexId,
-    pub weight: D,
-    pub predecessor: Option<VertexId>,
+    pub distance: D,
+    pub predecessor_hub: Option<VertexId>,
 }
 
 pub fn min_distance_intersection<D: Distance>(
@@ -22,7 +22,7 @@ pub fn min_distance_intersection<D: Distance>(
             Ordering::Less => dir1_index += 1,
             Ordering::Greater => dir2_index += 1,
             Ordering::Equal => {
-                let distance = dir1_label[dir1_index].weight + dir2_label[dir2_index].weight;
+                let distance = dir1_label[dir1_index].distance + dir2_label[dir2_index].distance;
 
                 if best.is_none_or(|(best_distance, _, _)| distance < best_distance) {
                     best = Some((distance, dir1_index, dir2_index));
@@ -37,17 +37,16 @@ pub fn min_distance_intersection<D: Distance>(
     best
 }
 
-pub fn path<D: Distance>(label: &[LabelEntry<D>], index: usize) -> Option<Vec<VertexId>> {
-    let mut entry = label.get(index)?;
-    let mut path = vec![entry.hub];
+pub fn path_to_root<D: Distance>(label: &[LabelEntry<D>], index: usize) -> Option<Vec<VertexId>> {
+    let mut current_entry = label.get(index)?;
+    let mut path = vec![current_entry.hub];
 
-    while let Some(predecessor) = entry.predecessor {
+    while let Some(predecessor) = current_entry.predecessor_hub {
         let predecessor_index = label
             .binary_search_by_key(&predecessor, |entry| entry.hub)
             .ok()?;
-
-        entry = &label[predecessor_index];
-        path.push(entry.hub);
+        current_entry = &label[predecessor_index];
+        path.push(current_entry.hub);
     }
 
     Some(path)
