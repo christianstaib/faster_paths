@@ -50,7 +50,7 @@ impl<D: Distance> WorkingGraph<D> {
 
     /// Inserts an edge into the graph and records its reverse adjacency for the head.
     pub(super) fn add_edge(&mut self, edge: ContractionEdge<D>) {
-        /// While self loops are not forbidden for contraction, they make it impossible to unpack a shortcut path containing them, as they create a cycle.
+        // While self loops are not forbidden for contraction, they make it impossible to unpack a shortcut path containing them, as they create a cycle.
         if edge.tail == edge.head {
             return;
         }

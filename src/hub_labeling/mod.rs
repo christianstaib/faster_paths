@@ -1,9 +1,6 @@
 pub mod entry;
 
-use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, VecDeque},
-};
+use std::collections::VecDeque;
 
 use crate::{
     contraction_hierachy::{ContractionEdge, ContractionHierarchy},
@@ -14,7 +11,6 @@ use crate::{
 
 use entry::{LabelEntry, min_distance_intersection};
 use indicatif::ProgressBar;
-use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 pub struct HubLabeling<D: Distance> {

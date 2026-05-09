@@ -6,7 +6,6 @@ use ch::pathfinder::ShortestPathFinder;
 use ch::validation::validate_path;
 use clap::Parser;
 use indicatif::ProgressIterator;
-use ordered_float::OrderedFloat;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
