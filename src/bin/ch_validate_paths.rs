@@ -11,15 +11,15 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Infile in .fmi format
+    /// Contraction hierarchy file
     #[arg(short, long)]
     contraction_hierarchy: PathBuf,
 
-    /// CH graph in .fmi format
+    /// Input graph file
     #[arg(short, long)]
     graph: PathBuf,
 
-    /// Infile in .fmi format
+    /// Test file
     #[arg(short, long)]
     tests: PathBuf,
 }

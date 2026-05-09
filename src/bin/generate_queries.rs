@@ -12,11 +12,11 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input graph in .fmi format
+    /// Input graph file
     #[arg(short, long)]
     graph: PathBuf,
 
-    /// Number of queries to generate
+    /// Query count
     #[arg(short, long)]
     n: usize,
 

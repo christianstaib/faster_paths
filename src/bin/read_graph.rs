@@ -9,16 +9,16 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Infile in .fmi format
+    /// Input graph file
     #[arg(short, long)]
-    graph_in: PathBuf,
+    graph: PathBuf,
 }
 
 fn main() {
     let args = Args::parse();
 
     // Parse the ChGraph from the file
-    let graph: FastGraph<WeightedEdge<u32>> = read_fmi_graph(&args.graph_in).unwrap();
+    let graph: FastGraph<WeightedEdge<u32>> = read_fmi_graph(&args.graph).unwrap();
 
     for edge in graph.out_edges(VertexId::new(5)) {
         println!("{:?} -> {:?} = {:?}", edge.tail, edge.head, edge.weight);

@@ -13,11 +13,11 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Contraction hierarchy in .fmi format
+    /// Contraction hierarchy file
     #[arg(short, long)]
     contraction_hierarchy: PathBuf,
 
-    /// Test queries with expected distances
+    /// Test file
     #[arg(short, long)]
     tests: PathBuf,
 }

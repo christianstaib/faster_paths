@@ -8,11 +8,11 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input graph in .fmi format
+    /// Input graph file
     #[arg(short, long)]
     graph: PathBuf,
 
-    /// Output CH graph in .fmi format
+    /// Output CH file
     #[arg(short, long)]
     contraction_hierarchy: PathBuf,
 }

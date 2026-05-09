@@ -15,15 +15,15 @@ enum BenchmarkMode {
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Infile in .fmi format
+    /// Contraction hierarchy file
     #[arg(short, long)]
     contraction_hierarchy: PathBuf,
 
-    /// Infile in .fmi format
+    /// Test file
     #[arg(short, long)]
     tests: PathBuf,
 
-    /// What to benchmark: distance or path
+    /// Benchmark mode
     #[arg(short, long, value_enum, default_value = "distance")]
     mode: BenchmarkMode,
 }

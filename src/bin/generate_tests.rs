@@ -16,15 +16,15 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input graph in .fmi format
+    /// Input graph file
     #[arg(short, long)]
-    graph_in: PathBuf,
+    graph: PathBuf,
 
-    /// Output test file in the format consumed by test_ch.rs
+    /// Output tests file
     #[arg(short, long)]
-    test_out: PathBuf,
+    tests: PathBuf,
 
-    /// Number of test queries to generate
+    /// Test count
     #[arg(short = 'n', long)]
     num_tests: usize,
 }
@@ -62,10 +62,10 @@ type DistanceType = OrderedFloat<f32>;
 fn main() {
     let args = Args::parse();
 
-    let graph = read_fmi_graph::<DistanceType>(&args.graph_in).unwrap();
+    let graph = read_fmi_graph::<DistanceType>(&args.graph).unwrap();
 
     let tests = generate_tests(&graph, args.num_tests);
-    write_tests(&args.test_out, &tests).unwrap();
+    write_tests(&args.tests, &tests).unwrap();
 
-    println!("Wrote {} tests to {:?}.", tests.len(), args.test_out);
+    println!("Wrote {} tests to {:?}.", tests.len(), args.tests);
 }
