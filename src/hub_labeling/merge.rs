@@ -15,11 +15,11 @@ use indicatif::ProgressBar;
 use rustc_hash::FxHashMap;
 
 pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabeling<D> {
-    let top_down_order = extract_contraction_order(ch);
+    let top_down_order = extract_contraction_order(ch).unwrap();
 
     let num_vertices = ch.num_vertices();
-    let mut up_labels = self_labels(num_vertices);
-    let mut down_labels = self_labels(num_vertices);
+    let mut up_labels = initialize_labels(num_vertices);
+    let mut down_labels = initialize_labels(num_vertices);
 
     let bar = ProgressBar::new(num_vertices as u64);
     for vertices in top_down_order {
@@ -27,17 +27,19 @@ pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabe
         let labels = vertices
             .par_iter()
             .map(|&vertex| {
-                let mut up_label = merge_label(ch.up_graph(), vertex, &up_labels);
-                up_label = prune_label(&up_label, &down_labels);
+                let mut up_label = merge_label(ch.up_graph(), &up_labels, vertex);
+                up_label = prune_label(&down_labels, &up_label);
                 up_label.shrink_to_fit();
-                let mut down_label = merge_label(ch.down_graph(), vertex, &down_labels);
-                down_label = prune_label(&down_label, &up_labels);
+
+                let mut down_label = merge_label(ch.down_graph(), &down_labels, vertex);
+                down_label = prune_label(&up_labels, &down_label);
                 down_label.shrink_to_fit();
+
                 (vertex, up_label, down_label)
             })
             .collect::<Vec<_>>();
 
-        // Assign them sequential
+        // Assign them sequential. Could potentially use unsafe here.
         labels
             .into_iter()
             .for_each(|(vertex, up_label, down_label)| {
@@ -57,7 +59,7 @@ pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabe
     }
 }
 
-fn self_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>> {
+fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>> {
     (0..num_vertices)
         .map(|vertex| {
             vec![LabelEntry {
@@ -71,8 +73,8 @@ fn self_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>> {
 
 fn merge_label<D: Distance>(
     dir1_graph: &FastGraph<ContractionEdge<D>>,
-    vertex: VertexId,
     dir1_labels: &[Vec<LabelEntry<D>>],
+    vertex: VertexId,
 ) -> Vec<LabelEntry<D>> {
     let mut new_label: FxHashMap<VertexId, LabelEntry<D>> = FxHashMap::default();
     new_label.insert(
@@ -107,8 +109,8 @@ fn merge_label<D: Distance>(
 }
 
 fn prune_label<D: Distance>(
-    dir1_label: &[LabelEntry<D>],
     dir2_labels: &[Vec<LabelEntry<D>>],
+    dir1_label: &[LabelEntry<D>],
 ) -> Vec<LabelEntry<D>> {
     dir1_label
         .iter()

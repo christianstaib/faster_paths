@@ -33,11 +33,15 @@ impl<D: Distance> ContractionHierarchy<D> {
     }
 }
 
-pub fn extract_contraction_order<D: Distance>(ch: &ContractionHierarchy<D>) -> Vec<Vec<VertexId>> {
+pub fn extract_contraction_order<D: Distance>(
+    ch: &ContractionHierarchy<D>,
+) -> Option<Vec<Vec<VertexId>>> {
     let num_vertices = ch.num_vertices();
     let mut indegrees = vec![0; num_vertices];
 
-    for edge in ch.up_graph().edges().chain(ch.down_graph().edges()) {
+    let all_up_edges = ch.up_graph.edges();
+    let all_down_edges = ch.down_graph.edges();
+    for edge in all_up_edges.chain(all_down_edges) {
         indegrees[edge.head.as_usize()] += 1;
     }
 
@@ -46,23 +50,19 @@ pub fn extract_contraction_order<D: Distance>(ch: &ContractionHierarchy<D>) -> V
         .enumerate()
         .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(VertexId::new(vertex as u32)))
         .collect::<Vec<_>>();
+
     let mut layers = Vec::new();
     let mut visited = 0;
 
     while !current_layer.is_empty() {
-        let mut layer = Vec::with_capacity(current_layer.len());
         let mut next_layer = Vec::new();
 
-        while let Some(vertex) = current_layer.pop() {
-            layer.push(vertex);
+        for vertex in current_layer.iter().copied() {
             visited += 1;
 
-            for edge in ch
-                .up_graph()
-                .out_edges(vertex)
-                .iter()
-                .chain(ch.down_graph().out_edges(vertex))
-            {
+            let up_edges = ch.up_graph.out_edges(vertex).iter();
+            let down_edges = ch.down_graph.out_edges(vertex).iter();
+            for edge in up_edges.chain(down_edges) {
                 let head_indegree = &mut indegrees[edge.head.as_usize()];
                 *head_indegree -= 1;
 
@@ -72,15 +72,15 @@ pub fn extract_contraction_order<D: Distance>(ch: &ContractionHierarchy<D>) -> V
             }
         }
 
-        layers.push(layer);
+        layers.push(current_layer);
         current_layer = next_layer;
     }
 
-    assert_eq!(
-        visited, num_vertices,
-        "contraction hierarchy must be acyclic"
-    );
+    // contraction hierarchy must be acyclic
+    if visited != num_vertices {
+        return None;
+    }
 
     layers.reverse();
-    layers
+    Some(layers)
 }

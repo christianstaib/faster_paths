@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, usize};
 
 use crate::types::{Distance, VertexId};
 
@@ -35,4 +35,20 @@ pub fn min_distance_intersection<D: Distance>(
     }
 
     best
+}
+
+pub fn path<D: Distance>(label: &[LabelEntry<D>], index: usize) -> Option<Vec<VertexId>> {
+    let mut entry = label.get(index)?;
+    let mut path = vec![entry.hub];
+
+    while let Some(predecessor) = entry.predecessor {
+        let predecessor_index = label
+            .binary_search_by_key(&predecessor, |entry| entry.hub)
+            .ok()?;
+
+        entry = &label[predecessor_index];
+        path.push(entry.hub);
+    }
+
+    Some(path)
 }
