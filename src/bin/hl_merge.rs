@@ -33,7 +33,7 @@ fn main() {
     println!("Average label size is {}", avg_label_size);
 
     let start = Instant::now();
-    let output = File::create(args.hub_labeling).unwrap();
-    write_fmi_hl(BufWriter::new(output), &hub_labeling).unwrap();
+    let hub_labeling_file = File::create(args.hub_labeling).unwrap();
+    write_fmi_hl(BufWriter::new(hub_labeling_file), &hub_labeling).unwrap();
     println!("writing took {:?}", start.elapsed());
 }

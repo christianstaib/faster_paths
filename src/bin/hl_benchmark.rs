@@ -1,10 +1,11 @@
-use ch::contraction_hierachy::ContractionHierarchyPathfinder;
-use ch::fmi::read_fmi_ch;
-use ch::pathfinder::ShortestPathFinder;
-use ch::validation::generate_queries;
+use ch::{
+    fmi::{read_fmi_ch, read_fmi_hl},
+    hub_labeling::HubLabelingPathfinder,
+    pathfinder::ShortestPathFinder,
+    validation::generate_queries,
+};
 use clap::{Parser, ValueEnum};
-use std::path::PathBuf;
-use std::time::Instant;
+use std::{path::PathBuf, time::Instant};
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 enum BenchmarkMode {
@@ -19,6 +20,10 @@ struct Args {
     #[arg(short, long)]
     contraction_hierarchy: PathBuf,
 
+    /// Hub labeling file
+    #[arg(short = 'l', long)]
+    hub_labeling: PathBuf,
+
     /// Test file
     #[arg(short, long)]
     num: usize,
@@ -28,14 +33,18 @@ struct Args {
     mode: BenchmarkMode,
 }
 
-type DistanceType = u32; //OrderedFloat<f32>;
+type DistanceType = u32;
 
 fn main() {
     let args = Args::parse();
 
-    // Parse the ChGraph from the file
     let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
-    let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
+    let hub_labeling = read_fmi_hl::<DistanceType>(&args.hub_labeling).unwrap();
+
+    let mut pathfinder = HubLabelingPathfinder {
+        contraction_hierarchy: &contraction_hierarchy,
+        hub_labeling: &hub_labeling,
+    };
 
     let warmup_queries = generate_queries(contraction_hierarchy.num_vertices(), args.num);
     let benchmark_queries = generate_queries(contraction_hierarchy.num_vertices(), args.num);

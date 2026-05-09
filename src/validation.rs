@@ -1,9 +1,15 @@
 use crate::{
     graph::{Edge, EdgeLike, GraphLike},
-    path::{Path, PathDistance},
+    path::{Path, PathDistance, PathQuery},
+    pathfinder::ShortestPathFinder,
     types::{Distance, VertexId},
 };
 use num_traits::Zero;
+use rand::seq::index::sample;
+use std::{
+    iter,
+    time::{Duration, Instant},
+};
 
 /// Validates that `actual` matches the distance provided by `test`.
 pub fn validate_distance<D: Distance>(
@@ -45,6 +51,65 @@ pub fn validate_path<G: GraphLike>(
         (Some(found_path), Some(expected_distance)) => {
             validate_found_path(graph, test, found_path, expected_distance)
         }
+    }
+}
+
+/// Validates all tests against `pathfinder`.
+///
+/// If `graph` is present, complete returned paths are checked against the graph. Otherwise only
+/// distances are checked. On success, returns the average pathfinder runtime per test.
+pub fn validate<D, G, P>(
+    tests: &[PathDistance<D>],
+    graph: Option<&G>,
+    pathfinder: &mut P,
+) -> Result<Duration, Vec<String>>
+where
+    D: Distance,
+    G: GraphLike,
+    G::Edge: EdgeLike<Distance = D>,
+    P: ShortestPathFinder<Distance = D>,
+{
+    let mut total_runtime = Duration::ZERO;
+    let mut failures = Vec::new();
+
+    match graph {
+        Some(graph) => {
+            for test in tests {
+                let start = Instant::now();
+                let path = pathfinder.path(test.query());
+                total_runtime += start.elapsed();
+
+                if let Err(message) = validate_path(graph, test, &path) {
+                    failures.push(message);
+                }
+            }
+        }
+
+        None => {
+            for test in tests {
+                let start = Instant::now();
+                let distance = pathfinder.distance(test.query());
+                total_runtime += start.elapsed();
+
+                if let Err(message) = validate_distance(test, &distance) {
+                    failures.push(message);
+                }
+            }
+        }
+    }
+
+    if failures.is_empty() {
+        Ok(average_runtime(total_runtime, tests.len()))
+    } else {
+        Err(failures)
+    }
+}
+
+fn average_runtime(total_runtime: Duration, num_tests: usize) -> Duration {
+    if num_tests == 0 {
+        Duration::ZERO
+    } else {
+        total_runtime / num_tests as u32
     }
 }
 
@@ -123,4 +188,21 @@ fn validate_found_path<G: GraphLike>(
     }
 
     Ok(())
+}
+
+pub fn generate_queries(num_vertices: usize, num_tests: usize) -> Vec<PathQuery> {
+    let mut rng = rand::rng();
+    iter::repeat_with(|| {
+        let [source, target] = sample(&mut rng, num_vertices, 2)
+            .into_vec()
+            .try_into()
+            .unwrap();
+
+        PathQuery {
+            source: VertexId::new(source as u32),
+            target: VertexId::new(target as u32),
+        }
+    })
+    .take(num_tests)
+    .collect()
 }

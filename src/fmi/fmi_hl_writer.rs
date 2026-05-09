@@ -53,4 +53,3 @@ fn write_label_entries<W: Write, D: Distance + Display>(
 fn skipped(skipped: Option<VertexId>) -> String {
     skipped.map_or_else(|| "None".to_owned(), |v| v.as_usize().to_string())
 }
-
