@@ -1,8 +1,9 @@
 use std::{cmp::Ordering, usize};
 
 use crate::types::{Distance, VertexId};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct LabelEntry<D> {
     pub hub: VertexId,
     pub distance: D,

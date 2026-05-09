@@ -4,8 +4,9 @@ use std::{
 };
 
 use num_traits::Zero;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 pub struct VertexId(u32);
 
 impl VertexId {
