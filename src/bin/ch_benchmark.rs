@@ -1,10 +1,8 @@
-use ch::contraction_hierachy::ContractionHierarchyPathfinder;
-use ch::fmi::read_fmi_ch;
+use ch::contraction_hierachy::{ContractionHierarchy, ContractionHierarchyPathfinder};
 use ch::pathfinder::ShortestPathFinder;
 use ch::validation::generate_queries;
 use clap::{Parser, ValueEnum};
-use std::path::PathBuf;
-use std::time::Instant;
+use std::{fs::File, io::BufReader, path::PathBuf, time::Instant};
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 enum BenchmarkMode {
@@ -33,8 +31,11 @@ type DistanceType = u32; //OrderedFloat<f32>;
 fn main() {
     let args = Args::parse();
 
-    // Parse the ChGraph from the file
-    let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
+    let (contraction_hierarchy, _): (ContractionHierarchy<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.contraction_hierarchy).unwrap()),
+        &mut [0; 1024],
+    ))
+    .unwrap();
     let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 
     let warmup_queries = generate_queries(contraction_hierarchy.num_vertices(), args.num);

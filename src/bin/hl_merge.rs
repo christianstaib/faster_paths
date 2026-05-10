@@ -1,9 +1,11 @@
-use ch::{
-    fmi::{read_fmi_ch, write_fmi_hl},
-    hub_labeling::merge,
-};
+use ch::{contraction_hierachy::ContractionHierarchy, hub_labeling::merge};
 use clap::Parser;
-use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::PathBuf,
+    time::Instant,
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -22,7 +24,11 @@ type DistanceType = u32;
 fn main() {
     let args = Args::parse();
 
-    let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
+    let (contraction_hierarchy, _): (ContractionHierarchy<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.contraction_hierarchy).unwrap()),
+        &mut [0; 1024],
+    ))
+    .unwrap();
 
     let start = Instant::now();
     let hub_labeling = merge(&contraction_hierarchy);
@@ -34,6 +40,6 @@ fn main() {
 
     let start = Instant::now();
     let hub_labeling_file = File::create(args.hub_labeling).unwrap();
-    write_fmi_hl(BufWriter::new(hub_labeling_file), &hub_labeling).unwrap();
+    postcard::to_io(&hub_labeling, BufWriter::new(hub_labeling_file)).unwrap();
     println!("writing took {:?}", start.elapsed());
 }

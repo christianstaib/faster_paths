@@ -2,8 +2,10 @@ use crate::{
     flattened_nested::FlattenedNested, graph::GraphLike, graph::edge_like::EdgeLike,
     types::VertexId,
 };
+use serde::{Deserialize, Serialize};
 
 /// A graph represented in Compressed Sparse Row (CSR) format.
+#[derive(Serialize, Deserialize)]
 pub struct FastGraph<E: EdgeLike> {
     flattened_nested: FlattenedNested<E>,
 }

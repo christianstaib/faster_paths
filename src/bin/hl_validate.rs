@@ -1,10 +1,11 @@
 use ch::{
-    fmi::{read_fmi_ch, read_fmi_graph, read_fmi_hl, read_tests},
-    hub_labeling::HubLabelingPathfinder,
+    contraction_hierachy::ContractionHierarchy,
+    fmi::{read_fmi_graph, read_tests},
+    hub_labeling::{HubLabeling, HubLabelingPathfinder},
     validation::validate,
 };
 use clap::Parser;
-use std::path::PathBuf;
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -35,8 +36,16 @@ fn main() {
         .graph
         .as_ref()
         .map(|graph| read_fmi_graph::<DistanceType>(graph).unwrap());
-    let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
-    let hub_labeling = read_fmi_hl::<DistanceType>(&args.hub_labeling).unwrap();
+    let (contraction_hierarchy, _): (ContractionHierarchy<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.contraction_hierarchy).unwrap()),
+        &mut [0; 1024],
+    ))
+    .unwrap();
+    let (hub_labeling, _): (HubLabeling<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.hub_labeling).unwrap()),
+        &mut [0; 1024],
+    ))
+    .unwrap();
     let tests = read_tests::<DistanceType>(&args.tests).unwrap();
 
     let mut pathfinder = HubLabelingPathfinder {

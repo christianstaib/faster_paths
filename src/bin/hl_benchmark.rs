@@ -1,11 +1,11 @@
 use ch::{
-    fmi::{read_fmi_ch, read_fmi_hl},
-    hub_labeling::HubLabelingPathfinder,
+    contraction_hierachy::ContractionHierarchy,
+    hub_labeling::{HubLabeling, HubLabelingPathfinder},
     pathfinder::ShortestPathFinder,
     validation::generate_queries,
 };
 use clap::{Parser, ValueEnum};
-use std::{path::PathBuf, time::Instant};
+use std::{fs::File, io::BufReader, path::PathBuf, time::Instant};
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 enum BenchmarkMode {
@@ -38,8 +38,17 @@ type DistanceType = u32;
 fn main() {
     let args = Args::parse();
 
-    let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
-    let hub_labeling = read_fmi_hl::<DistanceType>(&args.hub_labeling).unwrap();
+    let (contraction_hierarchy, _): (ContractionHierarchy<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.contraction_hierarchy).unwrap()),
+        &mut [0; 1024],
+    ))
+    .unwrap();
+    let mut read_buffer = [0; 1024];
+    let (hub_labeling, _): (HubLabeling<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.hub_labeling).unwrap()),
+        &mut read_buffer,
+    ))
+    .unwrap();
 
     let mut pathfinder = HubLabelingPathfinder {
         contraction_hierarchy: &contraction_hierarchy,

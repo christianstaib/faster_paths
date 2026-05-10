@@ -1,7 +1,4 @@
-use ch::{
-    contraction_hierachy::contract_graph_sequential,
-    fmi::{read_fmi_graph, write_fmi_ch},
-};
+use ch::{contraction_hierachy::contract_graph_sequential, fmi::read_fmi_graph};
 use clap::Parser;
 use std::{fs::File, io::BufWriter, path::PathBuf};
 
@@ -26,5 +23,5 @@ fn main() {
     let contraction_hierarchy = contract_graph_sequential(&graph);
     let output = File::create(args.contraction_hierarchy).unwrap();
 
-    write_fmi_ch(BufWriter::new(output), &contraction_hierarchy).unwrap();
+    postcard::to_io(&contraction_hierarchy, BufWriter::new(output)).unwrap();
 }
