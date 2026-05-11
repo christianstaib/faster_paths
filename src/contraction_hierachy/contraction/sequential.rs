@@ -33,7 +33,7 @@ fn contract_working_graph_sequential<D: Distance>(
 ) -> ContractionHierarchy<D> {
     let mut levels = vec![0; graph.num_vertices()];
     let mut queue = Queue::new(&graph);
-    let progress = ProgressBar::new(queue.len() as u64);
+    let progress = ProgressBar::new(graph.num_vertices() as u64);
 
     let mut next_level = 0;
     while let Some((vertex, shortcuts)) = queue.pop(&graph) {

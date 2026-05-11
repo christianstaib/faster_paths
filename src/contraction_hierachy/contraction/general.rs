@@ -9,16 +9,6 @@ use crate::graph::{EdgeLike, FastGraph, GraphLike};
 use crate::types::Distance;
 use crate::types::VertexId;
 
-/// Calculates the edge difference. Used in order to avoid calculation errors if always written out.
-pub(super) fn edge_difference<D: Distance>(
-    graph: &WorkingGraph<D>,
-    vertex: VertexId,
-    shortcut_count: usize,
-) -> i64 {
-    let degree = graph.get_out(vertex).len() + graph.get_in(vertex).len();
-    shortcut_count as i64 - degree as i64
-}
-
 /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
 pub(super) fn build_working_graph<G: GraphLike>(
     graph: &G,

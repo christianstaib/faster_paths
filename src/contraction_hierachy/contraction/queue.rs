@@ -7,59 +7,70 @@ use crate::{
     contraction_hierachy::{
         ContractionEdge,
         contraction::{
-            general::{edge_difference, generate_shortcuts},
+            general::generate_shortcuts,
+            terms::{Term, default_terms, priority},
             working_graph::WorkingGraph,
         },
     },
     types::{Distance, VertexId},
 };
 
-const MAX_WITNESS_HOPS: u32 = 10;
+const MAX_WITNESS_HOPS: u32 = 100;
 
-pub(super) struct Queue {
+pub(super) struct Queue<D: Distance> {
     heap: BinaryHeap<(Reverse<i64>, VertexId)>,
+    terms: Vec<Box<dyn Term<D>>>,
 }
 
-impl Queue {
-    pub(super) fn new<D: Distance>(graph: &WorkingGraph<D>) -> Self {
-        let heap = initial_heap(graph);
-        Self { heap }
+impl<D: Distance> Queue<D> {
+    pub(super) fn new(graph: &WorkingGraph<D>) -> Self {
+        let terms = default_terms::<D>(graph.num_vertices());
+        let heap = initial_heap(graph, &terms);
+        Self { heap, terms }
     }
 
-    pub(super) fn len(&self) -> usize {
-        self.heap.len()
-    }
-
-    pub(super) fn pop<D: Distance>(
+    pub(super) fn pop(
         &mut self,
         graph: &WorkingGraph<D>,
     ) -> Option<(VertexId, Vec<ContractionEdge<D>>)> {
-        while let Some((Reverse(queued_edge_difference), vertex)) = self.heap.pop() {
+        while let Some((Reverse(queued_priority), vertex)) = self.heap.pop() {
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
-            let current_edge_difference = edge_difference(graph, vertex, shortcuts.len());
+            let current_priority = priority(graph, vertex, &shortcuts, &self.terms);
 
-            if current_edge_difference <= queued_edge_difference {
+            if current_priority <= queued_priority {
+                self.update_terms_for_contracted(graph, vertex, &shortcuts);
                 return Some((vertex, shortcuts));
             }
 
-            self.heap.push((Reverse(current_edge_difference), vertex));
+            self.heap.push((Reverse(current_priority), vertex));
         }
 
         None
     }
+
+    fn update_terms_for_contracted(
+        &mut self,
+        graph: &WorkingGraph<D>,
+        vertex: VertexId,
+        shortcuts: &[ContractionEdge<D>],
+    ) {
+        for term in &mut self.terms {
+            term.update(graph, vertex, shortcuts);
+        }
+    }
 }
 
-fn initial_heap<D: Distance>(graph: &WorkingGraph<D>) -> BinaryHeap<(Reverse<i64>, VertexId)> {
+fn initial_heap<D: Distance>(
+    graph: &WorkingGraph<D>,
+    terms: &[Box<dyn Term<D>>],
+) -> BinaryHeap<(Reverse<i64>, VertexId)> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
         .progress()
         .map(VertexId::new)
         .map(|vertex| {
-            let shortcut_count = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS).len();
-            (
-                Reverse(edge_difference(graph, vertex, shortcut_count)),
-                vertex,
-            )
+            let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
+            (Reverse(priority(graph, vertex, &shortcuts, terms)), vertex)
         })
         .collect()
 }

@@ -2,7 +2,8 @@ use crate::{
     contraction_hierachy::{
         ContractionEdge,
         contraction::{
-            general::{build_hierarchy, build_working_graph, edge_difference, generate_shortcuts},
+            general::{build_hierarchy, build_working_graph, generate_shortcuts},
+            terms::{Term, default_terms, priority},
             working_graph::WorkingGraph,
         },
         contraction_hierarchy::ContractionHierarchy,
@@ -37,14 +38,15 @@ fn contract_working_graph_parallel<D: Distance>(
     fraction: f64,
 ) -> ContractionHierarchy<D> {
     let mut levels = vec![usize::MAX; graph.num_vertices()];
+    let mut terms = default_terms::<D>(graph.num_vertices());
     let mut remaining = graph.num_vertices();
     let mut next_level = 0;
     let progress = ProgressBar::new(remaining as u64);
 
     while remaining > 0 {
-        let mut candidates = contraction_candidates(&graph, &levels);
+        let mut candidates = contraction_candidates(&graph, &levels, &terms);
 
-        candidates.sort_unstable_by_key(|(vertex, edge_difference, _)| (*edge_difference, *vertex));
+        candidates.sort_unstable_by_key(|(vertex, priority, _)| (*priority, *vertex));
         let selected = select_independent_candidates(&graph, &levels, &candidates, fraction);
         debug_assert!(!selected.is_empty());
 
@@ -55,6 +57,12 @@ fn contract_working_graph_parallel<D: Distance>(
             }
         }
         let contracted = selected_candidates.len();
+
+        for (vertex, _, shortcuts) in &selected_candidates {
+            for term in &mut terms {
+                term.update(&graph, *vertex, shortcuts);
+            }
+        }
 
         for (vertex, _, _) in &selected_candidates {
             levels[vertex.as_usize()] = next_level;
@@ -88,6 +96,7 @@ fn contract_working_graph_parallel<D: Distance>(
 fn contraction_candidates<D: Distance>(
     graph: &WorkingGraph<D>,
     levels: &[usize],
+    terms: &[Box<dyn Term<D>>],
 ) -> Vec<(VertexId, i64, Vec<ContractionEdge<D>>)> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
@@ -95,9 +104,9 @@ fn contraction_candidates<D: Distance>(
         .filter(|&vertex| is_uncontracted(vertex, levels))
         .map(|vertex| {
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
-            let edge_difference = edge_difference(graph, vertex, shortcuts.len());
+            let priority = priority(graph, vertex, &shortcuts, terms);
 
-            (vertex, edge_difference, shortcuts)
+            (vertex, priority, shortcuts)
         })
         .collect()
 }

@@ -2,6 +2,7 @@ mod general;
 mod parallel;
 mod queue;
 mod sequential;
+mod terms;
 mod working_graph;
 
 pub use parallel::contract_graph_parallel;
