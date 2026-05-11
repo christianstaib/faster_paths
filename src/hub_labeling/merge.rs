@@ -14,7 +14,7 @@ use rayon::prelude::*;
 use indicatif::ProgressBar;
 use rustc_hash::FxHashMap;
 
-pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabeling<D> {
+pub fn merge<D: Distance>(ch: &ContractionHierarchy<D>) -> HubLabeling<D> {
     let top_down_order = extract_contraction_order(ch).unwrap();
 
     let num_vertices = ch.num_vertices();

@@ -18,7 +18,6 @@ pub fn contract_graph_sequential<G>(
 ) -> ContractionHierarchy<<G::Edge as EdgeLike>::Distance>
 where
     G: GraphLike,
-    <G::Edge as EdgeLike>::Distance: Sync,
 {
     let working_graph = build_working_graph(graph);
 
@@ -29,7 +28,7 @@ where
     contraction_hierarchy
 }
 
-fn contract_working_graph_sequential<D: Distance + Sync>(
+fn contract_working_graph_sequential<D: Distance>(
     mut graph: WorkingGraph<D>,
 ) -> ContractionHierarchy<D> {
     let mut levels = vec![0; graph.num_vertices()];

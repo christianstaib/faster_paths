@@ -21,7 +21,7 @@ pub(super) struct Queue {
 }
 
 impl Queue {
-    pub(super) fn new<D: Distance + Sync>(graph: &WorkingGraph<D>) -> Self {
+    pub(super) fn new<D: Distance>(graph: &WorkingGraph<D>) -> Self {
         let heap = initial_heap(graph);
         Self { heap }
     }
@@ -49,9 +49,7 @@ impl Queue {
     }
 }
 
-fn initial_heap<D: Distance + Sync>(
-    graph: &WorkingGraph<D>,
-) -> BinaryHeap<(Reverse<i64>, VertexId)> {
+fn initial_heap<D: Distance>(graph: &WorkingGraph<D>) -> BinaryHeap<(Reverse<i64>, VertexId)> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
         .progress()

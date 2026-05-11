@@ -29,7 +29,7 @@ struct Args {
     num_tests: usize,
 }
 
-fn generate_tests<D: Distance + Send + Sync>(
+fn generate_tests<D: Distance>(
     graph: &FastGraph<WeightedEdge<D>>,
     num_tests: usize,
 ) -> Vec<PathDistance<D>> {

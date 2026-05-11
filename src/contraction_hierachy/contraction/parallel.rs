@@ -22,7 +22,6 @@ pub fn contract_graph_parallel<G>(
 ) -> ContractionHierarchy<<G::Edge as EdgeLike>::Distance>
 where
     G: GraphLike,
-    <G::Edge as EdgeLike>::Distance: Send + Sync,
 {
     let working_graph = build_working_graph(graph);
 
@@ -33,7 +32,7 @@ where
     contraction_hierarchy
 }
 
-fn contract_working_graph_parallel<D: Distance + Send + Sync>(
+fn contract_working_graph_parallel<D: Distance>(
     mut graph: WorkingGraph<D>,
     fraction: f64,
 ) -> ContractionHierarchy<D> {
@@ -86,7 +85,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
     build_hierarchy(&graph.get_edges(), &levels)
 }
 
-fn contraction_candidates<D: Distance + Send + Sync>(
+fn contraction_candidates<D: Distance>(
     graph: &WorkingGraph<D>,
     levels: &[usize],
 ) -> Vec<(VertexId, i64, Vec<ContractionEdge<D>>)> {
