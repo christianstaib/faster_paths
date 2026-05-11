@@ -1,5 +1,6 @@
 mod general;
 mod parallel;
+mod queue;
 mod sequential;
 mod working_graph;
 
