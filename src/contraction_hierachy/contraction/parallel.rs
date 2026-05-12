@@ -16,6 +16,7 @@ use rayon::prelude::*;
 use std::time::Instant;
 
 const MAX_WITNESS_HOPS: u32 = 10;
+type Candidate<D> = (i64, VertexId, Vec<ContractionEdge<D>>);
 
 pub fn contract_graph_parallel<G>(
     graph: &G,
@@ -44,56 +45,43 @@ fn contract_working_graph_parallel<D: Distance>(
     let progress = ProgressBar::new(remaining as u64);
 
     while remaining > 0 {
-        let mut candidates = contraction_candidates(&graph, &levels, &terms);
+        let batch = select_contraction_batch(&graph, &levels, &terms, fraction);
+        let batch_size = batch.len();
 
-        candidates.sort_unstable_by_key(|(vertex, priority, _)| (*priority, *vertex));
-        let selected = select_independent_candidates(&graph, &levels, &candidates, fraction);
-        debug_assert!(!selected.is_empty());
+        update_terms_for_batch(&mut terms, &graph, &batch);
+        apply_contraction_batch(&mut graph, &mut levels, &mut next_level, batch);
 
-        let mut selected_candidates = Vec::with_capacity(selected.len());
-        for (candidate, selected) in candidates.into_iter().zip(selected) {
-            if selected {
-                selected_candidates.push(candidate);
-            }
-        }
-        let contracted = selected_candidates.len();
-
-        for (vertex, _, shortcuts) in &selected_candidates {
-            for term in &mut terms {
-                term.update(&graph, *vertex, shortcuts);
-            }
-        }
-
-        for (vertex, _, _) in &selected_candidates {
-            levels[vertex.as_usize()] = next_level;
-            next_level += 1;
-        }
-
-        for (vertex, _, _) in &selected_candidates {
-            graph.contract_vertex(*vertex);
-        }
-
-        for (_, _, shortcuts) in selected_candidates {
-            for shortcut in shortcuts {
-                graph.add_edge(shortcut);
-            }
-        }
-
-        remaining -= contracted;
-        progress.inc(contracted as u64);
+        remaining -= batch_size;
+        progress.inc(batch_size as u64);
     }
 
     progress.finish();
 
-    debug_assert!(levels.iter().all(|&level| level != usize::MAX));
-    build_hierarchy(&graph.get_edges(), &levels)
+    let (up_edges, down_edges) = graph.get_edges();
+    build_hierarchy(up_edges, down_edges)
+}
+
+fn select_contraction_batch<D: Distance>(
+    graph: &WorkingGraph<D>,
+    levels: &[usize],
+    terms: &[Box<dyn Term<D>>],
+    fraction: f64,
+) -> Vec<Candidate<D>> {
+    let mut candidates = contraction_candidates(graph, levels, terms);
+    candidates.sort_unstable_by_key(|(priority, _, _)| *priority);
+
+    select_independent_candidates(graph, levels, &candidates, fraction)
+        .into_iter()
+        .zip(candidates)
+        .filter_map(|(selected, candidate)| selected.then_some(candidate))
+        .collect()
 }
 
 fn contraction_candidates<D: Distance>(
     graph: &WorkingGraph<D>,
     levels: &[usize],
     terms: &[Box<dyn Term<D>>],
-) -> Vec<(VertexId, i64, Vec<ContractionEdge<D>>)> {
+) -> Vec<Candidate<D>> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
         .map(VertexId::new)
@@ -102,7 +90,7 @@ fn contraction_candidates<D: Distance>(
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
             let priority = priority(graph, vertex, &shortcuts, terms);
 
-            (vertex, priority, shortcuts)
+            (priority, vertex, shortcuts)
         })
         .collect()
 }
@@ -110,7 +98,7 @@ fn contraction_candidates<D: Distance>(
 fn select_independent_candidates<D: Distance>(
     graph: &WorkingGraph<D>,
     levels: &[usize],
-    candidates: &[(VertexId, i64, Vec<ContractionEdge<D>>)],
+    candidates: &[Candidate<D>],
     fraction: f64,
 ) -> Vec<bool> {
     let candidate_limit = ((candidates.len() as f64) * fraction).ceil() as usize;
@@ -119,7 +107,7 @@ fn select_independent_candidates<D: Distance>(
     let mut selected = vec![false; candidates.len()];
     let mut blocked = vec![false; graph.num_vertices()];
 
-    for (index, (vertex, _, _)) in candidates.iter().enumerate().take(candidate_limit) {
+    for (index, (_, vertex, _)) in candidates.iter().enumerate().take(candidate_limit) {
         let vertex_index = vertex.as_usize();
         if blocked[vertex_index] {
             continue;
@@ -142,6 +130,40 @@ fn select_independent_candidates<D: Distance>(
     }
 
     selected
+}
+
+fn update_terms_for_batch<D: Distance>(
+    terms: &mut [Box<dyn Term<D>>],
+    graph: &WorkingGraph<D>,
+    candidates: &[Candidate<D>],
+) {
+    for (_, vertex, shortcuts) in candidates {
+        for term in &mut *terms {
+            term.update(graph, *vertex, shortcuts);
+        }
+    }
+}
+
+fn apply_contraction_batch<D: Distance>(
+    graph: &mut WorkingGraph<D>,
+    levels: &mut [usize],
+    next_level: &mut usize,
+    candidates: Vec<Candidate<D>>,
+) {
+    for (_, vertex, _) in &candidates {
+        levels[vertex.as_usize()] = *next_level;
+        *next_level += 1;
+    }
+
+    for (_, vertex, _) in &candidates {
+        graph.contract_vertex(*vertex);
+    }
+
+    for (_, _, shortcuts) in candidates {
+        for shortcut in shortcuts {
+            graph.add_edge(shortcut);
+        }
+    }
 }
 
 fn is_uncontracted(vertex: VertexId, levels: &[usize]) -> bool {

@@ -7,7 +7,8 @@ use crate::{
 pub(super) struct WorkingGraph<D: Distance> {
     outgoing: Vec<Vec<ContractionEdge<D>>>,
     incoming: Vec<Vec<WeightedEdge<D>>>,
-    contracted_edges: Vec<ContractionEdge<D>>,
+    up_edges: Vec<ContractionEdge<D>>,
+    down_edges: Vec<ContractionEdge<D>>,
 }
 
 impl<D: Distance> WorkingGraph<D> {
@@ -20,7 +21,8 @@ impl<D: Distance> WorkingGraph<D> {
         let mut working_graph = Self {
             outgoing: vec![Vec::new(); graph.num_vertices()],
             incoming: vec![Vec::new(); graph.num_vertices()],
-            contracted_edges: Vec::new(),
+            up_edges: Vec::new(),
+            down_edges: Vec::new(),
         };
 
         for edge in graph.edges() {
@@ -94,15 +96,17 @@ impl<D: Distance> WorkingGraph<D> {
     pub(super) fn contract_vertex(&mut self, vertex: VertexId) {
         let vertex_index = vertex.as_usize();
 
+        // lower level -> higher level
         for edge in std::mem::take(&mut self.outgoing[vertex_index]) {
             let index = self.incoming[edge.head.as_usize()]
                 .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&vertex))
                 .expect("incoming edge missing although outgoing edge exists");
 
             self.incoming[edge.head.as_usize()].remove(index);
-            self.contracted_edges.push(edge);
+            self.up_edges.push(edge);
         }
 
+        // higher level -> lower level. Revese before push
         for incoming_edge in std::mem::take(&mut self.incoming[vertex_index]) {
             let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
 
@@ -110,11 +114,11 @@ impl<D: Distance> WorkingGraph<D> {
                 .binary_search_by(|edge| edge.head.cmp(&vertex))
                 .expect("outgoing edge missing although incoming edge exists");
 
-            self.contracted_edges.push(outgoing.remove(index));
+            self.down_edges.push(outgoing.remove(index).reversed());
         }
     }
 
-    pub(super) fn get_edges(self) -> Vec<ContractionEdge<D>> {
-        self.contracted_edges
+    pub(super) fn get_edges(self) -> (Vec<ContractionEdge<D>>, Vec<ContractionEdge<D>>) {
+        (self.up_edges, self.down_edges)
     }
 }

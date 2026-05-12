@@ -1,3 +1,4 @@
+use crate::graph::EdgeLike;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -43,5 +44,32 @@ impl<T> FlattenedNested<T> {
 
     pub fn num_flat(&self) -> usize {
         self.flat.len()
+    }
+}
+
+impl<T: EdgeLike> FlattenedNested<T> {
+    pub fn from_flat(mut flat: Vec<T>) -> Self {
+        let num_vertices = flat
+            .iter()
+            .map(|edge| edge.tail().max(edge.head()).as_usize())
+            .max()
+            .map_or(0, |vertex| vertex + 1);
+
+        flat.sort_unstable_by_key(|edge| (edge.tail(), edge.head()));
+
+        let mut offsets = Vec::with_capacity(num_vertices + 1);
+        let mut edge_index = 0;
+
+        for vertex in 0..num_vertices {
+            offsets.push(edge_index);
+
+            while edge_index < flat.len() && flat[edge_index].tail().as_usize() == vertex {
+                edge_index += 1;
+            }
+        }
+
+        offsets.push(flat.len());
+
+        Self { flat, offsets }
     }
 }

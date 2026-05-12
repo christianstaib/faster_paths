@@ -19,6 +19,12 @@ impl<E: EdgeLike> FastGraph<E> {
             flattened_nested: FlattenedNested::new(nested),
         }
     }
+
+    pub fn from_flat(flat: Vec<E>) -> Self {
+        Self {
+            flattened_nested: FlattenedNested::from_flat(flat),
+        }
+    }
 }
 
 impl<E: EdgeLike> GraphLike for FastGraph<E> {

@@ -31,22 +31,19 @@ where
 fn contract_working_graph_sequential<D: Distance>(
     mut graph: WorkingGraph<D>,
 ) -> ContractionHierarchy<D> {
-    let mut levels = vec![0; graph.num_vertices()];
     let mut queue = Queue::new(&graph);
     let progress = ProgressBar::new(graph.num_vertices() as u64);
 
-    let mut level = 0;
     while let Some((vertex, shortcuts)) = queue.pop(&graph) {
         graph.contract_vertex(vertex);
         for shortcut in shortcuts {
             graph.add_edge(shortcut);
         }
 
-        levels[vertex.as_usize()] = level;
-        level += 1;
         progress.inc(1);
     }
     progress.finish();
 
-    build_hierarchy(&graph.get_edges(), &levels)
+    let (up_edges, down_edges) = graph.get_edges();
+    build_hierarchy(up_edges, down_edges)
 }
