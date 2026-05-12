@@ -75,11 +75,7 @@ fn contract_working_graph_parallel<D: Distance>(
 
         for (_, _, shortcuts) in selected_candidates {
             for shortcut in shortcuts {
-                if is_uncontracted(shortcut.tail, &levels)
-                    && is_uncontracted(shortcut.head, &levels)
-                {
-                    graph.add_edge(shortcut);
-                }
+                graph.add_edge(shortcut);
             }
         }
 

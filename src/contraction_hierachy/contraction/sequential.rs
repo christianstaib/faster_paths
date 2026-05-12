@@ -35,15 +35,15 @@ fn contract_working_graph_sequential<D: Distance>(
     let mut queue = Queue::new(&graph);
     let progress = ProgressBar::new(graph.num_vertices() as u64);
 
-    let mut next_level = 0;
+    let mut level = 0;
     while let Some((vertex, shortcuts)) = queue.pop(&graph) {
         graph.contract_vertex(vertex);
         for shortcut in shortcuts {
             graph.add_edge(shortcut);
         }
 
-        levels[vertex.as_usize()] = next_level;
-        next_level += 1;
+        levels[vertex.as_usize()] = level;
+        level += 1;
         progress.inc(1);
     }
     progress.finish();
