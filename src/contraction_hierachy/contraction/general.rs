@@ -4,28 +4,8 @@ use std::collections::BinaryHeap;
 
 use crate::contraction_hierachy::ContractionEdge;
 use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
-use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
-use crate::graph::{EdgeLike, FastGraph, GraphLike};
 use crate::types::Distance;
 use crate::types::VertexId;
-
-/// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-pub(super) fn build_working_graph<G: GraphLike>(
-    graph: &G,
-) -> WorkingGraph<<G::Edge as EdgeLike>::Distance> {
-    WorkingGraph::new(graph)
-}
-
-/// Given contracted up and down edges, build a contraction hierarchy.
-pub(super) fn build_hierarchy<D: Distance>(
-    up_edges: Vec<ContractionEdge<D>>,
-    down_edges: Vec<ContractionEdge<D>>,
-) -> ContractionHierarchy<D> {
-    ContractionHierarchy::new(
-        FastGraph::from_flat(up_edges),
-        FastGraph::from_flat(down_edges),
-    )
-}
 
 /// Computes the shortcuts necessary to maintain the shortest path distances in `graph` if vertex
 /// would be disconnected and also possibly some more.

@@ -2,7 +2,7 @@ use crate::{
     contraction_hierachy::{
         ContractionEdge,
         contraction::{
-            general::{build_hierarchy, build_working_graph, generate_shortcuts},
+            general::generate_shortcuts,
             terms::{Term, default_terms, priority},
             working_graph::WorkingGraph,
         },
@@ -25,7 +25,7 @@ pub fn contract_graph_parallel<G>(
 where
     G: GraphLike,
 {
-    let working_graph = build_working_graph(graph);
+    let working_graph = WorkingGraph::new(graph);
 
     let start = Instant::now();
     let contraction_hierarchy = contract_working_graph_parallel(working_graph, fraction);
@@ -58,7 +58,7 @@ fn contract_working_graph_parallel<D: Distance>(
     progress.finish();
 
     let (up_edges, down_edges) = graph.get_edges();
-    build_hierarchy(up_edges, down_edges)
+    ContractionHierarchy::new(up_edges, down_edges)
 }
 
 fn select_contraction_batch<D: Distance>(

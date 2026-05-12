@@ -1,10 +1,6 @@
 use crate::{
     contraction_hierachy::{
-        contraction::{
-            general::{build_hierarchy, build_working_graph},
-            queue::Queue,
-            working_graph::WorkingGraph,
-        },
+        contraction::{queue::Queue, working_graph::WorkingGraph},
         contraction_hierarchy::ContractionHierarchy,
     },
     graph::{EdgeLike, GraphLike},
@@ -19,7 +15,7 @@ pub fn contract_graph_sequential<G>(
 where
     G: GraphLike,
 {
-    let working_graph = build_working_graph(graph);
+    let working_graph = WorkingGraph::new(graph);
 
     let start = Instant::now();
     let contraction_hierarchy = contract_working_graph_sequential(working_graph);
@@ -45,5 +41,5 @@ fn contract_working_graph_sequential<D: Distance>(
     progress.finish();
 
     let (up_edges, down_edges) = graph.get_edges();
-    build_hierarchy(up_edges, down_edges)
+    ContractionHierarchy::new(up_edges, down_edges)
 }

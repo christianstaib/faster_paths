@@ -12,13 +12,10 @@ pub struct ContractionHierarchy<D: Distance> {
 }
 
 impl<D: Distance> ContractionHierarchy<D> {
-    pub fn new(
-        up_graph: FastGraph<ContractionEdge<D>>,
-        down_graph: FastGraph<ContractionEdge<D>>,
-    ) -> Self {
+    pub fn new(up_edges: Vec<ContractionEdge<D>>, down_edges: Vec<ContractionEdge<D>>) -> Self {
         Self {
-            up_graph,
-            down_graph,
+            up_graph: FastGraph::from_flat(up_edges),
+            down_graph: FastGraph::from_flat(down_edges),
         }
     }
 
