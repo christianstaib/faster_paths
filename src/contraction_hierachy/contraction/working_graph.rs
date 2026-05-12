@@ -104,25 +104,17 @@ impl<D: Distance> WorkingGraph<D> {
         }
 
         for incoming_edge in std::mem::take(&mut self.incoming[vertex_index]) {
-            let edge = {
-                let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
+            let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
 
-                let index = outgoing
-                    .binary_search_by(|edge| edge.head.cmp(&vertex))
-                    .expect("outgoing edge missing although incoming edge exists");
+            let index = outgoing
+                .binary_search_by(|edge| edge.head.cmp(&vertex))
+                .expect("outgoing edge missing although incoming edge exists");
 
-                outgoing.remove(index)
-            };
-
-            self.contracted_edges.push(edge);
+            self.contracted_edges.push(outgoing.remove(index));
         }
     }
 
-    pub(super) fn get_edges(&self) -> Vec<ContractionEdge<D>> {
+    pub(super) fn get_edges(self) -> Vec<ContractionEdge<D>> {
         self.contracted_edges
-            .iter()
-            .copied()
-            .chain(self.outgoing.iter().flatten().copied())
-            .collect()
     }
 }
