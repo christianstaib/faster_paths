@@ -1,7 +1,7 @@
+use super::{Term, for_each_neighbor};
+
 use crate::{
-    contraction_hierachy::{
-        ContractionEdge, contraction::terms::Term, contraction::working_graph::WorkingGraph,
-    },
+    contraction_hierachy::{ContractionEdge, contraction::working_graph::WorkingGraph},
     types::{Distance, VertexId},
 };
 
@@ -38,47 +38,9 @@ impl<D: Distance> Term<D> for CostOfQueries {
         _shortcuts: &[ContractionEdge<D>],
     ) {
         let neighbor_estimate = self.value(vertex) + 1;
-        let out_edges = graph.get_out(vertex);
-        let in_edges = graph.get_in(vertex);
-
-        let mut out_idx = 0;
-        let mut in_idx = 0;
-        let mut update_estimate = |neighbor: VertexId| {
+        for_each_neighbor(graph, vertex, |neighbor| {
             let estimate = &mut self.estimates[neighbor.as_usize()];
             *estimate = (*estimate).max(neighbor_estimate);
-        };
-
-        while out_idx < out_edges.len() && in_idx < in_edges.len() {
-            let out_head = out_edges[out_idx].head;
-            let in_head = in_edges[in_idx].head;
-
-            let neighbor = match out_head.cmp(&in_head) {
-                std::cmp::Ordering::Less => {
-                    out_idx += 1;
-                    out_head
-                }
-                std::cmp::Ordering::Greater => {
-                    in_idx += 1;
-                    in_head
-                }
-                std::cmp::Ordering::Equal => {
-                    out_idx += 1;
-                    in_idx += 1;
-                    out_head
-                }
-            };
-
-            update_estimate(neighbor);
-        }
-
-        while out_idx < out_edges.len() {
-            update_estimate(out_edges[out_idx].head);
-            out_idx += 1;
-        }
-
-        while in_idx < in_edges.len() {
-            update_estimate(in_edges[in_idx].head);
-            in_idx += 1;
-        }
+        });
     }
 }

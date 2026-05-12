@@ -1,7 +1,7 @@
+use super::{Term, for_each_neighbor};
+
 use crate::{
-    contraction_hierachy::{
-        ContractionEdge, contraction::terms::Term, contraction::working_graph::WorkingGraph,
-    },
+    contraction_hierachy::{ContractionEdge, contraction::working_graph::WorkingGraph},
     types::{Distance, VertexId},
 };
 
@@ -37,45 +37,8 @@ impl<D: Distance> Term<D> for DeletedNeighbors {
         vertex: VertexId,
         _shortcuts: &[ContractionEdge<D>],
     ) {
-        let out_edges = graph.get_out(vertex);
-        let in_edges = graph.get_in(vertex);
-
-        let mut out_idx = 0;
-        let mut in_idx = 0;
-
-        while out_idx < out_edges.len() && in_idx < in_edges.len() {
-            let out_head = out_edges[out_idx].head;
-            let in_head = in_edges[in_idx].head;
-
-            let neighbor = match out_head.cmp(&in_head) {
-                std::cmp::Ordering::Less => {
-                    out_idx += 1;
-                    out_head
-                }
-                std::cmp::Ordering::Greater => {
-                    in_idx += 1;
-                    in_head
-                }
-                std::cmp::Ordering::Equal => {
-                    out_idx += 1;
-                    in_idx += 1;
-                    out_head
-                }
-            };
-
+        for_each_neighbor(graph, vertex, |neighbor| {
             self.counts[neighbor.as_usize()] += 1;
-        }
-
-        while out_idx < out_edges.len() {
-            let neighbor = out_edges[out_idx].head;
-            self.counts[neighbor.as_usize()] += 1;
-            out_idx += 1;
-        }
-
-        while in_idx < in_edges.len() {
-            let neighbor = in_edges[in_idx].head;
-            self.counts[neighbor.as_usize()] += 1;
-            in_idx += 1;
-        }
+        });
     }
 }
