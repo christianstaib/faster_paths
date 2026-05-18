@@ -1,5 +1,3 @@
-use rayon::slice::ParallelSliceMut;
-
 use crate::{
     contraction_hierachy::ContractionEdge,
     graph::{EdgeLike, GraphLike},
@@ -108,24 +106,15 @@ impl<D: Distance> WorkingGraph<D> {
     where
         D: Send,
     {
-        let num_up_edges: usize = self.outgoing.iter().map(|edges| edges.len()).sum();
-        let num_down_edges: usize = self.incoming.iter().map(|edges| edges.len()).sum();
-
-        let mut up_edges = Vec::with_capacity(num_up_edges);
-        let mut down_edges = Vec::with_capacity(num_down_edges);
-
-        for mut edges in self.outgoing {
-            up_edges.extend_from_slice(&edges);
-            edges.clear();
+        let mut up_edges = Vec::with_capacity(self.outgoing.iter().map(Vec::len).sum());
+        for edges in self.outgoing {
+            up_edges.extend(edges);
         }
 
-        for mut edges in self.incoming {
-            down_edges.extend_from_slice(&edges);
-            edges.clear();
+        let mut down_edges = Vec::with_capacity(self.incoming.iter().map(Vec::len).sum());
+        for edges in self.incoming {
+            down_edges.extend(&edges);
         }
-
-        up_edges.par_sort_unstable();
-        down_edges.par_sort_unstable();
 
         (up_edges, down_edges)
     }

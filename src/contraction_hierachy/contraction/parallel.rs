@@ -11,9 +11,10 @@ use crate::{
     types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
+use num_traits::clamp;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
@@ -44,9 +45,17 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
 
     let progress = ProgressBar::new(remaining.len() as u64);
 
-    while !remaining.is_empty() {
-        let (next_remaining, candidates) = select_ids(&graph, &remaining);
+    let mut serial_time = Duration::ZERO;
+    let mut parallel_time = Duration::ZERO;
 
+    let mut current;
+
+    while !remaining.is_empty() {
+        current = Instant::now();
+        let (mut next_remaining, candidates) = select_ids(&graph, &remaining);
+        serial_time += current.elapsed();
+
+        current = Instant::now();
         let mut candidates_data: Vec<_> = candidates
             .into_par_iter()
             .map(|vertex| {
@@ -56,8 +65,20 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
             })
             .collect();
         candidates_data.par_sort_unstable_by_key(|(_, edge_difference, _)| *edge_difference);
+        parallel_time += current.elapsed();
 
-        candidates_data.truncate(((candidates_data.len() as f64 * fraction) as usize).min(1));
+        current = Instant::now();
+        let use_len = clamp(
+            (candidates_data.len() as f64 * fraction) as usize,
+            1,
+            candidates_data.len(),
+        );
+        for i in use_len..candidates_data.len() {
+            next_remaining.push(candidates_data[i].0);
+        }
+
+        candidates_data.truncate(use_len);
+        println!("candidates len {}", candidates_data.len());
 
         for (vertex, _, shortcuts) in &candidates_data {
             graph.contract_vertex(*vertex);
@@ -67,16 +88,24 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         }
 
         remaining = next_remaining;
+        serial_time += current.elapsed();
         progress.inc(candidates_data.len() as u64);
     }
 
+    println!("serial time {:?}", serial_time);
+    println!("parallel time {:?}", parallel_time);
+
     progress.finish();
 
+    current = Instant::now();
     let (up_edges, down_edges) = graph.edges();
-    ContractionHierarchy::new(
+    let x = ContractionHierarchy::new(
         FastGraph::from_flat(up_edges),
         FastGraph::from_flat(down_edges),
-    )
+    );
+    println!("final creation took {:?}", current.elapsed());
+
+    x
 }
 
 fn select_ids<D: Distance>(
