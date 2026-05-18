@@ -49,6 +49,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
 
     let mut current;
 
+    let mut num_levels = 0;
     while !remaining.is_empty() {
         current = Instant::now();
         let (mut next_remaining, candidates) = select_ids(&graph, &remaining);
@@ -77,7 +78,6 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         }
 
         candidates_data.truncate(use_len);
-        println!("candidates len {}", candidates_data.len());
 
         for (vertex, _, shortcuts) in &candidates_data {
             graph.contract_vertex(*vertex);
@@ -89,8 +89,10 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         remaining = next_remaining;
         serial_time += current.elapsed();
         progress.inc(candidates_data.len() as u64);
+        num_levels += 1;
     }
 
+    println!("num levels {}", num_levels);
     println!("serial time {:?}", serial_time);
     println!("parallel time {:?}", parallel_time);
 
@@ -98,13 +100,13 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
 
     current = Instant::now();
     let (up_edges, down_edges) = graph.edges();
-    let x = ContractionHierarchy::new(
+    let ch = ContractionHierarchy::new(
         FastGraph::from_flat(up_edges),
         FastGraph::from_flat(down_edges),
     );
     println!("final creation took {:?}", current.elapsed());
 
-    x
+    ch
 }
 
 fn select_ids<D: Distance>(
