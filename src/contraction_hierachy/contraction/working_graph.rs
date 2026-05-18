@@ -24,7 +24,7 @@ impl<D: Distance> WorkingGraph<D> {
         };
 
         for edge in graph.edges() {
-            working_graph.add_edge(ContractionEdge {
+            working_graph.add_edge(&ContractionEdge {
                 tail: edge.tail(),
                 head: edge.head(),
                 weight: edge.weight(),
@@ -49,7 +49,7 @@ impl<D: Distance> WorkingGraph<D> {
     }
 
     /// Inserts an edge into the graph and records its reverse adjacency for the head.
-    pub(super) fn add_edge(&mut self, edge: ContractionEdge<D>) {
+    pub(super) fn add_edge(&mut self, edge: &ContractionEdge<D>) {
         // While self loops are not forbidden for contraction, they make it impossible to unpack a shortcut path containing them, as they create a cycle.
         if edge.tail == edge.head {
             return;
@@ -69,7 +69,7 @@ impl<D: Distance> WorkingGraph<D> {
                     .expect("incoming edge missing although outgoing edge exists");
 
                 self.incoming[edge.head.as_usize()][in_idx].weight = edge.weight;
-                self.outgoing[edge.tail.as_usize()][out_idx] = edge;
+                self.outgoing[edge.tail.as_usize()][out_idx] = edge.clone();
             }
 
             Err(out_idx) => {
@@ -78,7 +78,7 @@ impl<D: Distance> WorkingGraph<D> {
                     .expect_err("incoming edge already exists although outgoing edge is missing");
 
                 self.incoming[edge.head.as_usize()].insert(in_idx, edge.reversed());
-                self.outgoing[edge.tail.as_usize()].insert(out_idx, edge);
+                self.outgoing[edge.tail.as_usize()].insert(out_idx, edge.clone());
             }
         }
     }

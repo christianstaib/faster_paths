@@ -37,32 +37,28 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
     mut graph: WorkingGraph<D>,
     fraction: f64,
 ) -> ContractionHierarchy<D> {
-    // let mut levels = vec![usize::MAX; graph.num_vertices()];
     let mut remaining = (0..graph.num_vertices() as u32)
         .map(VertexId::new)
         .collect::<Vec<_>>();
+
     let mut blocked = vec![0u32; graph.num_vertices()];
     let mut block_token = 1;
+
     let progress = ProgressBar::new(remaining.len() as u64);
 
     while !remaining.is_empty() {
-        sort_vertices_by_degree(&graph, &mut remaining);
+        remaining.par_sort_unstable_by_key(|&vertex| {
+            graph.get_out(vertex).len() + graph.get_in(vertex).len()
+        });
         let (next_remaining, ids) =
             select_ids(&graph, &remaining, fraction, &mut blocked, block_token);
-        debug_assert!(!ids.is_empty());
 
         let mut selected_candidates = build_shortcuts_for_vertices(&graph, ids);
-        debug_assert!(!selected_candidates.is_empty());
 
-        selected_candidates
-            .sort_unstable_by_key(|(vertex, edge_difference, _)| (*edge_difference, *vertex));
-        let contracted = selected_candidates.len();
+        selected_candidates.sort_unstable_by_key(|(_, edge_difference, _)| *edge_difference);
 
-        for (vertex, _, _) in &selected_candidates {
+        for (vertex, _, shortcuts) in &selected_candidates {
             graph.contract_vertex(*vertex);
-        }
-
-        for (_, _, shortcuts) in selected_candidates {
             for shortcut in shortcuts {
                 graph.add_edge(shortcut);
             }
@@ -74,7 +70,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
             blocked.fill(0);
             block_token = 1;
         }
-        progress.inc(contracted as u64);
+        progress.inc(selected_candidates.len() as u64);
     }
 
     progress.finish();
@@ -84,15 +80,6 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         FastGraph::from_flat(up_edges),
         FastGraph::from_flat(down_edges),
     )
-}
-
-fn sort_vertices_by_degree<D: Distance + Sync>(graph: &WorkingGraph<D>, vertices: &mut [VertexId]) {
-    vertices.par_sort_unstable_by_key(|&vertex| {
-        (
-            graph.get_out(vertex).len() + graph.get_in(vertex).len(),
-            vertex,
-        )
-    });
 }
 
 fn select_ids<D: Distance>(

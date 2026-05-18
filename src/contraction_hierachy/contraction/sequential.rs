@@ -50,7 +50,7 @@ fn contract_working_graph_sequential<D: Distance + Sync + Send>(
         }
 
         graph.contract_vertex(vertex);
-        for shortcut in shortcuts {
+        for shortcut in &shortcuts {
             graph.add_edge(shortcut);
         }
 
