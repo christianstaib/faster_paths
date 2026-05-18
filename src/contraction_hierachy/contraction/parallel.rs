@@ -57,9 +57,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
             .collect();
         candidates_data.par_sort_unstable_by_key(|(_, edge_difference, _)| *edge_difference);
 
-        let candidate_limit = ((candidates_data.len() as f64) * fraction).ceil() as usize;
-        let candidate_limit = candidate_limit.clamp(1, candidates_data.len());
-        candidates_data.truncate(candidate_limit);
+        candidates_data.truncate(((candidates_data.len() as f64 * fraction) as usize).min(1));
 
         for (vertex, _, shortcuts) in &candidates_data {
             graph.contract_vertex(*vertex);
