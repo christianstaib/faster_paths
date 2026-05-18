@@ -7,6 +7,10 @@ pub struct FlattenedNested<T> {
 }
 
 impl<T> FlattenedNested<T> {
+    pub fn from_flat(flat: Vec<T>, offsets: Vec<usize>) -> Self {
+        Self { flat, offsets }
+    }
+
     pub fn new(nested: &Vec<Vec<T>>) -> Self
     where
         T: Copy,

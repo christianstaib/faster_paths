@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader, Read},
+    path::Path,
     str::FromStr,
 };
 
@@ -57,7 +58,9 @@ fn read_ch_edges<D: Distance + FromStr>(
     Some(graph)
 }
 
-fn ch_from_reader<D: Distance + FromStr, R: Read>(reader: R) -> Option<ContractionHierarchy<D>> {
+pub(super) fn ch_from_reader<D: Distance + FromStr, R: Read>(
+    reader: R,
+) -> Option<ContractionHierarchy<D>> {
     let mut lines = BufReader::new(reader).lines().filter_map(Result::ok);
 
     let num_up_edges = lines.next()?.parse().ok()?;
@@ -69,9 +72,57 @@ fn ch_from_reader<D: Distance + FromStr, R: Read>(reader: R) -> Option<Contracti
     ))
 }
 
-pub fn read_fmi_ch<D: Distance + FromStr>(
-    file: &std::path::Path,
-) -> Option<ContractionHierarchy<D>> {
-    let reader = BufReader::new(File::open(file).unwrap());
+pub fn read_fmi_ch<D: Distance + FromStr>(file: &Path) -> Option<ContractionHierarchy<D>> {
+    let reader = BufReader::new(File::open(file).ok()?);
     ch_from_reader(reader)
+}
+
+/// Reads CH files produced by `/home/christianstaib/Downloads/ch_constructor`.
+///
+/// The constructor writes:
+/// - number of upward edges
+/// - number of downward edges
+/// - upward edges as `tail head weight skipped`
+/// - downward edges as `tail head weight skipped`
+///
+/// Missing skipped vertices are encoded as `-1`.
+pub fn read_ch_constructor_ch<D: Distance + FromStr>(
+    file: &Path,
+) -> Option<ContractionHierarchy<D>> {
+    read_fmi_ch(file)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{fmi::fmi_ch_reader::ch_from_reader, graph::GraphLike, types::VertexId};
+
+    #[test]
+    fn reads_ch_constructor_output() {
+        let input = "\
+2
+1
+0 2 7 -1
+1 3 11 2
+3 1 11 2
+";
+
+        let ch = ch_from_reader::<u32, _>(input.as_bytes()).unwrap();
+
+        assert_eq!(ch.up_graph().num_edges(), 2);
+        assert_eq!(ch.down_graph().num_edges(), 1);
+
+        let up_from_zero = ch.up_graph().out_edges(VertexId::new(0));
+        assert_eq!(up_from_zero[0].head, VertexId::new(2));
+        assert_eq!(up_from_zero[0].weight, 7);
+        assert_eq!(up_from_zero[0].skipped, None);
+
+        let up_from_one = ch.up_graph().out_edges(VertexId::new(1));
+        assert_eq!(up_from_one[0].head, VertexId::new(3));
+        assert_eq!(up_from_one[0].weight, 11);
+        assert_eq!(up_from_one[0].skipped, Some(VertexId::new(2)));
+
+        let down_from_three = ch.down_graph().out_edges(VertexId::new(3));
+        assert_eq!(down_from_three[0].head, VertexId::new(1));
+        assert_eq!(down_from_three[0].skipped, Some(VertexId::new(2)));
+    }
 }

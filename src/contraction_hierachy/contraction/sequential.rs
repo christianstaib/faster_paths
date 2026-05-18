@@ -1,12 +1,12 @@
 use crate::{
     contraction_hierachy::{
         contraction::{
-            general::{build_hierarchy, build_working_graph, edge_difference, generate_shortcuts},
+            general::{build_working_graph, edge_difference, generate_shortcuts},
             working_graph::WorkingGraph,
         },
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{EdgeLike, GraphLike},
+    graph::{EdgeLike, FastGraph, GraphLike},
     types::{Distance, VertexId},
 };
 use indicatif::{ParallelProgressIterator, ProgressBar};
@@ -20,7 +20,7 @@ pub fn contract_graph_sequential<G>(
 ) -> ContractionHierarchy<<G::Edge as EdgeLike>::Distance>
 where
     G: GraphLike,
-    <G::Edge as EdgeLike>::Distance: Sync,
+    <G::Edge as EdgeLike>::Distance: Sync + Send,
 {
     let working_graph = build_working_graph(graph);
 
@@ -31,7 +31,7 @@ where
     contraction_hierarchy
 }
 
-fn contract_working_graph_sequential<D: Distance + Sync>(
+fn contract_working_graph_sequential<D: Distance + Sync + Send>(
     mut graph: WorkingGraph<D>,
 ) -> ContractionHierarchy<D> {
     let mut levels = vec![0; graph.num_vertices()];
@@ -60,7 +60,11 @@ fn contract_working_graph_sequential<D: Distance + Sync>(
     }
     progress.finish();
 
-    build_hierarchy(&graph.get_edges(), &levels)
+    let (up_edges, down_edges) = graph.edges();
+    ContractionHierarchy::new(
+        FastGraph::from_flat(up_edges),
+        FastGraph::from_flat(down_edges),
+    )
 }
 
 /// Initializes the binary heap used during the sequential contraction in parallel.

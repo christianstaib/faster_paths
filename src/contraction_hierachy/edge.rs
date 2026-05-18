@@ -17,7 +17,7 @@ use crate::{
 ///   was skipped by this shortcut.
 /// - the child edge in the *other* graph is an edge `middle -> tail`.
 /// - the child edge in the *same* graph is an edge `middle -> head`.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContractionEdge<D> {
     pub tail: VertexId,
     pub head: VertexId,

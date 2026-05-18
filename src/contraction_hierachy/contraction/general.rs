@@ -4,8 +4,7 @@ use std::collections::BinaryHeap;
 
 use crate::contraction_hierachy::ContractionEdge;
 use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
-use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
-use crate::graph::{EdgeLike, FastGraph, GraphLike};
+use crate::graph::{EdgeLike, GraphLike};
 use crate::types::Distance;
 use crate::types::VertexId;
 
@@ -24,31 +23,6 @@ pub(super) fn build_working_graph<G: GraphLike>(
     graph: &G,
 ) -> WorkingGraph<<G::Edge as EdgeLike>::Distance> {
     WorkingGraph::new(graph)
-}
-
-/// Given a list of `edges` which contains both up and down edges, separate them and build a
-/// contraction hierarchy.
-pub(super) fn build_hierarchy<D: Distance>(
-    contracted_edges: &Vec<ContractionEdge<D>>,
-    levels: &[usize],
-) -> ContractionHierarchy<D> {
-    let mut up_graph = vec![Vec::new(); levels.len()];
-    let mut down_graph = vec![Vec::new(); levels.len()];
-
-    for &edge in contracted_edges {
-        if levels[edge.tail.as_usize()] < levels[edge.head.as_usize()] {
-            up_graph[edge.tail.as_usize()].push(edge);
-        } else {
-            down_graph[edge.head.as_usize()].push(edge.reversed());
-        }
-    }
-
-    up_graph
-        .iter_mut()
-        .chain(down_graph.iter_mut())
-        .for_each(|edges| edges.sort_by_key(|edge| edge.head));
-
-    ContractionHierarchy::new(FastGraph::new(&up_graph), FastGraph::new(&down_graph))
 }
 
 /// Computes the shortcuts necessary to maintain the shortest path distances in `graph` if vertex

@@ -9,6 +9,27 @@ pub struct FastGraph<E: EdgeLike> {
 }
 
 impl<E: EdgeLike> FastGraph<E> {
+    pub fn from_flat(mut flat: Vec<E>) -> Self
+    where
+        E: Copy,
+    {
+        flat.sort_unstable_by_key(|edge| (edge.tail(), edge.head(), edge.weight()));
+
+        let mut indices = vec![0; flat.last().unwrap().tail().as_usize() + 2];
+
+        for edge in &flat {
+            indices[edge.tail().as_usize() + 1] += 1;
+        }
+
+        for i in 1..indices.len() {
+            indices[i] += indices[i - 1];
+        }
+
+        Self {
+            flattened_nested: FlattenedNested::from_flat(flat, indices),
+        }
+    }
+
     pub fn new(nested: &Vec<Vec<E>>) -> Self
     where
         E: Copy,

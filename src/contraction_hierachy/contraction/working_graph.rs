@@ -1,13 +1,14 @@
+use rayon::slice::ParallelSliceMut;
+
 use crate::{
     contraction_hierachy::ContractionEdge,
-    graph::{EdgeLike, GraphLike, WeightedEdge},
+    graph::{EdgeLike, GraphLike},
     types::{Distance, VertexId},
 };
 
 pub(super) struct WorkingGraph<D: Distance> {
     outgoing: Vec<Vec<ContractionEdge<D>>>,
-    incoming: Vec<Vec<WeightedEdge<D>>>,
-    contracted_edges: Vec<ContractionEdge<D>>,
+    incoming: Vec<Vec<ContractionEdge<D>>>,
 }
 
 impl<D: Distance> WorkingGraph<D> {
@@ -20,7 +21,6 @@ impl<D: Distance> WorkingGraph<D> {
         let mut working_graph = Self {
             outgoing: vec![Vec::new(); graph.num_vertices()],
             incoming: vec![Vec::new(); graph.num_vertices()],
-            contracted_edges: Vec::new(),
         };
 
         for edge in graph.edges() {
@@ -44,7 +44,7 @@ impl<D: Distance> WorkingGraph<D> {
     }
 
     /// Returns reverse incoming adjacency, stored as `vertex -> predecessor`.
-    pub(super) fn get_in(&self, vertex: VertexId) -> &[WeightedEdge<D>] {
+    pub(super) fn get_in(&self, vertex: VertexId) -> &[ContractionEdge<D>] {
         return &self.incoming[vertex.as_usize()];
     }
 
@@ -77,14 +77,7 @@ impl<D: Distance> WorkingGraph<D> {
                     .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&edge.tail))
                     .expect_err("incoming edge already exists although outgoing edge is missing");
 
-                self.incoming[edge.head.as_usize()].insert(
-                    in_idx,
-                    WeightedEdge {
-                        tail: edge.head,
-                        head: edge.tail,
-                        weight: edge.weight,
-                    },
-                );
+                self.incoming[edge.head.as_usize()].insert(in_idx, edge.reversed());
                 self.outgoing[edge.tail.as_usize()].insert(out_idx, edge);
             }
         }
@@ -94,35 +87,48 @@ impl<D: Distance> WorkingGraph<D> {
     pub(super) fn contract_vertex(&mut self, vertex: VertexId) {
         let vertex_index = vertex.as_usize();
 
-        for edge in std::mem::take(&mut self.outgoing[vertex_index]) {
+        for edge in &self.outgoing[vertex_index] {
             let index = self.incoming[edge.head.as_usize()]
                 .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&vertex))
                 .expect("incoming edge missing although outgoing edge exists");
 
             self.incoming[edge.head.as_usize()].remove(index);
-            self.contracted_edges.push(edge);
         }
 
-        for incoming_edge in std::mem::take(&mut self.incoming[vertex_index]) {
-            let edge = {
-                let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
+        for incoming_edge in &self.incoming[vertex_index] {
+            let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
 
-                let index = outgoing
-                    .binary_search_by(|edge| edge.head.cmp(&vertex))
-                    .expect("outgoing edge missing although incoming edge exists");
+            let index = outgoing
+                .binary_search_by(|edge| edge.head.cmp(&vertex))
+                .expect("outgoing edge missing although incoming edge exists");
 
-                outgoing.remove(index)
-            };
-
-            self.contracted_edges.push(edge);
+            outgoing.remove(index);
         }
     }
 
-    pub(super) fn get_edges(&self) -> Vec<ContractionEdge<D>> {
-        self.contracted_edges
-            .iter()
-            .copied()
-            .chain(self.outgoing.iter().flatten().copied())
-            .collect()
+    pub(super) fn edges(self) -> (Vec<ContractionEdge<D>>, Vec<ContractionEdge<D>>)
+    where
+        D: Send,
+    {
+        let num_up_edges: usize = self.outgoing.iter().map(|edges| edges.len()).sum();
+        let num_down_edges: usize = self.incoming.iter().map(|edges| edges.len()).sum();
+
+        let mut up_edges = Vec::with_capacity(num_up_edges);
+        let mut down_edges = Vec::with_capacity(num_down_edges);
+
+        for mut edges in self.outgoing {
+            up_edges.extend_from_slice(&edges);
+            edges.clear();
+        }
+
+        for mut edges in self.incoming {
+            down_edges.extend_from_slice(&edges);
+            edges.clear();
+        }
+
+        up_edges.par_sort_unstable();
+        down_edges.par_sort_unstable();
+
+        (up_edges, down_edges)
     }
 }
