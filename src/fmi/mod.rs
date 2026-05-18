@@ -1,7 +1,6 @@
 mod fmi_ch_reader;
 mod fmi_ch_writer;
 mod fmi_graph_reader;
-mod fmi_hl_format;
 mod fmi_hl_reader;
 mod fmi_hl_writer;
 mod fmi_query_writer;

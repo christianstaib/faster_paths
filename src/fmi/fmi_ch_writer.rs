@@ -1,7 +1,6 @@
-use std::{
-    fmt::Display,
-    io::{self, Write},
-};
+use std::io::{self, Write};
+
+use serde::Serialize;
 
 use crate::{
     contraction_hierachy::{ContractionEdge, ContractionHierarchy},
@@ -9,7 +8,17 @@ use crate::{
     types::{Distance, VertexId},
 };
 
-pub fn write_fmi_ch<W: Write, D: Distance + Display>(
+pub fn write_fmi_ch<W: Write, D: Distance + Serialize>(
+    out: W,
+    ch: &ContractionHierarchy<D>,
+) -> io::Result<()> {
+    postcard::to_io(ch, out)
+        .map(|_| ())
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))
+}
+
+#[allow(dead_code)]
+pub(super) fn write_fmi_ch_text<W: Write, D: Distance + std::fmt::Display>(
     mut out: W,
     ch: &ContractionHierarchy<D>,
 ) -> io::Result<()> {
@@ -19,7 +28,7 @@ pub fn write_fmi_ch<W: Write, D: Distance + Display>(
     write_edges(&mut out, ch.down_graph())
 }
 
-fn write_edges<W: Write, D: Distance + Display>(
+fn write_edges<W: Write, D: Distance + std::fmt::Display>(
     out: &mut W,
     graph: &FastGraph<ContractionEdge<D>>,
 ) -> io::Result<()> {

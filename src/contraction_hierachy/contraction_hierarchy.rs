@@ -3,7 +3,9 @@ use crate::{
     graph::{FastGraph, GraphLike},
     types::{Distance, VertexId},
 };
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct ContractionHierarchy<D: Distance> {
     up_graph: FastGraph<ContractionEdge<D>>,
     down_graph: FastGraph<ContractionEdge<D>>,
