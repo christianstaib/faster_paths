@@ -12,7 +12,7 @@ use crate::{
 };
 use indicatif::ProgressBar;
 use rayon::prelude::*;
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
@@ -41,21 +41,24 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         .map(VertexId::new)
         .collect::<Vec<_>>();
 
-    let mut blocked = vec![0u32; graph.num_vertices()];
-    let mut block_token = 1;
-
     let progress = ProgressBar::new(remaining.len() as u64);
 
     while !remaining.is_empty() {
-        remaining.par_sort_unstable_by_key(|&vertex| {
-            graph.get_out(vertex).len() + graph.get_in(vertex).len()
-        });
-        let (next_remaining, ids) =
-            select_ids(&graph, &remaining, fraction, &mut blocked, block_token);
+        remaining
+            .par_sort_by_key(|&vertex| graph.get_out(vertex).len() + graph.get_in(vertex).len());
 
-        let mut selected_candidates = build_shortcuts_for_vertices(&graph, ids);
+        let mut blocked = HashMap::with_capacity(remaining.len());
+        let (next_remaining, candidates) = select_ids(&graph, &remaining, fraction, &mut blocked);
 
-        selected_candidates.sort_unstable_by_key(|(_, edge_difference, _)| *edge_difference);
+        let mut selected_candidates: Vec<_> = candidates
+            .into_par_iter()
+            .map(|vertex| {
+                let shortcuts = generate_shortcuts(&graph, vertex, MAX_WITNESS_HOPS);
+                let edge_difference = edge_difference(&graph, vertex, shortcuts.len());
+                (vertex, edge_difference, shortcuts)
+            })
+            .collect();
+        selected_candidates.par_sort_by_key(|(_, edge_difference, _)| *edge_difference);
 
         for (vertex, _, shortcuts) in &selected_candidates {
             graph.contract_vertex(*vertex);
@@ -65,11 +68,6 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         }
 
         remaining = next_remaining;
-        block_token = block_token.wrapping_add(1);
-        if block_token == 0 {
-            blocked.fill(0);
-            block_token = 1;
-        }
         progress.inc(selected_candidates.len() as u64);
     }
 
@@ -86,8 +84,7 @@ fn select_ids<D: Distance>(
     graph: &WorkingGraph<D>,
     candidates: &[VertexId],
     fraction: f64,
-    blocked: &mut [u32],
-    block_token: u32,
+    blocked: &mut HashMap<VertexId, bool>,
 ) -> (Vec<VertexId>, Vec<VertexId>) {
     if candidates.is_empty() {
         return (Vec::new(), Vec::new());
@@ -100,37 +97,22 @@ fn select_ids<D: Distance>(
     let mut ids = Vec::new();
 
     for (index, &vertex) in candidates.iter().enumerate() {
-        if index >= candidate_limit || blocked[vertex.as_usize()] == block_token {
+        if index >= candidate_limit || blocked.contains_key(&vertex) {
             next_remaining.push(vertex);
             continue;
         }
 
         ids.push(vertex);
-        blocked[vertex.as_usize()] = block_token;
+        blocked.insert(vertex, true);
 
-        for edge in graph.get_out(vertex) {
-            blocked[edge.head.as_usize()] = block_token;
-        }
-
-        for edge in graph.get_in(vertex) {
-            blocked[edge.head.as_usize()] = block_token;
+        for edge in graph
+            .get_out(vertex)
+            .iter()
+            .chain(graph.get_in(vertex).iter())
+        {
+            blocked.insert(edge.head, true);
         }
     }
 
     (next_remaining, ids)
-}
-
-fn build_shortcuts_for_vertices<D: Distance + Send + Sync>(
-    graph: &WorkingGraph<D>,
-    vertices: Vec<VertexId>,
-) -> Vec<(VertexId, i64, Vec<ContractionEdge<D>>)> {
-    vertices
-        .into_par_iter()
-        .map(|vertex| {
-            let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
-            let edge_difference = edge_difference(graph, vertex, shortcuts.len());
-
-            (vertex, edge_difference, shortcuts)
-        })
-        .collect()
 }

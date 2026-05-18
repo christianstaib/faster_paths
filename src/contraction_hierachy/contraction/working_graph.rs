@@ -85,9 +85,7 @@ impl<D: Distance> WorkingGraph<D> {
 
     /// Removes all active incident edges of `vertex`.
     pub(super) fn contract_vertex(&mut self, vertex: VertexId) {
-        let vertex_index = vertex.as_usize();
-
-        for edge in &self.outgoing[vertex_index] {
+        for edge in &self.outgoing[vertex.as_usize()] {
             let index = self.incoming[edge.head.as_usize()]
                 .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&vertex))
                 .expect("incoming edge missing although outgoing edge exists");
@@ -95,7 +93,7 @@ impl<D: Distance> WorkingGraph<D> {
             self.incoming[edge.head.as_usize()].remove(index);
         }
 
-        for incoming_edge in &self.incoming[vertex_index] {
+        for incoming_edge in &self.incoming[vertex.as_usize()] {
             let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
 
             let index = outgoing
