@@ -12,7 +12,8 @@ use crate::{
 };
 use indicatif::ProgressBar;
 use rayon::prelude::*;
-use std::{collections::HashMap, time::Instant};
+use rustc_hash::FxHashSet;
+use std::time::Instant;
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
@@ -44,13 +45,9 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
     let progress = ProgressBar::new(remaining.len() as u64);
 
     while !remaining.is_empty() {
-        remaining
-            .par_sort_by_key(|&vertex| graph.get_out(vertex).len() + graph.get_in(vertex).len());
+        let (next_remaining, candidates) = select_ids(&graph, &remaining);
 
-        let mut blocked = HashMap::with_capacity(remaining.len());
-        let (next_remaining, candidates) = select_ids(&graph, &remaining, fraction, &mut blocked);
-
-        let mut selected_candidates: Vec<_> = candidates
+        let mut candidates_data: Vec<_> = candidates
             .into_par_iter()
             .map(|vertex| {
                 let shortcuts = generate_shortcuts(&graph, vertex, MAX_WITNESS_HOPS);
@@ -58,9 +55,13 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
                 (vertex, edge_difference, shortcuts)
             })
             .collect();
-        selected_candidates.par_sort_by_key(|(_, edge_difference, _)| *edge_difference);
+        candidates_data.par_sort_unstable_by_key(|(_, edge_difference, _)| *edge_difference);
 
-        for (vertex, _, shortcuts) in &selected_candidates {
+        let candidate_limit = ((candidates_data.len() as f64) * fraction).ceil() as usize;
+        let candidate_limit = candidate_limit.clamp(1, candidates_data.len());
+        candidates_data.truncate(candidate_limit);
+
+        for (vertex, _, shortcuts) in &candidates_data {
             graph.contract_vertex(*vertex);
             for shortcut in shortcuts {
                 graph.add_edge(shortcut);
@@ -68,7 +69,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         }
 
         remaining = next_remaining;
-        progress.inc(selected_candidates.len() as u64);
+        progress.inc(candidates_data.len() as u64);
     }
 
     progress.finish();
@@ -83,34 +84,31 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
 fn select_ids<D: Distance>(
     graph: &WorkingGraph<D>,
     candidates: &[VertexId],
-    fraction: f64,
-    blocked: &mut HashMap<VertexId, bool>,
 ) -> (Vec<VertexId>, Vec<VertexId>) {
     if candidates.is_empty() {
         return (Vec::new(), Vec::new());
     }
 
-    let candidate_limit = ((candidates.len() as f64) * fraction).ceil() as usize;
-    let candidate_limit = candidate_limit.clamp(1, candidates.len());
+    let mut blocked = FxHashSet::default();
 
     let mut next_remaining = Vec::with_capacity(candidates.len());
     let mut ids = Vec::new();
 
-    for (index, &vertex) in candidates.iter().enumerate() {
-        if index >= candidate_limit || blocked.contains_key(&vertex) {
+    for &vertex in candidates {
+        if blocked.contains(&vertex) {
             next_remaining.push(vertex);
             continue;
         }
 
         ids.push(vertex);
-        blocked.insert(vertex, true);
+        blocked.insert(vertex);
 
         for edge in graph
             .get_out(vertex)
             .iter()
             .chain(graph.get_in(vertex).iter())
         {
-            blocked.insert(edge.head, true);
+            blocked.insert(edge.head);
         }
     }
 
