@@ -100,11 +100,19 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
 
     current = Instant::now();
     let (up_edges, down_edges) = graph.edges();
-    let ch = ContractionHierarchy::new(
-        FastGraph::from_flat(up_edges),
-        FastGraph::from_flat(down_edges),
-    );
-    println!("final creation took {:?}", current.elapsed());
+    println!("flat edge creation {:?}", current.elapsed());
+
+    current = Instant::now();
+    let up_graph = FastGraph::from_flat(up_edges);
+    println!("up graph creation {:?}", current.elapsed());
+
+    current = Instant::now();
+    let down_graph = FastGraph::from_flat(down_edges);
+    println!("down graph creation {:?}", current.elapsed());
+
+    current = Instant::now();
+    let ch = ContractionHierarchy::new(up_graph, down_graph);
+    println!("ch creation {:?}", current.elapsed());
 
     ch
 }

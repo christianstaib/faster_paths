@@ -106,16 +106,16 @@ impl<D: Distance> WorkingGraph<D> {
     where
         D: Send,
     {
-        let mut up_edges = Vec::with_capacity(self.outgoing.iter().map(Vec::len).sum());
-        for edges in self.outgoing {
-            up_edges.extend(edges);
-        }
+        let flatten = |nested: Vec<Vec<ContractionEdge<D>>>| {
+            let mut flat = Vec::with_capacity(nested.iter().map(Vec::len).sum());
 
-        let mut down_edges = Vec::with_capacity(self.incoming.iter().map(Vec::len).sum());
-        for edges in self.incoming {
-            down_edges.extend(&edges);
-        }
+            for mut chunk in nested {
+                flat.append(&mut chunk);
+            }
 
-        (up_edges, down_edges)
+            flat
+        };
+
+        rayon::join(|| flatten(self.outgoing), || flatten(self.incoming))
     }
 }
