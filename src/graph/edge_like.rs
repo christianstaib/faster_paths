@@ -6,4 +6,5 @@ pub trait EdgeLike {
     fn tail(&self) -> VertexId;
     fn head(&self) -> VertexId;
     fn weight(&self) -> Self::Distance;
+    fn reversed(&self) -> Self;
 }

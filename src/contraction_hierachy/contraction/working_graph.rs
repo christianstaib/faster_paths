@@ -1,7 +1,6 @@
 use crate::{
-    contraction_hierachy::ContractionEdge,
     graph::{Edge, EdgeLike, Graph, GraphLike},
-    types::{Distance, VertexId},
+    types::VertexId,
 };
 
 pub(super) struct WorkingGraph<E: EdgeLike> {
@@ -24,43 +23,22 @@ impl<E: EdgeLike> WorkingGraph<E> {
     }
 }
 
-impl<D: Distance> WorkingGraph<ContractionEdge<D>> {
+impl<E: EdgeLike> WorkingGraph<E> {
     /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-    pub(super) fn new() -> WorkingGraph<ContractionEdge<D>> {
+    pub(super) fn new() -> WorkingGraph<E> {
         Self {
             outgoing: Graph::new(),
             incoming: Graph::new(),
         }
     }
 
-    //    /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-    //    pub(super) fn new<G>(graph: &G) -> WorkingGraph<ContractionEdge<D>>
-    //    where
-    //        G: GraphLike,
-    //        G::Edge: EdgeLike<Distance = D>,
-    //    {
-    //        let mut working_graph = Self {
-    //            outgoing: Graph::new(),
-    //            incoming: Graph::new(),
-    //        };
-    //
-    //        for edge in graph.edges() {
-    //            let contraction_edge = ContractionEdge {
-    //                tail: edge.tail(),
-    //                head: edge.head(),
-    //                weight: edge.weight(),
-    //                skipped: None,
-    //            };
-    //            working_graph.add_edge(&contraction_edge);
-    //        }
-    //
-    //        working_graph
-    //    }
-
     /// Inserts an edge into the graph and records its reverse adjacency for the head.
-    pub(super) fn add_edge(&mut self, edge: &ContractionEdge<D>) {
+    pub(super) fn add_edge(&mut self, edge: &E)
+    where
+        E: Copy,
+    {
         // While self loops are not forbidden for contraction, they make it impossible to unpack a shortcut path containing them, as they create a cycle.
-        if edge.tail == edge.head {
+        if edge.tail() == edge.head() {
             return;
         }
 
@@ -76,17 +54,17 @@ impl<D: Distance> WorkingGraph<ContractionEdge<D>> {
         };
 
         for edge in self.outgoing.out_edges(vertex) {
-            self.incoming.remove_edge(create_edge(edge.head)).unwrap();
+            self.incoming.remove_edge(create_edge(edge.head())).unwrap();
         }
 
         for edge in self.incoming.out_edges(vertex) {
-            self.outgoing.remove_edge(create_edge(edge.head)).unwrap();
+            self.outgoing.remove_edge(create_edge(edge.head())).unwrap();
         }
     }
 
-    pub(super) fn edges(self) -> (Vec<ContractionEdge<D>>, Vec<ContractionEdge<D>>)
+    pub(super) fn edges(self) -> (Vec<E>, Vec<E>)
     where
-        D: Send + Sync,
+        E: Send + Sync + Copy,
     {
         rayon::join(
             || self.outgoing.edges().copied().collect(),

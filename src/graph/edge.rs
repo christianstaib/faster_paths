@@ -28,4 +28,12 @@ impl<D: Distance> EdgeLike for WeightedEdge<D> {
     fn weight(&self) -> Self::Distance {
         self.weight
     }
+
+    fn reversed(&self) -> Self {
+        Self {
+            tail: self.head,
+            head: self.tail,
+            weight: self.weight,
+        }
+    }
 }

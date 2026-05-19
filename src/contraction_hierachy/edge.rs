@@ -26,16 +26,6 @@ pub struct ContractionEdge<D> {
     pub skipped: Option<VertexId>,
 }
 
-impl<D: Distance> ContractionEdge<D> {
-    pub fn reversed(&self) -> Self {
-        Self {
-            tail: self.head,
-            head: self.tail,
-            ..*self
-        }
-    }
-}
-
 impl<D: Distance> EdgeLike for ContractionEdge<D> {
     type Distance = D;
 
@@ -47,5 +37,13 @@ impl<D: Distance> EdgeLike for ContractionEdge<D> {
     }
     fn weight(&self) -> Self::Distance {
         self.weight
+    }
+
+    fn reversed(&self) -> Self {
+        Self {
+            tail: self.head,
+            head: self.tail,
+            ..*self
+        }
     }
 }

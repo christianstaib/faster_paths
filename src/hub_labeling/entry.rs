@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, usize};
+use std::cmp::Ordering;
 
 use crate::types::{Distance, VertexId};
 use serde::{Deserialize, Serialize};
