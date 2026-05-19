@@ -16,17 +16,18 @@ impl EdgeDifference {
 impl<D: Distance> Term<D> for EdgeDifference {
     fn value(
         &self,
-        graph: &WorkingGraph<D>,
+        graph: &WorkingGraph<ContractionEdge<D>>,
         vertex: VertexId,
         shortcuts: &[ContractionEdge<D>],
     ) -> i64 {
-        let degree = graph.get_out(vertex).len() + graph.get_in(vertex).len();
+        let degree =
+            graph.outgoing().out_edges(vertex).len() + graph.incoming().out_edges(vertex).len();
         shortcuts.len() as i64 - degree as i64
     }
 
     fn update(
         &mut self,
-        _graph: &WorkingGraph<D>,
+        _graph: &WorkingGraph<ContractionEdge<D>>,
         _vertex: VertexId,
         _shortcuts: &[ContractionEdge<D>],
     ) {

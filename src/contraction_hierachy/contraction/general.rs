@@ -10,18 +10,19 @@ use crate::types::VertexId;
 
 /// Calculates the edge difference. Used in order to avoid calculation errors if always written out.
 pub(super) fn edge_difference<D: Distance>(
-    graph: &WorkingGraph<D>,
+    graph: &WorkingGraph<ContractionEdge<D>>,
     vertex: VertexId,
     shortcut_count: usize,
 ) -> i64 {
-    let degree = graph.get_out(vertex).len() + graph.get_in(vertex).len();
+    let degree =
+        graph.outgoing().out_edges(vertex).len() + graph.incoming().out_edges(vertex).len();
     shortcut_count as i64 - degree as i64
 }
 
 /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
 pub(super) fn build_working_graph<G: GraphLike>(
     graph: &G,
-) -> WorkingGraph<<G::Edge as EdgeLike>::Distance> {
+) -> WorkingGraph<ContractionEdge<<G::Edge as EdgeLike>::Distance>> {
     WorkingGraph::new(graph)
 }
 
@@ -31,25 +32,26 @@ pub(super) fn build_working_graph<G: GraphLike>(
 /// A shortcut u -> w for u -> v -> w is necessary iff (u, v, w) is the only shortest u-v-path.
 /// This function relaxes this condition by limiting the search space size with max_hops.
 pub(super) fn generate_shortcuts<D: Distance>(
-    graph: &WorkingGraph<D>,
+    graph: &WorkingGraph<ContractionEdge<D>>,
     vertex: VertexId,
     max_hops: u32,
 ) -> Vec<ContractionEdge<D>> {
-    let targets = graph
-        .get_out(vertex)
+    let outgoing_edges = graph.outgoing().out_edges(vertex);
+    let targets = outgoing_edges
         .iter()
         .map(|edge| edge.head)
         .collect::<FxHashSet<_>>();
 
     graph
-        .get_in(vertex)
+        .incoming()
+        .out_edges(vertex)
         .iter()
         .flat_map(|incoming_edge| {
             let tail = incoming_edge.head;
             let tail_weight = incoming_edge.weight;
             let distances = bounded_dijkstra(graph, tail, &targets, max_hops);
 
-            graph.get_out(vertex).iter().filter_map(move |edge| {
+            outgoing_edges.iter().filter_map(move |edge| {
                 if tail == edge.head {
                     return None;
                 }
@@ -74,7 +76,7 @@ pub(super) fn generate_shortcuts<D: Distance>(
 ///
 /// Stops once every target has been settled or once only vertices with hop distance > `max_hops` remain. The returned map may contain non-target vertices.
 pub(super) fn bounded_dijkstra<D: Distance>(
-    graph: &WorkingGraph<D>,
+    graph: &WorkingGraph<ContractionEdge<D>>,
     source: VertexId,
     targets: &FxHashSet<VertexId>,
     max_hops: u32,
@@ -107,7 +109,7 @@ pub(super) fn bounded_dijkstra<D: Distance>(
             continue;
         }
 
-        for edge in graph.get_out(vertex) {
+        for edge in graph.outgoing().out_edges(vertex) {
             let new_distance = distance + edge.weight;
 
             if distances

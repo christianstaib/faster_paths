@@ -1,5 +1,6 @@
 use crate::{
     contraction_hierachy::{
+        ContractionEdge,
         contraction::{general::build_working_graph, queue::Queue, working_graph::WorkingGraph},
         contraction_hierarchy::ContractionHierarchy,
     },
@@ -26,7 +27,7 @@ where
 }
 
 fn contract_working_graph_sequential<D: Distance + Sync + Send>(
-    mut graph: WorkingGraph<D>,
+    mut graph: WorkingGraph<ContractionEdge<D>>,
 ) -> ContractionHierarchy<D> {
     let mut queue = Queue::new(&graph);
     let progress = ProgressBar::new(graph.num_vertices() as u64);

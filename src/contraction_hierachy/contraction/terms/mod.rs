@@ -15,7 +15,7 @@ use edge_difference::EdgeDifference;
 pub(super) trait Term<D: Distance>: Send + Sync {
     fn value(
         &self,
-        graph: &WorkingGraph<D>,
+        graph: &WorkingGraph<ContractionEdge<D>>,
         vertex: VertexId,
         shortcuts: &[ContractionEdge<D>],
     ) -> i64;
@@ -24,7 +24,7 @@ pub(super) trait Term<D: Distance>: Send + Sync {
     /// This is called before `vertex` is contracted, so neighbors can be reached.
     fn update(
         &mut self,
-        graph: &WorkingGraph<D>,
+        graph: &WorkingGraph<ContractionEdge<D>>,
         vertex: VertexId,
         shortcuts: &[ContractionEdge<D>],
     );
@@ -32,12 +32,12 @@ pub(super) trait Term<D: Distance>: Send + Sync {
 
 /// Visits each distinct incoming or outgoing neighbor of `vertex`.
 fn for_each_neighbor<D: Distance>(
-    graph: &WorkingGraph<D>,
+    graph: &WorkingGraph<ContractionEdge<D>>,
     vertex: VertexId,
     mut visit: impl FnMut(VertexId),
 ) {
-    let out_edges = graph.get_out(vertex);
-    let in_edges = graph.get_in(vertex);
+    let out_edges = graph.outgoing().out_edges(vertex);
+    let in_edges = graph.incoming().out_edges(vertex);
 
     let mut out_idx = 0;
     let mut in_idx = 0;
@@ -85,7 +85,7 @@ pub(super) fn default_terms<D: Distance>(vertex_count: usize) -> Vec<Box<dyn Ter
 }
 
 pub(super) fn priority<D: Distance>(
-    graph: &WorkingGraph<D>,
+    graph: &WorkingGraph<ContractionEdge<D>>,
     vertex: VertexId,
     shortcuts: &[ContractionEdge<D>],
     terms: &[Box<dyn Term<D>>],

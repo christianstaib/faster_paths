@@ -14,12 +14,15 @@ impl<E: EdgeLike> Graph<E> {
             out_edges: nested.clone(),
         }
     }
-}
 
-impl<E: EdgeLike> GraphLike for Graph<E> {
-    type Edge = E;
+    pub(crate) fn empty(num_vertices: usize) -> Self {
+        let mut out_edges = Vec::with_capacity(num_vertices);
+        out_edges.resize_with(num_vertices, Vec::new);
 
-    fn out_edges(&self, tail: VertexId) -> &[E] {
+        Self { out_edges }
+    }
+
+    pub fn out_edges(&self, tail: VertexId) -> &[E] {
         if tail.as_usize() >= self.out_edges.len() {
             return &[];
         }
@@ -27,17 +30,41 @@ impl<E: EdgeLike> GraphLike for Graph<E> {
         &self.out_edges[tail.as_usize()]
     }
 
-    fn num_vertices(&self) -> usize {
+    pub(crate) fn out_edges_mut(&mut self, tail: VertexId) -> &mut Vec<E> {
+        &mut self.out_edges[tail.as_usize()]
+    }
+
+    pub fn num_vertices(&self) -> usize {
+        self.out_edges.len()
+    }
+
+    pub fn num_edges(&self) -> usize {
+        self.out_edges.iter().map(|edges| edges.len()).sum()
+    }
+
+    pub fn edges(&self) -> impl Iterator<Item = &E> + '_ {
+        (0..self.num_vertices())
+            .map(|tail| VertexId::new(tail as u32))
+            .flat_map(|tail| self.out_edges(tail).iter())
+    }
+
+    pub(crate) fn into_nested(self) -> Vec<Vec<E>> {
         self.out_edges
-            .iter()
-            .flatten()
-            .map(|edge| std::cmp::max(edge.tail(), edge.head()))
-            .max()
-            .map(|vertex| vertex.as_usize())
-            .unwrap_or(0)
+    }
+}
+
+impl<E: EdgeLike> GraphLike for Graph<E> {
+    type Edge = E;
+
+    fn out_edges(&self, tail: VertexId) -> &[E] {
+        self.out_edges(tail)
+    }
+
+    fn num_vertices(&self) -> usize {
+        self.num_vertices()
     }
 
     fn num_edges(&self) -> usize {
-        self.out_edges.iter().map(|edges| edges.len()).sum()
+        self.num_edges()
     }
 }

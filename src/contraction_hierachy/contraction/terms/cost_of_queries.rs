@@ -24,7 +24,7 @@ impl CostOfQueries {
 impl<D: Distance> Term<D> for CostOfQueries {
     fn value(
         &self,
-        _graph: &WorkingGraph<D>,
+        _graph: &WorkingGraph<ContractionEdge<D>>,
         vertex: VertexId,
         _shortcuts: &[ContractionEdge<D>],
     ) -> i64 {
@@ -33,7 +33,7 @@ impl<D: Distance> Term<D> for CostOfQueries {
 
     fn update(
         &mut self,
-        graph: &WorkingGraph<D>,
+        graph: &WorkingGraph<ContractionEdge<D>>,
         vertex: VertexId,
         _shortcuts: &[ContractionEdge<D>],
     ) {

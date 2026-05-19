@@ -1,24 +1,39 @@
 use crate::{
     contraction_hierachy::ContractionEdge,
-    graph::{EdgeLike, GraphLike},
+    graph::{EdgeLike, Graph, GraphLike},
     types::{Distance, VertexId},
 };
 
-pub(super) struct WorkingGraph<D: Distance> {
-    outgoing: Vec<Vec<ContractionEdge<D>>>,
-    incoming: Vec<Vec<ContractionEdge<D>>>,
+pub(super) struct WorkingGraph<E: EdgeLike> {
+    outgoing: Graph<E>,
+    incoming: Graph<E>,
 }
 
-impl<D: Distance> WorkingGraph<D> {
+impl<E: EdgeLike> WorkingGraph<E> {
+    pub(super) fn num_vertices(&self) -> usize {
+        self.outgoing.num_vertices()
+    }
+
+    pub(super) fn outgoing(&self) -> &Graph<E> {
+        &self.outgoing
+    }
+
+    /// Reverse incoming adjacency, stored as `vertex -> predecessor`.
+    pub(super) fn incoming(&self) -> &Graph<E> {
+        &self.incoming
+    }
+}
+
+impl<D: Distance> WorkingGraph<ContractionEdge<D>> {
     /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-    pub(super) fn new<G>(graph: &G) -> WorkingGraph<D>
+    pub(super) fn new<G>(graph: &G) -> WorkingGraph<ContractionEdge<D>>
     where
         G: GraphLike,
         G::Edge: EdgeLike<Distance = D>,
     {
         let mut working_graph = Self {
-            outgoing: vec![Vec::new(); graph.num_vertices()],
-            incoming: vec![Vec::new(); graph.num_vertices()],
+            outgoing: Graph::empty(graph.num_vertices()),
+            incoming: Graph::empty(graph.num_vertices()),
         };
 
         for edge in graph.edges() {
@@ -33,19 +48,6 @@ impl<D: Distance> WorkingGraph<D> {
         working_graph
     }
 
-    pub(super) fn num_vertices(&self) -> usize {
-        self.outgoing.len()
-    }
-
-    pub(super) fn get_out(&self, vertex: VertexId) -> &[ContractionEdge<D>] {
-        return &self.outgoing[vertex.as_usize()];
-    }
-
-    /// Returns reverse incoming adjacency, stored as `vertex -> predecessor`.
-    pub(super) fn get_in(&self, vertex: VertexId) -> &[ContractionEdge<D>] {
-        return &self.incoming[vertex.as_usize()];
-    }
-
     /// Inserts an edge into the graph and records its reverse adjacency for the head.
     pub(super) fn add_edge(&mut self, edge: &ContractionEdge<D>) {
         // While self loops are not forbidden for contraction, they make it impossible to unpack a shortcut path containing them, as they create a cycle.
@@ -53,46 +55,58 @@ impl<D: Distance> WorkingGraph<D> {
             return;
         }
 
-        match self.outgoing[edge.tail.as_usize()]
+        match self
+            .outgoing
+            .out_edges(edge.tail)
             .binary_search_by(|old_edge| old_edge.head.cmp(&edge.head))
         {
             Ok(out_idx) => {
                 // Edge already in graph. Update weight.
-                if self.outgoing[edge.tail.as_usize()][out_idx].weight <= edge.weight {
+                if self.outgoing.out_edges(edge.tail)[out_idx].weight <= edge.weight {
                     return;
                 }
 
-                let in_idx = self.incoming[edge.head.as_usize()]
+                let in_idx = self
+                    .incoming
+                    .out_edges(edge.head)
                     .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&edge.tail))
                     .expect("incoming edge missing although outgoing edge exists");
 
-                self.incoming[edge.head.as_usize()][in_idx].weight = edge.weight;
-                self.outgoing[edge.tail.as_usize()][out_idx] = edge.clone();
+                self.incoming.out_edges_mut(edge.head)[in_idx].weight = edge.weight;
+                self.outgoing.out_edges_mut(edge.tail)[out_idx].weight = edge.weight;
             }
 
             Err(out_idx) => {
-                let in_idx = self.incoming[edge.head.as_usize()]
+                let in_idx = self
+                    .incoming
+                    .out_edges(edge.head)
                     .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&edge.tail))
                     .expect_err("incoming edge already exists although outgoing edge is missing");
 
-                self.incoming[edge.head.as_usize()].insert(in_idx, edge.reversed());
-                self.outgoing[edge.tail.as_usize()].insert(out_idx, edge.clone());
+                self.incoming
+                    .out_edges_mut(edge.head)
+                    .insert(in_idx, edge.reversed());
+                self.outgoing
+                    .out_edges_mut(edge.tail)
+                    .insert(out_idx, edge.clone());
             }
         }
     }
 
     /// Removes all out and in edges with head == vertex
     pub(super) fn make_unreachable(&mut self, vertex: VertexId) {
-        for edge in &self.outgoing[vertex.as_usize()] {
-            let index = self.incoming[edge.head.as_usize()]
+        for edge in self.outgoing.out_edges(vertex) {
+            let index = self
+                .incoming
+                .out_edges(edge.head)
                 .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&vertex))
                 .expect("incoming edge missing although outgoing edge exists");
 
-            self.incoming[edge.head.as_usize()].remove(index);
+            self.incoming.out_edges_mut(edge.head).remove(index);
         }
 
-        for incoming_edge in &self.incoming[vertex.as_usize()] {
-            let outgoing = &mut self.outgoing[incoming_edge.head.as_usize()];
+        for incoming_edge in self.incoming.out_edges(vertex) {
+            let outgoing = self.outgoing.out_edges_mut(incoming_edge.head);
 
             let index = outgoing
                 .binary_search_by(|edge| edge.head.cmp(&vertex))
@@ -106,7 +120,8 @@ impl<D: Distance> WorkingGraph<D> {
     where
         D: Send,
     {
-        let flatten = |nested: Vec<Vec<ContractionEdge<D>>>| {
+        let flatten = |graph: Graph<ContractionEdge<D>>| {
+            let nested = graph.into_nested();
             let mut flat = Vec::with_capacity(nested.iter().map(Vec::len).sum());
 
             for mut chunk in nested {
@@ -116,6 +131,9 @@ impl<D: Distance> WorkingGraph<D> {
             flat
         };
 
-        rayon::join(|| flatten(self.outgoing), || flatten(self.incoming))
+        let outgoing = self.outgoing;
+        let incoming = self.incoming;
+
+        rayon::join(move || flatten(outgoing), move || flatten(incoming))
     }
 }

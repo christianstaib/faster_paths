@@ -1,5 +1,6 @@
 use crate::{
     contraction_hierachy::{
+        ContractionEdge,
         contraction::{
             general::{build_working_graph, edge_difference, generate_shortcuts},
             working_graph::WorkingGraph,
@@ -35,7 +36,7 @@ where
 }
 
 fn contract_working_graph_parallel<D: Distance + Send + Sync>(
-    mut graph: WorkingGraph<D>,
+    mut graph: WorkingGraph<ContractionEdge<D>>,
     fraction: f64,
 ) -> ContractionHierarchy<D> {
     let mut remaining = (0..graph.num_vertices() as u32)
@@ -118,7 +119,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
 }
 
 fn select_ids<D: Distance>(
-    graph: &WorkingGraph<D>,
+    graph: &WorkingGraph<ContractionEdge<D>>,
     candidates: &[VertexId],
 ) -> (Vec<VertexId>, Vec<VertexId>) {
     if candidates.is_empty() {
@@ -140,9 +141,10 @@ fn select_ids<D: Distance>(
         blocked.insert(vertex);
 
         for edge in graph
-            .get_out(vertex)
+            .outgoing()
+            .out_edges(vertex)
             .iter()
-            .chain(graph.get_in(vertex).iter())
+            .chain(graph.incoming().out_edges(vertex).iter())
         {
             blocked.insert(edge.head);
         }
