@@ -81,8 +81,8 @@ impl<D: Distance> WorkingGraph<D> {
         }
     }
 
-    /// Removes all active incident edges of `vertex`.
-    pub(super) fn contract_vertex(&mut self, vertex: VertexId) {
+    /// Removes all out and in edges with head == vertex
+    pub(super) fn make_unreachable(&mut self, vertex: VertexId) {
         for edge in &self.outgoing[vertex.as_usize()] {
             let index = self.incoming[edge.head.as_usize()]
                 .binary_search_by(|incoming_edge| incoming_edge.head.cmp(&vertex))

@@ -38,17 +38,3 @@ pub struct Path<D: Distance> {
     pub vertices: Vec<VertexId>,
     pub distance: D,
 }
-
-// impl<D: Distance> Path<D> {
-//     pub fn new(vertices: Vec<VertexId>, distance: D) -> Self {
-//         Self { vertices, distance }
-//     }
-//
-//     pub fn vertices(&self) -> &[VertexId] {
-//         &self.vertices
-//     }
-//
-//     pub fn distance(&self) -> D {
-//         self.distance
-//     }
-// }

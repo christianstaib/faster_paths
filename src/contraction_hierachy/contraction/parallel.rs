@@ -80,7 +80,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
         candidates_data.truncate(use_len);
 
         for (vertex, _, shortcuts) in &candidates_data {
-            graph.contract_vertex(*vertex);
+            graph.make_unreachable(*vertex);
             for shortcut in shortcuts {
                 graph.add_edge(shortcut);
             }

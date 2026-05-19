@@ -32,7 +32,7 @@ fn contract_working_graph_sequential<D: Distance + Sync + Send>(
     let progress = ProgressBar::new(graph.num_vertices() as u64);
 
     while let Some((vertex, shortcuts)) = queue.pop(&graph) {
-        graph.contract_vertex(vertex);
+        graph.make_unreachable(vertex);
         for shortcut in &shortcuts {
             graph.add_edge(shortcut);
         }
