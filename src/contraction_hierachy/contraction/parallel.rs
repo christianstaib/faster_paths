@@ -26,7 +26,9 @@ where
     G: GraphLike,
     <G::Edge as EdgeLike>::Distance: Send + Sync,
 {
+    let start = Instant::now();
     let working_graph = build_working_graph(graph);
+    println!("Working graph generation took {:?}", start.elapsed());
 
     let start = Instant::now();
     let contraction_hierarchy = contract_working_graph_parallel(working_graph, fraction);

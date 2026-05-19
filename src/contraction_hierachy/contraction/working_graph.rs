@@ -26,30 +26,36 @@ impl<E: EdgeLike> WorkingGraph<E> {
 
 impl<D: Distance> WorkingGraph<ContractionEdge<D>> {
     /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-    pub(super) fn new<G>(graph: &G) -> WorkingGraph<ContractionEdge<D>>
-    where
-        G: GraphLike,
-        G::Edge: EdgeLike<Distance = D>,
-    {
-        let empty_graph =
-            || Graph::from_nested((0..graph.num_vertices()).map(|_| Vec::new()).collect());
-
-        let mut working_graph = Self {
-            outgoing: empty_graph(),
-            incoming: empty_graph(),
-        };
-
-        for edge in graph.edges() {
-            working_graph.add_edge(&ContractionEdge {
-                tail: edge.tail(),
-                head: edge.head(),
-                weight: edge.weight(),
-                skipped: None,
-            });
+    pub(super) fn new() -> WorkingGraph<ContractionEdge<D>> {
+        Self {
+            outgoing: Graph::new(),
+            incoming: Graph::new(),
         }
-
-        working_graph
     }
+
+    //    /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
+    //    pub(super) fn new<G>(graph: &G) -> WorkingGraph<ContractionEdge<D>>
+    //    where
+    //        G: GraphLike,
+    //        G::Edge: EdgeLike<Distance = D>,
+    //    {
+    //        let mut working_graph = Self {
+    //            outgoing: Graph::new(),
+    //            incoming: Graph::new(),
+    //        };
+    //
+    //        for edge in graph.edges() {
+    //            let contraction_edge = ContractionEdge {
+    //                tail: edge.tail(),
+    //                head: edge.head(),
+    //                weight: edge.weight(),
+    //                skipped: None,
+    //            };
+    //            working_graph.add_edge(&contraction_edge);
+    //        }
+    //
+    //        working_graph
+    //    }
 
     /// Inserts an edge into the graph and records its reverse adjacency for the head.
     pub(super) fn add_edge(&mut self, edge: &ContractionEdge<D>) {
@@ -64,45 +70,27 @@ impl<D: Distance> WorkingGraph<ContractionEdge<D>> {
 
     /// Removes all out and in edges with head == vertex
     pub(super) fn make_unreachable(&mut self, vertex: VertexId) {
-        {
-            let outgoing = &self.outgoing;
-            let incoming = &mut self.incoming;
+        let create_edge = |from| Edge {
+            tail: from,
+            head: vertex,
+        };
 
-            for edge in outgoing.out_edges(vertex) {
-                incoming
-                    .remove_edge(Edge {
-                        tail: edge.head,
-                        head: vertex,
-                    })
-                    .expect("incoming edge missing although outgoing edge exists");
-            }
+        for edge in self.outgoing.out_edges(vertex) {
+            self.incoming.remove_edge(create_edge(edge.head)).unwrap();
         }
 
-        {
-            let incoming = &self.incoming;
-            let outgoing = &mut self.outgoing;
-
-            for incoming_edge in incoming.out_edges(vertex) {
-                outgoing
-                    .remove_edge(Edge {
-                        tail: incoming_edge.head,
-                        head: vertex,
-                    })
-                    .expect("outgoing edge missing although incoming edge exists");
-            }
+        for edge in self.incoming.out_edges(vertex) {
+            self.outgoing.remove_edge(create_edge(edge.head)).unwrap();
         }
     }
 
     pub(super) fn edges(self) -> (Vec<ContractionEdge<D>>, Vec<ContractionEdge<D>>)
     where
-        D: Send,
+        D: Send + Sync,
     {
-        let outgoing = self.outgoing;
-        let incoming = self.incoming;
-
         rayon::join(
-            move || outgoing.edges().copied().collect(),
-            move || incoming.edges().copied().collect(),
+            || self.outgoing.edges().copied().collect(),
+            || self.incoming.edges().copied().collect(),
         )
     }
 }

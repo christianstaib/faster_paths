@@ -8,7 +8,6 @@ use ch::{
 use clap::Parser;
 use graph_readers::edges_from_fmi;
 use indicatif::ParallelProgressIterator;
-use ordered_float::OrderedFloat;
 use rand::seq::index::sample;
 use rayon::prelude::*;
 use std::{
@@ -61,7 +60,7 @@ fn generate_tests<D: Distance + Send + Sync>(
         .collect::<Vec<_>>()
 }
 
-type DistanceType = OrderedFloat<f32>;
+type DistanceType = u32;
 
 fn main() {
     let args = Args::parse();

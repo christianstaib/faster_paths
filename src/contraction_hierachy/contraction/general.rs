@@ -23,7 +23,20 @@ pub(super) fn edge_difference<D: Distance>(
 pub(super) fn build_working_graph<G: GraphLike>(
     graph: &G,
 ) -> WorkingGraph<ContractionEdge<<G::Edge as EdgeLike>::Distance>> {
-    WorkingGraph::new(graph)
+    let mut working_graph = WorkingGraph::new();
+
+    graph.edges().for_each(|edge| {
+        let contraction_edge = ContractionEdge {
+            tail: edge.tail(),
+            head: edge.head(),
+            weight: edge.weight(),
+            skipped: None,
+        };
+
+        working_graph.add_edge(&contraction_edge);
+    });
+
+    working_graph
 }
 
 /// Computes the shortcuts necessary to maintain the shortest path distances in `graph` if vertex
