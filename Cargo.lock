@@ -87,6 +87,7 @@ name = "ch"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "graph_readers",
  "indicatif",
  "num-traits",
  "ordered-float",
@@ -281,6 +282,14 @@ dependencies = [
  "rand_core",
  "wasip2",
  "wasip3",
+]
+
+[[package]]
+name = "graph_readers"
+version = "0.1.0"
+source = "git+https://github.com/christianstaib/graph_readers.git#74a5ec821ef66aad6db919665964acc1463b5dbd"
+dependencies = [
+ "clap",
 ]
 
 [[package]]

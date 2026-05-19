@@ -1,9 +1,16 @@
 use ch::{
     contraction_hierachy::contract_graph_sequential,
-    fmi::{read_fmi_graph, write_fmi_ch},
+    fmi::write_fmi_ch,
+    graph::{FastGraph, WeightedEdge},
+    types::VertexId,
 };
 use clap::Parser;
-use std::{fs::File, io::BufWriter, path::PathBuf};
+use graph_readers::edges_from_fmi;
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+    path::PathBuf,
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -21,7 +28,14 @@ type DistanceType = u32;
 
 fn main() {
     let args = Args::parse();
-    let graph = read_fmi_graph::<DistanceType>(&args.graph).unwrap();
+    let edges = edges_from_fmi(
+        BufReader::new(File::open(&args.graph).unwrap()),
+        |s| s.parse::<u32>().ok().map(VertexId::new),
+        |s| s.parse::<DistanceType>().ok(),
+        |tail, head, weight| WeightedEdge { tail, head, weight },
+    )
+    .unwrap();
+    let graph = FastGraph::from_flat(edges);
 
     let contraction_hierarchy = contract_graph_sequential(&graph);
     let output = File::create(args.contraction_hierarchy).unwrap();

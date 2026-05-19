@@ -1,11 +1,17 @@
 use ch::{
-    fmi::{read_fmi_graph, write_queries},
-    graph::GraphLike,
+    fmi::write_queries,
+    graph::{FastGraph, GraphLike, WeightedEdge},
+    types::VertexId,
     validation::generate_queries,
 };
 use clap::Parser;
+use graph_readers::edges_from_fmi;
 use ordered_float::OrderedFloat;
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::BufReader,
+    path::PathBuf,
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -28,7 +34,15 @@ type DistanceType = OrderedFloat<f32>;
 fn main() {
     let args = Args::parse();
 
-    let graph = read_fmi_graph::<DistanceType>(&args.graph).unwrap();
+    let edges = edges_from_fmi(
+        BufReader::new(File::open(&args.graph).unwrap()),
+        |s| s.parse::<u32>().ok().map(VertexId::new),
+        |s| s.parse::<DistanceType>().ok(),
+        |tail, head, weight| WeightedEdge { tail, head, weight },
+    )
+    .unwrap();
+    let graph = FastGraph::from_flat(edges);
+
     let queries = generate_queries(graph.num_vertices(), args.n);
     write_queries(&args.out, &queries).unwrap();
 

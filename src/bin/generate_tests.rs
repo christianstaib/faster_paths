@@ -1,17 +1,22 @@
 use ch::{
     classical_search::DijkstraPathfinder,
-    fmi::{read_fmi_graph, write_tests},
+    fmi::write_tests,
     graph::{FastGraph, GraphLike, WeightedEdge},
     path::{PathDistance, PathQuery},
     pathfinder::ShortestPathFinder,
     types::{Distance, VertexId},
 };
 use clap::Parser;
+use graph_readers::edges_from_fmi;
 use indicatif::ParallelProgressIterator;
 use ordered_float::OrderedFloat;
 use rand::seq::index::sample;
 use rayon::prelude::*;
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::BufReader,
+    path::PathBuf,
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -62,7 +67,14 @@ type DistanceType = OrderedFloat<f32>;
 fn main() {
     let args = Args::parse();
 
-    let graph = read_fmi_graph::<DistanceType>(&args.graph).unwrap();
+    let edges = edges_from_fmi(
+        BufReader::new(File::open(&args.graph).unwrap()),
+        |s| s.parse::<u32>().ok().map(VertexId::new),
+        |s| s.parse::<DistanceType>().ok(),
+        |tail, head, weight| WeightedEdge { tail, head, weight },
+    )
+    .unwrap();
+    let graph = FastGraph::from_flat(edges);
 
     let tests = generate_tests(&graph, args.num_tests);
     write_tests(&args.tests, &tests).unwrap();
