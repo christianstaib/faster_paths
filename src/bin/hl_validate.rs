@@ -1,17 +1,14 @@
 use ch::{
-    fmi::{read_fmi_ch, read_fmi_hl, read_tests},
+    contraction_hierachy::ContractionHierarchy,
     graph::{FastGraph, WeightedEdge},
-    hub_labeling::HubLabelingPathfinder,
+    hub_labeling::{HubLabeling, HubLabelingPathfinder},
+    path::PathDistance,
     types::VertexId,
     validation::validate,
 };
 use clap::Parser;
 use graph_readers::edges_from_fmi;
-use std::{
-    fs::File,
-    io::BufReader,
-    path::PathBuf,
-};
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -49,9 +46,22 @@ fn main() {
 
         FastGraph::from_flat(edges)
     });
-    let contraction_hierarchy = read_fmi_ch::<DistanceType>(&args.contraction_hierarchy).unwrap();
-    let hub_labeling = read_fmi_hl::<DistanceType>(&args.hub_labeling).unwrap();
-    let tests = read_tests::<DistanceType>(&args.tests).unwrap();
+
+    let (contraction_hierarchy, _): (ContractionHierarchy<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.contraction_hierarchy).unwrap()),
+        &mut [0; 1024],
+    ))
+    .unwrap();
+
+    let (hub_labeling, _): (HubLabeling<DistanceType>, _) = postcard::from_io((
+        BufReader::new(File::open(&args.hub_labeling).unwrap()),
+        &mut [0; 1024],
+    ))
+    .unwrap();
+
+    let tests_input = File::open(&args.tests).unwrap();
+    let tests: Vec<PathDistance<DistanceType>> =
+        serde_json::from_reader(BufReader::new(tests_input)).unwrap();
 
     let mut pathfinder = HubLabelingPathfinder {
         contraction_hierarchy: &contraction_hierarchy,

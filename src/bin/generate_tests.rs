@@ -1,6 +1,5 @@
 use ch::{
     classical_search::DijkstraPathfinder,
-    fmi::write_tests,
     graph::{FastGraph, GraphLike, WeightedEdge},
     path::{PathDistance, PathQuery},
     pathfinder::ShortestPathFinder,
@@ -14,7 +13,7 @@ use rand::seq::index::sample;
 use rayon::prelude::*;
 use std::{
     fs::File,
-    io::BufReader,
+    io::{BufReader, BufWriter},
     path::PathBuf,
 };
 
@@ -77,7 +76,8 @@ fn main() {
     let graph = FastGraph::from_flat(edges);
 
     let tests = generate_tests(&graph, args.num_tests);
-    write_tests(&args.tests, &tests).unwrap();
+    let output = File::create(&args.tests).unwrap();
+    serde_json::to_writer_pretty(BufWriter::new(output), &tests).unwrap();
 
     println!("Wrote {} tests to {:?}.", tests.len(), args.tests);
 }

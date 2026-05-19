@@ -1,7 +1,8 @@
 use crate::types::{Distance, VertexId};
+use serde::{Deserialize, Serialize};
 
 /// Stores a query for a path from source to target.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PathQuery {
     pub source: VertexId,
     pub target: VertexId,
@@ -9,7 +10,7 @@ pub struct PathQuery {
 
 /// Stores a PathQuery as well as the expected shotests path distance, which is given as an
 /// optional, as there might be no path between source and target.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PathDistance<D: Distance> {
     query: PathQuery,
     distance: Option<D>,

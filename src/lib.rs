@@ -4,7 +4,6 @@
 pub mod classical_search;
 pub mod contraction_hierachy;
 pub mod flattened_nested;
-pub mod fmi;
 pub mod graph;
 pub mod hub_labeling;
 pub mod path;

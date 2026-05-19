@@ -1,6 +1,5 @@
 use ch::{
     contraction_hierachy::contract_graph_sequential,
-    fmi::write_fmi_ch,
     graph::{FastGraph, WeightedEdge},
     types::VertexId,
 };
@@ -40,5 +39,5 @@ fn main() {
     let contraction_hierarchy = contract_graph_sequential(&graph);
     let output = File::create(args.contraction_hierarchy).unwrap();
 
-    write_fmi_ch(BufWriter::new(output), &contraction_hierarchy).unwrap();
+    postcard::to_io(&contraction_hierarchy, BufWriter::new(output)).unwrap();
 }

@@ -1,5 +1,4 @@
 use ch::{
-    fmi::write_queries,
     graph::{FastGraph, GraphLike, WeightedEdge},
     types::VertexId,
     validation::generate_queries,
@@ -9,7 +8,7 @@ use graph_readers::edges_from_fmi;
 use ordered_float::OrderedFloat;
 use std::{
     fs::File,
-    io::BufReader,
+    io::{BufReader, BufWriter},
     path::PathBuf,
 };
 
@@ -44,7 +43,8 @@ fn main() {
     let graph = FastGraph::from_flat(edges);
 
     let queries = generate_queries(graph.num_vertices(), args.n);
-    write_queries(&args.out, &queries).unwrap();
+    let output = File::create(&args.out).unwrap();
+    serde_json::to_writer_pretty(BufWriter::new(output), &queries).unwrap();
 
     println!("Wrote {} queries to {:?}.", queries.len(), args.out);
 }
