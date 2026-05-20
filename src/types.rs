@@ -3,7 +3,7 @@ use std::{
     ops::{Add, AddAssign},
 };
 
-use num_traits::Zero;
+use num_traits::{Bounded, Zero};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Serialize, Deserialize)]
@@ -20,11 +20,11 @@ impl VertexId {
 }
 
 pub trait Distance:
-    Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug + Send + Sync
+    Copy + Ord + Zero + Bounded + Add<Output = Self> + AddAssign + Debug + Send + Sync
 {
 }
 
 impl<D> Distance for D where
-    D: Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug + Send + Sync
+    D: Copy + Ord + Zero + Bounded + Add<Output = Self> + AddAssign + Debug + Send + Sync
 {
 }
