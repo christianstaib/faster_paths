@@ -1,5 +1,5 @@
 use crate::{
-    graph::{Edge, EdgeLike, GraphLike},
+    graph::{Edge, EdgeLike, GraphLike, WeightedEdge},
     path::{Path, PathDistance, PathQuery},
     pathfinder::ShortestPathFinder,
     types::{Distance, VertexId},
@@ -28,11 +28,23 @@ pub fn validate_distance<D: Distance>(
     ))
 }
 
-pub fn validate_path<G: GraphLike>(
+pub fn validate_path<G>(
     graph: &G,
     test: &PathDistance<<G::Edge as EdgeLike>::Weight>,
     path: &Option<Path<<G::Edge as EdgeLike>::Weight>>,
-) -> Result<(), String> {
+) -> Result<(), String>
+where
+    G: GraphLike,
+{
+    let edges: Vec<_> = graph
+        .all_edges()
+        .map(|edge| WeightedEdge {
+            tail: edge.tail(),
+            head: edge.head(),
+            weight: edge.weight(),
+        })
+        .collect();
+
     match (path, test.distance()) {
         (None, None) => Ok(()),
 
@@ -49,7 +61,7 @@ pub fn validate_path<G: GraphLike>(
         )),
 
         (Some(found_path), Some(expected_distance)) => {
-            validate_found_path(graph, test, found_path, expected_distance)
+            validate_found_path(&edges, test.query(), &expected_distance, found_path)
         }
     }
 }
@@ -98,94 +110,44 @@ where
         }
     }
 
-    if failures.is_empty() {
-        Ok(average_runtime(total_runtime, tests.len()))
-    } else {
-        Err(failures)
-    }
+    Ok(total_runtime / tests.len() as u32)
 }
 
-fn average_runtime(total_runtime: Duration, num_tests: usize) -> Duration {
-    if num_tests == 0 {
-        Duration::ZERO
-    } else {
-        total_runtime / num_tests as u32
-    }
-}
-
-/// Sum up the edge weights of `path` in `graph`. If an edge is missing, return it as `Err`.
-fn sum_edge_weights<G: GraphLike>(
-    graph: &G,
-    path: &[VertexId],
-) -> Result<<G::Edge as EdgeLike>::Weight, Edge> {
-    path.windows(2).try_fold(
-        <G::Edge as EdgeLike>::Weight::zero(),
-        |summed_distance, potential_edge| {
+/// Sum up the edge weights of `path` in `edges`. If an edge is missing, return it as `Err`.
+fn sum_edge_weights<E: EdgeLike>(edges: &Vec<E>, path: &[VertexId]) -> Result<E::Weight, Edge> {
+    path.windows(2)
+        .try_fold(E::Weight::zero(), |summed_distance, potential_edge| {
             let tail = potential_edge[0];
             let head = potential_edge[1];
 
-            let weight = graph
-                .outgoing_edges(tail)
+            let weight = edges
                 .iter()
-                .filter(|edge| edge.head() == head)
+                .filter(|edge| edge.tail() == tail && edge.head() == head)
                 .map(|edge| edge.weight())
                 .min()
                 .ok_or(Edge { tail, head })?;
 
             Ok(summed_distance + weight)
-        },
-    )
+        })
 }
 
-fn validate_found_path<G: GraphLike>(
-    graph: &G,
-    test: &PathDistance<<G::Edge as EdgeLike>::Weight>,
-    path: &Path<<G::Edge as EdgeLike>::Weight>,
-    expected_distance: <G::Edge as EdgeLike>::Weight,
-) -> Result<(), String> {
-    if path.distance != expected_distance {
-        return Err(format!(
-            "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
-            test.query(),
-            expected_distance,
-            path.distance,
-        ));
-    }
+fn validate_found_path<E: EdgeLike, D: Distance>(
+    edges: &Vec<E>,
+    query: &PathQuery,
+    expected_distance: &D,
+    path: &Path<D>,
+) -> Result<(), String>
+where
+    D: Distance,
+    E: EdgeLike<Weight = D>,
+{
+    validate_reported_distance(edges, query, expected_distance, path)?;
 
-    let vertices = &path.vertices;
-    let query = test.query();
+    validate_source_vertex(edges, query, expected_distance, path)?;
 
-    if vertices.first() != Some(&query.source) {
-        return Err(format!(
-            "{:?}. Path starts at {:?}, expected {:?}.",
-            query,
-            vertices.first(),
-            query.source,
-        ));
-    }
+    validate_target_vertex(edges, query, expected_distance, path)?;
 
-    if vertices.last() != Some(&query.target) {
-        return Err(format!(
-            "{:?}. Path ends at {:?}, expected {:?}.",
-            query,
-            vertices.last(),
-            query.target,
-        ));
-    }
-
-    let actual_sum = sum_edge_weights(graph, vertices).map_err(|missing_edge| {
-        format!(
-            "{:?}. Path contains missing edge: {:?} -> {:?}.",
-            query, missing_edge.tail, missing_edge.head,
-        )
-    })?;
-
-    if actual_sum != expected_distance {
-        return Err(format!(
-            "{:?}. Path edge weight sum mismatch: expected {:?}, but got {:?}.",
-            query, expected_distance, actual_sum,
-        ));
-    }
+    validate_edge_weight_sum(edges, query, expected_distance, path)?;
 
     Ok(())
 }
@@ -205,4 +167,95 @@ pub fn generate_queries(num_vertices: usize, num_tests: usize) -> Vec<PathQuery>
     })
     .take(num_tests)
     .collect()
+}
+
+fn validate_reported_distance<E, D>(
+    _edges: &Vec<E>,
+    query: &PathQuery,
+    expected_distance: &D,
+    path: &Path<D>,
+) -> Result<(), String>
+where
+    D: Distance,
+    E: EdgeLike<Weight = D>,
+{
+    if &path.distance == expected_distance {
+        return Ok(());
+    }
+
+    Err(format!(
+        "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
+        query, expected_distance, path.distance,
+    ))
+}
+
+fn validate_source_vertex<E, D>(
+    _edges: &Vec<E>,
+    query: &PathQuery,
+    _expected_distance: &D,
+    path: &Path<D>,
+) -> Result<(), String>
+where
+    D: Distance,
+    E: EdgeLike<Weight = D>,
+{
+    if path.vertices.first() == Some(&query.source) {
+        return Ok(());
+    }
+
+    Err(format!(
+        "{:?}. Path starts at {:?}, expected {:?}.",
+        query,
+        path.vertices.first(),
+        query.source,
+    ))
+}
+
+fn validate_target_vertex<E, D>(
+    _edges: &Vec<E>,
+    query: &PathQuery,
+    _expected_distance: &D,
+    path: &Path<D>,
+) -> Result<(), String>
+where
+    D: Distance,
+    E: EdgeLike<Weight = D>,
+{
+    if path.vertices.last() == Some(&query.target) {
+        return Ok(());
+    }
+
+    Err(format!(
+        "{:?}. Path ends at {:?}, expected {:?}.",
+        query,
+        path.vertices.last(),
+        query.target,
+    ))
+}
+
+fn validate_edge_weight_sum<E, D>(
+    edges: &Vec<E>,
+    query: &PathQuery,
+    expected_distance: &D,
+    path: &Path<D>,
+) -> Result<(), String>
+where
+    D: Distance,
+    E: EdgeLike<Weight = D>,
+{
+    let actual_sum = sum_edge_weights(edges, &path.vertices).map_err(|missing_edge| {
+        format!(
+            "{:?}. Path contains missing edge: {:?} -> {:?}.",
+            query, missing_edge.tail, missing_edge.head,
+        )
+    })?;
+
+    if &actual_sum == expected_distance {
+        return Ok(());
+    }
+
+    Err(format!(
+        "{:?}. Path edge weight sum mismatch: expected {:?}, but got {:?}.",
+        query, expected_distance, actual_sum,
+    ))
 }
