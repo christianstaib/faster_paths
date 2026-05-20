@@ -1,6 +1,6 @@
 use crate::{
     contraction_hierachy::ContractionHierarchy,
-    flattened_nested::FlattenedNested,
+    data_structures::FlattenedNested,
     graph::{EdgeLike, GraphLike, compute_topological_layers},
     hub_labeling::{
         HubLabeling,

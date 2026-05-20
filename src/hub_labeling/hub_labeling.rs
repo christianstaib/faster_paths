@@ -1,6 +1,6 @@
 use crate::{
     contraction_hierachy::ContractionHierarchy,
-    flattened_nested::FlattenedNested,
+    data_structures::FlattenedNested,
     hub_labeling::{entry::LabelEntry, merge},
     types::Distance,
 };

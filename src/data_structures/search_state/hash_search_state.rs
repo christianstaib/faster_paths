@@ -1,9 +1,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{
-    search_state::search_state_access::SearchStateAccess,
-    types::{Distance, VertexId},
-};
+use crate::types::{Distance, VertexId};
+
+use super::search_state_access::SearchStateAccess;
 
 pub struct HashSearchState<D: Distance> {
     distance: FxHashMap<VertexId, D>,

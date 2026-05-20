@@ -3,10 +3,10 @@ use std::{cmp::Reverse, collections::BinaryHeap};
 use num_traits::Zero;
 
 use crate::{
+    data_structures::{HashSearchState, SearchStateAccess},
     graph::{EdgeLike, GraphLike},
     path::{Path, PathQuery},
     pathfinder::ShortestPathFinder,
-    search_state::{HashSearchState, SearchStateAccess},
     types::VertexId,
 };
 

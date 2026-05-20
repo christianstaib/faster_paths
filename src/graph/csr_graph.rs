@@ -1,6 +1,5 @@
 use crate::{
-    flattened_nested::FlattenedNested, graph::GraphLike, graph::edge_like::EdgeLike,
-    types::VertexId,
+    data_structures::FlattenedNested, graph::GraphLike, graph::edge_like::EdgeLike, types::VertexId,
 };
 use serde::{Deserialize, Serialize};
 
