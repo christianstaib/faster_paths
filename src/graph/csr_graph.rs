@@ -37,7 +37,7 @@ impl<E: EdgeLike> CsrGraph<E> {
         E: Copy,
     {
         Self {
-            flattened_nested: FlattenedNested::new(nested),
+            flattened_nested: FlattenedNested::from_nested(nested),
         }
     }
 }

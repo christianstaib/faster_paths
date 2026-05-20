@@ -11,7 +11,7 @@ impl<T> FlattenedNested<T> {
         Self { flat, offsets }
     }
 
-    pub fn new(nested: &Vec<Vec<T>>) -> Self
+    pub fn from_nested(nested: &Vec<Vec<T>>) -> Self
     where
         T: Copy,
     {

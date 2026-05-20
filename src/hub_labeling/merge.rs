@@ -67,8 +67,8 @@ pub(super) fn merge<D: Distance>(
     bar.finish();
 
     Some(HubLabeling {
-        up_hub_labeling: FlattenedNested::new(&up_labels),
-        down_hub_labeling: FlattenedNested::new(&down_labels),
+        up_hub_labeling: FlattenedNested::from_nested(&up_labels),
+        down_hub_labeling: FlattenedNested::from_nested(&down_labels),
     })
 }
 
