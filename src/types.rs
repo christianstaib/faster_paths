@@ -19,6 +19,12 @@ impl VertexId {
     }
 }
 
-pub trait Distance: Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug {}
+pub trait Distance:
+    Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug + Send + Sync
+{
+}
 
-impl<D> Distance for D where D: Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug {}
+impl<D> Distance for D where
+    D: Copy + Ord + Zero + Add<Output = Self> + AddAssign + Debug + Send + Sync
+{
+}
