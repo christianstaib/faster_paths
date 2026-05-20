@@ -13,8 +13,8 @@ pub(super) fn edge_difference<D: Distance>(
     vertex: VertexId,
     shortcut_count: usize,
 ) -> i64 {
-    let degree = graph.forward_graph().out_edges(vertex).len()
-        + graph.reverse_graph().out_edges(vertex).len();
+    let degree =
+        graph.forward().outgoing_edges(vertex).len() + graph.reverse().outgoing_edges(vertex).len();
     shortcut_count as i64 - degree as i64
 }
 
@@ -48,15 +48,15 @@ pub(super) fn generate_shortcuts<D: Distance>(
     vertex: VertexId,
     max_hops: u32,
 ) -> Vec<ContractionEdge<D>> {
-    let outgoing_edges = graph.forward_graph().out_edges(vertex);
+    let outgoing_edges = graph.forward().outgoing_edges(vertex);
     let targets = outgoing_edges
         .iter()
         .map(|edge| edge.head)
         .collect::<FxHashSet<_>>();
 
     graph
-        .reverse_graph()
-        .out_edges(vertex)
+        .reverse()
+        .outgoing_edges(vertex)
         .iter()
         .flat_map(|incoming_edge| {
             let tail = incoming_edge.head;
@@ -121,7 +121,7 @@ pub(super) fn bounded_dijkstra<D: Distance>(
             continue;
         }
 
-        for edge in graph.forward_graph().out_edges(vertex) {
+        for edge in graph.forward().outgoing_edges(vertex) {
             let new_distance = distance + edge.weight;
 
             if distances

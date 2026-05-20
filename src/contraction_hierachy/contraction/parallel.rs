@@ -140,10 +140,10 @@ fn select_ids<D: Distance>(
         blocked.insert(vertex);
 
         for edge in graph
-            .forward_graph()
-            .out_edges(vertex)
+            .forward()
+            .outgoing_edges(vertex)
             .iter()
-            .chain(graph.reverse_graph().out_edges(vertex).iter())
+            .chain(graph.reverse().outgoing_edges(vertex).iter())
         {
             blocked.insert(edge.head);
         }

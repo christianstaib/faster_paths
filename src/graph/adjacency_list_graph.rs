@@ -20,18 +20,14 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
         Self { edges }
     }
 
-    pub fn out_edges(&self, tail: VertexId) -> &[E] {
-        if tail.as_usize() >= self.edges.len() {
-            return &[];
-        }
-
-        &self.edges[tail.as_usize()]
-    }
-
     pub fn add_edge(&mut self, edge: &E)
     where
         E: Copy,
     {
+        if edge.tail() == edge.head() {
+            return;
+        }
+
         let needed_len = std::cmp::max(edge.tail(), edge.head()).as_usize() + 1;
         if self.edges.len() < needed_len {
             self.edges.resize_with(needed_len, Vec::new);
@@ -63,7 +59,11 @@ impl<E: EdgeLike> GraphLike for AdjacencyListGraph<E> {
     type Edge = E;
 
     fn outgoing_edges(&self, tail: VertexId) -> &[E] {
-        self.out_edges(tail)
+        if tail.as_usize() >= self.edges.len() {
+            return &[];
+        }
+
+        &self.edges[tail.as_usize()]
     }
 
     fn num_vertices(&self) -> usize {

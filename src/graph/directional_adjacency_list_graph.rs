@@ -3,6 +3,12 @@ use crate::{
     types::VertexId,
 };
 
+/// A graph represented by two adjacency lists, allowing outgoing and incoming
+/// edges to be queried.
+///
+/// Incoming edges are stored in reverse direction. For example, an edge
+/// `(0 -> 1)` is stored in its original direction in `forward`, but as its
+/// reverse edge `(1 -> 0)` in `reverse`.
 pub struct DirectionalAdjacencyListGraph<E: EdgeLike> {
     forward: AdjacencyListGraph<E>,
     reverse: AdjacencyListGraph<E>,
@@ -12,7 +18,7 @@ impl<E: EdgeLike> GraphLike for DirectionalAdjacencyListGraph<E> {
     type Edge = E;
 
     fn outgoing_edges(&self, tail: VertexId) -> &[Self::Edge] {
-        self.forward.out_edges(tail)
+        self.forward.outgoing_edges(tail)
     }
 
     fn num_vertices(&self) -> usize {
@@ -25,7 +31,7 @@ impl<E: EdgeLike> GraphLike for DirectionalAdjacencyListGraph<E> {
 }
 
 impl<E: EdgeLike> DirectionalAdjacencyListGraph<E> {
-    /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
+    /// Returns a new, empty graph.
     pub fn new() -> DirectionalAdjacencyListGraph<E> {
         Self {
             forward: AdjacencyListGraph::new(),
@@ -33,45 +39,45 @@ impl<E: EdgeLike> DirectionalAdjacencyListGraph<E> {
         }
     }
 
-    pub fn forward_graph(&self) -> &AdjacencyListGraph<E> {
+    /// Returns the forward graph, which contains all edges in their original direction.
+    pub fn forward(&self) -> &AdjacencyListGraph<E> {
         &self.forward
     }
 
-    /// Reverse incoming adjacency, stored as `vertex -> predecessor`.
-    pub fn reverse_graph(&self) -> &AdjacencyListGraph<E> {
+    /// Returns the reverse graph, which contains all edges in reversed direction.
+    pub fn reverse(&self) -> &AdjacencyListGraph<E> {
         &self.reverse
     }
 
-    /// Inserts an edge into the graph and records its reverse adjacency for the head.
+    /// Inserts an edge into the graph.
+    ///
+    /// The edge is stored in its original direction in the forward graph and in
+    /// reversed direction in the reverse graph.
     pub fn add_edge(&mut self, edge: &E)
     where
         E: Copy,
     {
-        // While self loops are not forbidden for contraction, they make it impossible to unpack a shortcut path containing them, as they create a cycle.
-        if edge.tail() == edge.head() {
-            return;
-        }
-
         self.forward.add_edge(edge);
         self.reverse.add_edge(&edge.reversed());
     }
 
-    /// Removes all out and in edges with head == vertex
+    /// Removes all references to! `vertex`.
     pub fn make_unreachable(&mut self, vertex: VertexId) {
         let create_edge = |from| Edge {
             tail: from,
             head: vertex,
         };
 
-        for edge in self.forward.out_edges(vertex) {
+        for edge in self.forward.outgoing_edges(vertex) {
             self.reverse.remove_edge(create_edge(edge.head())).unwrap();
         }
 
-        for edge in self.reverse.out_edges(vertex) {
+        for edge in self.reverse.outgoing_edges(vertex) {
             self.forward.remove_edge(create_edge(edge.head())).unwrap();
         }
     }
 
+    /// Consumes the graph and returns its forward and reverse edge lists.
     pub fn into_edge_lists(self) -> (Vec<E>, Vec<E>)
     where
         E: Copy,

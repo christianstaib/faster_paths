@@ -1,6 +1,6 @@
 use crate::{
     contraction_hierachy::{ContractionEdge, contraction::terms::Term},
-    graph::DirectionalAdjacencyListGraph,
+    graph::{DirectionalAdjacencyListGraph, GraphLike},
     types::{Distance, VertexId},
 };
 
@@ -19,8 +19,8 @@ impl<D: Distance> Term<D> for EdgeDifference {
         vertex: VertexId,
         shortcuts: &[ContractionEdge<D>],
     ) -> i64 {
-        let degree = graph.forward_graph().out_edges(vertex).len()
-            + graph.reverse_graph().out_edges(vertex).len();
+        let degree = graph.forward().outgoing_edges(vertex).len()
+            + graph.reverse().outgoing_edges(vertex).len();
         shortcuts.len() as i64 - degree as i64
     }
 

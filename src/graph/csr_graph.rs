@@ -11,10 +11,8 @@ pub struct CsrGraph<E: EdgeLike> {
 }
 
 impl<E: EdgeLike> CsrGraph<E> {
-    pub fn from_flat(mut flat: Vec<E>) -> Self
-    where
-        E: Copy,
-    {
+    /// Builds a CSR graph from a flat edge list.
+    pub fn from_flat(mut flat: Vec<E>) -> Self {
         flat.sort_unstable_by_key(|edge| (edge.tail(), edge.head(), edge.weight()));
 
         let largest_tail = flat.last().map(|edge| edge.tail().as_usize()).unwrap_or(0);
@@ -33,7 +31,8 @@ impl<E: EdgeLike> CsrGraph<E> {
         }
     }
 
-    pub fn new(nested: &Vec<Vec<E>>) -> Self
+    /// Builds a CSR graph from nested outgoing adjacency lists.
+    pub fn from_nested(nested: &Vec<Vec<E>>) -> Self
     where
         E: Copy,
     {

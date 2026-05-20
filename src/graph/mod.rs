@@ -1,3 +1,6 @@
+//! Collection of datastructures that represent graphs.
+//!
+
 mod adjacency_list_graph;
 mod csr_graph;
 mod directional_adjacency_list_graph;

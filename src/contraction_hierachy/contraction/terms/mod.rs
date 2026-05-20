@@ -4,7 +4,7 @@ mod edge_difference;
 
 use crate::{
     contraction_hierachy::ContractionEdge,
-    graph::DirectionalAdjacencyListGraph,
+    graph::{DirectionalAdjacencyListGraph, GraphLike},
     types::{Distance, VertexId},
 };
 
@@ -36,8 +36,8 @@ fn for_each_neighbor<D: Distance>(
     vertex: VertexId,
     mut visit: impl FnMut(VertexId),
 ) {
-    let out_edges = graph.forward_graph().out_edges(vertex);
-    let in_edges = graph.reverse_graph().out_edges(vertex);
+    let out_edges = graph.forward().outgoing_edges(vertex);
+    let in_edges = graph.reverse().outgoing_edges(vertex);
 
     let mut out_idx = 0;
     let mut in_idx = 0;
