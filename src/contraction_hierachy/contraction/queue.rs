@@ -22,7 +22,7 @@ pub(super) struct Queue<D: Distance> {
     terms: Vec<Box<dyn Term<D>>>,
 }
 
-impl<D: Distance + Send + Sync> Queue<D> {
+impl<D: Distance> Queue<D> {
     pub(super) fn new(graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>) -> Self {
         let terms = default_terms::<D>(graph.num_vertices());
         let heap = initial_heap(graph, &terms);
@@ -60,7 +60,7 @@ impl<D: Distance + Send + Sync> Queue<D> {
     }
 }
 
-fn initial_heap<D: Distance + Send + Sync>(
+fn initial_heap<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     terms: &[Box<dyn Term<D>>],
 ) -> BinaryHeap<(Reverse<i64>, VertexId)> {

@@ -21,7 +21,6 @@ pub fn contract_graph_parallel<G>(
 ) -> ContractionHierarchy<<G::Edge as EdgeLike>::Weight>
 where
     G: GraphLike,
-    <G::Edge as EdgeLike>::Weight: Send + Sync,
 {
     let start = Instant::now();
     let working_graph = build_working_graph(graph);
@@ -34,7 +33,7 @@ where
     contraction_hierarchy
 }
 
-fn contract_working_graph_parallel<D: Distance + Send + Sync>(
+fn contract_working_graph_parallel<D: Distance>(
     mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     fraction: f64,
 ) -> ContractionHierarchy<D> {

@@ -1,4 +1,4 @@
-use ch::{contraction_hierachy::ContractionHierarchy, hub_labeling::merge};
+use ch::{contraction_hierachy::ContractionHierarchy, hub_labeling::HubLabeling};
 use clap::Parser;
 use std::{
     fs::File,
@@ -31,7 +31,7 @@ fn main() {
     .unwrap();
 
     let start = Instant::now();
-    let hub_labeling = merge(&contraction_hierarchy).unwrap();
+    let hub_labeling = HubLabeling::try_from_contraction_hierarchy(&contraction_hierarchy).unwrap();
     println!("Merging took {:?}", start.elapsed());
 
     let avg_label_size = hub_labeling.up_hub_labeling.num_flat() as f32

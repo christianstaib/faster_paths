@@ -15,7 +15,6 @@ pub fn contract_graph_sequential<G>(
 ) -> ContractionHierarchy<<G::Edge as EdgeLike>::Weight>
 where
     G: GraphLike,
-    <G::Edge as EdgeLike>::Weight: Sync + Send,
 {
     let working_graph = build_working_graph(graph);
 
@@ -26,7 +25,7 @@ where
     contraction_hierarchy
 }
 
-fn contract_working_graph_sequential<D: Distance + Sync + Send>(
+fn contract_working_graph_sequential<D: Distance>(
     mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
 ) -> ContractionHierarchy<D> {
     let mut queue = Queue::new(&graph);

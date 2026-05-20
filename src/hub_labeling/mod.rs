@@ -4,5 +4,5 @@ mod merge;
 mod pathfinder;
 
 pub use hub_labeling::HubLabeling;
-pub use merge::merge;
+pub(self) use merge::merge;
 pub use pathfinder::HubLabelingPathfinder;

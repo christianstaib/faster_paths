@@ -22,7 +22,7 @@ use rustc_hash::FxHashMap;
 ///
 /// Returns `None` if the combined up down graph is cyclic and no
 /// topological layering exists.
-pub fn merge<D: Distance + Send + Sync>(
+pub(super) fn merge<D: Distance>(
     contraction_hierarchy: &ContractionHierarchy<D>,
 ) -> Option<HubLabeling<D>> {
     let up_graph = contraction_hierarchy.up_graph();
