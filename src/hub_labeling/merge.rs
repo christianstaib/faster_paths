@@ -1,10 +1,10 @@
 use crate::{
-    contraction_hierachy::{ContractionEdge, ContractionHierarchy},
+    contraction_hierachy::ContractionHierarchy,
     flattened_nested::FlattenedNested,
-    graph::{CsrGraph, GraphLike, compute_topological_layers},
+    graph::{EdgeLike, GraphLike, compute_topological_layers},
     hub_labeling::{
         HubLabeling,
-        entry::{LabelEntry, min_distance_intersection},
+        entry::{LabelEntry, min_common_hub_distance},
     },
     types::{Distance, VertexId},
 };
@@ -14,104 +14,137 @@ use rayon::prelude::*;
 use indicatif::ProgressBar;
 use rustc_hash::FxHashMap;
 
-pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabeling<D> {
-    let top_down_order = compute_topological_layers(&[ch.up_graph(), ch.down_graph()]).unwrap();
+/// Builds a HubLabeling from a ContractionHierarchy by merging.
+///
+/// The up and down labels are computed layer by layer in a shared topological
+/// order of both up and down graphs. Within one layer, vertices are independent
+/// and can be processed in parallel.
+///
+/// Returns `None` if the combined up down graph is cyclic and no
+/// topological layering exists.
+pub fn merge<D: Distance + Send + Sync>(
+    contraction_hierarchy: &ContractionHierarchy<D>,
+) -> Option<HubLabeling<D>> {
+    let up_graph = contraction_hierarchy.up_graph();
+    let down_graph = contraction_hierarchy.down_graph();
+    let topological_layers = compute_topological_layers(&[up_graph, down_graph])?;
 
-    let num_vertices = ch.num_vertices();
+    let num_vertices = contraction_hierarchy.num_vertices();
     let mut up_labels = initialize_labels(num_vertices);
     let mut down_labels = initialize_labels(num_vertices);
 
     let bar = ProgressBar::new(num_vertices as u64);
-    for vertices in top_down_order {
-        // Build labels in parallel
+    for vertices in topological_layers {
+        // Build labels in parallel.
         let labels = vertices
-            .iter()
-            .inspect(|_| bar.inc(1))
-            .par_bridge()
+            .par_iter()
             .map(|&vertex| {
-                let mut up_label = merge_label(ch.up_graph(), &up_labels, vertex);
+                let up_edges_vertex = up_graph.outgoing_edges(vertex);
+                let mut up_label = merge_label(up_edges_vertex, &up_labels, vertex);
                 up_label = prune_label(&down_labels, &up_label);
                 up_label.shrink_to_fit();
 
-                let mut down_label = merge_label(ch.down_graph(), &down_labels, vertex);
+                let down_edges_vertex = down_graph.outgoing_edges(vertex);
+                let mut down_label = merge_label(down_edges_vertex, &down_labels, vertex);
                 down_label = prune_label(&up_labels, &down_label);
                 down_label.shrink_to_fit();
+
+                bar.inc(1);
 
                 (vertex, up_label, down_label)
             })
             .collect::<Vec<_>>();
 
-        // Assign them sequential. Could potentially use unsafe here.
+        // Assign them sequential.
         labels
             .into_iter()
             .for_each(|(vertex, up_label, down_label)| {
                 up_labels[vertex.as_usize()] = up_label;
                 down_labels[vertex.as_usize()] = down_label;
             });
-
-        // bar.inc(vertices.len() as u64);
     }
+
     bar.finish();
 
-    let up_hub_labeling = FlattenedNested::new(&up_labels);
-    let down_hub_labeling = FlattenedNested::new(&down_labels);
-    HubLabeling {
-        up_hub_labeling,
-        down_hub_labeling,
-    }
+    Some(HubLabeling {
+        up_hub_labeling: FlattenedNested::new(&up_labels),
+        down_hub_labeling: FlattenedNested::new(&down_labels),
+    })
 }
 
+/// Creates one initial label for every vertex.
+///
+/// Each label contains only its own vertex as hub, at distance zero and without
+/// a predecessor.
 fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>> {
     (0..num_vertices)
         .map(|vertex| {
-            vec![LabelEntry {
+            let label_entry = LabelEntry {
                 hub: VertexId::new(vertex as u32),
                 distance: D::zero(),
                 predecessor_hub: None,
-            }]
+            };
+            vec![label_entry]
         })
         .collect()
 }
 
-fn merge_label<D: Distance>(
-    dir1_graph: &CsrGraph<ContractionEdge<D>>,
-    dir1_labels: &[Vec<LabelEntry<D>>],
+/// Builds the unpruned label for `vertex` from already computed neighbor labels.
+///
+/// Each outgoing edge extends every label entry of its head vertex by the edge
+/// weight. If several outgoing edges produce an entry for the same hub, only the
+/// candidate with the smallest distance is kept. The resulting label is sorted
+/// by hub.
+fn merge_label<D, E>(
+    edges: &[E],
+    labels: &[Vec<LabelEntry<D>>],
     vertex: VertexId,
-) -> Vec<LabelEntry<D>> {
-    let mut new_label: FxHashMap<VertexId, LabelEntry<D>> = FxHashMap::default();
-    new_label.insert(
-        vertex,
-        LabelEntry {
-            hub: vertex,
-            distance: D::zero(),
-            predecessor_hub: None,
-        },
-    );
+) -> Vec<LabelEntry<D>>
+where
+    D: Distance,
+    E: EdgeLike<Weight = D>,
+{
+    let mut entries = FxHashMap::default();
+    entries.insert(vertex, (D::zero(), None));
 
-    for edge in dir1_graph.outgoing_edges(vertex) {
-        for entry in dir1_labels[edge.head.as_usize()].iter() {
-            let new_entry = LabelEntry {
-                hub: entry.hub,
-                distance: entry.distance + edge.weight,
-                predecessor_hub: Some(entry.predecessor_hub.unwrap_or(vertex)),
-            };
-            if let Some(old_entry) = new_label.get_mut(&entry.hub) {
-                if new_entry.distance < old_entry.distance {
-                    *old_entry = new_entry;
-                }
-            } else {
-                new_label.insert(entry.hub, new_entry);
-            }
+    for edge in edges {
+        for entry in &labels[edge.head().as_usize()] {
+            let candidate_distance = entry.distance + edge.weight();
+            let candidate_predecessor_hub = Some(entry.predecessor_hub.unwrap_or(vertex));
+
+            entries
+                .entry(entry.hub)
+                .and_modify(|(best_distance, best_predecessor_hub)| {
+                    if candidate_distance < *best_distance {
+                        *best_distance = candidate_distance;
+                        *best_predecessor_hub = candidate_predecessor_hub;
+                    }
+                })
+                .or_insert((candidate_distance, candidate_predecessor_hub));
         }
     }
 
-    let mut new_label: Vec<LabelEntry<D>> = new_label.into_values().collect();
-    new_label.sort_unstable_by_key(|entry| entry.hub);
-    new_label
+    let mut label = entries
+        .into_iter()
+        .map(|(hub, (distance, predecessor_hub))| LabelEntry {
+            hub,
+            distance,
+            predecessor_hub,
+        })
+        .collect::<Vec<_>>();
+
+    label.sort_unstable_by_key(|entry| entry.hub);
+    label
 }
 
-/// Returns a pruned `dir1_label` by removing all entries whose distance is not equal to the true
-/// distance, as they can never contribute to a true shortest-distance query.
+/// Removes label entries whose stored distance is not the true shortest distance.
+///
+/// An entry is kept only if its distance matches the shortest distance obtained
+/// through the opposite labels. Entries with larger distances cannot contribute
+/// to a shortest-path query.
+///
+/// Expects `dir1_label` and each relevant label in `dir2_labels` to have at
+/// least one common hub, so the intersection lookup always succeeds.
 fn prune_label<D: Distance>(
     dir2_labels: &[Vec<LabelEntry<D>>],
     dir1_label: &[LabelEntry<D>],
@@ -121,7 +154,7 @@ fn prune_label<D: Distance>(
         .filter(|entry| {
             let dir2_label = &dir2_labels[entry.hub.as_usize()];
             let (true_distance, _dir1_index, _dir2_index) =
-                min_distance_intersection(&dir1_label, dir2_label).unwrap();
+                min_common_hub_distance(&dir1_label, dir2_label).unwrap();
 
             entry.distance == true_distance
         })
