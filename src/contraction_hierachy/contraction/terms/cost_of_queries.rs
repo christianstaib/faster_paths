@@ -1,7 +1,8 @@
 use super::{Term, for_each_neighbor};
 
 use crate::{
-    contraction_hierachy::{ContractionEdge, contraction::working_graph::WorkingGraph},
+    contraction_hierachy::ContractionEdge,
+    graph::WorkingGraph,
     types::{Distance, VertexId},
 };
 

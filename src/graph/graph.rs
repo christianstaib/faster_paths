@@ -25,7 +25,10 @@ impl<E: EdgeLike> Graph<E> {
         &self.edges[tail.as_usize()]
     }
 
-    pub fn add_edge(&mut self, edge: E) {
+    pub fn add_edge(&mut self, edge: &E)
+    where
+        E: Copy,
+    {
         let needed_len = std::cmp::max(edge.tail(), edge.head()).as_usize() + 1;
         if self.edges.len() < needed_len {
             self.edges.resize_with(needed_len, Vec::new);
@@ -35,10 +38,10 @@ impl<E: EdgeLike> Graph<E> {
         match edges.binary_search_by_key(&edge.head(), |old_edge| old_edge.head()) {
             Ok(index) => {
                 if edge.weight() < edges[index].weight() {
-                    edges[index] = edge;
+                    edges[index] = *edge;
                 }
             }
-            Err(index) => edges.insert(index, edge),
+            Err(index) => edges.insert(index, *edge),
         }
     }
 

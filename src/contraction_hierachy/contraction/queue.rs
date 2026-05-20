@@ -9,9 +9,9 @@ use crate::{
         contraction::{
             general::generate_shortcuts,
             terms::{Term, default_terms, priority},
-            working_graph::WorkingGraph,
         },
     },
+    graph::WorkingGraph,
     types::{Distance, VertexId},
 };
 

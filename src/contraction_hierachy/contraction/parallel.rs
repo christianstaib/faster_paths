@@ -1,13 +1,10 @@
 use crate::{
     contraction_hierachy::{
         ContractionEdge,
-        contraction::{
-            general::{build_working_graph, edge_difference, generate_shortcuts},
-            working_graph::WorkingGraph,
-        },
+        contraction::general::{build_working_graph, edge_difference, generate_shortcuts},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{EdgeLike, FastGraph, GraphLike},
+    graph::{EdgeLike, FastGraph, GraphLike, WorkingGraph},
     types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
@@ -102,7 +99,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
     progress.finish();
 
     current = Instant::now();
-    let (up_edges, down_edges) = graph.edges();
+    let (up_edges, down_edges) = graph.into_edge_lists();
     println!("flat edge creation {:?}", current.elapsed());
 
     current = Instant::now();
@@ -143,10 +140,10 @@ fn select_ids<D: Distance>(
         blocked.insert(vertex);
 
         for edge in graph
-            .outgoing()
+            .forward_graph()
             .out_edges(vertex)
             .iter()
-            .chain(graph.incoming().out_edges(vertex).iter())
+            .chain(graph.reverse_graph().out_edges(vertex).iter())
         {
             blocked.insert(edge.head);
         }

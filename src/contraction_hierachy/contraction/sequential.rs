@@ -1,10 +1,10 @@
 use crate::{
     contraction_hierachy::{
         ContractionEdge,
-        contraction::{general::build_working_graph, queue::Queue, working_graph::WorkingGraph},
+        contraction::{general::build_working_graph, queue::Queue},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{EdgeLike, FastGraph, GraphLike},
+    graph::{EdgeLike, FastGraph, GraphLike, WorkingGraph},
     types::Distance,
 };
 use indicatif::ProgressBar;
@@ -42,7 +42,7 @@ fn contract_working_graph_sequential<D: Distance + Sync + Send>(
     }
     progress.finish();
 
-    let (up_edges, down_edges) = graph.edges();
+    let (up_edges, down_edges) = graph.into_edge_lists();
     ContractionHierarchy::new(
         FastGraph::from_flat(up_edges),
         FastGraph::from_flat(down_edges),

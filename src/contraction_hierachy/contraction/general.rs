@@ -3,8 +3,7 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
 use crate::contraction_hierachy::ContractionEdge;
-use crate::contraction_hierachy::contraction::working_graph::WorkingGraph;
-use crate::graph::{EdgeLike, GraphLike};
+use crate::graph::{EdgeLike, GraphLike, WorkingGraph};
 use crate::types::Distance;
 use crate::types::VertexId;
 
@@ -14,8 +13,8 @@ pub(super) fn edge_difference<D: Distance>(
     vertex: VertexId,
     shortcut_count: usize,
 ) -> i64 {
-    let degree =
-        graph.outgoing().out_edges(vertex).len() + graph.incoming().out_edges(vertex).len();
+    let degree = graph.forward_graph().out_edges(vertex).len()
+        + graph.reverse_graph().out_edges(vertex).len();
     shortcut_count as i64 - degree as i64
 }
 
@@ -49,14 +48,14 @@ pub(super) fn generate_shortcuts<D: Distance>(
     vertex: VertexId,
     max_hops: u32,
 ) -> Vec<ContractionEdge<D>> {
-    let outgoing_edges = graph.outgoing().out_edges(vertex);
+    let outgoing_edges = graph.forward_graph().out_edges(vertex);
     let targets = outgoing_edges
         .iter()
         .map(|edge| edge.head)
         .collect::<FxHashSet<_>>();
 
     graph
-        .incoming()
+        .reverse_graph()
         .out_edges(vertex)
         .iter()
         .flat_map(|incoming_edge| {
@@ -122,7 +121,7 @@ pub(super) fn bounded_dijkstra<D: Distance>(
             continue;
         }
 
-        for edge in graph.outgoing().out_edges(vertex) {
+        for edge in graph.forward_graph().out_edges(vertex) {
             let new_distance = distance + edge.weight;
 
             if distances
