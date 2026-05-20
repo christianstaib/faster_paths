@@ -20,6 +20,10 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
         Self { edges }
     }
 
+    pub fn get_edges(&self) -> &Vec<Vec<E>> {
+        &self.edges
+    }
+
     pub fn add_edge(&mut self, edge: &E)
     where
         E: Copy,

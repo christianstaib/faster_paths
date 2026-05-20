@@ -1,5 +1,5 @@
 use crate::{
-    graph::{AdjacencyListGraph, Edge, EdgeLike, GraphLike},
+    graph::{AdjacencyListGraph, CsrGraph, Edge, EdgeLike, GraphLike},
     types::VertexId,
 };
 
@@ -78,13 +78,13 @@ impl<E: EdgeLike> DirectionalAdjacencyListGraph<E> {
     }
 
     /// Consumes the graph and returns its forward and reverse edge lists.
-    pub fn into_edge_lists(self) -> (Vec<E>, Vec<E>)
+    pub fn into_csr_graphs(&self) -> (CsrGraph<E>, CsrGraph<E>)
     where
         E: Copy,
     {
         (
-            self.forward.all_edges().copied().collect(),
-            self.reverse.all_edges().copied().collect(),
+            CsrGraph::from_nested(self.forward.get_edges()),
+            CsrGraph::from_nested(self.reverse.get_edges()),
         )
     }
 }

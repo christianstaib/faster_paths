@@ -4,7 +4,7 @@ use crate::{
         contraction::general::{build_working_graph, edge_difference, generate_shortcuts},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{CsrGraph, DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
+    graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
     types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
@@ -99,16 +99,8 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
     progress.finish();
 
     current = Instant::now();
-    let (up_edges, down_edges) = graph.into_edge_lists();
+    let (up_graph, down_graph) = graph.into_csr_graphs();
     println!("flat edge creation {:?}", current.elapsed());
-
-    current = Instant::now();
-    let up_graph = CsrGraph::from_flat(up_edges);
-    println!("up graph creation {:?}", current.elapsed());
-
-    current = Instant::now();
-    let down_graph = CsrGraph::from_flat(down_edges);
-    println!("down graph creation {:?}", current.elapsed());
 
     current = Instant::now();
     let ch = ContractionHierarchy::new(up_graph, down_graph);

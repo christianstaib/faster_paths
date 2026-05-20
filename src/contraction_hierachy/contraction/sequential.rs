@@ -4,7 +4,7 @@ use crate::{
         contraction::{general::build_working_graph, queue::Queue},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{CsrGraph, DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
+    graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
     types::Distance,
 };
 use indicatif::ProgressBar;
@@ -42,9 +42,6 @@ fn contract_working_graph_sequential<D: Distance + Sync + Send>(
     }
     progress.finish();
 
-    let (up_edges, down_edges) = graph.into_edge_lists();
-    ContractionHierarchy::new(
-        CsrGraph::from_flat(up_edges),
-        CsrGraph::from_flat(down_edges),
-    )
+    let (up_graph, down_graph) = graph.into_csr_graphs();
+    ContractionHierarchy::new(up_graph, down_graph)
 }
