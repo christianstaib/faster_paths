@@ -1,11 +1,30 @@
 use crate::types::{Distance, VertexId};
+use rand::seq::index::sample;
 use serde::{Deserialize, Serialize};
+use std::iter;
 
 /// Stores a query for a path from source to target.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PathQuery {
     pub source: VertexId,
     pub target: VertexId,
+}
+
+pub fn generate_queries(num_vertices: usize, num_tests: usize) -> Vec<PathQuery> {
+    let mut rng = rand::rng();
+    iter::repeat_with(|| {
+        let [source, target] = sample(&mut rng, num_vertices, 2)
+            .into_vec()
+            .try_into()
+            .unwrap();
+
+        PathQuery {
+            source: VertexId::new(source as u32),
+            target: VertexId::new(target as u32),
+        }
+    })
+    .take(num_tests)
+    .collect()
 }
 
 /// Stores a PathQuery as well as the expected shotests path distance, which is given as an
