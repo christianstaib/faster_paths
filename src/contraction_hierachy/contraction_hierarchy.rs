@@ -41,8 +41,8 @@ pub fn extract_contraction_order<D: Distance>(
     let num_vertices = ch.num_vertices();
     let mut indegrees = vec![0; num_vertices];
 
-    let all_up_edges = ch.up_graph.edges();
-    let all_down_edges = ch.down_graph.edges();
+    let all_up_edges = ch.up_graph.all_edges();
+    let all_down_edges = ch.down_graph.all_edges();
     for edge in all_up_edges.chain(all_down_edges) {
         indegrees[edge.head.as_usize()] += 1;
     }
@@ -62,8 +62,8 @@ pub fn extract_contraction_order<D: Distance>(
         for vertex in current_layer.iter().copied() {
             visited += 1;
 
-            let up_edges = ch.up_graph.out_edges(vertex).iter();
-            let down_edges = ch.down_graph.out_edges(vertex).iter();
+            let up_edges = ch.up_graph.outgoing_edges(vertex).iter();
+            let down_edges = ch.down_graph.outgoing_edges(vertex).iter();
             for edge in up_edges.chain(down_edges) {
                 let head_indegree = &mut indegrees[edge.head.as_usize()];
                 *head_indegree -= 1;

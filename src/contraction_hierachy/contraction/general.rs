@@ -3,13 +3,13 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
 use crate::contraction_hierachy::ContractionEdge;
-use crate::graph::{EdgeLike, GraphLike, WorkingGraph};
+use crate::graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike};
 use crate::types::Distance;
 use crate::types::VertexId;
 
 /// Calculates the edge difference. Used in order to avoid calculation errors if always written out.
 pub(super) fn edge_difference<D: Distance>(
-    graph: &WorkingGraph<ContractionEdge<D>>,
+    graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     vertex: VertexId,
     shortcut_count: usize,
 ) -> i64 {
@@ -21,10 +21,10 @@ pub(super) fn edge_difference<D: Distance>(
 /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
 pub(super) fn build_working_graph<G: GraphLike>(
     graph: &G,
-) -> WorkingGraph<ContractionEdge<<G::Edge as EdgeLike>::Distance>> {
-    let mut working_graph = WorkingGraph::new();
+) -> DirectionalAdjacencyListGraph<ContractionEdge<<G::Edge as EdgeLike>::Weight>> {
+    let mut working_graph = DirectionalAdjacencyListGraph::new();
 
-    graph.edges().for_each(|edge| {
+    graph.all_edges().for_each(|edge| {
         let contraction_edge = ContractionEdge {
             tail: edge.tail(),
             head: edge.head(),
@@ -44,7 +44,7 @@ pub(super) fn build_working_graph<G: GraphLike>(
 /// A shortcut u -> w for u -> v -> w is necessary iff (u, v, w) is the only shortest u-v-path.
 /// This function relaxes this condition by limiting the search space size with max_hops.
 pub(super) fn generate_shortcuts<D: Distance>(
-    graph: &WorkingGraph<ContractionEdge<D>>,
+    graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     vertex: VertexId,
     max_hops: u32,
 ) -> Vec<ContractionEdge<D>> {
@@ -88,7 +88,7 @@ pub(super) fn generate_shortcuts<D: Distance>(
 ///
 /// Stops once every target has been settled or once only vertices with hop distance > `max_hops` remain. The returned map may contain non-target vertices.
 pub(super) fn bounded_dijkstra<D: Distance>(
-    graph: &WorkingGraph<ContractionEdge<D>>,
+    graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     source: VertexId,
     targets: &FxHashSet<VertexId>,
     max_hops: u32,

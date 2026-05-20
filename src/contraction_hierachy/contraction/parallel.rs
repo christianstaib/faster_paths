@@ -4,7 +4,7 @@ use crate::{
         contraction::general::{build_working_graph, edge_difference, generate_shortcuts},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{CsrGraph, EdgeLike, GraphLike, WorkingGraph},
+    graph::{CsrGraph, DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
     types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
@@ -18,10 +18,10 @@ const MAX_WITNESS_HOPS: u32 = 10;
 pub fn contract_graph_parallel<G>(
     graph: &G,
     fraction: f64,
-) -> ContractionHierarchy<<G::Edge as EdgeLike>::Distance>
+) -> ContractionHierarchy<<G::Edge as EdgeLike>::Weight>
 where
     G: GraphLike,
-    <G::Edge as EdgeLike>::Distance: Send + Sync,
+    <G::Edge as EdgeLike>::Weight: Send + Sync,
 {
     let start = Instant::now();
     let working_graph = build_working_graph(graph);
@@ -35,7 +35,7 @@ where
 }
 
 fn contract_working_graph_parallel<D: Distance + Send + Sync>(
-    mut graph: WorkingGraph<ContractionEdge<D>>,
+    mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     fraction: f64,
 ) -> ContractionHierarchy<D> {
     let mut remaining = (0..graph.num_vertices() as u32)
@@ -118,7 +118,7 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
 }
 
 fn select_ids<D: Distance>(
-    graph: &WorkingGraph<ContractionEdge<D>>,
+    graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     candidates: &[VertexId],
 ) -> (Vec<VertexId>, Vec<VertexId>) {
     if candidates.is_empty() {

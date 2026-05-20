@@ -3,30 +3,15 @@ use crate::{
     types::VertexId,
 };
 
-pub struct WorkingGraph<E: EdgeLike> {
+pub struct DirectionalAdjacencyListGraph<E: EdgeLike> {
     forward: AdjacencyListGraph<E>,
     reverse: AdjacencyListGraph<E>,
 }
 
-impl<E: EdgeLike> WorkingGraph<E> {
-    pub fn num_vertices(&self) -> usize {
-        self.forward.num_vertices()
-    }
-
-    pub fn forward_graph(&self) -> &AdjacencyListGraph<E> {
-        &self.forward
-    }
-
-    /// Reverse incoming adjacency, stored as `vertex -> predecessor`.
-    pub fn reverse_graph(&self) -> &AdjacencyListGraph<E> {
-        &self.reverse
-    }
-}
-
-impl<E: EdgeLike> GraphLike for WorkingGraph<E> {
+impl<E: EdgeLike> GraphLike for DirectionalAdjacencyListGraph<E> {
     type Edge = E;
 
-    fn out_edges(&self, tail: VertexId) -> &[Self::Edge] {
+    fn outgoing_edges(&self, tail: VertexId) -> &[Self::Edge] {
         self.forward.out_edges(tail)
     }
 
@@ -39,13 +24,22 @@ impl<E: EdgeLike> GraphLike for WorkingGraph<E> {
     }
 }
 
-impl<E: EdgeLike> WorkingGraph<E> {
+impl<E: EdgeLike> DirectionalAdjacencyListGraph<E> {
     /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-    pub fn new() -> WorkingGraph<E> {
+    pub fn new() -> DirectionalAdjacencyListGraph<E> {
         Self {
             forward: AdjacencyListGraph::new(),
             reverse: AdjacencyListGraph::new(),
         }
+    }
+
+    pub fn forward_graph(&self) -> &AdjacencyListGraph<E> {
+        &self.forward
+    }
+
+    /// Reverse incoming adjacency, stored as `vertex -> predecessor`.
+    pub fn reverse_graph(&self) -> &AdjacencyListGraph<E> {
+        &self.reverse
     }
 
     /// Inserts an edge into the graph and records its reverse adjacency for the head.
@@ -83,8 +77,8 @@ impl<E: EdgeLike> WorkingGraph<E> {
         E: Copy,
     {
         (
-            self.forward.edges().copied().collect(),
-            self.reverse.edges().copied().collect(),
+            self.forward.all_edges().copied().collect(),
+            self.reverse.all_edges().copied().collect(),
         )
     }
 }

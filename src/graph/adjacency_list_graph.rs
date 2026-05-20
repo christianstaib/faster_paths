@@ -1,9 +1,12 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     graph::{Edge, GraphLike, edge_like::EdgeLike},
     types::VertexId,
 };
 
 /// A graph represented by adjacency lists.
+#[derive(Serialize, Deserialize)]
 pub struct AdjacencyListGraph<E: EdgeLike> {
     edges: Vec<Vec<E>>,
 }
@@ -59,7 +62,7 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
 impl<E: EdgeLike> GraphLike for AdjacencyListGraph<E> {
     type Edge = E;
 
-    fn out_edges(&self, tail: VertexId) -> &[E] {
+    fn outgoing_edges(&self, tail: VertexId) -> &[E] {
         self.out_edges(tail)
     }
 

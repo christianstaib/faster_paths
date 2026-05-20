@@ -4,7 +4,7 @@ use crate::{
         contraction::{general::build_working_graph, queue::Queue},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{CsrGraph, EdgeLike, GraphLike, WorkingGraph},
+    graph::{CsrGraph, DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
     types::Distance,
 };
 use indicatif::ProgressBar;
@@ -12,10 +12,10 @@ use std::time::Instant;
 
 pub fn contract_graph_sequential<G>(
     graph: &G,
-) -> ContractionHierarchy<<G::Edge as EdgeLike>::Distance>
+) -> ContractionHierarchy<<G::Edge as EdgeLike>::Weight>
 where
     G: GraphLike,
-    <G::Edge as EdgeLike>::Distance: Sync + Send,
+    <G::Edge as EdgeLike>::Weight: Sync + Send,
 {
     let working_graph = build_working_graph(graph);
 
@@ -27,7 +27,7 @@ where
 }
 
 fn contract_working_graph_sequential<D: Distance + Sync + Send>(
-    mut graph: WorkingGraph<ContractionEdge<D>>,
+    mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
 ) -> ContractionHierarchy<D> {
     let mut queue = Queue::new(&graph);
     let progress = ProgressBar::new(graph.num_vertices() as u64);

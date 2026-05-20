@@ -2,7 +2,7 @@ use super::{Term, for_each_neighbor};
 
 use crate::{
     contraction_hierachy::ContractionEdge,
-    graph::WorkingGraph,
+    graph::DirectionalAdjacencyListGraph,
     types::{Distance, VertexId},
 };
 
@@ -25,7 +25,7 @@ impl DeletedNeighbors {
 impl<D: Distance> Term<D> for DeletedNeighbors {
     fn value(
         &self,
-        _graph: &WorkingGraph<ContractionEdge<D>>,
+        _graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
         vertex: VertexId,
         _shortcuts: &[ContractionEdge<D>],
     ) -> i64 {
@@ -34,7 +34,7 @@ impl<D: Distance> Term<D> for DeletedNeighbors {
 
     fn update(
         &mut self,
-        graph: &WorkingGraph<ContractionEdge<D>>,
+        graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
         vertex: VertexId,
         _shortcuts: &[ContractionEdge<D>],
     ) {

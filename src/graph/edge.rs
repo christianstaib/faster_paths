@@ -1,23 +1,27 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     graph::edge_like::EdgeLike,
     types::{Distance, VertexId},
 };
 
-#[derive(Clone, Copy)]
+/// A directed edge.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Edge {
     pub tail: VertexId,
     pub head: VertexId,
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct WeightedEdge<D> {
+/// A directed edge with an associated weight.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct WeightedEdge<W> {
     pub tail: VertexId,
     pub head: VertexId,
-    pub weight: D,
+    pub weight: W,
 }
 
-impl<D: Distance> EdgeLike for WeightedEdge<D> {
-    type Distance = D;
+impl<W: Distance> EdgeLike for WeightedEdge<W> {
+    type Weight = W;
 
     fn tail(&self) -> VertexId {
         self.tail
@@ -25,7 +29,7 @@ impl<D: Distance> EdgeLike for WeightedEdge<D> {
     fn head(&self) -> VertexId {
         self.head
     }
-    fn weight(&self) -> Self::Distance {
+    fn weight(&self) -> Self::Weight {
         self.weight
     }
 

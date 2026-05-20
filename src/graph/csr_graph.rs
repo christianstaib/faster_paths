@@ -46,7 +46,7 @@ impl<E: EdgeLike> CsrGraph<E> {
 impl<E: EdgeLike> GraphLike for CsrGraph<E> {
     type Edge = E;
 
-    fn out_edges(&self, tail: VertexId) -> &[E] {
+    fn outgoing_edges(&self, tail: VertexId) -> &[E] {
         self.flattened_nested.nested(tail.as_usize())
     }
 

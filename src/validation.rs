@@ -30,8 +30,8 @@ pub fn validate_distance<D: Distance>(
 
 pub fn validate_path<G: GraphLike>(
     graph: &G,
-    test: &PathDistance<<G::Edge as EdgeLike>::Distance>,
-    path: &Option<Path<<G::Edge as EdgeLike>::Distance>>,
+    test: &PathDistance<<G::Edge as EdgeLike>::Weight>,
+    path: &Option<Path<<G::Edge as EdgeLike>::Weight>>,
 ) -> Result<(), String> {
     match (path, test.distance()) {
         (None, None) => Ok(()),
@@ -66,7 +66,7 @@ pub fn validate<D, G, P>(
 where
     D: Distance,
     G: GraphLike,
-    G::Edge: EdgeLike<Distance = D>,
+    G::Edge: EdgeLike<Weight = D>,
     P: ShortestPathFinder<Distance = D>,
 {
     let mut total_runtime = Duration::ZERO;
@@ -117,15 +117,15 @@ fn average_runtime(total_runtime: Duration, num_tests: usize) -> Duration {
 fn sum_edge_weights<G: GraphLike>(
     graph: &G,
     path: &[VertexId],
-) -> Result<<G::Edge as EdgeLike>::Distance, Edge> {
+) -> Result<<G::Edge as EdgeLike>::Weight, Edge> {
     path.windows(2).try_fold(
-        <G::Edge as EdgeLike>::Distance::zero(),
+        <G::Edge as EdgeLike>::Weight::zero(),
         |summed_distance, potential_edge| {
             let tail = potential_edge[0];
             let head = potential_edge[1];
 
             let weight = graph
-                .out_edges(tail)
+                .outgoing_edges(tail)
                 .iter()
                 .filter(|edge| edge.head() == head)
                 .map(|edge| edge.weight())
@@ -139,9 +139,9 @@ fn sum_edge_weights<G: GraphLike>(
 
 fn validate_found_path<G: GraphLike>(
     graph: &G,
-    test: &PathDistance<<G::Edge as EdgeLike>::Distance>,
-    path: &Path<<G::Edge as EdgeLike>::Distance>,
-    expected_distance: <G::Edge as EdgeLike>::Distance,
+    test: &PathDistance<<G::Edge as EdgeLike>::Weight>,
+    path: &Path<<G::Edge as EdgeLike>::Weight>,
+    expected_distance: <G::Edge as EdgeLike>::Weight,
 ) -> Result<(), String> {
     if path.distance != expected_distance {
         return Err(format!(

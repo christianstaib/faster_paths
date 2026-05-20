@@ -1,11 +1,11 @@
 use crate::{graph::EdgeLike, types::VertexId};
 
-/// Common interface for graphs.
+/// Common interface for a directed, weighted graph.
+///
+/// Vertices are of type [`VertexId`]. Edges are exposed through outgoing
+/// adjacency lists, which can be queried by their tail.
 pub trait GraphLike {
     type Edge: EdgeLike;
-
-    /// Returns all outgoing edges of the given vertex.
-    fn out_edges(&self, tail: VertexId) -> &[Self::Edge];
 
     /// Returns the number of vertices in the graph.
     fn num_vertices(&self) -> usize;
@@ -13,10 +13,13 @@ pub trait GraphLike {
     /// Returns the number of edges in the graph.
     fn num_edges(&self) -> usize;
 
-    /// Returns all edges in the graph.
-    fn edges(&self) -> impl Iterator<Item = &Self::Edge> + '_ {
-        (0..self.num_vertices())
-            .map(|tail| VertexId::new(tail as u32))
-            .flat_map(|tail| self.out_edges(tail).iter())
+    /// Returns a slice of all edges outgoing from `tail`.
+    fn outgoing_edges(&self, tail: VertexId) -> &[Self::Edge];
+
+    /// Returns an iterator over all edges in the graph.
+    fn all_edges(&self) -> impl Iterator<Item = &Self::Edge> + '_ {
+        (0..self.num_vertices() as u32)
+            .map(VertexId::new)
+            .flat_map(|tail| self.outgoing_edges(tail).iter())
     }
 }

@@ -11,7 +11,7 @@ use crate::{
             terms::{Term, default_terms, priority},
         },
     },
-    graph::WorkingGraph,
+    graph::{DirectionalAdjacencyListGraph, GraphLike},
     types::{Distance, VertexId},
 };
 
@@ -23,7 +23,7 @@ pub(super) struct Queue<D: Distance> {
 }
 
 impl<D: Distance + Send + Sync> Queue<D> {
-    pub(super) fn new(graph: &WorkingGraph<ContractionEdge<D>>) -> Self {
+    pub(super) fn new(graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>) -> Self {
         let terms = default_terms::<D>(graph.num_vertices());
         let heap = initial_heap(graph, &terms);
         Self { heap, terms }
@@ -31,7 +31,7 @@ impl<D: Distance + Send + Sync> Queue<D> {
 
     pub(super) fn pop(
         &mut self,
-        graph: &WorkingGraph<ContractionEdge<D>>,
+        graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     ) -> Option<(VertexId, Vec<ContractionEdge<D>>)> {
         while let Some((Reverse(queued_priority), vertex)) = self.heap.pop() {
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
@@ -50,7 +50,7 @@ impl<D: Distance + Send + Sync> Queue<D> {
 
     fn update_terms_for_contracted(
         &mut self,
-        graph: &WorkingGraph<ContractionEdge<D>>,
+        graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
         vertex: VertexId,
         shortcuts: &[ContractionEdge<D>],
     ) {
@@ -61,7 +61,7 @@ impl<D: Distance + Send + Sync> Queue<D> {
 }
 
 fn initial_heap<D: Distance + Send + Sync>(
-    graph: &WorkingGraph<ContractionEdge<D>>,
+    graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     terms: &[Box<dyn Term<D>>],
 ) -> BinaryHeap<(Reverse<i64>, VertexId)> {
     (0..graph.num_vertices() as u32)

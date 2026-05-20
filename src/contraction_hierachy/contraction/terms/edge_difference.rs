@@ -1,6 +1,6 @@
 use crate::{
     contraction_hierachy::{ContractionEdge, contraction::terms::Term},
-    graph::WorkingGraph,
+    graph::DirectionalAdjacencyListGraph,
     types::{Distance, VertexId},
 };
 
@@ -15,7 +15,7 @@ impl EdgeDifference {
 impl<D: Distance> Term<D> for EdgeDifference {
     fn value(
         &self,
-        graph: &WorkingGraph<ContractionEdge<D>>,
+        graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
         vertex: VertexId,
         shortcuts: &[ContractionEdge<D>],
     ) -> i64 {
@@ -26,7 +26,7 @@ impl<D: Distance> Term<D> for EdgeDifference {
 
     fn update(
         &mut self,
-        _graph: &WorkingGraph<ContractionEdge<D>>,
+        _graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
         _vertex: VertexId,
         _shortcuts: &[ContractionEdge<D>],
     ) {

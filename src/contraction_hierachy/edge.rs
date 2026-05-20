@@ -27,7 +27,7 @@ pub struct ContractionEdge<D> {
 }
 
 impl<D: Distance> EdgeLike for ContractionEdge<D> {
-    type Distance = D;
+    type Weight = D;
 
     fn tail(&self) -> VertexId {
         self.tail
@@ -35,7 +35,7 @@ impl<D: Distance> EdgeLike for ContractionEdge<D> {
     fn head(&self) -> VertexId {
         self.head
     }
-    fn weight(&self) -> Self::Distance {
+    fn weight(&self) -> Self::Weight {
         self.weight
     }
 

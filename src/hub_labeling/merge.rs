@@ -88,7 +88,7 @@ fn merge_label<D: Distance>(
         },
     );
 
-    for edge in dir1_graph.out_edges(vertex) {
+    for edge in dir1_graph.outgoing_edges(vertex) {
         for entry in dir1_labels[edge.head.as_usize()].iter() {
             let new_entry = LabelEntry {
                 hub: entry.hub,

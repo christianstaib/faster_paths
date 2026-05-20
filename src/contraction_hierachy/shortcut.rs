@@ -17,7 +17,7 @@ fn find_edge<D: Distance>(
     tail: VertexId,
     head: VertexId,
 ) -> Option<&ContractionEdge<D>> {
-    let edges = graph.out_edges(tail);
+    let edges = graph.outgoing_edges(tail);
 
     edges
         .binary_search_by_key(&head, |edge| edge.head)

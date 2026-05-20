@@ -75,7 +75,7 @@ fn stall<D: Distance>(
     vertex: VertexId,
     dir1_dist_vertex: D,
 ) -> bool {
-    for edge in dir2_graph.out_edges(vertex) {
+    for edge in dir2_graph.outgoing_edges(vertex) {
         if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head) {
             if dir1_dist_meeting_vertex + edge.weight < dir1_dist_vertex {
                 return true;
@@ -153,7 +153,7 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             }
 
             // Perform normal edge relaxation.
-            for edge in dir1_graph.out_edges(tail) {
+            for edge in dir1_graph.outgoing_edges(tail) {
                 let new_distance = dir1_dist_tail + edge.weight;
                 let current_distance = dir1_state.get_distance(edge.head);
                 if current_distance.is_some_and(|current_distance| new_distance >= current_distance)
