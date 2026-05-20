@@ -1,11 +1,11 @@
 use crate::{
-    graph::{Edge, EdgeLike, Graph, GraphLike},
+    graph::{AdjacencyListGraph, Edge, EdgeLike, GraphLike},
     types::VertexId,
 };
 
 pub struct WorkingGraph<E: EdgeLike> {
-    forward: Graph<E>,
-    reverse: Graph<E>,
+    forward: AdjacencyListGraph<E>,
+    reverse: AdjacencyListGraph<E>,
 }
 
 impl<E: EdgeLike> WorkingGraph<E> {
@@ -13,12 +13,12 @@ impl<E: EdgeLike> WorkingGraph<E> {
         self.forward.num_vertices()
     }
 
-    pub fn forward_graph(&self) -> &Graph<E> {
+    pub fn forward_graph(&self) -> &AdjacencyListGraph<E> {
         &self.forward
     }
 
     /// Reverse incoming adjacency, stored as `vertex -> predecessor`.
-    pub fn reverse_graph(&self) -> &Graph<E> {
+    pub fn reverse_graph(&self) -> &AdjacencyListGraph<E> {
         &self.reverse
     }
 }
@@ -43,8 +43,8 @@ impl<E: EdgeLike> WorkingGraph<E> {
     /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
     pub fn new() -> WorkingGraph<E> {
         Self {
-            forward: Graph::new(),
-            reverse: Graph::new(),
+            forward: AdjacencyListGraph::new(),
+            reverse: AdjacencyListGraph::new(),
         }
     }
 

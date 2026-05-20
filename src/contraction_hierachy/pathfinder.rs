@@ -1,7 +1,7 @@
 use crate::contraction_hierachy::contraction_hierarchy::ContractionHierarchy;
 use crate::contraction_hierachy::edge::ContractionEdge;
 use crate::contraction_hierachy::shortcut::unpack_and_concat_shortcut_paths;
-use crate::graph::FastGraph;
+use crate::graph::CsrGraph;
 use crate::graph::GraphLike;
 use crate::path::{Path, PathQuery};
 use crate::pathfinder::ShortestPathFinder;
@@ -71,7 +71,7 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
 /// it cannot be optimal and `vertex` can be stalled in dir1.
 fn stall<D: Distance>(
     dir1_state: &HashSearchState<D>,
-    dir2_graph: &FastGraph<ContractionEdge<D>>,
+    dir2_graph: &CsrGraph<ContractionEdge<D>>,
     vertex: VertexId,
     dir1_dist_vertex: D,
 ) -> bool {

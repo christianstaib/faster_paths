@@ -4,7 +4,7 @@ use crate::{
         contraction::general::{build_working_graph, edge_difference, generate_shortcuts},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{EdgeLike, FastGraph, GraphLike, WorkingGraph},
+    graph::{CsrGraph, EdgeLike, GraphLike, WorkingGraph},
     types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
@@ -103,11 +103,11 @@ fn contract_working_graph_parallel<D: Distance + Send + Sync>(
     println!("flat edge creation {:?}", current.elapsed());
 
     current = Instant::now();
-    let up_graph = FastGraph::from_flat(up_edges);
+    let up_graph = CsrGraph::from_flat(up_edges);
     println!("up graph creation {:?}", current.elapsed());
 
     current = Instant::now();
-    let down_graph = FastGraph::from_flat(down_edges);
+    let down_graph = CsrGraph::from_flat(down_edges);
     println!("down graph creation {:?}", current.elapsed());
 
     current = Instant::now();

@@ -1,5 +1,5 @@
 use ch::contraction_hierachy::{ContractionHierarchy, ContractionHierarchyPathfinder};
-use ch::graph::{FastGraph, WeightedEdge};
+use ch::graph::{CsrGraph, WeightedEdge};
 use ch::path::PathDistance;
 use ch::types::VertexId;
 use ch::validation::validate;
@@ -44,7 +44,7 @@ fn main() {
         )
         .unwrap();
 
-        FastGraph::from_flat(edges)
+        CsrGraph::from_flat(edges)
     });
     let tests_input = File::open(&args.tests).unwrap();
     let tests: Vec<PathDistance<DistanceType>> =

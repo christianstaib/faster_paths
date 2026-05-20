@@ -6,18 +6,19 @@ use serde::{Deserialize, Serialize};
 
 /// A graph represented in Compressed Sparse Row (CSR) format.
 #[derive(Serialize, Deserialize)]
-pub struct FastGraph<E: EdgeLike> {
+pub struct CsrGraph<E: EdgeLike> {
     flattened_nested: FlattenedNested<E>,
 }
 
-impl<E: EdgeLike> FastGraph<E> {
+impl<E: EdgeLike> CsrGraph<E> {
     pub fn from_flat(mut flat: Vec<E>) -> Self
     where
         E: Copy,
     {
         flat.sort_unstable_by_key(|edge| (edge.tail(), edge.head(), edge.weight()));
 
-        let mut indices = vec![0; flat.last().unwrap().tail().as_usize() + 2];
+        let largest_tail = flat.last().map(|edge| edge.tail().as_usize()).unwrap_or(0);
+        let mut indices = vec![0; largest_tail + 2];
 
         for edge in &flat {
             indices[edge.tail().as_usize() + 1] += 1;
@@ -42,7 +43,7 @@ impl<E: EdgeLike> FastGraph<E> {
     }
 }
 
-impl<E: EdgeLike> GraphLike for FastGraph<E> {
+impl<E: EdgeLike> GraphLike for CsrGraph<E> {
     type Edge = E;
 
     fn out_edges(&self, tail: VertexId) -> &[E] {

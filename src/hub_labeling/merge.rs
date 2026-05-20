@@ -1,7 +1,7 @@
 use crate::{
     contraction_hierachy::{ContractionEdge, ContractionHierarchy, extract_contraction_order},
     flattened_nested::FlattenedNested,
-    graph::{FastGraph, GraphLike},
+    graph::{CsrGraph, GraphLike},
     hub_labeling::{
         HubLabeling,
         entry::{LabelEntry, min_distance_intersection},
@@ -74,7 +74,7 @@ fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>
 }
 
 fn merge_label<D: Distance>(
-    dir1_graph: &FastGraph<ContractionEdge<D>>,
+    dir1_graph: &CsrGraph<ContractionEdge<D>>,
     dir1_labels: &[Vec<LabelEntry<D>>],
     vertex: VertexId,
 ) -> Vec<LabelEntry<D>> {

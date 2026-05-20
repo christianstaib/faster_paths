@@ -1,6 +1,6 @@
 use ch::{
     contraction_hierachy::contract_graph_parallel,
-    graph::{FastGraph, WeightedEdge},
+    graph::{CsrGraph, WeightedEdge},
     types::VertexId,
 };
 use clap::Parser;
@@ -39,7 +39,7 @@ fn main() {
         |tail, head, weight| WeightedEdge { tail, head, weight },
     )
     .unwrap();
-    let graph = FastGraph::from_flat(edges);
+    let graph = CsrGraph::from_flat(edges);
 
     let contraction_hierarchy = contract_graph_parallel(&graph, args.fraction);
     let output = File::create(args.contraction_hierarchy).unwrap();

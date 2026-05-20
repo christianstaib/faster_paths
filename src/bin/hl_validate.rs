@@ -1,6 +1,6 @@
 use ch::{
     contraction_hierachy::ContractionHierarchy,
-    graph::{FastGraph, WeightedEdge},
+    graph::{CsrGraph, WeightedEdge},
     hub_labeling::{HubLabeling, HubLabelingPathfinder},
     path::PathDistance,
     types::VertexId,
@@ -44,7 +44,7 @@ fn main() {
         )
         .unwrap();
 
-        FastGraph::from_flat(edges)
+        CsrGraph::from_flat(edges)
     });
 
     let (contraction_hierarchy, _): (ContractionHierarchy<DistanceType>, _) = postcard::from_io((

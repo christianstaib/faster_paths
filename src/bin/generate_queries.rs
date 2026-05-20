@@ -1,5 +1,5 @@
 use ch::{
-    graph::{FastGraph, GraphLike, WeightedEdge},
+    graph::{CsrGraph, GraphLike, WeightedEdge},
     types::VertexId,
     validation::generate_queries,
 };
@@ -40,7 +40,7 @@ fn main() {
         |tail, head, weight| WeightedEdge { tail, head, weight },
     )
     .unwrap();
-    let graph = FastGraph::from_flat(edges);
+    let graph = CsrGraph::from_flat(edges);
 
     let queries = generate_queries(graph.num_vertices(), args.n);
     let output = File::create(&args.out).unwrap();

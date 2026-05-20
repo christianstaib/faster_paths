@@ -1,20 +1,20 @@
 use crate::{
     contraction_hierachy::edge::ContractionEdge,
-    graph::{FastGraph, GraphLike},
+    graph::{CsrGraph, GraphLike},
     types::{Distance, VertexId},
 };
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct ContractionHierarchy<D: Distance> {
-    up_graph: FastGraph<ContractionEdge<D>>,
-    down_graph: FastGraph<ContractionEdge<D>>,
+    up_graph: CsrGraph<ContractionEdge<D>>,
+    down_graph: CsrGraph<ContractionEdge<D>>,
 }
 
 impl<D: Distance> ContractionHierarchy<D> {
     pub fn new(
-        up_graph: FastGraph<ContractionEdge<D>>,
-        down_graph: FastGraph<ContractionEdge<D>>,
+        up_graph: CsrGraph<ContractionEdge<D>>,
+        down_graph: CsrGraph<ContractionEdge<D>>,
     ) -> Self {
         Self {
             up_graph,
@@ -22,11 +22,11 @@ impl<D: Distance> ContractionHierarchy<D> {
         }
     }
 
-    pub fn up_graph(&self) -> &FastGraph<ContractionEdge<D>> {
+    pub fn up_graph(&self) -> &CsrGraph<ContractionEdge<D>> {
         &self.up_graph
     }
 
-    pub fn down_graph(&self) -> &FastGraph<ContractionEdge<D>> {
+    pub fn down_graph(&self) -> &CsrGraph<ContractionEdge<D>> {
         &self.down_graph
     }
 

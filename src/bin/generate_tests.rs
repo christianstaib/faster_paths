@@ -1,6 +1,6 @@
 use ch::{
     classical_search::DijkstraPathfinder,
-    graph::{FastGraph, GraphLike, WeightedEdge},
+    graph::{CsrGraph, GraphLike, WeightedEdge},
     path::{PathDistance, PathQuery},
     pathfinder::ShortestPathFinder,
     types::{Distance, VertexId},
@@ -33,7 +33,7 @@ struct Args {
 }
 
 fn generate_tests<D: Distance + Send + Sync>(
-    graph: &FastGraph<WeightedEdge<D>>,
+    graph: &CsrGraph<WeightedEdge<D>>,
     num_tests: usize,
 ) -> Vec<PathDistance<D>> {
     let num_vertices = graph.num_vertices();
@@ -72,7 +72,7 @@ fn main() {
         |tail, head, weight| WeightedEdge { tail, head, weight },
     )
     .unwrap();
-    let graph = FastGraph::from_flat(edges);
+    let graph = CsrGraph::from_flat(edges);
 
     let tests = generate_tests(&graph, args.num_tests);
     let output = File::create(&args.tests).unwrap();

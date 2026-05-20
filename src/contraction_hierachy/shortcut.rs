@@ -1,7 +1,7 @@
 use crate::graph::GraphLike;
 use crate::{
     contraction_hierachy::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
-    graph::FastGraph,
+    graph::CsrGraph,
     types::{Distance, VertexId},
 };
 
@@ -13,7 +13,7 @@ use crate::{
 /// The outgoing edges of `tail` must be sorted by their head vertex, because the
 /// lookup is performed using binary search.
 fn find_edge<D: Distance>(
-    graph: &FastGraph<ContractionEdge<D>>,
+    graph: &CsrGraph<ContractionEdge<D>>,
     tail: VertexId,
     head: VertexId,
 ) -> Option<&ContractionEdge<D>> {
@@ -64,8 +64,8 @@ pub fn unpack_and_concat_shortcut_paths<D: Distance>(
 /// Shortcut edges are unpacked iteratively using both graphs. Returns `None` if
 /// an expected edge is not found or the input is empty.
 pub fn unpack_shortcuts<D: Distance>(
-    dir1_graph: &FastGraph<ContractionEdge<D>>,
-    dir2_graph: &FastGraph<ContractionEdge<D>>,
+    dir1_graph: &CsrGraph<ContractionEdge<D>>,
+    dir2_graph: &CsrGraph<ContractionEdge<D>>,
     dir1_reversed_shortcut_path: &[VertexId],
 ) -> Option<Vec<VertexId>> {
     enum Dir {

@@ -4,11 +4,11 @@ use crate::{
 };
 
 /// A graph represented by adjacency lists.
-pub struct Graph<E: EdgeLike> {
+pub struct AdjacencyListGraph<E: EdgeLike> {
     edges: Vec<Vec<E>>,
 }
 
-impl<E: EdgeLike> Graph<E> {
+impl<E: EdgeLike> AdjacencyListGraph<E> {
     pub fn new() -> Self {
         Self { edges: Vec::new() }
     }
@@ -56,7 +56,7 @@ impl<E: EdgeLike> Graph<E> {
     }
 }
 
-impl<E: EdgeLike> GraphLike for Graph<E> {
+impl<E: EdgeLike> GraphLike for AdjacencyListGraph<E> {
     type Edge = E;
 
     fn out_edges(&self, tail: VertexId) -> &[E] {
