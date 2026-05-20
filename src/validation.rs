@@ -172,16 +172,14 @@ fn path_weight<E: EdgeLike>(
     for pair in vertices.windows(2) {
         let tail = pair[0];
         let head = pair[1];
-        let Some(weight) = edges
-            .iter()
-            .filter(|edge| edge.tail() == tail && edge.head() == head)
-            .map(|edge| edge.weight())
-            .min()
+
+        let Ok(index) =
+            edges.binary_search_by_key(&(tail, head), |edge| (edge.tail(), edge.head()))
         else {
             return Err((tail, head));
         };
 
-        total += weight;
+        total += edges[index].weight();
     }
 
     Ok(total)

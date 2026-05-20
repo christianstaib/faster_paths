@@ -11,7 +11,6 @@ use indicatif::ProgressBar;
 use num_traits::clamp;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
-use std::time::{Duration, Instant};
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
@@ -22,13 +21,9 @@ pub fn contract_graph_parallel<G>(
 where
     G: GraphLike,
 {
-    let start = Instant::now();
     let working_graph = build_working_graph(graph);
-    println!("Working graph generation took {:?}", start.elapsed());
 
-    let start = Instant::now();
     let contraction_hierarchy = contract_working_graph_parallel(working_graph, fraction);
-    println!("Contraction took {:?}", start.elapsed());
 
     contraction_hierarchy
 }
@@ -43,18 +38,9 @@ fn contract_working_graph_parallel<D: Distance>(
 
     let progress = ProgressBar::new(remaining.len() as u64);
 
-    let mut serial_time = Duration::ZERO;
-    let mut parallel_time = Duration::ZERO;
-
-    let mut current;
-
-    let mut num_levels = 0;
     while !remaining.is_empty() {
-        current = Instant::now();
         let (mut next_remaining, candidates) = select_ids(&graph, &remaining);
-        serial_time += current.elapsed();
 
-        current = Instant::now();
         let mut candidates_data: Vec<_> = candidates
             .into_par_iter()
             .map(|vertex| {
@@ -64,9 +50,7 @@ fn contract_working_graph_parallel<D: Distance>(
             })
             .collect();
         candidates_data.par_sort_unstable_by_key(|(_, edge_difference, _)| *edge_difference);
-        parallel_time += current.elapsed();
 
-        current = Instant::now();
         let use_len = clamp(
             (candidates_data.len() as f64 * fraction) as usize,
             1,
@@ -86,24 +70,14 @@ fn contract_working_graph_parallel<D: Distance>(
         }
 
         remaining = next_remaining;
-        serial_time += current.elapsed();
         progress.inc(candidates_data.len() as u64);
-        num_levels += 1;
     }
-
-    println!("num levels {}", num_levels);
-    println!("serial time {:?}", serial_time);
-    println!("parallel time {:?}", parallel_time);
 
     progress.finish();
 
-    current = Instant::now();
     let (up_graph, down_graph) = graph.into_csr_graphs();
-    println!("flat edge creation {:?}", current.elapsed());
 
-    current = Instant::now();
     let ch = ContractionHierarchy::new(up_graph, down_graph);
-    println!("ch creation {:?}", current.elapsed());
 
     ch
 }
