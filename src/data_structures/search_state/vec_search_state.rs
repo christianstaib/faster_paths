@@ -1,4 +1,7 @@
-use crate::types::{Distance, VertexId};
+use crate::{
+    graph::GraphLike,
+    types::{Distance, VertexId},
+};
 
 use super::search_state_access::SearchStateAccess;
 
@@ -19,6 +22,10 @@ impl<D: Distance> VecSearchState<D> {
 }
 
 impl<D: Distance> SearchStateAccess<D> for VecSearchState<D> {
+    fn new<G: GraphLike>(graph: &G) -> Self {
+        Self::new(graph.num_vertices())
+    }
+
     fn get_distance(&self, vertex: VertexId) -> Option<D> {
         let distance = self.distance.get(vertex.as_usize()).copied()?;
         (distance != D::max_value()).then_some(distance)

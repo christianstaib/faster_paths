@@ -1,6 +1,9 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::types::{Distance, VertexId};
+use crate::{
+    graph::GraphLike,
+    types::{Distance, VertexId},
+};
 
 use super::search_state_access::SearchStateAccess;
 
@@ -21,6 +24,10 @@ impl<D: Distance> HashSearchState<D> {
 }
 
 impl<D: Distance> SearchStateAccess<D> for HashSearchState<D> {
+    fn new<G: GraphLike>(_graph: &G) -> Self {
+        Self::new()
+    }
+
     fn get_distance(&self, vertex: VertexId) -> Option<D> {
         self.distance.get(&vertex).copied()
     }

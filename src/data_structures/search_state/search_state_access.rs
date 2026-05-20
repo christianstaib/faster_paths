@@ -1,6 +1,11 @@
-use crate::types::{Distance, VertexId};
+use crate::{
+    graph::GraphLike,
+    types::{Distance, VertexId},
+};
 
 pub trait SearchStateAccess<D: Distance> {
+    fn new<G: GraphLike>(graph: &G) -> Self;
+
     fn get_distance(&self, vertex: VertexId) -> Option<D>;
     fn set_distance(&mut self, vertex: VertexId, distance: D);
 

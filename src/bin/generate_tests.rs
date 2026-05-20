@@ -1,5 +1,6 @@
 use ch::{
     classical_search::DijkstraPathfinder,
+    data_structures::{HashSearchState, VecSearchState},
     graph::{CsrGraph, GraphLike, WeightedEdge},
     path::{PathDistance, PathQuery},
     pathfinder::ShortestPathFinder,
@@ -14,6 +15,7 @@ use std::{
     fs::File,
     io::{BufReader, BufWriter},
     path::PathBuf,
+    time::Instant,
 };
 
 #[derive(Parser, Debug)]
@@ -54,7 +56,7 @@ fn generate_tests<D: Distance>(
         .into_par_iter()
         .progress()
         .map_init(
-            || DijkstraPathfinder::new(graph),
+            || DijkstraPathfinder::<_, VecSearchState<_>>::new(graph),
             |pathfinder, query| PathDistance::new(query, pathfinder.distance(&query)),
         )
         .collect::<Vec<_>>()
@@ -74,7 +76,9 @@ fn main() {
     .unwrap();
     let graph = CsrGraph::from_flat(edges);
 
+    let start = Instant::now();
     let tests = generate_tests(&graph, args.num_tests);
+    println!("Took {:?}", start.elapsed());
     let output = File::create(&args.tests).unwrap();
     serde_json::to_writer_pretty(BufWriter::new(output), &tests).unwrap();
 

@@ -3,31 +3,33 @@ use std::{cmp::Reverse, collections::BinaryHeap};
 use num_traits::Zero;
 
 use crate::{
-    data_structures::{HashSearchState, SearchStateAccess},
+    data_structures::SearchStateAccess,
     graph::{EdgeLike, GraphLike},
     path::{Path, PathQuery},
     pathfinder::ShortestPathFinder,
     types::VertexId,
 };
 
-pub struct DijkstraPathfinder<'a, G>
+pub struct DijkstraPathfinder<'a, G, S>
 where
     G: GraphLike,
+    S: SearchStateAccess<<G::Edge as EdgeLike>::Weight>,
 {
     graph: &'a G,
     queue: BinaryHeap<(Reverse<<G::Edge as EdgeLike>::Weight>, VertexId)>,
-    up_state: HashSearchState<<G::Edge as EdgeLike>::Weight>,
+    search_state: S,
 }
 
-impl<'a, G> DijkstraPathfinder<'a, G>
+impl<'a, G, S> DijkstraPathfinder<'a, G, S>
 where
     G: GraphLike,
+    S: SearchStateAccess<<G::Edge as EdgeLike>::Weight>,
 {
     pub fn new(graph: &'a G) -> Self {
         Self {
             graph,
             queue: BinaryHeap::new(),
-            up_state: HashSearchState::new(),
+            search_state: S::new(graph),
         }
     }
 
@@ -36,12 +38,12 @@ where
         self.queue
             .push((Reverse(<G::Edge as EdgeLike>::Weight::zero()), query.source));
 
-        self.up_state.clear();
-        self.up_state
+        self.search_state.clear();
+        self.search_state
             .set_distance(query.source, <G::Edge as EdgeLike>::Weight::zero());
 
         while let Some((Reverse(dist_tail), tail)) = self.queue.pop() {
-            if self.up_state.test_and_set_expanded(tail) {
+            if self.search_state.test_and_set_expanded(tail) {
                 continue;
             }
 
@@ -51,13 +53,13 @@ where
 
             for edge in self.graph.outgoing_edges(tail) {
                 let new_distance = dist_tail + edge.weight();
-                let current_distance = self.up_state.get_distance(edge.head());
+                let current_distance = self.search_state.get_distance(edge.head());
                 if current_distance.is_some_and(|distance| new_distance >= distance) {
                     continue;
                 }
 
-                self.up_state.set_distance(edge.head(), new_distance);
-                self.up_state.set_predecessor(edge.head(), tail);
+                self.search_state.set_distance(edge.head(), new_distance);
+                self.search_state.set_predecessor(edge.head(), tail);
                 self.queue.push((Reverse(new_distance), edge.head()));
             }
         }
@@ -66,15 +68,16 @@ where
     }
 }
 
-impl<'a, G> ShortestPathFinder for DijkstraPathfinder<'a, G>
+impl<'a, G, S> ShortestPathFinder for DijkstraPathfinder<'a, G, S>
 where
     G: GraphLike,
+    S: SearchStateAccess<<G::Edge as EdgeLike>::Weight>,
 {
     type Distance = <G::Edge as EdgeLike>::Weight;
 
     fn path(&mut self, query: &PathQuery) -> Option<Path<Self::Distance>> {
         let distance = self.search(query)?;
-        let mut vertices = self.up_state.get_reversed_path(query.target)?;
+        let mut vertices = self.search_state.get_reversed_path(query.target)?;
         vertices.reverse();
 
         Some(Path { vertices, distance })
