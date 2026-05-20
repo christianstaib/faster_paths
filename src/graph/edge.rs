@@ -13,7 +13,7 @@ pub struct Edge {
 }
 
 /// A directed edge with an associated weight.
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct WeightedEdge<W> {
     pub tail: VertexId,
     pub head: VertexId,
