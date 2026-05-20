@@ -6,7 +6,6 @@ mod shortcut;
 
 pub use contraction::{contract_graph_parallel, contract_graph_sequential};
 pub use contraction_hierarchy::ContractionHierarchy;
-pub use contraction_hierarchy::extract_contraction_order;
 pub use edge::ContractionEdge;
 pub use pathfinder::ContractionHierarchyPathfinder;
 pub use shortcut::unpack_and_concat_shortcut_paths;

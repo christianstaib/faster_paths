@@ -1,7 +1,7 @@
 use crate::{
-    contraction_hierachy::{ContractionEdge, ContractionHierarchy, extract_contraction_order},
+    contraction_hierachy::{ContractionEdge, ContractionHierarchy},
     flattened_nested::FlattenedNested,
-    graph::{CsrGraph, GraphLike},
+    graph::{CsrGraph, GraphLike, compute_topological_layers},
     hub_labeling::{
         HubLabeling,
         entry::{LabelEntry, min_distance_intersection},
@@ -15,7 +15,7 @@ use indicatif::ProgressBar;
 use rustc_hash::FxHashMap;
 
 pub fn merge<D: Distance + Send + Sync>(ch: &ContractionHierarchy<D>) -> HubLabeling<D> {
-    let top_down_order = extract_contraction_order(ch).unwrap();
+    let top_down_order = compute_topological_layers(&[ch.up_graph(), ch.down_graph()]).unwrap();
 
     let num_vertices = ch.num_vertices();
     let mut up_labels = initialize_labels(num_vertices);

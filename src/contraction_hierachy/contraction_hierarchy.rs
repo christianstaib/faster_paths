@@ -1,10 +1,14 @@
 use crate::{
     contraction_hierachy::edge::ContractionEdge,
     graph::{CsrGraph, GraphLike},
-    types::{Distance, VertexId},
+    types::Distance,
 };
 use serde::{Deserialize, Serialize};
 
+/// Stores the upward and downward graphs of a contraction hierarchy.
+///
+/// Both graphs contain [`ContractionEdge`]s in upward direction, i.e. from lower
+/// to higher contraction level.
 #[derive(Serialize, Deserialize)]
 pub struct ContractionHierarchy<D: Distance> {
     up_graph: CsrGraph<ContractionEdge<D>>,
@@ -22,67 +26,18 @@ impl<D: Distance> ContractionHierarchy<D> {
         }
     }
 
+    /// Returns a reference to upward graph.
     pub fn up_graph(&self) -> &CsrGraph<ContractionEdge<D>> {
         &self.up_graph
     }
 
+    /// Returns a reference to downward graph.
     pub fn down_graph(&self) -> &CsrGraph<ContractionEdge<D>> {
         &self.down_graph
     }
 
+    /// Returns the number of vertices.
     pub fn num_vertices(&self) -> usize {
         std::cmp::max(self.up_graph.num_vertices(), self.down_graph.num_vertices())
     }
-}
-
-pub fn extract_contraction_order<D: Distance>(
-    ch: &ContractionHierarchy<D>,
-) -> Option<Vec<Vec<VertexId>>> {
-    let num_vertices = ch.num_vertices();
-    let mut indegrees = vec![0; num_vertices];
-
-    let all_up_edges = ch.up_graph.all_edges();
-    let all_down_edges = ch.down_graph.all_edges();
-    for edge in all_up_edges.chain(all_down_edges) {
-        indegrees[edge.head.as_usize()] += 1;
-    }
-
-    let mut current_layer = indegrees
-        .iter()
-        .enumerate()
-        .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(VertexId::new(vertex as u32)))
-        .collect::<Vec<_>>();
-
-    let mut layers = Vec::new();
-    let mut visited = 0;
-
-    while !current_layer.is_empty() {
-        let mut next_layer = Vec::new();
-
-        for vertex in current_layer.iter().copied() {
-            visited += 1;
-
-            let up_edges = ch.up_graph.outgoing_edges(vertex).iter();
-            let down_edges = ch.down_graph.outgoing_edges(vertex).iter();
-            for edge in up_edges.chain(down_edges) {
-                let head_indegree = &mut indegrees[edge.head.as_usize()];
-                *head_indegree -= 1;
-
-                if *head_indegree == 0 {
-                    next_layer.push(edge.head);
-                }
-            }
-        }
-
-        layers.push(current_layer);
-        current_layer = next_layer;
-    }
-
-    // contraction hierarchy must be acyclic
-    if visited != num_vertices {
-        return None;
-    }
-
-    layers.reverse();
-    Some(layers)
 }
