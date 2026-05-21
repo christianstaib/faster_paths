@@ -1,6 +1,8 @@
 use std::{
     fmt::Debug,
+    num::ParseIntError,
     ops::{Add, AddAssign},
+    str::FromStr,
 };
 
 use num_traits::{Bounded, Zero};
@@ -16,6 +18,14 @@ impl VertexId {
 
     pub fn as_usize(self) -> usize {
         self.0 as usize
+    }
+}
+
+impl FromStr for VertexId {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        u32::from_str(s).map(VertexId)
     }
 }
 
