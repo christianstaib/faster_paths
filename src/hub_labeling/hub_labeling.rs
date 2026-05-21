@@ -43,8 +43,9 @@ where
 
     pub fn try_from_contraction_hierarchy(
         contraction_hierarchy: &ContractionHierarchy<D>,
+        epsilon: D,
     ) -> Option<Self> {
-        merge(contraction_hierarchy)
+        merge(contraction_hierarchy, epsilon)
     }
 
     pub fn up_hub_labeling(&self) -> &FlattenedNested<LabelEntry<D>> {

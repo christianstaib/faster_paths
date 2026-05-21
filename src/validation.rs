@@ -2,9 +2,8 @@ use crate::{
     graph::EdgeLike,
     path::{Path, PathDistance, PathQuery},
     pathfinder::ShortestPathFinder,
-    types::{Distance, VertexId},
+    types::{Distance, VertexId, distance_abs_diff_eq},
 };
-use approx::abs_diff_ne;
 use num_traits::Zero;
 use std::time::{Duration, Instant};
 
@@ -12,6 +11,7 @@ pub fn validate_paths<E, P>(
     tests: &[PathDistance<P::Distance>],
     edges: &[E],
     pathfinder: &mut P,
+    epsilon: P::Distance,
 ) -> Result<Duration, Vec<String>>
 where
     E: EdgeLike<Weight = P::Distance>,
@@ -25,7 +25,7 @@ where
         let path = pathfinder.path(test.query());
         total_runtime += start.elapsed();
 
-        if let Err(message) = validate_path(edges, test, &path) {
+        if let Err(message) = validate_path(edges, test, &path, epsilon) {
             failures.push(message);
         }
     }
@@ -40,6 +40,7 @@ where
 pub fn validate_distances<P>(
     tests: &[PathDistance<P::Distance>],
     pathfinder: &mut P,
+    epsilon: P::Distance,
 ) -> Result<Duration, Vec<String>>
 where
     P: ShortestPathFinder,
@@ -52,7 +53,7 @@ where
         let distance = pathfinder.distance(test.query());
         total_runtime += start.elapsed();
 
-        if let Err(message) = validate_distance(test, &distance) {
+        if let Err(message) = validate_distance(test, &distance, epsilon) {
             failures.push(message);
         }
     }
@@ -64,28 +65,31 @@ where
     }
 }
 
-fn validate_distance<D: Distance>(
+fn validate_distance<D>(
     test: &PathDistance<D>,
     actual: &Option<D>,
-) -> Result<(), String> {
-    let expected = test.distance();
-
-    if abs_diff_ne!(expected, *actual) {
-        return Ok(());
+    epsilon: D,
+) -> Result<(), String>
+where
+    D: Distance,
+{
+    match (test.distance(), *actual) {
+        (None, None) => Ok(()),
+        (Some(expected), Some(actual)) if distance_abs_diff_eq(expected, actual, epsilon) => Ok(()),
+        (expected, actual) => Err(format!(
+            "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
+            test.query(),
+            expected,
+            actual
+        )),
     }
-
-    Err(format!(
-        "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
-        test.query(),
-        expected,
-        actual
-    ))
 }
 
 fn validate_path<E>(
     edges: &[E],
     test: &PathDistance<E::Weight>,
     path: &Option<Path<E::Weight>>,
+    epsilon: E::Weight,
 ) -> Result<(), String>
 where
     E: EdgeLike,
@@ -106,7 +110,7 @@ where
         )),
 
         (Some(found_path), Some(expected_distance)) => {
-            validate_found_path(edges, query, expected_distance, found_path)
+            validate_found_path(edges, query, expected_distance, found_path, epsilon)
         }
     }
 }
@@ -116,11 +120,12 @@ fn validate_found_path<E>(
     query: &PathQuery,
     expected_distance: E::Weight,
     path: &Path<E::Weight>,
+    epsilon: E::Weight,
 ) -> Result<(), String>
 where
     E: EdgeLike,
 {
-    if abs_diff_ne!(path.distance, expected_distance) {
+    if !distance_abs_diff_eq(path.distance, expected_distance, epsilon) {
         return Err(format!(
             "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
             query, expected_distance, path.distance,
@@ -154,7 +159,7 @@ where
         )
     })?;
 
-    if abs_diff_ne!(actual_sum, expected_distance) {
+    if !distance_abs_diff_eq(actual_sum, expected_distance, epsilon) {
         return Err(format!(
             "{:?}. Path edge weight sum mismatch: expected {:?}, but got {:?}.",
             query, expected_distance, actual_sum,

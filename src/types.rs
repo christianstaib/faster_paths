@@ -1,11 +1,10 @@
 use std::{
     fmt::Debug,
     num::ParseIntError,
-    ops::{Add, AddAssign},
+    ops::{Add, AddAssign, Sub},
     str::FromStr,
 };
 
-use approx::AbsDiffEq;
 use num_traits::{Bounded, Zero};
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +30,16 @@ impl FromStr for VertexId {
 }
 
 pub trait Distance:
-    Copy + Ord + Zero + Bounded + Add<Output = Self> + AddAssign + Debug + Send + Sync + AbsDiffEq
+    Copy
+    + Ord
+    + Zero
+    + Bounded
+    + Add<Output = Self>
+    + AddAssign
+    + Sub<Output = Self>
+    + Debug
+    + Send
+    + Sync
 {
 }
 
@@ -42,9 +50,23 @@ impl<D> Distance for D where
         + Bounded
         + Add<Output = Self>
         + AddAssign
+        + Sub<Output = Self>
         + Debug
         + Send
         + Sync
-        + AbsDiffEq
 {
+}
+
+/// Checks whether the absolute difference between `left` and `right` is at most `epsilon`.
+pub fn distance_abs_diff_eq<D>(left: D, right: D, epsilon: D) -> bool
+where
+    D: Ord + Sub<Output = D>,
+{
+    let diff = if left >= right {
+        left - right
+    } else {
+        right - left
+    };
+
+    diff <= epsilon
 }

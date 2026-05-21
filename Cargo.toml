@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-approx = { version = "0.6.0-rc2", features = ["ordered_float"] }
 graph_readers = { git = "https://github.com/christianstaib/graph_readers.git" }
 indicatif = { version = "0.18.4", features = ["rayon"] }
 num-traits = "0.2"

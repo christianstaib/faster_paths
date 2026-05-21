@@ -6,10 +6,9 @@ use crate::{
         HubLabeling,
         entry::{LabelEntry, min_common_hub_distance},
     },
-    types::{Distance, VertexId},
+    types::{Distance, VertexId, distance_abs_diff_eq},
 };
 
-use approx::abs_diff_eq;
 use rayon::prelude::*;
 
 use indicatif::ProgressBar;
@@ -25,6 +24,7 @@ use rustc_hash::FxHashMap;
 /// topological layering exists.
 pub(super) fn merge<D: Distance>(
     contraction_hierarchy: &ContractionHierarchy<D>,
+    epsilon: D,
 ) -> Option<HubLabeling<D>> {
     let up_graph = contraction_hierarchy.up_graph();
     let down_graph = contraction_hierarchy.down_graph();
@@ -42,12 +42,12 @@ pub(super) fn merge<D: Distance>(
             .map(|&vertex| {
                 let up_edges_vertex = up_graph.outgoing_edges(vertex);
                 let mut up_label = merge_label(up_edges_vertex, &up_labels, vertex);
-                up_label = prune_label(&down_labels, &up_label);
+                up_label = prune_label(&down_labels, &up_label, epsilon);
                 up_label.shrink_to_fit();
 
                 let down_edges_vertex = down_graph.outgoing_edges(vertex);
                 let mut down_label = merge_label(down_edges_vertex, &down_labels, vertex);
-                down_label = prune_label(&up_labels, &down_label);
+                down_label = prune_label(&up_labels, &down_label, epsilon);
                 down_label.shrink_to_fit();
 
                 bar.inc(1);
@@ -149,6 +149,7 @@ where
 fn prune_label<D: Distance>(
     dir2_labels: &[Vec<LabelEntry<D>>],
     dir1_label: &[LabelEntry<D>],
+    epsilon: D,
 ) -> Vec<LabelEntry<D>> {
     dir1_label
         .iter()
@@ -157,7 +158,7 @@ fn prune_label<D: Distance>(
             let (true_distance, _dir1_index, _dir2_index) =
                 min_common_hub_distance(dir1_label, dir2_label).unwrap();
 
-            abs_diff_eq!(entry.distance, true_distance)
+            distance_abs_diff_eq(entry.distance, true_distance, epsilon)
         })
         .copied()
         .collect()
