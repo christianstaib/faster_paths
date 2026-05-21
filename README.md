@@ -1,5 +1,8 @@
 # Faster Paths
 
+[![Build](https://github.com/christianstaib/faster_paths3/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/christianstaib/faster_paths3/actions/workflows/build.yml)
+[![Tests](https://github.com/christianstaib/faster_paths3/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/christianstaib/faster_paths3/actions/workflows/test.yml)
+
 This crate aims to provide different pathfinding algorithms.
 Currently, there are three pathfinding algorithms:
 1. Dijkstra
