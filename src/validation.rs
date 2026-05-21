@@ -4,6 +4,7 @@ use crate::{
     pathfinder::ShortestPathFinder,
     types::{Distance, VertexId},
 };
+use approx::abs_diff_ne;
 use num_traits::Zero;
 use std::time::{Duration, Instant};
 
@@ -69,7 +70,7 @@ fn validate_distance<D: Distance>(
 ) -> Result<(), String> {
     let expected = test.distance();
 
-    if expected == *actual {
+    if abs_diff_ne!(expected, *actual) {
         return Ok(());
     }
 
@@ -119,7 +120,7 @@ fn validate_found_path<E>(
 where
     E: EdgeLike,
 {
-    if path.distance != expected_distance {
+    if abs_diff_ne!(path.distance, expected_distance) {
         return Err(format!(
             "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
             query, expected_distance, path.distance,
@@ -153,7 +154,7 @@ where
         )
     })?;
 
-    if actual_sum != expected_distance {
+    if abs_diff_ne!(actual_sum, expected_distance) {
         return Err(format!(
             "{:?}. Path edge weight sum mismatch: expected {:?}, but got {:?}.",
             query, expected_distance, actual_sum,

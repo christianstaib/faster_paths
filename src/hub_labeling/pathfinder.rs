@@ -20,11 +20,11 @@ impl<'a, D: Distance> ShortestPathFinder for HubLabelingPathfinder<'a, D> {
     fn path(&mut self, query: &PathQuery) -> Option<Path<Self::Distance>> {
         let up_label = self
             .hub_labeling
-            .up_hub_labeling
+            .up_hub_labeling()
             .nested(query.source.as_usize());
         let down_label = self
             .hub_labeling
-            .down_hub_labeling
+            .down_hub_labeling()
             .nested(query.target.as_usize());
 
         let (distance, up_index, down_index) = min_common_hub_distance(up_label, down_label)?;
@@ -44,11 +44,11 @@ impl<'a, D: Distance> ShortestPathFinder for HubLabelingPathfinder<'a, D> {
     fn distance(&mut self, query: &PathQuery) -> Option<Self::Distance> {
         let up_label = self
             .hub_labeling
-            .up_hub_labeling
+            .up_hub_labeling()
             .nested(query.source.as_usize());
         let down_label = self
             .hub_labeling
-            .down_hub_labeling
+            .down_hub_labeling()
             .nested(query.target.as_usize());
 
         let (distance, _up_index, _down_index) = min_common_hub_distance(up_label, down_label)?;

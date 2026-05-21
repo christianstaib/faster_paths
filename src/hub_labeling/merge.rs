@@ -9,7 +9,7 @@ use crate::{
     types::{Distance, VertexId},
 };
 
-use approx::relative_eq;
+use approx::abs_diff_eq;
 use rayon::prelude::*;
 
 use indicatif::ProgressBar;
@@ -67,10 +67,10 @@ pub(super) fn merge<D: Distance>(
 
     bar.finish();
 
-    Some(HubLabeling {
-        up_hub_labeling: FlattenedNested::from_nested(&up_labels),
-        down_hub_labeling: FlattenedNested::from_nested(&down_labels),
-    })
+    Some(HubLabeling::new(
+        FlattenedNested::from_nested(&up_labels),
+        FlattenedNested::from_nested(&down_labels),
+    ))
 }
 
 /// Creates one initial label for every vertex.
@@ -155,9 +155,9 @@ fn prune_label<D: Distance>(
         .filter(|entry| {
             let dir2_label = &dir2_labels[entry.hub.as_usize()];
             let (true_distance, _dir1_index, _dir2_index) =
-                min_common_hub_distance(&dir1_label, dir2_label).unwrap();
+                min_common_hub_distance(dir1_label, dir2_label).unwrap();
 
-            relative_eq!(entry.distance, true_distance)
+            abs_diff_eq!(entry.distance, true_distance)
         })
         .copied()
         .collect()
