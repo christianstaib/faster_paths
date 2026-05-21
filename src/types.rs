@@ -5,6 +5,7 @@ use std::{
     str::FromStr,
 };
 
+use approx::{AbsDiffEq, RelativeEq};
 use num_traits::{Bounded, Zero};
 use serde::{Deserialize, Serialize};
 
@@ -30,11 +31,20 @@ impl FromStr for VertexId {
 }
 
 pub trait Distance:
-    Copy + Ord + Zero + Bounded + Add<Output = Self> + AddAssign + Debug + Send + Sync
+    Copy + Ord + Zero + Bounded + Add<Output = Self> + AddAssign + Debug + Send + Sync + RelativeEq
 {
 }
 
 impl<D> Distance for D where
-    D: Copy + Ord + Zero + Bounded + Add<Output = Self> + AddAssign + Debug + Send + Sync
+    D: Copy
+        + Ord
+        + Zero
+        + Bounded
+        + Add<Output = Self>
+        + AddAssign
+        + Debug
+        + Send
+        + Sync
+        + RelativeEq
 {
 }

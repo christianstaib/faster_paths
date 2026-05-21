@@ -9,6 +9,7 @@ use crate::{
     types::{Distance, VertexId},
 };
 
+use approx::relative_eq;
 use rayon::prelude::*;
 
 use indicatif::ProgressBar;
@@ -156,7 +157,7 @@ fn prune_label<D: Distance>(
             let (true_distance, _dir1_index, _dir2_index) =
                 min_common_hub_distance(&dir1_label, dir2_label).unwrap();
 
-            entry.distance == true_distance
+            relative_eq!(entry.distance, true_distance)
         })
         .copied()
         .collect()
