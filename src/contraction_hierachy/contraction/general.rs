@@ -19,7 +19,7 @@ pub(super) fn edge_difference<D: Distance>(
 }
 
 /// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-pub(super) fn build_working_graph<G: GraphLike>(
+pub fn build_working_graph<G: GraphLike>(
     graph: &G,
 ) -> DirectionalAdjacencyListGraph<ContractionEdge<<G::Edge as EdgeLike>::Weight>> {
     let mut working_graph = DirectionalAdjacencyListGraph::new();
