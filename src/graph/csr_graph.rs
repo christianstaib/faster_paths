@@ -2,6 +2,7 @@ use crate::{
     data_structures::FlattenedNested, graph::GraphLike, graph::edge_like::EdgeLike, types::Vertex,
 };
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 
 /// A graph represented in Compressed Sparse Row (CSR) format.
 #[derive(Serialize, Deserialize)]
@@ -14,8 +15,14 @@ impl<E: EdgeLike> CsrGraph<E> {
     pub fn from_flat(mut flat: Vec<E>) -> Self {
         flat.sort_unstable_by_key(|edge| (edge.tail(), edge.head(), edge.weight()));
 
-        let largest_tail = flat.last().map(|edge| edge.tail().as_usize()).unwrap_or(0);
-        let mut indices = vec![0; largest_tail + 2];
+        let num_vertices = flat
+            .iter()
+            .map(|edge| max(edge.tail(), edge.head()))
+            .max()
+            .map(|vertex| vertex.as_usize() + 1)
+            .unwrap_or(0);
+
+        let mut indices = vec![0; num_vertices + 1];
 
         for edge in &flat {
             indices[edge.tail().as_usize() + 1] += 1;
@@ -54,5 +61,31 @@ impl<E: EdgeLike> GraphLike for CsrGraph<E> {
 
     fn num_edges(&self) -> usize {
         self.flattened_nested.num_flat()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::graph::{CsrGraph, GraphLike, WeightedEdge};
+    use crate::types::Vertex;
+
+    #[test]
+    fn from_flat_counts_vertices_that_only_appear_as_heads() {
+        let graph = CsrGraph::from_flat(vec![WeightedEdge {
+            tail: Vertex::new(0),
+            head: Vertex::new(10),
+            weight: 1_u32,
+        }]);
+
+        assert_eq!(graph.num_vertices(), 11);
+        assert_eq!(graph.num_edges(), 1);
+    }
+
+    #[test]
+    fn from_flat_empty_graph_has_no_vertices() {
+        let graph = CsrGraph::<WeightedEdge<u32>>::from_flat(Vec::new());
+
+        assert_eq!(graph.num_vertices(), 0);
+        assert_eq!(graph.num_edges(), 0);
     }
 }
