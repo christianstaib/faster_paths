@@ -2,7 +2,7 @@ use crate::{graph::EdgeLike, types::Vertex};
 
 /// Common interface for a directed, weighted graph.
 ///
-/// Vertices are of type [`VertexId`]. Edges are exposed through outgoing
+/// Vertices are of type [`Vertex`]. Edges are exposed through outgoing
 /// adjacency lists, which can be queried by their tail.
 pub trait GraphLike {
     type Edge: EdgeLike;

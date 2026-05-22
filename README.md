@@ -14,9 +14,9 @@ Currently, there are three pathfinding algorithms:
 ## Data Types
 
 The basic building block of the graph you want to work with is `WeightedEdge`.
-A `WeightedEdge` has a `tail` and a `head`, both of type `VertexId`.
-`VertexId` is a strong typedef for `u32` and can be instantiated with
-`VertexId::new(u32)`.
+A `WeightedEdge` has a `tail` and a `head`, both of type `Vertex`.
+`Vertex` is a strong typedef for `u32` and can be instantiated with
+`Vertex::new(u32)`.
 
 It also has a generic `weight`. The weight type needs to implement the crate's
 `Distance` requirements, including `Ord` and `Add`. Possible weight types are
@@ -34,36 +34,45 @@ A Contraction Hierarchy requires *a bit* more space than the underlying graph.
 Minimal usage:
 
 ```rust
+use ch::{
+    contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_parallel},
+    graph::WeightedEdge,
+    path::PathQuery,
+    pathfinder::ShortestPathFinder,
+    types::Vertex,
+};
+use ordered_float::OrderedFloat;
+
 let edges = vec![
     WeightedEdge {
-        tail: VertexId::new(0),
-        head: VertexId::new(1),
+        tail: Vertex::new(0),
+        head: Vertex::new(1),
         weight: OrderedFloat(2.0),
     },
     WeightedEdge {
-        tail: VertexId::new(0),
-        head: VertexId::new(2),
+        tail: Vertex::new(0),
+        head: Vertex::new(2),
         weight: OrderedFloat(10.0),
     },
     WeightedEdge {
-        tail: VertexId::new(1),
-        head: VertexId::new(2),
+        tail: Vertex::new(1),
+        head: Vertex::new(2),
         weight: OrderedFloat(3.0),
     },
 ];
 
-let contraction_hierarchy = contract_graph_parallel(edges, 0.5);
+let contraction_hierarchy = contract_graph_parallel(&edges);
 let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 
 let query = PathQuery {
-    source: VertexId::new(0),
-    target: VertexId::new(2),
+    source: Vertex::new(0),
+    target: Vertex::new(2),
 };
 
 assert_eq!(pathfinder.distance(&query), Some(OrderedFloat(5.0)));
 assert_eq!(
     pathfinder.path(&query).unwrap().vertices,
-    vec![VertexId::new(0), VertexId::new(1), VertexId::new(2)]
+    vec![Vertex::new(0), Vertex::new(1), Vertex::new(2)]
 );
 ```
 
@@ -77,7 +86,7 @@ A Hub Labeling requires *a lot* more space than the underlying graph.
 For querying, both the Contraction Hierarchy and Hub Labeling are needed.
 Distance queries are basically instantaneous, but path queries are, for most
 types and sizes of graphs, similar in performance to Contraction Hierarchy
-queries (because the use the same mechanism for the path unpacking).
+queries (because they use the same mechanism for path unpacking).
 
 Minimal usage, after building a Contraction Hierarchy as above:
 During the creation of the Hub Labeling (during the *pruning* to be exact) the
@@ -98,6 +107,6 @@ let mut pathfinder = HubLabelingPathfinder {
 assert_eq!(pathfinder.distance(&query), Some(OrderedFloat(5.0)));
 assert_eq!(
     pathfinder.path(&query).unwrap().vertices,
-    vec![VertexId::new(0), VertexId::new(1), VertexId::new(2)]
+    vec![Vertex::new(0), Vertex::new(1), Vertex::new(2)]
 );
 ```

@@ -8,40 +8,40 @@
 //!     graph::WeightedEdge,
 //!     path::PathQuery,
 //!     pathfinder::ShortestPathFinder,
-//!     types::VertexId,
+//!     types::Vertex,
 //! };
 //! use ordered_float::OrderedFloat;
 //!
 //! let edges = vec![
 //!     WeightedEdge {
-//!         tail: VertexId::new(0),
-//!         head: VertexId::new(1),
+//!         tail: Vertex::new(0),
+//!         head: Vertex::new(1),
 //!         weight: OrderedFloat(2.0),
 //!     },
 //!     WeightedEdge {
-//!         tail: VertexId::new(0),
-//!         head: VertexId::new(2),
+//!         tail: Vertex::new(0),
+//!         head: Vertex::new(2),
 //!         weight: OrderedFloat(10.0),
 //!     },
 //!     WeightedEdge {
-//!         tail: VertexId::new(1),
-//!         head: VertexId::new(2),
+//!         tail: Vertex::new(1),
+//!         head: Vertex::new(2),
 //!         weight: OrderedFloat(3.0),
 //!     },
 //! ];
 //!
-//! let contraction_hierarchy = contract_graph_parallel(edges);
+//! let contraction_hierarchy = contract_graph_parallel(&edges);
 //! let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 //!
 //! let query = PathQuery {
-//!     source: VertexId::new(0),
-//!     target: VertexId::new(2),
+//!     source: Vertex::new(0),
+//!     target: Vertex::new(2),
 //! };
 //!
 //! assert_eq!(pathfinder.distance(&query), Some(OrderedFloat(5.0)));
 //! assert_eq!(
 //!     pathfinder.path(&query).unwrap().vertices,
-//!     vec![VertexId::new(0), VertexId::new(1), VertexId::new(2)]
+//!     vec![Vertex::new(0), Vertex::new(1), Vertex::new(2)]
 //! );
 //! ```
 
