@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use ch::{graph::WeightedEdge, path::PathDistance, types::VertexId};
+use ch::{graph::WeightedEdge, path::PathDistance, types::Vertex};
 use serde::de::DeserializeOwned;
 
 pub fn edges_from_dimacs<R, VertexParser, WeightParser, EdgeCreator, VertexType, WeightType, Edge>(
@@ -57,7 +57,7 @@ where
 {
     edges_from_dimacs(
         BufReader::new(File::open("tests/fixtures/karlsruhe.gr").unwrap()),
-        |vertex_parser| vertex_parser.parse::<VertexId>().ok(),
+        |vertex_parser| vertex_parser.parse::<Vertex>().ok(),
         |weight_parser| weight_parser.parse::<D>().ok(),
         |tail, head, weight| WeightedEdge { tail, head, weight },
     )
