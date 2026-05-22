@@ -1,11 +1,14 @@
 use crate::{
     contraction_hierachy::{
         ContractionEdge,
-        contraction::{general::build_working_graph, queue::Queue},
+        contraction::{
+            general::{build_working_graph, generate_shortcuts},
+            queue::Queue,
+        },
         contraction_hierarchy::ContractionHierarchy,
     },
     graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
-    types::Distance,
+    types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
 use std::time::Instant;
@@ -32,6 +35,27 @@ fn contract_working_graph_sequential<D: Distance>(
     let progress = ProgressBar::new(graph.num_vertices() as u64);
 
     while let Some((vertex, shortcuts)) = queue.pop(&graph) {
+        graph.make_unreachable(vertex);
+        for shortcut in &shortcuts {
+            graph.add_edge(shortcut);
+        }
+
+        progress.inc(1);
+    }
+    progress.finish();
+
+    let (up_graph, down_graph) = graph.into_csr_graphs();
+    ContractionHierarchy::new(up_graph, down_graph)
+}
+
+pub fn contract_working_graph_sequential_with_order<D: Distance>(
+    mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
+    order: &Vec<VertexId>,
+) -> ContractionHierarchy<D> {
+    let progress = ProgressBar::new(graph.num_vertices() as u64);
+
+    for &vertex in order {
+        let shortcuts = generate_shortcuts(&graph, vertex, 10);
         graph.make_unreachable(vertex);
         for shortcut in &shortcuts {
             graph.add_edge(shortcut);
