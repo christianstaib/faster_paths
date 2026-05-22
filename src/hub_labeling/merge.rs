@@ -67,10 +67,9 @@ pub(super) fn merge<D: Distance>(
 
     bar.finish();
 
-    Some(HubLabeling::new(
-        FlattenedNested::from_nested(&up_labels),
-        FlattenedNested::from_nested(&down_labels),
-    ))
+    let up_hub_labeling = FlattenedNested::from_nested(&up_labels);
+    let down_hub_labeling = FlattenedNested::from_nested(&down_labels);
+    Some(HubLabeling::new(up_hub_labeling, down_hub_labeling))
 }
 
 /// Creates one initial label for every vertex.
