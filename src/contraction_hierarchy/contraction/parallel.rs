@@ -16,9 +16,7 @@ const MAX_WITNESS_HOPS: u32 = 10;
 pub fn contract_graph_parallel<D: Distance>(edges: &[WeightedEdge<D>]) -> ContractionHierarchy<D> {
     let working_graph = build_working_graph(edges.iter());
 
-    let contraction_hierarchy = contract_working_graph_parallel(working_graph, 0.5);
-
-    contraction_hierarchy
+    contract_working_graph_parallel(working_graph, 0.5)
 }
 
 fn contract_working_graph_parallel<D: Distance>(
@@ -65,9 +63,7 @@ fn contract_working_graph_parallel<D: Distance>(
 
     let (up_graph, down_graph) = graph.into_csr_graphs();
 
-    let ch = ContractionHierarchy::new(up_graph, down_graph);
-
-    ch
+    ContractionHierarchy::new(up_graph, down_graph)
 }
 
 fn select_ids<D: Distance>(

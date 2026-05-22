@@ -76,7 +76,7 @@ pub(super) fn generate_shortcuts<D: Distance>(
                 distances
                     .get(&edge.head)
                     .is_none_or(|&witness_distance| witness_distance >= weight)
-                    .then(|| ContractionEdge {
+                    .then_some(ContractionEdge {
                         tail,
                         head: edge.head,
                         weight,
