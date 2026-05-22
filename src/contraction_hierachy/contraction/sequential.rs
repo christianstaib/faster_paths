@@ -7,19 +7,16 @@ use crate::{
         },
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
+    graph::{DirectionalAdjacencyListGraph, GraphLike, WeightedEdge},
     types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
 use std::time::Instant;
 
-pub fn contract_graph_sequential<G>(
-    graph: &G,
-) -> ContractionHierarchy<<G::Edge as EdgeLike>::Weight>
-where
-    G: GraphLike,
-{
-    let working_graph = build_working_graph(graph);
+pub fn contract_graph_sequential<D: Distance>(
+    edges: &Vec<WeightedEdge<D>>,
+) -> ContractionHierarchy<D> {
+    let working_graph = build_working_graph(edges.iter());
 
     let start = Instant::now();
     let contraction_hierarchy = contract_working_graph_sequential(working_graph);
@@ -54,7 +51,7 @@ pub fn contract_working_graph_sequential_with_order<D: Distance>(
 ) -> ContractionHierarchy<D> {
     let progress = ProgressBar::new(graph.num_vertices() as u64);
 
-    for &vertex in order {
+    for &vertex in order.iter().rev() {
         let shortcuts = generate_shortcuts(&graph, vertex, 10);
         graph.make_unreachable(vertex);
         for shortcut in &shortcuts {

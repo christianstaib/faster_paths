@@ -2,7 +2,6 @@ mod common;
 
 use ch::{
     contraction_hierachy::{ContractionHierarchyPathfinder, contract_graph_sequential},
-    graph::CsrGraph,
     validation::{validate_distances, validate_paths},
 };
 use ordered_float::OrderedFloat;
@@ -15,8 +14,7 @@ fn karlsruhe_fixture_matches_contraction_hierarchy() {
     let edges = common::karlsruhe_edges::<DistanceType>();
     let tests = common::karlsruhe_tests::<DistanceType>();
 
-    let graph = CsrGraph::from_flat(edges.clone());
-    let contraction_hierarchy = contract_graph_sequential(&graph);
+    let contraction_hierarchy = contract_graph_sequential(&edges);
     let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 
     validate_distances(&tests, &mut pathfinder, epsilon).unwrap();

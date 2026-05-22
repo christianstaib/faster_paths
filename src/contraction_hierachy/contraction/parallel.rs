@@ -4,7 +4,7 @@ use crate::{
         contraction::general::{build_working_graph, edge_difference, generate_shortcuts},
         contraction_hierarchy::ContractionHierarchy,
     },
-    graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike},
+    graph::{DirectionalAdjacencyListGraph, GraphLike, WeightedEdge},
     types::{Distance, VertexId},
 };
 use indicatif::ProgressBar;
@@ -14,16 +14,12 @@ use rustc_hash::FxHashSet;
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
-pub fn contract_graph_parallel<G>(
-    graph: &G,
-    fraction: f64,
-) -> ContractionHierarchy<<G::Edge as EdgeLike>::Weight>
-where
-    G: GraphLike,
-{
-    let working_graph = build_working_graph(graph);
+pub fn contract_graph_parallel<D: Distance>(
+    edges: &Vec<WeightedEdge<D>>,
+) -> ContractionHierarchy<D> {
+    let working_graph = build_working_graph(edges.iter());
 
-    let contraction_hierarchy = contract_working_graph_parallel(working_graph, fraction);
+    let contraction_hierarchy = contract_working_graph_parallel(working_graph, 0.5);
 
     contraction_hierarchy
 }

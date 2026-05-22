@@ -11,6 +11,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 pub struct VertexId(u32);
 
+impl From<u32> for VertexId {
+    fn from(value: u32) -> Self {
+        Self(value)
+    }
+}
+
 impl VertexId {
     pub fn new(vertex_id: u32) -> Self {
         Self(vertex_id)

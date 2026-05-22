@@ -18,13 +18,16 @@ pub(super) fn edge_difference<D: Distance>(
     shortcut_count as i64 - degree as i64
 }
 
-/// Given a normal graph, build a `WorkingGraph` which is used during contraction.
-pub fn build_working_graph<G: GraphLike>(
-    graph: &G,
-) -> DirectionalAdjacencyListGraph<ContractionEdge<<G::Edge as EdgeLike>::Weight>> {
+/// Given normal edge-like values, build a `WorkingGraph` which is used during contraction.
+pub fn build_working_graph<'a, E>(
+    edges: impl IntoIterator<Item = &'a E>,
+) -> DirectionalAdjacencyListGraph<ContractionEdge<E::Weight>>
+where
+    E: EdgeLike + 'a,
+{
     let mut working_graph = DirectionalAdjacencyListGraph::new();
 
-    graph.all_edges().for_each(|edge| {
+    edges.into_iter().for_each(|edge| {
         let contraction_edge = ContractionEdge {
             tail: edge.tail(),
             head: edge.head(),
