@@ -20,7 +20,7 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
         Self { edges }
     }
 
-    pub fn get_edges(&self) -> &Vec<Vec<E>> {
+    pub fn get_edges(&self) -> &[Vec<E>] {
         &self.edges
     }
 

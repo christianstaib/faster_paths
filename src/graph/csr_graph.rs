@@ -31,7 +31,7 @@ impl<E: EdgeLike> CsrGraph<E> {
     }
 
     /// Builds a CSR graph from nested outgoing adjacency lists.
-    pub fn from_nested(nested: &Vec<Vec<E>>) -> Self
+    pub fn from_nested(nested: &[Vec<E>]) -> Self
     where
         E: Copy,
     {

@@ -13,9 +13,7 @@ use rustc_hash::FxHashSet;
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
-pub fn contract_graph_parallel<D: Distance>(
-    edges: &Vec<WeightedEdge<D>>,
-) -> ContractionHierarchy<D> {
+pub fn contract_graph_parallel<D: Distance>(edges: &[WeightedEdge<D>]) -> ContractionHierarchy<D> {
     let working_graph = build_working_graph(edges.iter());
 
     let contraction_hierarchy = contract_working_graph_parallel(working_graph, 0.5);

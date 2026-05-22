@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub fn contract_graph_sequential<D: Distance>(
-    edges: &Vec<WeightedEdge<D>>,
+    edges: &[WeightedEdge<D>],
 ) -> ContractionHierarchy<D> {
     let working_graph = build_working_graph(edges.iter());
 
@@ -37,7 +37,7 @@ fn contract_working_graph_sequential<D: Distance>(
 
 pub fn contract_working_graph_sequential_with_order<D: Distance>(
     mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    order: &Vec<Vertex>,
+    order: &[Vertex],
 ) -> ContractionHierarchy<D> {
     for &vertex in order.iter().rev() {
         let shortcuts = generate_shortcuts(&graph, vertex, 10);

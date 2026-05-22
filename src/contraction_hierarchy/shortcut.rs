@@ -35,19 +35,19 @@ fn find_edge<D: Distance>(
 /// cannot be unpacked with the given contraction hierarchy.
 pub fn unpack_and_concat_shortcut_paths<D: Distance>(
     contraction_hierarchy: &ContractionHierarchy<D>,
-    up_reversed_shortcut_path: &Vec<Vertex>,
-    down_reversed_shortcut_path: &Vec<Vertex>,
+    up_reversed_shortcut_path: &[Vertex],
+    down_reversed_shortcut_path: &[Vertex],
 ) -> Option<Vec<Vertex>> {
     let up_path = unpack_shortcuts(
         contraction_hierarchy.up_graph(),
         contraction_hierarchy.down_graph(),
-        &up_reversed_shortcut_path,
+        up_reversed_shortcut_path,
     )?;
 
     let down_path = unpack_shortcuts(
         contraction_hierarchy.down_graph(),
         contraction_hierarchy.up_graph(),
-        &down_reversed_shortcut_path,
+        down_reversed_shortcut_path,
     )?;
 
     Some(
