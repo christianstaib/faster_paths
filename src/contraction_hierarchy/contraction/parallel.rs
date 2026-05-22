@@ -45,8 +45,8 @@ fn contract_working_graph_parallel<D: Distance>(
             1,
             candidates_data.len(),
         );
-        for i in use_len..candidates_data.len() {
-            next_remaining.push(candidates_data[i].0);
+        for (vertex, _, _) in &candidates_data[use_len..] {
+            next_remaining.push(*vertex);
         }
 
         candidates_data.truncate(use_len);

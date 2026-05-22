@@ -59,6 +59,12 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
     }
 }
 
+impl<E: EdgeLike> Default for AdjacencyListGraph<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: EdgeLike> GraphLike for AdjacencyListGraph<E> {
     type Edge = E;
 

@@ -4,20 +4,32 @@ use crate::{
         HubLabeling,
         entry::{min_common_hub_distance, reversed_shortcut_path},
     },
-    path::{Path, PathQuery},
+    path::{Path, Query},
     pathfinder::ShortestPathFinder,
     types::Distance,
 };
 
 pub struct HubLabelingPathfinder<'a, D: Distance> {
-    pub contraction_hierarchy: &'a ContractionHierarchy<D>,
-    pub hub_labeling: &'a HubLabeling<D>,
+    contraction_hierarchy: &'a ContractionHierarchy<D>,
+    hub_labeling: &'a HubLabeling<D>,
+}
+
+impl<'a, D: Distance> HubLabelingPathfinder<'a, D> {
+    pub fn new(
+        contraction_hierarchy: &'a ContractionHierarchy<D>,
+        hub_labeling: &'a HubLabeling<D>,
+    ) -> Self {
+        Self {
+            contraction_hierarchy,
+            hub_labeling,
+        }
+    }
 }
 
 impl<'a, D: Distance> ShortestPathFinder for HubLabelingPathfinder<'a, D> {
     type Distance = D;
 
-    fn path(&mut self, query: &PathQuery) -> Option<Path<Self::Distance>> {
+    fn path(&mut self, query: &Query) -> Option<Path<Self::Distance>> {
         let up_label = self
             .hub_labeling
             .up_hub_labeling()
@@ -41,7 +53,7 @@ impl<'a, D: Distance> ShortestPathFinder for HubLabelingPathfinder<'a, D> {
         Some(Path { vertices, distance })
     }
 
-    fn distance(&mut self, query: &PathQuery) -> Option<Self::Distance> {
+    fn distance(&mut self, query: &Query) -> Option<Self::Distance> {
         let up_label = self
             .hub_labeling
             .up_hub_labeling()

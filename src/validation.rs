@@ -1,14 +1,39 @@
 use crate::{
     graph::EdgeLike,
-    path::{Path, PathDistance, PathQuery},
+    path::{Path, Query},
     pathfinder::ShortestPathFinder,
     types::{Distance, Vertex, distance_abs_diff_eq},
 };
 use num_traits::Zero;
+use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
+/// Test case for validating shortest path queries.
+///
+/// The expected distance is optional because the target might be unreachable
+/// from the source.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct PathTestCase<D: Distance> {
+    query: Query,
+    distance: Option<D>,
+}
+
+impl<D: Distance> PathTestCase<D> {
+    pub fn new(query: Query, distance: Option<D>) -> Self {
+        Self { query, distance }
+    }
+
+    pub fn query(&self) -> &Query {
+        &self.query
+    }
+
+    pub fn distance(&self) -> Option<D> {
+        self.distance
+    }
+}
+
 pub fn validate_paths<E, P>(
-    tests: &[PathDistance<P::Distance>],
+    tests: &[PathTestCase<P::Distance>],
     edges: &[E],
     pathfinder: &mut P,
     epsilon: P::Distance,
@@ -38,7 +63,7 @@ where
 }
 
 pub fn validate_distances<P>(
-    tests: &[PathDistance<P::Distance>],
+    tests: &[PathTestCase<P::Distance>],
     pathfinder: &mut P,
     epsilon: P::Distance,
 ) -> Result<Duration, Vec<String>>
@@ -66,7 +91,7 @@ where
 }
 
 fn validate_distance<D>(
-    test: &PathDistance<D>,
+    test: &PathTestCase<D>,
     actual: &Option<D>,
     epsilon: D,
 ) -> Result<(), String>
@@ -87,7 +112,7 @@ where
 
 fn validate_path<E>(
     edges: &[E],
-    test: &PathDistance<E::Weight>,
+    test: &PathTestCase<E::Weight>,
     path: &Option<Path<E::Weight>>,
     epsilon: E::Weight,
 ) -> Result<(), String>
@@ -117,7 +142,7 @@ where
 
 fn validate_found_path<E>(
     edges: &[E],
-    query: &PathQuery,
+    query: &Query,
     expected_distance: E::Weight,
     path: &Path<E::Weight>,
     epsilon: E::Weight,

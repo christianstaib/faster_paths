@@ -88,3 +88,9 @@ impl<E: EdgeLike> DirectionalAdjacencyListGraph<E> {
         )
     }
 }
+
+impl<E: EdgeLike> Default for DirectionalAdjacencyListGraph<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}

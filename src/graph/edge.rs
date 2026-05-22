@@ -14,14 +14,14 @@ pub struct Edge {
 
 /// A directed edge with an associated weight.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct WeightedEdge<W> {
+pub struct WeightedEdge<Weight> {
     pub tail: Vertex,
     pub head: Vertex,
-    pub weight: W,
+    pub weight: Weight,
 }
 
-impl<W: Distance> EdgeLike for WeightedEdge<W> {
-    type Weight = W;
+impl<Weight: Distance> EdgeLike for WeightedEdge<Weight> {
+    type Weight = Weight;
 
     fn tail(&self) -> Vertex {
         self.tail

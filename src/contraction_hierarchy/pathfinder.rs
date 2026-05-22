@@ -4,7 +4,7 @@ use crate::contraction_hierarchy::shortcut::unpack_and_concat_shortcut_paths;
 use crate::data_structures::{HashSearchState, SearchStateAccess};
 use crate::graph::CsrGraph;
 use crate::graph::GraphLike;
-use crate::path::{Path, PathQuery};
+use crate::path::{Path, Query};
 use crate::pathfinder::ShortestPathFinder;
 use crate::types::{Distance, Vertex};
 use std::cmp::Reverse;
@@ -12,8 +12,8 @@ use std::collections::BinaryHeap;
 
 #[derive(Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 enum Direction {
-    UP,
-    DOWN,
+    Up,
+    Down,
 }
 
 #[derive(Eq, PartialEq)]
@@ -41,7 +41,7 @@ pub struct ContractionHierarchyPathfinder<'a, D: Distance> {
 impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, D> {
     type Distance = D;
 
-    fn path(&mut self, query: &PathQuery) -> Option<Path<D>> {
+    fn path(&mut self, query: &Query) -> Option<Path<D>> {
         let (distance, meeting_vertex) = self.search(query)?;
 
         let up_reversed_shortcut_path = self.up_state.get_reversed_path(meeting_vertex)?;
@@ -55,7 +55,7 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
         Some(Path { vertices, distance })
     }
 
-    fn distance(&mut self, query: &PathQuery) -> Option<D> {
+    fn distance(&mut self, query: &Query) -> Option<D> {
         let (distance, _meeting_vertex) = self.search(query)?;
 
         Some(distance)
@@ -75,10 +75,10 @@ fn stall<D: Distance>(
     dir1_dist_vertex: D,
 ) -> bool {
     for edge in dir2_graph.outgoing_edges(vertex) {
-        if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head) {
-            if dir1_dist_meeting_vertex + edge.weight < dir1_dist_vertex {
-                return true;
-            }
+        if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head)
+            && dir1_dist_meeting_vertex + edge.weight < dir1_dist_vertex
+        {
+            return true;
         }
     }
 
@@ -95,13 +95,13 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         }
     }
 
-    pub fn search(&mut self, query: &PathQuery) -> Option<(D, Vertex)> {
+    pub fn search(&mut self, query: &Query) -> Option<(D, Vertex)> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
-            .push(Entry(Reverse(D::zero()), query.source, Direction::UP));
+            .push(Entry(Reverse(D::zero()), query.source, Direction::Up));
         self.queue
-            .push(Entry(Reverse(D::zero()), query.target, Direction::DOWN));
+            .push(Entry(Reverse(D::zero()), query.target, Direction::Down));
 
         self.up_state.clear();
         self.up_state.set_distance(query.source, D::zero());
@@ -120,13 +120,13 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
 
             // Set up the variables to use the same code for both directions.
             let (dir1_state, dir2_state, dir1_graph, dir2_graph) = match dir1 {
-                Direction::UP => (
+                Direction::Up => (
                     &mut self.up_state,
                     &self.down_state,
                     self.contraction_hierarchy.up_graph(),
                     self.contraction_hierarchy.down_graph(),
                 ),
-                Direction::DOWN => (
+                Direction::Down => (
                     &mut self.down_state,
                     &self.up_state,
                     self.contraction_hierarchy.down_graph(),

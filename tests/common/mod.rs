@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use faster_paths::{graph::WeightedEdge, path::PathDistance, types::Vertex};
+use faster_paths::{graph::WeightedEdge, types::Vertex, validation::PathTestCase};
 use serde::de::DeserializeOwned;
 
 pub fn edges_from_dimacs<R, VertexParser, WeightParser, EdgeCreator, VertexType, WeightType, Edge>(
@@ -64,7 +64,7 @@ where
     .unwrap()
 }
 
-pub fn karlsruhe_tests<D>() -> Vec<PathDistance<D>>
+pub fn karlsruhe_tests<D>() -> Vec<PathTestCase<D>>
 where
     D: faster_paths::types::Distance + DeserializeOwned,
 {

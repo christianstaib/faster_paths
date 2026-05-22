@@ -18,10 +18,7 @@ fn karlsruhe_fixture_matches_hub_labeling() {
     let contraction_hierarchy = contract_graph_sequential(&edges);
     let hub_labeling =
         HubLabeling::try_from_contraction_hierarchy(&contraction_hierarchy, epsilon).unwrap();
-    let mut pathfinder = HubLabelingPathfinder {
-        contraction_hierarchy: &contraction_hierarchy,
-        hub_labeling: &hub_labeling,
-    };
+    let mut pathfinder = HubLabelingPathfinder::new(&contraction_hierarchy, &hub_labeling);
 
     validate_distances(&tests, &mut pathfinder, epsilon).unwrap();
 

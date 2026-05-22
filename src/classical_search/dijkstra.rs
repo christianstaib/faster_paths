@@ -5,7 +5,7 @@ use num_traits::Zero;
 use crate::{
     data_structures::SearchStateAccess,
     graph::{EdgeLike, GraphLike},
-    path::{Path, PathQuery},
+    path::{Path, Query},
     pathfinder::ShortestPathFinder,
     types::Vertex,
 };
@@ -33,7 +33,7 @@ where
         }
     }
 
-    fn search(&mut self, query: &PathQuery) -> Option<<G::Edge as EdgeLike>::Weight> {
+    fn search(&mut self, query: &Query) -> Option<<G::Edge as EdgeLike>::Weight> {
         self.queue.clear();
         self.queue
             .push((Reverse(<G::Edge as EdgeLike>::Weight::zero()), query.source));
@@ -75,7 +75,7 @@ where
 {
     type Distance = <G::Edge as EdgeLike>::Weight;
 
-    fn path(&mut self, query: &PathQuery) -> Option<Path<Self::Distance>> {
+    fn path(&mut self, query: &Query) -> Option<Path<Self::Distance>> {
         let distance = self.search(query)?;
         let mut vertices = self.search_state.get_reversed_path(query.target)?;
         vertices.reverse();
@@ -83,7 +83,7 @@ where
         Some(Path { vertices, distance })
     }
 
-    fn distance(&mut self, query: &PathQuery) -> Option<Self::Distance> {
+    fn distance(&mut self, query: &Query) -> Option<Self::Distance> {
         self.search(query)
     }
 }

@@ -1,12 +1,15 @@
 //! Faster Paths provides different pathfinding algorithms.
 //!
+//! Edge weights must be non-negative. The shortest-path algorithms in this
+//! crate are not designed for graphs with negative edge weights.
+//!
 //! Minimal Contraction Hierarchy usage:
 //!
 //! ```
 //! use faster_paths::{
 //!     contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_parallel},
 //!     graph::WeightedEdge,
-//!     path::PathQuery,
+//!     path::Query,
 //!     pathfinder::ShortestPathFinder,
 //!     types::Vertex,
 //! };
@@ -33,7 +36,7 @@
 //! let contraction_hierarchy = contract_graph_parallel(&edges);
 //! let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 //!
-//! let query = PathQuery {
+//! let query = Query {
 //!     source: Vertex::new(0),
 //!     target: Vertex::new(2),
 //! };

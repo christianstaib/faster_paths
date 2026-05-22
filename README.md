@@ -23,6 +23,9 @@ It also has a generic `weight`. The weight type needs to implement the crate's
 `u32`, `i32`, `u64`, `i64`, `OrderedFloat<f32>`, `OrderedFloat<f64>`, or your
 own custom weight type =).
 
+Edge weights must be non-negative. The shortest-path algorithms in this crate
+are not designed for graphs with negative edge weights.
+
 ## Contraction Hierarchies
 
 This requires some preprocessing.
@@ -37,7 +40,7 @@ Minimal usage:
 use faster_paths::{
     contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_parallel},
     graph::WeightedEdge,
-    path::PathQuery,
+    path::Query,
     pathfinder::ShortestPathFinder,
     types::Vertex,
 };
@@ -64,7 +67,7 @@ let edges = vec![
 let contraction_hierarchy = contract_graph_parallel(&edges);
 let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 
-let query = PathQuery {
+let query = Query {
     source: Vertex::new(0),
     target: Vertex::new(2),
 };
@@ -99,10 +102,7 @@ let epsilon = OrderedFloat(1e-6);
 let hub_labeling =
     HubLabeling::try_from_contraction_hierarchy(&contraction_hierarchy, epsilon).unwrap();
 
-let mut pathfinder = HubLabelingPathfinder {
-    contraction_hierarchy: &contraction_hierarchy,
-    hub_labeling: &hub_labeling,
-};
+let mut pathfinder = HubLabelingPathfinder::new(&contraction_hierarchy, &hub_labeling);
 
 assert_eq!(pathfinder.distance(&query), Some(OrderedFloat(5.0)));
 assert_eq!(

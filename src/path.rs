@@ -5,12 +5,12 @@ use std::iter;
 
 /// Stores a query for a path from source to target.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct PathQuery {
+pub struct Query {
     pub source: Vertex,
     pub target: Vertex,
 }
 
-pub fn generate_queries(num_vertices: usize, num_tests: usize) -> Vec<PathQuery> {
+pub fn generate_random_queries(num_vertices: usize, num_queries: usize) -> Vec<Query> {
     let mut rng = rand::rng();
     iter::repeat_with(|| {
         let [source, target] = sample(&mut rng, num_vertices, 2)
@@ -18,40 +18,18 @@ pub fn generate_queries(num_vertices: usize, num_tests: usize) -> Vec<PathQuery>
             .try_into()
             .unwrap();
 
-        PathQuery {
+        Query {
             source: Vertex::new(source as u32),
             target: Vertex::new(target as u32),
         }
     })
-    .take(num_tests)
+    .take(num_queries)
     .collect()
 }
 
-/// Stores a PathQuery as well as the expected shotests path distance, which is given as an
-/// optional, as there might be no path between source and target.
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct PathDistance<D: Distance> {
-    query: PathQuery,
-    distance: Option<D>,
-}
-
-impl<D: Distance> PathDistance<D> {
-    pub fn new(query: PathQuery, distance: Option<D>) -> Self {
-        Self { query, distance }
-    }
-
-    pub fn query(&self) -> &PathQuery {
-        &self.query
-    }
-
-    pub fn distance(&self) -> Option<D> {
-        self.distance
-    }
-}
-
-/// Stores a path and the distance the paths represents. The first vertex from vertices is the
+/// Stores a path and the distance the path represents. The first vertex from vertices is the
 /// source vertex of the path, the last one the target vertex. As this represents an existing path,
-/// vertices shall be non empty.
+/// vertices should be non-empty.
 #[derive(Clone, Debug)]
 pub struct Path<D: Distance> {
     pub vertices: Vec<Vertex>,

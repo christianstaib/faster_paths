@@ -23,6 +23,12 @@ impl<D: Distance> HashSearchState<D> {
     }
 }
 
+impl<D: Distance> Default for HashSearchState<D> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<D: Distance> SearchStateAccess<D> for HashSearchState<D> {
     fn new<G: GraphLike>(_graph: &G) -> Self {
         Self::new()
