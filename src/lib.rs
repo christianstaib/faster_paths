@@ -3,7 +3,7 @@
 //! Minimal Contraction Hierarchy usage:
 //!
 //! ```
-//! use ch::{
+//! use faster_paths::{
 //!     contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_parallel},
 //!     graph::WeightedEdge,
 //!     path::PathQuery,

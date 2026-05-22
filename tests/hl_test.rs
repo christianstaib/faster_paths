@@ -1,6 +1,6 @@
 mod common;
 
-use ch::{
+use faster_paths::{
     contraction_hierarchy::contract_graph_sequential,
     hub_labeling::{HubLabeling, HubLabelingPathfinder},
     validation::{validate_distances, validate_paths},

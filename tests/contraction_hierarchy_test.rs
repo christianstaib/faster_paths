@@ -1,6 +1,6 @@
 mod common;
 
-use ch::{
+use faster_paths::{
     contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_sequential},
     validation::{validate_distances, validate_paths},
 };

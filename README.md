@@ -34,7 +34,7 @@ A Contraction Hierarchy requires *a bit* more space than the underlying graph.
 Minimal usage:
 
 ```rust
-use ch::{
+use faster_paths::{
     contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_parallel},
     graph::WeightedEdge,
     path::PathQuery,

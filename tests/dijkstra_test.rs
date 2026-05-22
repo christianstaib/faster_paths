@@ -1,6 +1,6 @@
 mod common;
 
-use ch::{
+use faster_paths::{
     classical_search::DijkstraPathfinder,
     data_structures::VecSearchState,
     graph::CsrGraph,

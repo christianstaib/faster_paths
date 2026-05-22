@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use ch::{graph::WeightedEdge, path::PathDistance, types::Vertex};
+use faster_paths::{graph::WeightedEdge, path::PathDistance, types::Vertex};
 use serde::de::DeserializeOwned;
 
 pub fn edges_from_dimacs<R, VertexParser, WeightParser, EdgeCreator, VertexType, WeightType, Edge>(
@@ -66,7 +66,7 @@ where
 
 pub fn karlsruhe_tests<D>() -> Vec<PathDistance<D>>
 where
-    D: ch::types::Distance + DeserializeOwned,
+    D: faster_paths::types::Distance + DeserializeOwned,
 {
     let tests_input = File::open("tests/fixtures/karlsruhe_tests.json").unwrap();
     serde_json::from_reader(BufReader::new(tests_input)).unwrap()
