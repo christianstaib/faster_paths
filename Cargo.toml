@@ -4,8 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-graph_readers = { git = "https://github.com/christianstaib/graph_readers.git" }
-indicatif = { version = "0.18.4", features = ["rayon"] }
 num-traits = "0.2"
 postcard = { version = "1", default-features = false, features = ["use-std"] }
 rayon = "1.10"

@@ -1,6 +1,5 @@
 use std::{cmp::Reverse, collections::BinaryHeap};
 
-use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 
 use crate::{
@@ -66,7 +65,6 @@ fn initial_heap<D: Distance>(
 ) -> BinaryHeap<(Reverse<i64>, Vertex)> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
-        .progress()
         .map(Vertex::new)
         .map(|vertex| {
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);

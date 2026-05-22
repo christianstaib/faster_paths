@@ -7,7 +7,6 @@ use crate::{
     graph::{DirectionalAdjacencyListGraph, GraphLike, WeightedEdge},
     types::{Distance, Vertex},
 };
-use indicatif::ProgressBar;
 use num_traits::clamp;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
@@ -31,8 +30,6 @@ fn contract_working_graph_parallel<D: Distance>(
     let mut remaining = (0..graph.num_vertices() as u32)
         .map(Vertex::new)
         .collect::<Vec<_>>();
-
-    let progress = ProgressBar::new(remaining.len() as u64);
 
     while !remaining.is_empty() {
         let (mut next_remaining, candidates) = select_ids(&graph, &remaining);
@@ -66,10 +63,7 @@ fn contract_working_graph_parallel<D: Distance>(
         }
 
         remaining = next_remaining;
-        progress.inc(candidates_data.len() as u64);
     }
-
-    progress.finish();
 
     let (up_graph, down_graph) = graph.into_csr_graphs();
 

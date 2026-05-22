@@ -11,7 +11,6 @@ use crate::{
 
 use rayon::prelude::*;
 
-use indicatif::ProgressBar;
 use rustc_hash::FxHashMap;
 
 /// Builds a HubLabeling from a ContractionHierarchy by merging.
@@ -34,7 +33,6 @@ pub(super) fn merge<D: Distance>(
     let mut up_labels = initialize_labels(num_vertices);
     let mut down_labels = initialize_labels(num_vertices);
 
-    let bar = ProgressBar::new(num_vertices as u64);
     for vertices in topological_layers {
         // Build labels in parallel.
         let labels = vertices
@@ -50,8 +48,6 @@ pub(super) fn merge<D: Distance>(
                 down_label = prune_label(&up_labels, &down_label, epsilon);
                 down_label.shrink_to_fit();
 
-                bar.inc(1);
-
                 (vertex, up_label, down_label)
             })
             .collect::<Vec<_>>();
@@ -64,8 +60,6 @@ pub(super) fn merge<D: Distance>(
                 down_labels[vertex.as_usize()] = down_label;
             });
     }
-
-    bar.finish();
 
     let up_hub_labeling = FlattenedNested::from_nested(&up_labels);
     let down_hub_labeling = FlattenedNested::from_nested(&down_labels);
