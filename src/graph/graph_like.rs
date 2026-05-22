@@ -1,4 +1,4 @@
-use crate::{graph::EdgeLike, types::VertexId};
+use crate::{graph::EdgeLike, types::Vertex};
 
 /// Common interface for a directed, weighted graph.
 ///
@@ -14,12 +14,12 @@ pub trait GraphLike {
     fn num_edges(&self) -> usize;
 
     /// Returns a slice of all edges outgoing from `tail`.
-    fn outgoing_edges(&self, tail: VertexId) -> &[Self::Edge];
+    fn outgoing_edges(&self, tail: Vertex) -> &[Self::Edge];
 
     /// Returns an iterator over all edges in the graph.
     fn all_edges(&self) -> impl Iterator<Item = &Self::Edge> + '_ {
         (0..self.num_vertices() as u32)
-            .map(VertexId::new)
+            .map(Vertex::new)
             .flat_map(|tail| self.outgoing_edges(tail).iter())
     }
 }

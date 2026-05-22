@@ -7,7 +7,7 @@ use crate::{
     graph::{EdgeLike, GraphLike},
     path::{Path, PathQuery},
     pathfinder::ShortestPathFinder,
-    types::VertexId,
+    types::Vertex,
 };
 
 pub struct DijkstraPathfinder<'a, G, S>
@@ -16,7 +16,7 @@ where
     S: SearchStateAccess<<G::Edge as EdgeLike>::Weight>,
 {
     graph: &'a G,
-    queue: BinaryHeap<(Reverse<<G::Edge as EdgeLike>::Weight>, VertexId)>,
+    queue: BinaryHeap<(Reverse<<G::Edge as EdgeLike>::Weight>, Vertex)>,
     search_state: S,
 }
 

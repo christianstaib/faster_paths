@@ -5,12 +5,12 @@ use std::collections::BinaryHeap;
 use crate::contraction_hierachy::ContractionEdge;
 use crate::graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike};
 use crate::types::Distance;
-use crate::types::VertexId;
+use crate::types::Vertex;
 
 /// Calculates the edge difference. Used in order to avoid calculation errors if always written out.
 pub(super) fn edge_difference<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    vertex: VertexId,
+    vertex: Vertex,
     shortcut_count: usize,
 ) -> i64 {
     let degree =
@@ -48,7 +48,7 @@ where
 /// This function relaxes this condition by limiting the search space size with max_hops.
 pub(super) fn generate_shortcuts<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    vertex: VertexId,
+    vertex: Vertex,
     max_hops: u32,
 ) -> Vec<ContractionEdge<D>> {
     let outgoing_edges = graph.forward().outgoing_edges(vertex);
@@ -92,10 +92,10 @@ pub(super) fn generate_shortcuts<D: Distance>(
 /// Stops once every target has been settled or once only vertices with hop distance > `max_hops` remain. The returned map may contain non-target vertices.
 pub(super) fn bounded_dijkstra<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    source: VertexId,
-    targets: &FxHashSet<VertexId>,
+    source: Vertex,
+    targets: &FxHashSet<Vertex>,
     max_hops: u32,
-) -> FxHashMap<VertexId, D> {
+) -> FxHashMap<Vertex, D> {
     let mut distances = FxHashMap::default();
     let mut hops = FxHashMap::default();
     let mut queue = BinaryHeap::new();

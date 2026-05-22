@@ -3,7 +3,7 @@ use super::{Term, for_each_neighbor};
 use crate::{
     contraction_hierachy::ContractionEdge,
     graph::DirectionalAdjacencyListGraph,
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 
 pub(crate) struct CostOfQueries {
@@ -17,7 +17,7 @@ impl CostOfQueries {
         }
     }
 
-    fn value(&self, vertex: VertexId) -> i64 {
+    fn value(&self, vertex: Vertex) -> i64 {
         self.estimates[vertex.as_usize()]
     }
 }
@@ -26,7 +26,7 @@ impl<D: Distance> Term<D> for CostOfQueries {
     fn value(
         &self,
         _graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-        vertex: VertexId,
+        vertex: Vertex,
         _shortcuts: &[ContractionEdge<D>],
     ) -> i64 {
         self.value(vertex)
@@ -35,7 +35,7 @@ impl<D: Distance> Term<D> for CostOfQueries {
     fn update(
         &mut self,
         graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-        vertex: VertexId,
+        vertex: Vertex,
         _shortcuts: &[ContractionEdge<D>],
     ) {
         let neighbor_estimate = self.value(vertex) + 1;

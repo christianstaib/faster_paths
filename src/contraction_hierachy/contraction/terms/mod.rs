@@ -5,7 +5,7 @@ mod edge_difference;
 use crate::{
     contraction_hierachy::ContractionEdge,
     graph::{DirectionalAdjacencyListGraph, GraphLike},
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 
 use cost_of_queries::CostOfQueries;
@@ -16,7 +16,7 @@ pub(super) trait Term<D: Distance>: Send + Sync {
     fn value(
         &self,
         graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-        vertex: VertexId,
+        vertex: Vertex,
         shortcuts: &[ContractionEdge<D>],
     ) -> i64;
 
@@ -25,7 +25,7 @@ pub(super) trait Term<D: Distance>: Send + Sync {
     fn update(
         &mut self,
         graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-        vertex: VertexId,
+        vertex: Vertex,
         shortcuts: &[ContractionEdge<D>],
     );
 }
@@ -33,8 +33,8 @@ pub(super) trait Term<D: Distance>: Send + Sync {
 /// Visits each distinct incoming or outgoing neighbor of `vertex`.
 fn for_each_neighbor<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    vertex: VertexId,
-    mut visit: impl FnMut(VertexId),
+    vertex: Vertex,
+    mut visit: impl FnMut(Vertex),
 ) {
     let out_edges = graph.forward().outgoing_edges(vertex);
     let in_edges = graph.reverse().outgoing_edges(vertex);
@@ -86,7 +86,7 @@ pub(super) fn default_terms<D: Distance>(vertex_count: usize) -> Vec<Box<dyn Ter
 
 pub(super) fn priority<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    vertex: VertexId,
+    vertex: Vertex,
     shortcuts: &[ContractionEdge<D>],
     terms: &[Box<dyn Term<D>>],
 ) -> i64 {

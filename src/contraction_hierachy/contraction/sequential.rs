@@ -8,7 +8,7 @@ use crate::{
         contraction_hierarchy::ContractionHierarchy,
     },
     graph::{DirectionalAdjacencyListGraph, GraphLike, WeightedEdge},
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 use indicatif::ProgressBar;
 use std::time::Instant;
@@ -47,7 +47,7 @@ fn contract_working_graph_sequential<D: Distance>(
 
 pub fn contract_working_graph_sequential_with_order<D: Distance>(
     mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    order: &Vec<VertexId>,
+    order: &Vec<Vertex>,
 ) -> ContractionHierarchy<D> {
     let progress = ProgressBar::new(graph.num_vertices() as u64);
 

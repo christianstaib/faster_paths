@@ -2,7 +2,7 @@ use crate::{
     graph::EdgeLike,
     path::{Path, PathDistance, PathQuery},
     pathfinder::ShortestPathFinder,
-    types::{Distance, VertexId, distance_abs_diff_eq},
+    types::{Distance, Vertex, distance_abs_diff_eq},
 };
 use num_traits::Zero;
 use std::time::{Duration, Instant};
@@ -171,8 +171,8 @@ where
 
 fn path_weight<E: EdgeLike>(
     edges: &[E],
-    vertices: &[VertexId],
-) -> Result<E::Weight, (VertexId, VertexId)> {
+    vertices: &[Vertex],
+) -> Result<E::Weight, (Vertex, Vertex)> {
     let mut total = E::Weight::zero();
 
     for pair in vertices.windows(2) {

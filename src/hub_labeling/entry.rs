@@ -1,13 +1,13 @@
 use std::cmp::Ordering;
 
-use crate::types::{Distance, VertexId};
+use crate::types::{Distance, Vertex};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct LabelEntry<D> {
-    pub hub: VertexId,
+    pub hub: Vertex,
     pub distance: D,
-    pub predecessor_hub: Option<VertexId>,
+    pub predecessor_hub: Option<Vertex>,
 }
 
 /// Finds the common hub with the smallest combined distance.
@@ -51,7 +51,7 @@ pub fn min_common_hub_distance<D: Distance>(
 pub fn reversed_shortcut_path<D: Distance>(
     label: &[LabelEntry<D>],
     index: usize,
-) -> Option<Vec<VertexId>> {
+) -> Option<Vec<Vertex>> {
     let mut entry = label.get(index)?;
     let mut path = vec![entry.hub];
 

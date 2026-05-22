@@ -1,4 +1,4 @@
-use crate::types::{Distance, VertexId};
+use crate::types::{Distance, Vertex};
 
 /// Common interface for a directed, weighted edge.
 ///
@@ -8,10 +8,10 @@ pub trait EdgeLike {
     type Weight: Distance;
 
     /// Returns the tail vertex of the edge.
-    fn tail(&self) -> VertexId;
+    fn tail(&self) -> Vertex;
 
     /// Returns the head vertex of the edge.
-    fn head(&self) -> VertexId;
+    fn head(&self) -> Vertex;
 
     /// Returns the weight of the edge.
     fn weight(&self) -> Self::Weight;

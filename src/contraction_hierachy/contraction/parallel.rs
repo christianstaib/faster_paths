@@ -5,7 +5,7 @@ use crate::{
         contraction_hierarchy::ContractionHierarchy,
     },
     graph::{DirectionalAdjacencyListGraph, GraphLike, WeightedEdge},
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 use indicatif::ProgressBar;
 use num_traits::clamp;
@@ -29,7 +29,7 @@ fn contract_working_graph_parallel<D: Distance>(
     fraction: f64,
 ) -> ContractionHierarchy<D> {
     let mut remaining = (0..graph.num_vertices() as u32)
-        .map(VertexId::new)
+        .map(Vertex::new)
         .collect::<Vec<_>>();
 
     let progress = ProgressBar::new(remaining.len() as u64);
@@ -80,8 +80,8 @@ fn contract_working_graph_parallel<D: Distance>(
 
 fn select_ids<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    candidates: &[VertexId],
-) -> (Vec<VertexId>, Vec<VertexId>) {
+    candidates: &[Vertex],
+) -> (Vec<Vertex>, Vec<Vertex>) {
     if candidates.is_empty() {
         return (Vec::new(), Vec::new());
     }

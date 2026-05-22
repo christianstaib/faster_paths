@@ -1,13 +1,13 @@
 use crate::{
     graph::GraphLike,
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 
 use super::search_state_access::SearchStateAccess;
 
 pub struct VecSearchState<D: Distance> {
     distance: Vec<D>,
-    predecessor: Vec<VertexId>,
+    predecessor: Vec<Vertex>,
     expanded: Vec<bool>,
 }
 
@@ -15,7 +15,7 @@ impl<D: Distance> VecSearchState<D> {
     pub fn new(num_vertices: usize) -> Self {
         Self {
             distance: vec![D::max_value(); num_vertices],
-            predecessor: vec![VertexId::new(u32::MAX); num_vertices],
+            predecessor: vec![Vertex::new(u32::MAX); num_vertices],
             expanded: vec![false; num_vertices],
         }
     }
@@ -26,38 +26,38 @@ impl<D: Distance> SearchStateAccess<D> for VecSearchState<D> {
         Self::new(graph.num_vertices())
     }
 
-    fn get_distance(&self, vertex: VertexId) -> Option<D> {
+    fn get_distance(&self, vertex: Vertex) -> Option<D> {
         let distance = self.distance.get(vertex.as_usize()).copied()?;
         (distance != D::max_value()).then_some(distance)
     }
 
-    fn set_distance(&mut self, vertex: VertexId, distance: D) {
+    fn set_distance(&mut self, vertex: Vertex, distance: D) {
         self.distance[vertex.as_usize()] = distance;
     }
 
-    fn get_predecessor(&self, vertex: VertexId) -> Option<VertexId> {
+    fn get_predecessor(&self, vertex: Vertex) -> Option<Vertex> {
         let predecessor = self.predecessor.get(vertex.as_usize()).copied()?;
-        (predecessor != VertexId::new(u32::MAX)).then_some(predecessor)
+        (predecessor != Vertex::new(u32::MAX)).then_some(predecessor)
     }
 
-    fn set_predecessor(&mut self, vertex: VertexId, predecessor: VertexId) {
+    fn set_predecessor(&mut self, vertex: Vertex, predecessor: Vertex) {
         self.predecessor[vertex.as_usize()] = predecessor;
     }
 
-    fn is_expanded(&self, vertex: VertexId) -> bool {
+    fn is_expanded(&self, vertex: Vertex) -> bool {
         self.expanded
             .get(vertex.as_usize())
             .copied()
             .unwrap_or(false)
     }
 
-    fn set_expanded(&mut self, vertex: VertexId) {
+    fn set_expanded(&mut self, vertex: Vertex) {
         self.expanded[vertex.as_usize()] = true;
     }
 
     fn clear(&mut self) {
         self.distance.fill(D::max_value());
-        self.predecessor.fill(VertexId::new(u32::MAX));
+        self.predecessor.fill(Vertex::new(u32::MAX));
         self.expanded.fill(false);
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     graph::{EdgeLike, GraphLike},
-    types::VertexId,
+    types::Vertex,
 };
 
 /// Computes *one* layered topological sorting that is valid for *multiple* graphs at once, if it
@@ -13,7 +13,7 @@ use crate::{
 /// The returned layers are ordered from top to bottom: vertices in layer `0`
 /// are at the head/top end of directed paths. Therefore, for an edge
 /// `tail -> head`, `head` appears in an earlier layer than `tail`.
-pub fn compute_topological_layers<G: GraphLike>(graphs: &[&G]) -> Option<Vec<Vec<VertexId>>> {
+pub fn compute_topological_layers<G: GraphLike>(graphs: &[&G]) -> Option<Vec<Vec<Vertex>>> {
     let num_vertices = graphs
         .iter()
         .map(|graph| graph.num_vertices())
@@ -28,7 +28,7 @@ pub fn compute_topological_layers<G: GraphLike>(graphs: &[&G]) -> Option<Vec<Vec
     let mut current_layer = indegrees
         .iter()
         .enumerate()
-        .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(VertexId::new(vertex as u32)))
+        .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(Vertex::new(vertex as u32)))
         .collect::<Vec<_>>();
 
     let mut layers = Vec::new();

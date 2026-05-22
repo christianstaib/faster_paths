@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     graph::{Edge, GraphLike, edge_like::EdgeLike},
-    types::VertexId,
+    types::Vertex,
 };
 
 /// A graph represented by adjacency lists.
@@ -62,7 +62,7 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
 impl<E: EdgeLike> GraphLike for AdjacencyListGraph<E> {
     type Edge = E;
 
-    fn outgoing_edges(&self, tail: VertexId) -> &[E] {
+    fn outgoing_edges(&self, tail: Vertex) -> &[E] {
         if tail.as_usize() >= self.edges.len() {
             return &[];
         }

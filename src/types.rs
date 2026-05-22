@@ -9,17 +9,17 @@ use num_traits::{Bounded, Zero};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Serialize, Deserialize)]
-pub struct VertexId(u32);
+pub struct Vertex(u32);
 
-impl From<u32> for VertexId {
+impl From<u32> for Vertex {
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
-impl VertexId {
-    pub fn new(vertex_id: u32) -> Self {
-        Self(vertex_id)
+impl Vertex {
+    pub fn new(id: u32) -> Self {
+        Self(id)
     }
 
     pub fn as_usize(self) -> usize {
@@ -27,11 +27,11 @@ impl VertexId {
     }
 }
 
-impl FromStr for VertexId {
+impl FromStr for Vertex {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        u32::from_str(s).map(VertexId)
+        u32::from_str(s).map(Vertex)
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{
-    data_structures::FlattenedNested, graph::GraphLike, graph::edge_like::EdgeLike, types::VertexId,
+    data_structures::FlattenedNested, graph::GraphLike, graph::edge_like::EdgeLike, types::Vertex,
 };
 use serde::{Deserialize, Serialize};
 
@@ -44,7 +44,7 @@ impl<E: EdgeLike> CsrGraph<E> {
 impl<E: EdgeLike> GraphLike for CsrGraph<E> {
     type Edge = E;
 
-    fn outgoing_edges(&self, tail: VertexId) -> &[E] {
+    fn outgoing_edges(&self, tail: Vertex) -> &[E] {
         self.flattened_nested.nested(tail.as_usize())
     }
 

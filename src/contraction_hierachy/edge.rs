@@ -1,6 +1,6 @@
 use crate::{
     graph::EdgeLike,
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 use serde::{Deserialize, Serialize};
 
@@ -20,19 +20,19 @@ use serde::{Deserialize, Serialize};
 /// - the child edge in the *same* graph is the edge `middle -> head`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ContractionEdge<D> {
-    pub tail: VertexId,
-    pub head: VertexId,
+    pub tail: Vertex,
+    pub head: Vertex,
     pub weight: D,
-    pub skipped: Option<VertexId>,
+    pub skipped: Option<Vertex>,
 }
 
 impl<D: Distance> EdgeLike for ContractionEdge<D> {
     type Weight = D;
 
-    fn tail(&self) -> VertexId {
+    fn tail(&self) -> Vertex {
         self.tail
     }
-    fn head(&self) -> VertexId {
+    fn head(&self) -> Vertex {
         self.head
     }
     fn weight(&self) -> Self::Weight {

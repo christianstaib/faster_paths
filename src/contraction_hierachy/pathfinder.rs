@@ -6,7 +6,7 @@ use crate::graph::CsrGraph;
 use crate::graph::GraphLike;
 use crate::path::{Path, PathQuery};
 use crate::pathfinder::ShortestPathFinder;
-use crate::types::{Distance, VertexId};
+use crate::types::{Distance, Vertex};
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
@@ -17,7 +17,7 @@ enum Direction {
 }
 
 #[derive(Eq, PartialEq)]
-struct Entry<D>(Reverse<D>, VertexId, Direction);
+struct Entry<D>(Reverse<D>, Vertex, Direction);
 
 impl<D: Ord> Ord for Entry<D> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
@@ -71,7 +71,7 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
 fn stall<D: Distance>(
     dir1_state: &HashSearchState<D>,
     dir2_graph: &CsrGraph<ContractionEdge<D>>,
-    vertex: VertexId,
+    vertex: Vertex,
     dir1_dist_vertex: D,
 ) -> bool {
     for edge in dir2_graph.outgoing_edges(vertex) {
@@ -95,7 +95,7 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         }
     }
 
-    pub fn search(&mut self, query: &PathQuery) -> Option<(D, VertexId)> {
+    pub fn search(&mut self, query: &PathQuery) -> Option<(D, Vertex)> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
@@ -109,7 +109,7 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         self.down_state.clear();
         self.down_state.set_distance(query.target, D::zero());
 
-        let mut best_meeting: Option<(D, VertexId)> = None;
+        let mut best_meeting: Option<(D, Vertex)> = None;
 
         while let Some(Entry(Reverse(dir1_dist_tail), tail, dir1)) = self.queue.pop() {
             // Once all distances in the queue are larger than the meeting distance,

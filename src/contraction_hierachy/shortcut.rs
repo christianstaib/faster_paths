@@ -2,7 +2,7 @@ use crate::graph::GraphLike;
 use crate::{
     contraction_hierachy::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
     graph::CsrGraph,
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 
 /// Finds an edge from `tail` to `head` in `graph`.
@@ -14,8 +14,8 @@ use crate::{
 /// lookup is performed using binary search.
 fn find_edge<D: Distance>(
     graph: &CsrGraph<ContractionEdge<D>>,
-    tail: VertexId,
-    head: VertexId,
+    tail: Vertex,
+    head: Vertex,
 ) -> Option<&ContractionEdge<D>> {
     let edges = graph.outgoing_edges(tail);
 
@@ -35,9 +35,9 @@ fn find_edge<D: Distance>(
 /// cannot be unpacked with the given contraction hierarchy.
 pub fn unpack_and_concat_shortcut_paths<D: Distance>(
     contraction_hierarchy: &ContractionHierarchy<D>,
-    up_reversed_shortcut_path: &Vec<VertexId>,
-    down_reversed_shortcut_path: &Vec<VertexId>,
-) -> Option<Vec<VertexId>> {
+    up_reversed_shortcut_path: &Vec<Vertex>,
+    down_reversed_shortcut_path: &Vec<Vertex>,
+) -> Option<Vec<Vertex>> {
     let up_path = unpack_shortcuts(
         contraction_hierarchy.up_graph(),
         contraction_hierarchy.down_graph(),
@@ -66,8 +66,8 @@ pub fn unpack_and_concat_shortcut_paths<D: Distance>(
 pub fn unpack_shortcuts<D: Distance>(
     dir1_graph: &CsrGraph<ContractionEdge<D>>,
     dir2_graph: &CsrGraph<ContractionEdge<D>>,
-    dir1_reversed_shortcut_path: &[VertexId],
-) -> Option<Vec<VertexId>> {
+    dir1_reversed_shortcut_path: &[Vertex],
+) -> Option<Vec<Vertex>> {
     enum Dir {
         Dir1,
         Dir2,

@@ -1,7 +1,7 @@
 use crate::{
     contraction_hierachy::{ContractionEdge, contraction::terms::Term},
     graph::{DirectionalAdjacencyListGraph, GraphLike},
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 
 pub(crate) struct EdgeDifference;
@@ -16,7 +16,7 @@ impl<D: Distance> Term<D> for EdgeDifference {
     fn value(
         &self,
         graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-        vertex: VertexId,
+        vertex: Vertex,
         shortcuts: &[ContractionEdge<D>],
     ) -> i64 {
         let degree = graph.forward().outgoing_edges(vertex).len()
@@ -27,7 +27,7 @@ impl<D: Distance> Term<D> for EdgeDifference {
     fn update(
         &mut self,
         _graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-        _vertex: VertexId,
+        _vertex: Vertex,
         _shortcuts: &[ContractionEdge<D>],
     ) {
     }

@@ -1,4 +1,4 @@
-use crate::types::{Distance, VertexId};
+use crate::types::{Distance, Vertex};
 use rand::seq::index::sample;
 use serde::{Deserialize, Serialize};
 use std::iter;
@@ -6,8 +6,8 @@ use std::iter;
 /// Stores a query for a path from source to target.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PathQuery {
-    pub source: VertexId,
-    pub target: VertexId,
+    pub source: Vertex,
+    pub target: Vertex,
 }
 
 pub fn generate_queries(num_vertices: usize, num_tests: usize) -> Vec<PathQuery> {
@@ -19,8 +19,8 @@ pub fn generate_queries(num_vertices: usize, num_tests: usize) -> Vec<PathQuery>
             .unwrap();
 
         PathQuery {
-            source: VertexId::new(source as u32),
-            target: VertexId::new(target as u32),
+            source: Vertex::new(source as u32),
+            target: Vertex::new(target as u32),
         }
     })
     .take(num_tests)
@@ -54,6 +54,6 @@ impl<D: Distance> PathDistance<D> {
 /// vertices shall be non empty.
 #[derive(Clone, Debug)]
 pub struct Path<D: Distance> {
-    pub vertices: Vec<VertexId>,
+    pub vertices: Vec<Vertex>,
     pub distance: D,
 }

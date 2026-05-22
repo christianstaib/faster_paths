@@ -1,6 +1,6 @@
 use crate::{
     graph::{AdjacencyListGraph, CsrGraph, Edge, EdgeLike, GraphLike},
-    types::VertexId,
+    types::Vertex,
 };
 
 /// A graph represented by two adjacency lists, allowing outgoing and incoming
@@ -17,7 +17,7 @@ pub struct DirectionalAdjacencyListGraph<E: EdgeLike> {
 impl<E: EdgeLike> GraphLike for DirectionalAdjacencyListGraph<E> {
     type Edge = E;
 
-    fn outgoing_edges(&self, tail: VertexId) -> &[Self::Edge] {
+    fn outgoing_edges(&self, tail: Vertex) -> &[Self::Edge] {
         self.forward.outgoing_edges(tail)
     }
 
@@ -62,7 +62,7 @@ impl<E: EdgeLike> DirectionalAdjacencyListGraph<E> {
     }
 
     /// Removes all references to! `vertex`.
-    pub fn make_unreachable(&mut self, vertex: VertexId) {
+    pub fn make_unreachable(&mut self, vertex: Vertex) {
         let create_edge = |from| Edge {
             tail: from,
             head: vertex,

@@ -6,7 +6,7 @@ use crate::{
         HubLabeling,
         entry::{LabelEntry, min_common_hub_distance},
     },
-    types::{Distance, VertexId, distance_abs_diff_eq},
+    types::{Distance, Vertex, distance_abs_diff_eq},
 };
 
 use rayon::prelude::*;
@@ -80,7 +80,7 @@ fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>
     (0..num_vertices)
         .map(|vertex| {
             let label_entry = LabelEntry {
-                hub: VertexId::new(vertex as u32),
+                hub: Vertex::new(vertex as u32),
                 distance: D::zero(),
                 predecessor_hub: None,
             };
@@ -98,7 +98,7 @@ fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>
 fn merge_label<D, E>(
     edges: &[E],
     labels: &[Vec<LabelEntry<D>>],
-    vertex: VertexId,
+    vertex: Vertex,
 ) -> Vec<LabelEntry<D>>
 where
     D: Distance,

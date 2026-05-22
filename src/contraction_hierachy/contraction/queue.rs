@@ -12,13 +12,13 @@ use crate::{
         },
     },
     graph::{DirectionalAdjacencyListGraph, GraphLike},
-    types::{Distance, VertexId},
+    types::{Distance, Vertex},
 };
 
 const MAX_WITNESS_HOPS: u32 = 100;
 
 pub(super) struct Queue<D: Distance> {
-    heap: BinaryHeap<(Reverse<i64>, VertexId)>,
+    heap: BinaryHeap<(Reverse<i64>, Vertex)>,
     terms: Vec<Box<dyn Term<D>>>,
 }
 
@@ -32,7 +32,7 @@ impl<D: Distance> Queue<D> {
     pub(super) fn pop(
         &mut self,
         graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    ) -> Option<(VertexId, Vec<ContractionEdge<D>>)> {
+    ) -> Option<(Vertex, Vec<ContractionEdge<D>>)> {
         while let Some((Reverse(queued_priority), vertex)) = self.heap.pop() {
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
             let current_priority = priority(graph, vertex, &shortcuts, &self.terms);
@@ -51,7 +51,7 @@ impl<D: Distance> Queue<D> {
     fn update_terms_for_contracted(
         &mut self,
         graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-        vertex: VertexId,
+        vertex: Vertex,
         shortcuts: &[ContractionEdge<D>],
     ) {
         for term in &mut self.terms {
@@ -63,11 +63,11 @@ impl<D: Distance> Queue<D> {
 fn initial_heap<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     terms: &[Box<dyn Term<D>>],
-) -> BinaryHeap<(Reverse<i64>, VertexId)> {
+) -> BinaryHeap<(Reverse<i64>, Vertex)> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
         .progress()
-        .map(VertexId::new)
+        .map(Vertex::new)
         .map(|vertex| {
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
             (Reverse(priority(graph, vertex, &shortcuts, terms)), vertex)
