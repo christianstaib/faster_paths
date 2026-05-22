@@ -1,6 +1,6 @@
 use crate::graph::GraphLike;
 use crate::{
-    contraction_hierachy::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
+    contraction_hierarchy::{contraction_hierarchy::ContractionHierarchy, edge::ContractionEdge},
     graph::CsrGraph,
     types::{Distance, Vertex},
 };

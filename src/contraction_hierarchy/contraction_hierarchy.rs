@@ -1,5 +1,5 @@
 use crate::{
-    contraction_hierachy::edge::ContractionEdge,
+    contraction_hierarchy::edge::ContractionEdge,
     graph::{CsrGraph, GraphLike},
     types::Distance,
 };

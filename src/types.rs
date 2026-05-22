@@ -25,6 +25,10 @@ impl Vertex {
     pub fn as_usize(self) -> usize {
         self.0 as usize
     }
+
+    pub fn as_us32(self) -> u32 {
+        self.0
+    }
 }
 
 impl FromStr for Vertex {

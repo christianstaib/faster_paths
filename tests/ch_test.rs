@@ -1,7 +1,7 @@
 mod common;
 
 use ch::{
-    contraction_hierachy::{ContractionHierarchyPathfinder, contract_graph_sequential},
+    contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_sequential},
     validation::{validate_distances, validate_paths},
 };
 use ordered_float::OrderedFloat;

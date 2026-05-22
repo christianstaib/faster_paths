@@ -1,5 +1,5 @@
 use crate::{
-    contraction_hierachy::{ContractionEdge, contraction::terms::Term},
+    contraction_hierarchy::{ContractionEdge, contraction::terms::Term},
     graph::{DirectionalAdjacencyListGraph, GraphLike},
     types::{Distance, Vertex},
 };

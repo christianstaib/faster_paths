@@ -2,7 +2,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
-use crate::contraction_hierachy::ContractionEdge;
+use crate::contraction_hierarchy::ContractionEdge;
 use crate::graph::{DirectionalAdjacencyListGraph, EdgeLike, GraphLike};
 use crate::types::Distance;
 use crate::types::Vertex;

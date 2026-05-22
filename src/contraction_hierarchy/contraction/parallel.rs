@@ -1,5 +1,5 @@
 use crate::{
-    contraction_hierachy::{
+    contraction_hierarchy::{
         ContractionEdge,
         contraction::general::{build_working_graph, edge_difference, generate_shortcuts},
         contraction_hierarchy::ContractionHierarchy,

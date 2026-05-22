@@ -1,7 +1,7 @@
 mod common;
 
 use ch::{
-    contraction_hierachy::contract_graph_sequential,
+    contraction_hierarchy::contract_graph_sequential,
     hub_labeling::{HubLabeling, HubLabelingPathfinder},
     validation::{validate_distances, validate_paths},
 };

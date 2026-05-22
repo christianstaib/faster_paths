@@ -4,7 +4,7 @@
 //!
 //! ```
 //! use ch::{
-//!     contraction_hierachy::{ContractionHierarchyPathfinder, contract_graph_parallel},
+//!     contraction_hierarchy::{ContractionHierarchyPathfinder, contract_graph_parallel},
 //!     graph::WeightedEdge,
 //!     path::PathQuery,
 //!     pathfinder::ShortestPathFinder,
@@ -46,7 +46,7 @@
 //! ```
 
 pub mod classical_search;
-pub mod contraction_hierachy;
+pub mod contraction_hierarchy;
 pub mod data_structures;
 pub mod graph;
 pub mod hub_labeling;

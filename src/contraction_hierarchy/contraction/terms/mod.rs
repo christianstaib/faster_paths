@@ -3,7 +3,7 @@ mod deleted_neighbors;
 mod edge_difference;
 
 use crate::{
-    contraction_hierachy::ContractionEdge,
+    contraction_hierarchy::ContractionEdge,
     graph::{DirectionalAdjacencyListGraph, GraphLike},
     types::{Distance, Vertex},
 };

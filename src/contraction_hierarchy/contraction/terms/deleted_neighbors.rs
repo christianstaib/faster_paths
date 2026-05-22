@@ -1,28 +1,28 @@
 use super::{Term, for_each_neighbor};
 
 use crate::{
-    contraction_hierachy::ContractionEdge,
+    contraction_hierarchy::ContractionEdge,
     graph::DirectionalAdjacencyListGraph,
     types::{Distance, Vertex},
 };
 
-pub(crate) struct CostOfQueries {
-    estimates: Vec<i64>,
+pub(crate) struct DeletedNeighbors {
+    counts: Vec<i64>,
 }
 
-impl CostOfQueries {
+impl DeletedNeighbors {
     pub(crate) fn new(vertex_count: usize) -> Self {
         Self {
-            estimates: vec![0; vertex_count],
+            counts: vec![0; vertex_count],
         }
     }
 
     fn value(&self, vertex: Vertex) -> i64 {
-        self.estimates[vertex.as_usize()]
+        self.counts[vertex.as_usize()]
     }
 }
 
-impl<D: Distance> Term<D> for CostOfQueries {
+impl<D: Distance> Term<D> for DeletedNeighbors {
     fn value(
         &self,
         _graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
@@ -38,10 +38,8 @@ impl<D: Distance> Term<D> for CostOfQueries {
         vertex: Vertex,
         _shortcuts: &[ContractionEdge<D>],
     ) {
-        let neighbor_estimate = self.value(vertex) + 1;
         for_each_neighbor(graph, vertex, |neighbor| {
-            let estimate = &mut self.estimates[neighbor.as_usize()];
-            *estimate = (*estimate).max(neighbor_estimate);
+            self.counts[neighbor.as_usize()] += 1;
         });
     }
 }

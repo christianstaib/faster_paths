@@ -1,5 +1,5 @@
 use crate::{
-    contraction_hierachy::{ContractionHierarchy, unpack_and_concat_shortcut_paths},
+    contraction_hierarchy::{ContractionHierarchy, unpack_and_concat_shortcut_paths},
     hub_labeling::{
         HubLabeling,
         entry::{min_common_hub_distance, reversed_shortcut_path},

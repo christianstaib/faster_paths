@@ -4,7 +4,7 @@ use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 
 use crate::{
-    contraction_hierachy::{
+    contraction_hierarchy::{
         ContractionEdge,
         contraction::{
             general::generate_shortcuts,

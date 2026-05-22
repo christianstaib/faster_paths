@@ -1,5 +1,5 @@
 use crate::{
-    contraction_hierachy::ContractionHierarchy,
+    contraction_hierarchy::ContractionHierarchy,
     data_structures::FlattenedNested,
     hub_labeling::{entry::LabelEntry, merge},
     types::Distance,
