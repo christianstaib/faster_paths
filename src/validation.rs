@@ -2,15 +2,11 @@ use crate::{
     graph::EdgeLike,
     path::{Path, Query},
     pathfinder::ShortestPathFinder,
-    types::{Distance, Vertex, distance_abs_diff_eq},
+    types::{Distance, Vertex, abs_diff_eq},
 };
 use num_traits::Zero;
-use rand::seq::index::sample;
 use serde::{Deserialize, Serialize};
-use std::{
-    iter,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 /// Test case for validating shortest path queries.
 ///
@@ -20,23 +16,6 @@ use std::{
 pub struct PathTestCase<D: Distance> {
     pub query: Query,
     pub distance: Option<D>,
-}
-
-pub fn generate_random_queries(num_vertices: usize, num_queries: usize) -> Vec<Query> {
-    let mut rng = rand::rng();
-    iter::repeat_with(|| {
-        let [source, target] = sample(&mut rng, num_vertices, 2)
-            .into_vec()
-            .try_into()
-            .unwrap();
-
-        Query {
-            source: Vertex::from(source as u32),
-            target: Vertex::from(target as u32),
-        }
-    })
-    .take(num_queries)
-    .collect()
 }
 
 /// Validates paths returned by `pathfinder` against `tests`.
@@ -124,7 +103,7 @@ where
 {
     match (test.distance, *actual) {
         (None, None) => Ok(()),
-        (Some(expected), Some(actual)) if distance_abs_diff_eq(expected, actual, epsilon) => Ok(()),
+        (Some(expected), Some(actual)) if abs_diff_eq(expected, actual, epsilon) => Ok(()),
         (expected, actual) => Err(format!(
             "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
             test.query, expected, actual
@@ -172,7 +151,7 @@ fn validate_found_path<E>(
 where
     E: EdgeLike,
 {
-    if !distance_abs_diff_eq(path.distance, expected_distance, epsilon) {
+    if !abs_diff_eq(path.distance, expected_distance, epsilon) {
         return Err(format!(
             "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
             query, expected_distance, path.distance,
@@ -206,7 +185,7 @@ where
         )
     })?;
 
-    if !distance_abs_diff_eq(actual_sum, expected_distance, epsilon) {
+    if !abs_diff_eq(actual_sum, expected_distance, epsilon) {
         return Err(format!(
             "{:?}. Path edge weight sum mismatch: expected {:?}, but got {:?}.",
             query, expected_distance, actual_sum,

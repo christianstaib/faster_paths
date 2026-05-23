@@ -6,7 +6,7 @@ use crate::{
         HubLabeling,
         entry::{LabelEntry, min_common_hub_distance},
     },
-    types::{Distance, Vertex, distance_abs_diff_eq},
+    types::{Distance, Vertex, abs_diff_eq},
 };
 
 use rayon::prelude::*;
@@ -151,7 +151,7 @@ fn prune_label<D: Distance>(
             let (true_distance, _dir1_index, _dir2_index) =
                 min_common_hub_distance(dir1_label, dir2_label).unwrap();
 
-            distance_abs_diff_eq(entry.distance, true_distance, epsilon)
+            abs_diff_eq(entry.distance, true_distance, epsilon)
         })
         .copied()
         .collect()
