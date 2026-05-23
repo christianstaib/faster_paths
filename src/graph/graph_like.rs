@@ -19,7 +19,7 @@ pub trait GraphLike {
     /// Returns an iterator over all edges in the graph.
     fn all_edges(&self) -> impl Iterator<Item = &Self::Edge> + '_ {
         (0..self.num_vertices() as u32)
-            .map(Vertex::new)
+            .map(Vertex::from)
             .flat_map(|tail| self.outgoing_edges(tail).iter())
     }
 }

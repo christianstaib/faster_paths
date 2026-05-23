@@ -72,8 +72,8 @@ mod tests {
     #[test]
     fn from_flat_counts_vertices_that_only_appear_as_heads() {
         let graph = CsrGraph::from_flat(vec![WeightedEdge {
-            tail: Vertex::new(0),
-            head: Vertex::new(10),
+            tail: Vertex::from(0),
+            head: Vertex::from(10),
             weight: 1_u32,
         }]);
 

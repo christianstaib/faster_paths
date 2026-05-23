@@ -15,7 +15,7 @@ impl<D: Distance> VecSearchState<D> {
     pub fn new(num_vertices: usize) -> Self {
         Self {
             distance: vec![D::max_value(); num_vertices],
-            predecessor: vec![Vertex::new(u32::MAX); num_vertices],
+            predecessor: vec![Vertex::from(u32::MAX); num_vertices],
             expanded: vec![false; num_vertices],
         }
     }
@@ -37,7 +37,7 @@ impl<D: Distance> SearchStateAccess<D> for VecSearchState<D> {
 
     fn get_predecessor(&self, vertex: Vertex) -> Option<Vertex> {
         let predecessor = self.predecessor.get(vertex.as_usize()).copied()?;
-        (predecessor != Vertex::new(u32::MAX)).then_some(predecessor)
+        (predecessor != Vertex::from(u32::MAX)).then_some(predecessor)
     }
 
     fn set_predecessor(&mut self, vertex: Vertex, predecessor: Vertex) {
@@ -57,7 +57,7 @@ impl<D: Distance> SearchStateAccess<D> for VecSearchState<D> {
 
     fn clear(&mut self) {
         self.distance.fill(D::max_value());
-        self.predecessor.fill(Vertex::new(u32::MAX));
+        self.predecessor.fill(Vertex::from(u32::MAX));
         self.expanded.fill(false);
     }
 }

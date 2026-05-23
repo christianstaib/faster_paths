@@ -65,7 +65,7 @@ fn initial_heap<D: Distance>(
 ) -> BinaryHeap<(Reverse<i64>, Vertex)> {
     (0..graph.num_vertices() as u32)
         .into_par_iter()
-        .map(Vertex::new)
+        .map(Vertex::from)
         .map(|vertex| {
             let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
             (Reverse(priority(graph, vertex, &shortcuts, terms)), vertex)

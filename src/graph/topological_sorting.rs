@@ -28,7 +28,7 @@ pub fn compute_topological_layers<G: GraphLike>(graphs: &[&G]) -> Option<Vec<Vec
     let mut current_layer = indegrees
         .iter()
         .enumerate()
-        .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(Vertex::new(vertex as u32)))
+        .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(Vertex::from(vertex as u32)))
         .collect::<Vec<_>>();
 
     let mut layers = Vec::new();

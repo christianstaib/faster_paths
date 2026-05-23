@@ -24,7 +24,7 @@ fn contract_working_graph_parallel<D: Distance>(
     fraction: f64,
 ) -> ContractionHierarchy<D> {
     let mut remaining = (0..graph.num_vertices() as u32)
-        .map(Vertex::new)
+        .map(Vertex::from)
         .collect::<Vec<_>>();
 
     while !remaining.is_empty() {

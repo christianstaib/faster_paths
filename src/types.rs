@@ -8,6 +8,9 @@ use std::{
 use num_traits::{Bounded, Zero};
 use serde::{Deserialize, Serialize};
 
+/// Zero-based identifier for a vertex in a graph.
+///
+/// A strong typedef for `u32` to avoid mixing vertex IDs with other numeric values.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 pub struct Vertex(u32);
 
@@ -18,15 +21,11 @@ impl From<u32> for Vertex {
 }
 
 impl Vertex {
-    pub fn new(id: u32) -> Self {
-        Self(id)
-    }
-
     pub fn as_usize(self) -> usize {
         self.0 as usize
     }
 
-    pub fn as_us32(self) -> u32 {
+    pub fn as_u32(self) -> u32 {
         self.0
     }
 }

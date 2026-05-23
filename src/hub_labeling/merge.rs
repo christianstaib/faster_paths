@@ -71,10 +71,10 @@ pub(super) fn merge<D: Distance>(
 /// Each label contains only its own vertex as hub, at distance zero and without
 /// a predecessor.
 fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>> {
-    (0..num_vertices)
+    (0..num_vertices as u32)
         .map(|vertex| {
             let label_entry = LabelEntry {
-                hub: Vertex::new(vertex as u32),
+                hub: Vertex::from(vertex),
                 distance: D::zero(),
                 predecessor_hub: None,
             };
