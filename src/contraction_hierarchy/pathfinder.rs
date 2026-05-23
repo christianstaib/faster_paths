@@ -46,6 +46,7 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
 
         let up_reversed_shortcut_path = self.up_state.get_reversed_path(meeting_vertex)?;
         let down_reversed_shortcut_path = self.down_state.get_reversed_path(meeting_vertex)?;
+
         let vertices = unpack_and_concat_shortcut_paths(
             self.contraction_hierarchy,
             &up_reversed_shortcut_path,
@@ -95,7 +96,16 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         }
     }
 
-    pub fn search(&mut self, query: &Query) -> Option<(D, Vertex)> {
+    /// Runs a bidirectional Contraction Hierarchy query.
+    ///
+    /// Vertices reached from both directions become meeting candidates, and the
+    /// search stops once the queued distances cannot improve the best candidate.
+    ///
+    /// Returns the shortest distance together with its meeting vertex, or `None`
+    /// if no path exists. On success, `up_state` and `down_state` retain the
+    /// predecessor chains needed to reconstruct and unpack the shortcut path
+    /// through the returned meeting vertex.
+    fn search(&mut self, query: &Query) -> Option<(D, Vertex)> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
