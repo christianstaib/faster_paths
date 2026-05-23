@@ -5,8 +5,12 @@ use crate::{
     types::{Distance, Vertex, abs_diff_eq},
 };
 use num_traits::Zero;
+use rand::seq::index::sample;
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
+use std::{
+    iter,
+    time::{Duration, Instant},
+};
 
 /// Test case for validating shortest path queries.
 ///
@@ -215,4 +219,21 @@ fn path_weight<E: EdgeLike>(
     }
 
     Ok(total)
+}
+
+pub fn generate_random_queries(num_vertices: usize, num_queries: usize) -> Vec<Query> {
+    let mut rng = rand::rng();
+    iter::repeat_with(|| {
+        let [source, target] = sample(&mut rng, num_vertices, 2)
+            .into_vec()
+            .try_into()
+            .unwrap();
+
+        Query {
+            source: Vertex::from(source as u32),
+            target: Vertex::from(target as u32),
+        }
+    })
+    .take(num_queries)
+    .collect()
 }
