@@ -2,7 +2,12 @@
 name = "faster_paths"
 version = "0.1.0"
 edition = "2024"
+description = "Blazingly fast shortest paths with (parallel) preprocessing via contraction hierarchies and hub labeling"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/christianstaib/faster_paths"
+readme = "README.md"
+keywords = ["pathfinding", "shortest-path", "graph", "contraction", "hub-labeling"]
+categories = ["algorithms", "data-structures", "science"]
 
 [dependencies]
 num-traits = "0.2"
