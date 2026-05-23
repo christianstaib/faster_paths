@@ -5,8 +5,12 @@ use crate::{
     types::{Distance, Vertex, distance_abs_diff_eq},
 };
 use num_traits::Zero;
+use rand::seq::index::sample;
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
+use std::{
+    iter,
+    time::{Duration, Instant},
+};
 
 /// Test case for validating shortest path queries.
 ///
@@ -18,6 +22,36 @@ pub struct PathTestCase<D: Distance> {
     pub distance: Option<D>,
 }
 
+pub fn generate_random_queries(num_vertices: usize, num_queries: usize) -> Vec<Query> {
+    let mut rng = rand::rng();
+    iter::repeat_with(|| {
+        let [source, target] = sample(&mut rng, num_vertices, 2)
+            .into_vec()
+            .try_into()
+            .unwrap();
+
+        Query {
+            source: Vertex::from(source as u32),
+            target: Vertex::from(target as u32),
+        }
+    })
+    .take(num_queries)
+    .collect()
+}
+
+/// Validates paths returned by `pathfinder` against `tests`.
+///
+/// A test passes when:
+/// - unreachable queries return no path,
+/// - reachable queries return a path,
+/// - the path distance matches the expected distance within `epsilon`,
+/// - the path starts at the query source,
+/// - the path ends at the query target,
+/// - every consecutive vertex pair in the path exists in `edges`, and
+/// - the summed edge weights match the expected distance within `epsilon`.
+///
+/// Returns the average query runtime when all paths are valid, or the collected
+/// validation failure messages otherwise.
 pub fn validate_paths<E, P>(
     tests: &[PathTestCase<P::Distance>],
     edges: &[E],
@@ -48,6 +82,10 @@ where
     }
 }
 
+/// Validates distances returned by `pathfinder` against `tests`.
+///
+/// Returns the average query runtime when all distances match within `epsilon`,
+/// or the collected validation failure messages otherwise.
 pub fn validate_distances<P>(
     tests: &[PathTestCase<P::Distance>],
     pathfinder: &mut P,
@@ -89,9 +127,7 @@ where
         (Some(expected), Some(actual)) if distance_abs_diff_eq(expected, actual, epsilon) => Ok(()),
         (expected, actual) => Err(format!(
             "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
-            test.query,
-            expected,
-            actual
+            test.query, expected, actual
         )),
     }
 }
