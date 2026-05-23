@@ -21,6 +21,10 @@ impl From<u32> for Vertex {
 }
 
 impl Vertex {
+    pub fn new(value: u32) -> Self {
+        Self(value)
+    }
+
     pub fn as_usize(self) -> usize {
         self.0 as usize
     }
