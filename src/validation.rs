@@ -14,22 +14,8 @@ use std::time::{Duration, Instant};
 /// from the source.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PathTestCase<D: Distance> {
-    query: Query,
-    distance: Option<D>,
-}
-
-impl<D: Distance> PathTestCase<D> {
-    pub fn new(query: Query, distance: Option<D>) -> Self {
-        Self { query, distance }
-    }
-
-    pub fn query(&self) -> &Query {
-        &self.query
-    }
-
-    pub fn distance(&self) -> Option<D> {
-        self.distance
-    }
+    pub query: Query,
+    pub distance: Option<D>,
 }
 
 pub fn validate_paths<E, P>(
@@ -47,7 +33,7 @@ where
 
     for test in tests {
         let start = Instant::now();
-        let path = pathfinder.path(test.query());
+        let path = pathfinder.path(&test.query);
         total_runtime += start.elapsed();
 
         if let Err(message) = validate_path(edges, test, &path, epsilon) {
@@ -75,7 +61,7 @@ where
 
     for test in tests {
         let start = Instant::now();
-        let distance = pathfinder.distance(test.query());
+        let distance = pathfinder.distance(&test.query);
         total_runtime += start.elapsed();
 
         if let Err(message) = validate_distance(test, &distance, epsilon) {
@@ -98,12 +84,12 @@ fn validate_distance<D>(
 where
     D: Distance,
 {
-    match (test.distance(), *actual) {
+    match (test.distance, *actual) {
         (None, None) => Ok(()),
         (Some(expected), Some(actual)) if distance_abs_diff_eq(expected, actual, epsilon) => Ok(()),
         (expected, actual) => Err(format!(
             "{:?}. Distance mismatch: expected {:?}, but got {:?}.",
-            test.query(),
+            test.query,
             expected,
             actual
         )),
@@ -119,9 +105,9 @@ fn validate_path<E>(
 where
     E: EdgeLike,
 {
-    let query = test.query();
+    let query = &test.query;
 
-    match (path, test.distance()) {
+    match (path, test.distance) {
         (None, None) => Ok(()),
 
         (None, Some(expected_distance)) => Err(format!(

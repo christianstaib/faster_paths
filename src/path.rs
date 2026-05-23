@@ -3,11 +3,30 @@ use rand::seq::index::sample;
 use serde::{Deserialize, Serialize};
 use std::iter;
 
-/// Stores a query for a path from source to target.
+/// Query for a path from a source vertex to a target vertex.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Query {
+    /// Source vertex of the query.
     pub source: Vertex,
+
+    /// Target vertex of the query.
     pub target: Vertex,
+}
+
+/// A concrete path.
+///
+/// Since `Path` represents an existing path, `vertices` should be non-empty.
+#[derive(Clone, Debug)]
+pub struct Path<D: Distance> {
+    /// Ordered vertices of the path: `vertices.first()` is the source, and
+    /// `vertices.last()` is the target.
+    pub vertices: Vec<Vertex>,
+
+    /// Total cost of the path.
+    ///
+    /// This should equal the sum of the weights of all consecutive edges in
+    /// `vertices`.
+    pub distance: D,
 }
 
 pub fn generate_random_queries(num_vertices: usize, num_queries: usize) -> Vec<Query> {
@@ -25,13 +44,4 @@ pub fn generate_random_queries(num_vertices: usize, num_queries: usize) -> Vec<Q
     })
     .take(num_queries)
     .collect()
-}
-
-/// Stores a path and the distance the path represents. The first vertex from vertices is the
-/// source vertex of the path, the last one the target vertex. As this represents an existing path,
-/// vertices should be non-empty.
-#[derive(Clone, Debug)]
-pub struct Path<D: Distance> {
-    pub vertices: Vec<Vertex>,
-    pub distance: D,
 }
