@@ -55,5 +55,6 @@ pub mod graph;
 pub mod hub_labeling;
 pub mod path;
 pub mod pathfinder;
+pub mod progress_bar;
 pub mod types;
 pub mod validation;

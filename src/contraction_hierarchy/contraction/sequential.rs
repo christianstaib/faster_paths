@@ -1,14 +1,11 @@
 use crate::{
     contraction_hierarchy::{
         ContractionEdge,
-        contraction::{
-            general::{build_working_graph, generate_shortcuts},
-            queue::Queue,
-        },
+        contraction::{general::build_working_graph, queue::Queue},
         contraction_hierarchy::ContractionHierarchy,
     },
     graph::{DirectionalAdjacencyListGraph, WeightedEdge},
-    types::{Distance, Vertex},
+    types::Distance,
 };
 
 pub fn contract_graph_sequential<D: Distance>(
@@ -25,22 +22,6 @@ fn contract_working_graph_sequential<D: Distance>(
     let mut queue = Queue::new(&graph);
 
     while let Some((vertex, shortcuts)) = queue.pop(&graph) {
-        graph.make_unreachable(vertex);
-        for shortcut in &shortcuts {
-            graph.add_edge(shortcut);
-        }
-    }
-
-    let (up_graph, down_graph) = graph.into_csr_graphs();
-    ContractionHierarchy::new(up_graph, down_graph)
-}
-
-pub fn contract_working_graph_sequential_with_order<D: Distance>(
-    mut graph: DirectionalAdjacencyListGraph<ContractionEdge<D>>,
-    order: &[Vertex],
-) -> ContractionHierarchy<D> {
-    for &vertex in order.iter().rev() {
-        let shortcuts = generate_shortcuts(&graph, vertex, 10);
         graph.make_unreachable(vertex);
         for shortcut in &shortcuts {
             graph.add_edge(shortcut);

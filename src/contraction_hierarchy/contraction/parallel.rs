@@ -1,3 +1,6 @@
+use std::collections::BinaryHeap;
+
+use crate::progress_bar::MaybeProgressBar;
 use crate::{
     contraction_hierarchy::{
         ContractionEdge,
@@ -9,7 +12,7 @@ use crate::{
 };
 use num_traits::clamp;
 use rayon::prelude::*;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 const MAX_WITNESS_HOPS: u32 = 10;
 
@@ -27,16 +30,35 @@ fn contract_working_graph_parallel<D: Distance>(
         .map(Vertex::from)
         .collect::<Vec<_>>();
 
+    let bar = MaybeProgressBar::new(remaining.len() as u64);
     while !remaining.is_empty() {
         let (mut next_remaining, candidates) = select_ids(&graph, &remaining);
 
         let mut candidates_data: Vec<_> = candidates
             .into_par_iter()
-            .map(|vertex| {
-                let shortcuts = generate_shortcuts(&graph, vertex, MAX_WITNESS_HOPS);
-                let edge_difference = edge_difference(&graph, vertex, shortcuts.len());
-                (vertex, edge_difference, shortcuts)
-            })
+            .map_init(
+                || {
+                    (
+                        FxHashMap::default(),
+                        FxHashMap::default(),
+                        FxHashSet::default(),
+                        BinaryHeap::new(),
+                    )
+                },
+                |(distances, hops, expanded, queue), vertex| {
+                    let shortcuts = generate_shortcuts(
+                        &graph,
+                        distances,
+                        hops,
+                        expanded,
+                        queue,
+                        vertex,
+                        MAX_WITNESS_HOPS,
+                    );
+                    let edge_difference = edge_difference(&graph, vertex, shortcuts.len());
+                    (vertex, edge_difference, shortcuts)
+                },
+            )
             .collect();
         candidates_data.par_sort_unstable_by_key(|(_, edge_difference, _)| *edge_difference);
 
@@ -50,6 +72,7 @@ fn contract_working_graph_parallel<D: Distance>(
         }
 
         candidates_data.truncate(use_len);
+        bar.inc(candidates_data.len() as u64);
 
         for (vertex, _, shortcuts) in &candidates_data {
             graph.make_unreachable(*vertex);
@@ -60,6 +83,7 @@ fn contract_working_graph_parallel<D: Distance>(
 
         remaining = next_remaining;
     }
+    bar.finish_and_clear();
 
     let (up_graph, down_graph) = graph.into_csr_graphs();
 

@@ -45,9 +45,15 @@ where
 /// would be disconnected and also possibly some more.
 ///
 /// A shortcut u -> w for u -> v -> w is necessary iff (u, v, w) is the only shortest u-v-path.
-/// This function relaxes this condition by limiting the search space size with max_hops.
+/// This function relaxes this condition by two things: a shortcut is inserted if (u, v, w) is *a* shortest path or the search is too costly (limited by hops).
 pub(super) fn generate_shortcuts<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
+    //
+    distances: &mut FxHashMap<Vertex, D>,
+    hops: &mut FxHashMap<Vertex, u32>,
+    expanded: &mut FxHashSet<Vertex>,
+    queue: &mut BinaryHeap<(Reverse<D>, Vertex)>,
+    //
     vertex: Vertex,
     max_hops: u32,
 ) -> Vec<ContractionEdge<D>> {
@@ -57,34 +63,42 @@ pub(super) fn generate_shortcuts<D: Distance>(
         .map(|edge| edge.head)
         .collect::<FxHashSet<_>>();
 
-    graph
-        .reverse()
-        .outgoing_edges(vertex)
-        .iter()
-        .flat_map(|incoming_edge| {
-            let tail = incoming_edge.head;
-            let tail_weight = incoming_edge.weight;
-            let distances = bounded_dijkstra(graph, tail, &targets, max_hops);
+    let mut shortcuts = Vec::new();
 
-            outgoing_edges.iter().filter_map(move |edge| {
-                if tail == edge.head {
-                    return None;
-                }
+    for incoming_edge in graph.reverse().outgoing_edges(vertex) {
+        let tail = incoming_edge.head;
+        let tail_weight = incoming_edge.weight;
 
-                let weight = tail_weight + edge.weight;
+        distances.clear();
+        hops.clear();
+        expanded.clear();
+        queue.clear();
+        bounded_dijkstra(
+            graph, distances, hops, expanded, queue, tail, &targets, max_hops,
+        );
 
-                distances
-                    .get(&edge.head)
-                    .is_none_or(|&witness_distance| witness_distance >= weight)
-                    .then_some(ContractionEdge {
-                        tail,
-                        head: edge.head,
-                        weight,
-                        skipped: Some(vertex),
-                    })
-            })
-        })
-        .collect()
+        for edge in outgoing_edges {
+            if tail == edge.head {
+                continue;
+            }
+
+            let weight = tail_weight + edge.weight;
+
+            if distances
+                .get(&edge.head)
+                .is_none_or(|&witness_distance| witness_distance >= weight)
+            {
+                shortcuts.push(ContractionEdge {
+                    tail,
+                    head: edge.head,
+                    weight,
+                    skipped: Some(vertex),
+                });
+            }
+        }
+    }
+
+    shortcuts
 }
 
 /// Computes shortest path distances from `source` to `targets`.
@@ -92,15 +106,16 @@ pub(super) fn generate_shortcuts<D: Distance>(
 /// Stops once every target has been settled or once only vertices with hop distance > `max_hops` remain. The returned map may contain non-target vertices.
 pub(super) fn bounded_dijkstra<D: Distance>(
     graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
+    //
+    distances: &mut FxHashMap<Vertex, D>,
+    hops: &mut FxHashMap<Vertex, u32>,
+    expanded: &mut FxHashSet<Vertex>,
+    queue: &mut BinaryHeap<(Reverse<D>, Vertex)>,
+    //
     source: Vertex,
     targets: &FxHashSet<Vertex>,
     max_hops: u32,
-) -> FxHashMap<Vertex, D> {
-    let mut distances = FxHashMap::default();
-    let mut hops = FxHashMap::default();
-    let mut queue = BinaryHeap::new();
-    let mut expanded = FxHashSet::default();
-
+) {
     let mut remaining_targets = targets.len();
 
     distances.insert(source, D::zero());
@@ -139,6 +154,4 @@ pub(super) fn bounded_dijkstra<D: Distance>(
             queue.push((Reverse(new_distance), edge.head));
         }
     }
-
-    distances
 }

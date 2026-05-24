@@ -1,6 +1,7 @@
 use std::{cmp::Reverse, collections::BinaryHeap};
 
 use rayon::prelude::*;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     contraction_hierarchy::{
@@ -33,7 +34,15 @@ impl<D: Distance> Queue<D> {
         graph: &DirectionalAdjacencyListGraph<ContractionEdge<D>>,
     ) -> Option<(Vertex, Vec<ContractionEdge<D>>)> {
         while let Some((Reverse(queued_priority), vertex)) = self.heap.pop() {
-            let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
+            let shortcuts = generate_shortcuts(
+                graph,
+                &mut FxHashMap::default(),
+                &mut FxHashMap::default(),
+                &mut FxHashSet::default(),
+                &mut BinaryHeap::new(),
+                vertex,
+                MAX_WITNESS_HOPS,
+            );
             let current_priority = priority(graph, vertex, &shortcuts, &self.terms);
 
             if current_priority <= queued_priority {
@@ -66,9 +75,27 @@ fn initial_heap<D: Distance>(
     (0..graph.num_vertices() as u32)
         .into_par_iter()
         .map(Vertex::from)
-        .map(|vertex| {
-            let shortcuts = generate_shortcuts(graph, vertex, MAX_WITNESS_HOPS);
-            (Reverse(priority(graph, vertex, &shortcuts, terms)), vertex)
-        })
+        .map_init(
+            || {
+                (
+                    FxHashMap::default(),
+                    FxHashMap::default(),
+                    FxHashSet::default(),
+                    BinaryHeap::new(),
+                )
+            },
+            |(distances, hops, expanded, queue), vertex| {
+                let shortcuts = generate_shortcuts(
+                    &graph,
+                    distances,
+                    hops,
+                    expanded,
+                    queue,
+                    vertex,
+                    MAX_WITNESS_HOPS,
+                );
+                (Reverse(priority(graph, vertex, &shortcuts, terms)), vertex)
+            },
+        )
         .collect()
 }

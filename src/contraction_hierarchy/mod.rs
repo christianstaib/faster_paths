@@ -5,10 +5,7 @@ mod pathfinder;
 mod shortcut;
 
 pub use contraction::build_working_graph;
-pub use contraction::{
-    contract_graph_parallel, contract_graph_sequential,
-    contract_working_graph_sequential_with_order,
-};
+pub use contraction::{contract_graph_parallel, contract_graph_sequential};
 pub use contraction_hierarchy::ContractionHierarchy;
 pub use edge::ContractionEdge;
 pub use pathfinder::ContractionHierarchyPathfinder;
