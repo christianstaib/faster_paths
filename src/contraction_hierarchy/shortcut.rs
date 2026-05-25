@@ -37,17 +37,20 @@ pub fn unpack_and_concat_shortcut_paths<D: Distance>(
     contraction_hierarchy: &ContractionHierarchy<D>,
     up_reversed_shortcut_path: &[Vertex],
     down_reversed_shortcut_path: &[Vertex],
+    max_expansion_steps: usize,
 ) -> Option<Vec<Vertex>> {
     let up_path = unpack_shortcuts(
         contraction_hierarchy.up_graph(),
         contraction_hierarchy.down_graph(),
         up_reversed_shortcut_path,
+        max_expansion_steps,
     )?;
 
     let down_path = unpack_shortcuts(
         contraction_hierarchy.down_graph(),
         contraction_hierarchy.up_graph(),
         down_reversed_shortcut_path,
+        max_expansion_steps,
     )?;
 
     Some(
@@ -67,6 +70,7 @@ pub fn unpack_shortcuts<D: Distance>(
     dir1_graph: &CsrGraph<ContractionEdge<D>>,
     dir2_graph: &CsrGraph<ContractionEdge<D>>,
     dir1_reversed_shortcut_path: &[Vertex],
+    max_expansion_steps: usize,
 ) -> Option<Vec<Vertex>> {
     enum Dir {
         Dir1,
@@ -79,8 +83,14 @@ pub fn unpack_shortcuts<D: Distance>(
         stack.push((find_edge(dir1_graph, pair[1], pair[0])?, Dir::Dir1));
     }
 
+    let mut num_expansion_steps = 0;
     let mut path = vec![*dir1_reversed_shortcut_path.first()?];
     while let Some((edge, dir)) = stack.pop() {
+        num_expansion_steps += 1;
+        if num_expansion_steps > max_expansion_steps {
+            panic!("Loop in shortcut expansion");
+        }
+
         let Some(skipped) = edge.skipped else {
             // Original edges contribute one vertex to the unpacked path.
             path.push(match dir {

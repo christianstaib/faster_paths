@@ -40,4 +40,9 @@ impl<D: Distance> ContractionHierarchy<D> {
     pub fn num_vertices(&self) -> usize {
         std::cmp::max(self.up_graph.num_vertices(), self.down_graph.num_vertices())
     }
+
+    /// Returns the number of edges.
+    pub fn num_edges(&self) -> usize {
+        self.up_graph.num_edges() + self.down_graph.num_edges()
+    }
 }

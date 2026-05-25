@@ -51,6 +51,7 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
             self.contraction_hierarchy,
             &up_reversed_shortcut_path,
             &down_reversed_shortcut_path,
+            self.contraction_hierarchy.num_edges() * 2,
         )?;
 
         Some(Path { vertices, distance })
