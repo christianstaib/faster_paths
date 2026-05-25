@@ -62,6 +62,10 @@ pub fn reversed_shortcut_path<D: Distance>(
 
         entry = &label[predecessor_index];
         path.push(entry.hub);
+
+        if path.len() > label.len() {
+            panic!("Cycle in path unpacking of hub label");
+        }
     }
 
     Some(path)
