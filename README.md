@@ -109,4 +109,41 @@ assert_eq!(
     pathfinder.path(&query).unwrap().vertices,
     vec![Vertex::new(0), Vertex::new(1), Vertex::new(2)]
 );
+
 ```
+
+## Benchmarking
+
+The benchmarks use the [DIMACS Challenge 9 road networks](https://www.diag.uniroma1.it/challenge9/download.shtml), code to run them yourself can be found [here](https://github.com/christianstaib/faster_paths_benchmark).
+The Contraction Hierarchy and Dijkstra measurements below were run on an M1 MacBook Air with 8 cores and 16 GB of RAM.
+On larger graphs, path unpacking dominates path-query time, which has optimizatin potential.
+
+| Graph          | # vertices | # edges | Dijkstra distance avg | Dijkstra path avg | CH construction | CH distance avg | CH path avg |
+| :------------- | ---------: | ------: | --------------------: | ----------------: | --------------: | --------------: | ----------: |
+| USA-road-d.NY  |       264k |    734k |               10.16ms |           10.22ms |           1.54s |        101.65µs |    126.99µs |
+| USA-road-d.CAL |      1.89M |   4.66M |               98.02ms |           97.95ms |           7.51s |        148.00µs |    254.48µs |
+| USA-road-d.USA |      23.9M |   58.3M |                 1.49s |             1.49s |         119.24s |        568.20µs |      1.16ms |
+| USA-road-t.NY  |       264k |    734k |               11.19ms |           11.22ms |           1.24s |         52.23µs |     66.34µs |
+| USA-road-t.CAL |      1.89M |   4.66M |               97.52ms |           97.53ms |           5.86s |         69.50µs |    145.24µs |
+| USA-road-t.USA |      23.9M |   58.3M |                 1.50s |             1.48s |          77.11s |        132.25µs |    578.67µs |
+
+The Hub Labeling benchmarks were run on a different system with 2x AMD EPYC 9454 and 2.5 TB of RAM on the wonderful [BwUniCluster 3.0](https://www.bwhpc.de/).
+Hub Labeling reuses the Contraction Hierarchy for path unpacking, so the path timings include the same, dominating time hit.
+The HL construction time in the table are to be seen in addition to the CH construction time.
+But if you need an distance oracle for your graph, the super fast distance query time might be nice fore you, but ensure you have enough RAM, as the size of the Hub Labeling can easily be hundreds of times larger as the underlying graph.
+However, for some super dense graphs, the Contraction Hierarchy and the Hub Labeling can actually be smaller than the underlying graph, as i explored in my [bachelor thesis](http://dx.doi.org/10.18419/opus-15429).
+
+
+| Graph          | CH construction | HL construction | Label size | HL distance |  HL path |
+| -------------- | --------------: | --------------: | ---------: | ----------: | -------: |
+| USA-road-d.NY  |        930.46ms |           2.60s |     110.02 |      1.03µs |  19.13µs |
+| USA-road-d.CAL |           5.18s |          31.68s |     136.13 |      1.12µs |  80.99µs |
+| USA-road-d.USA |          71.62s |         500.87s |     241.62 |     11.10µs | 746.96µs |
+| USA-road-t.NY  |        788.69ms |           1.90s |      73.42 |    838.00ns |  13.65µs |
+| USA-road-t.CAL |           4.82s |          22.97s |      95.35 |    871.00ns |  56.29µs |
+| USA-road-t.USA |          64.83s |         291.66s |     110.84 |      1.28µs | 389.00µs |
+
+## Credits & Acknowledgements
+- The name of this crate was inspired by the wonderful [fast_paths](https://github.com/easbar/fast_paths) whose path unpacking is a lot faster than mine =).
+- During my understanding of Contraction Hierarchies [this](https://jlazarsfeld.github.io/ch.150.project) guide by John Lazarsfeld helped me a lot!
+
