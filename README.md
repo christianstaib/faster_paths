@@ -1,5 +1,7 @@
 # Faster Paths
 
+[![Crates.io](https://img.shields.io/crates/v/faster_paths.svg)](https://crates.io/crates/faster_paths)
+[![Docs.rs](https://docs.rs/faster_paths/badge.svg)](https://docs.rs/faster_paths)
 [![Build](https://github.com/christianstaib/faster_paths3/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/christianstaib/faster_paths3/actions/workflows/build.yml)
 [![Tests](https://github.com/christianstaib/faster_paths3/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/christianstaib/faster_paths3/actions/workflows/test.yml)
 
@@ -10,6 +12,16 @@ Currently, there are three pathfinding algorithms:
 1. Dijkstra (slow, as expected)
 2. Contraction Hierarchies (fast & versatile)
 3. Hub Labeling (blazingly fast distance queries)
+
+## Installation
+
+Faster Paths is available on [crates.io](https://crates.io/crates/faster_paths).
+If you want to use it, just add it to your `Cargo.toml`:
+
+```toml
+[dependencies]
+faster_paths = "0.1.0"
+```
 
 ## Data Types
 

@@ -6,6 +6,10 @@ description = "Blazingly fast shortest paths with (parallel) preprocessing via c
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/christianstaib/faster_paths"
 readme = "README.md"
+exclude = [
+    ".cargo/",
+    ".github/",
+]
 keywords = ["pathfinding", "shortest-path", "graph", "contraction", "hub-labeling"]
 categories = ["algorithms", "data-structures", "science"]
 
