@@ -56,8 +56,8 @@ pub(super) fn merge<D: Distance>(
         labels
             .into_iter()
             .for_each(|(vertex, up_label, down_label)| {
-                up_labels[vertex.as_usize()] = up_label;
-                down_labels[vertex.as_usize()] = down_label;
+                up_labels[vertex as usize] = up_label;
+                down_labels[vertex as usize] = down_label;
             });
     }
 
@@ -74,7 +74,7 @@ fn initialize_labels<D: Distance>(num_vertices: usize) -> Vec<Vec<LabelEntry<D>>
     (0..num_vertices as u32)
         .map(|vertex| {
             let label_entry = LabelEntry {
-                hub: Vertex::from(vertex),
+                hub: vertex,
                 distance: D::zero(),
                 predecessor_hub: None,
             };
@@ -102,7 +102,7 @@ where
     entries.insert(vertex, (D::zero(), None));
 
     for edge in edges {
-        for entry in &labels[edge.head().as_usize()] {
+        for entry in &labels[edge.head() as usize] {
             let candidate_distance = entry.distance + edge.weight();
             let candidate_predecessor_hub = Some(entry.predecessor_hub.unwrap_or(vertex));
 
@@ -147,7 +147,7 @@ fn prune_label<D: Distance>(
     dir1_label
         .iter()
         .filter(|entry| {
-            let dir2_label = &dir2_labels[entry.hub.as_usize()];
+            let dir2_label = &dir2_labels[entry.hub as usize];
             let (true_distance, _dir1_index, _dir2_index) =
                 min_common_hub_distance(dir1_label, dir2_label).unwrap();
 

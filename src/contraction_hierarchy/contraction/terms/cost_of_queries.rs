@@ -18,7 +18,7 @@ impl CostOfQueries {
     }
 
     fn value(&self, vertex: Vertex) -> i64 {
-        self.estimates[vertex.as_usize()]
+        self.estimates[vertex as usize]
     }
 }
 
@@ -40,7 +40,7 @@ impl<D: Distance> Term<D> for CostOfQueries {
     ) {
         let neighbor_estimate = self.value(vertex) + 1;
         for_each_neighbor(graph, vertex, |neighbor| {
-            let estimate = &mut self.estimates[neighbor.as_usize()];
+            let estimate = &mut self.estimates[neighbor as usize];
             *estimate = (*estimate).max(neighbor_estimate);
         });
     }

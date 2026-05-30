@@ -22,13 +22,13 @@ pub fn compute_topological_layers<G: GraphLike>(graphs: &[&G]) -> Option<Vec<Vec
     let mut indegrees = vec![0; num_vertices];
 
     for edge in graphs.iter().flat_map(|graph| graph.all_edges()) {
-        indegrees[edge.head().as_usize()] += 1;
+        indegrees[edge.head() as usize] += 1;
     }
 
     let mut current_layer = indegrees
         .iter()
         .enumerate()
-        .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(Vertex::from(vertex as u32)))
+        .filter_map(|(vertex, &indegree)| (indegree == 0).then_some(vertex as u32))
         .collect::<Vec<_>>();
 
     let mut layers = Vec::new();
@@ -40,7 +40,7 @@ pub fn compute_topological_layers<G: GraphLike>(graphs: &[&G]) -> Option<Vec<Vec
 
         for &vertex in &current_layer {
             for edge in graphs.iter().flat_map(|graph| graph.outgoing_edges(vertex)) {
-                let head_indegree = &mut indegrees[edge.head().as_usize()];
+                let head_indegree = &mut indegrees[edge.head() as usize];
                 *head_indegree -= 1;
 
                 if *head_indegree == 0 {

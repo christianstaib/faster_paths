@@ -32,12 +32,12 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
             return;
         }
 
-        let needed_len = std::cmp::max(edge.tail(), edge.head()).as_usize() + 1;
+        let needed_len = std::cmp::max(edge.tail(), edge.head()) as usize + 1;
         if self.edges.len() < needed_len {
             self.edges.resize_with(needed_len, Vec::new);
         }
 
-        let edges = &mut self.edges[edge.tail().as_usize()];
+        let edges = &mut self.edges[edge.tail() as usize];
         match edges.binary_search_by_key(&edge.head(), |old_edge| old_edge.head()) {
             Ok(index) => {
                 if edge.weight() < edges[index].weight() {
@@ -49,7 +49,7 @@ impl<E: EdgeLike> AdjacencyListGraph<E> {
     }
 
     pub fn remove_edge(&mut self, edge: Edge) -> Option<E> {
-        let tail = edge.tail.as_usize();
+        let tail = edge.tail as usize;
         let edges = self.edges.get_mut(tail)?;
 
         edges
@@ -69,11 +69,11 @@ impl<E: EdgeLike> GraphLike for AdjacencyListGraph<E> {
     type Edge = E;
 
     fn outgoing_edges(&self, tail: Vertex) -> &[E] {
-        if tail.as_usize() >= self.edges.len() {
+        if tail as usize >= self.edges.len() {
             return &[];
         }
 
-        &self.edges[tail.as_usize()]
+        &self.edges[tail as usize]
     }
 
     fn num_vertices(&self) -> usize {

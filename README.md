@@ -26,9 +26,7 @@ faster_paths = "0.1.0"
 ## Data Types
 
 The basic building block of the graph you want to work with is `WeightedEdge`.
-A `WeightedEdge` has a `tail` and a `head`, both of type `Vertex`.
-`Vertex` is a strong typedef for `u32` and can be instantiated with
-`Vertex::new(u32)`.
+A `WeightedEdge` has a `tail` and a `head`, both of type `Vertex`, which is just a typedef for `u32`.
 
 It also has a generic `weight`. The weight type needs to implement the crate's
 `Distance` requirements, including `Ord` and `Add`. Possible weight types are
@@ -60,18 +58,18 @@ use ordered_float::OrderedFloat;
 
 let edges = vec![
     WeightedEdge {
-        tail: Vertex::new(0),
-        head: Vertex::new(1),
+        tail: 0,
+        head: 1,
         weight: OrderedFloat(2.0),
     },
     WeightedEdge {
-        tail: Vertex::new(0),
-        head: Vertex::new(2),
+        tail: 0,
+        head: 2,
         weight: OrderedFloat(10.0),
     },
     WeightedEdge {
-        tail: Vertex::new(1),
-        head: Vertex::new(2),
+        tail: 1,
+        head: 2,
         weight: OrderedFloat(3.0),
     },
 ];
@@ -80,14 +78,14 @@ let contraction_hierarchy = contract_graph_parallel(&edges);
 let mut pathfinder = ContractionHierarchyPathfinder::new(&contraction_hierarchy);
 
 let query = Query {
-    source: Vertex::new(0),
-    target: Vertex::new(2),
+    source: 0,
+    target: 2,
 };
 
 assert_eq!(pathfinder.distance(&query), Some(OrderedFloat(5.0)));
 assert_eq!(
     pathfinder.path(&query).unwrap().vertices,
-    vec![Vertex::new(0), Vertex::new(1), Vertex::new(2)]
+    vec![0, 1, 2]
 );
 ```
 
@@ -119,7 +117,7 @@ let mut pathfinder = HubLabelingPathfinder::new(&contraction_hierarchy, &hub_lab
 assert_eq!(pathfinder.distance(&query), Some(OrderedFloat(5.0)));
 assert_eq!(
     pathfinder.path(&query).unwrap().vertices,
-    vec![Vertex::new(0), Vertex::new(1), Vertex::new(2)]
+    vec![0, 1, 2]
 );
 
 ```

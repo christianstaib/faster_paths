@@ -18,7 +18,7 @@ impl DeletedNeighbors {
     }
 
     fn value(&self, vertex: Vertex) -> i64 {
-        self.counts[vertex.as_usize()]
+        self.counts[vertex as usize]
     }
 }
 
@@ -39,7 +39,7 @@ impl<D: Distance> Term<D> for DeletedNeighbors {
         _shortcuts: &[ContractionEdge<D>],
     ) {
         for_each_neighbor(graph, vertex, |neighbor| {
-            self.counts[neighbor.as_usize()] += 1;
+            self.counts[neighbor as usize] += 1;
         });
     }
 }

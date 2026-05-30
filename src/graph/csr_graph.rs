@@ -19,13 +19,13 @@ impl<E: EdgeLike> CsrGraph<E> {
             .iter()
             .map(|edge| max(edge.tail(), edge.head()))
             .max()
-            .map(|vertex| vertex.as_usize() + 1)
+            .map(|vertex| vertex as usize + 1)
             .unwrap_or(0);
 
         let mut indices = vec![0; num_vertices + 1];
 
         for edge in &flat {
-            indices[edge.tail().as_usize() + 1] += 1;
+            indices[edge.tail() as usize + 1] += 1;
         }
 
         for i in 1..indices.len() {
@@ -52,7 +52,7 @@ impl<E: EdgeLike> GraphLike for CsrGraph<E> {
     type Edge = E;
 
     fn outgoing_edges(&self, tail: Vertex) -> &[E] {
-        self.flattened_nested.nested(tail.as_usize())
+        self.flattened_nested.nested(tail as usize)
     }
 
     fn num_vertices(&self) -> usize {
@@ -67,13 +67,12 @@ impl<E: EdgeLike> GraphLike for CsrGraph<E> {
 #[cfg(test)]
 mod tests {
     use crate::graph::{CsrGraph, GraphLike, WeightedEdge};
-    use crate::types::Vertex;
 
     #[test]
     fn from_flat_counts_vertices_that_only_appear_as_heads() {
         let graph = CsrGraph::from_flat(vec![WeightedEdge {
-            tail: Vertex::from(0),
-            head: Vertex::from(10),
+            tail: 0,
+            head: 10,
             weight: 1_u32,
         }]);
 

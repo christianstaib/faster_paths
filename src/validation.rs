@@ -230,8 +230,8 @@ pub fn generate_random_queries(num_vertices: usize, num_queries: usize) -> Vec<Q
             .unwrap();
 
         Query {
-            source: Vertex::from(source as u32),
-            target: Vertex::from(target as u32),
+            source: source as u32,
+            target: target as u32,
         }
     })
     .take(num_queries)

@@ -1,46 +1,11 @@
 use std::{
     fmt::Debug,
-    num::ParseIntError,
     ops::{Add, AddAssign, Sub},
-    str::FromStr,
 };
 
 use num_traits::{Bounded, Zero};
-use serde::{Deserialize, Serialize};
 
-/// Zero-based identifier for a vertex in a graph.
-///
-/// A strong typedef for `u32` to avoid mixing vertex IDs with other numeric values.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Serialize, Deserialize)]
-pub struct Vertex(u32);
-
-impl From<u32> for Vertex {
-    fn from(value: u32) -> Self {
-        Self(value)
-    }
-}
-
-impl Vertex {
-    pub fn new(value: u32) -> Self {
-        Self(value)
-    }
-
-    pub fn as_usize(self) -> usize {
-        self.0 as usize
-    }
-
-    pub fn as_u32(self) -> u32 {
-        self.0
-    }
-}
-
-impl FromStr for Vertex {
-    type Err = ParseIntError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        u32::from_str(s).map(Vertex)
-    }
-}
+pub type Vertex = u32;
 
 /// Edge weight and path distance type used by shortest-path algorithms.
 ///
