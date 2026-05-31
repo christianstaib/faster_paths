@@ -1,7 +1,8 @@
 use crate::contraction_hierarchy::contraction_hierarchy::ContractionHierarchy;
+use crate::contraction_hierarchy::edge::ContractionEdge;
 use crate::contraction_hierarchy::shortcut::unpack_and_concat_shortcut_paths;
 use crate::data_structures::{HashVertexMap, HashVertexSet, VertexMap, VertexSet, reversed_path};
-use crate::graph::{EdgeLike, GraphLike};
+use crate::graph::{CsrGraph, EdgeLike, GraphLike};
 use crate::path::{Path, Query};
 use crate::pathfinder::ShortestPathFinder;
 use crate::types::{Distance, Vertex};
@@ -14,40 +15,31 @@ enum Direction {
     Down,
 }
 
-#[derive(Eq, PartialEq)]
-struct Entry<D>(Reverse<D>, Vertex, Direction);
-
-impl<D: Ord> Ord for Entry<D> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.cmp(&other.0)
-    }
-}
-
-impl<D: Ord> PartialOrd for Entry<D> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-pub struct ContractionHierarchyPathfinder<'a, D: Distance> {
-    contraction_hierarchy: &'a ContractionHierarchy<D>,
-    queue: BinaryHeap<Entry<D>>,
-    up_state: ChSearchState<D>,
-    down_state: ChSearchState<D>,
-}
-
-pub struct ChSearchState<D: Distance> {
+/// Search state for one direction of a Contraction Hierarchy query. Just a wrapper so the search
+/// becomes more readable.
+struct ChSearchState<'a, D: Distance> {
+    graph: &'a CsrGraph<ContractionEdge<D>>,
     distance: HashVertexMap<D>,
     predecessor: HashVertexMap<Vertex>,
     expanded: HashVertexSet,
 }
 
-impl<D: Distance> ChSearchState<D> {
-    fn new() -> Self {
+/// Path finder for shortest-path queries on a precomputed Contraction Hierarchy.
+/// Reuses its internal data structures across queries.
+pub struct ContractionHierarchyPathfinder<'a, D: Distance> {
+    contraction_hierarchy: &'a ContractionHierarchy<D>,
+    queue: BinaryHeap<(Reverse<D>, Vertex, Direction)>,
+    up_state: ChSearchState<'a, D>,
+    down_state: ChSearchState<'a, D>,
+}
+
+impl<'a, D: Distance> ChSearchState<'a, D> {
+    fn new(graph: &'a CsrGraph<ContractionEdge<D>>, len: usize) -> Self {
         Self {
-            distance: HashVertexMap::default(),
-            predecessor: HashVertexMap::default(),
-            expanded: HashVertexSet::default(),
+            graph,
+            distance: HashVertexMap::new(len, D::max_value()),
+            predecessor: HashVertexMap::new(len, Vertex::MAX),
+            expanded: HashVertexSet::new(len),
         }
     }
 
@@ -64,15 +56,18 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
     fn path(&mut self, query: &Query) -> Option<Path<D>> {
         let (distance, meeting_vertex) = self.search(query)?;
 
-        let up_reversed_shortcut_path = reversed_path(&self.up_state.predecessor, meeting_vertex);
-        let down_reversed_shortcut_path =
-            reversed_path(&self.down_state.predecessor, meeting_vertex);
+        let up_predecessor = &self.up_state.predecessor;
+        let up_reversed_shortcut_path = reversed_path(up_predecessor, meeting_vertex);
 
+        let down_predecessor = &self.down_state.predecessor;
+        let down_reversed_shortcut_path = reversed_path(down_predecessor, meeting_vertex);
+
+        let unpack_limit = self.contraction_hierarchy.num_edges() * 2;
         let vertices = unpack_and_concat_shortcut_paths(
             self.contraction_hierarchy,
             &up_reversed_shortcut_path,
             &down_reversed_shortcut_path,
-            self.contraction_hierarchy.num_edges() * 2,
+            unpack_limit,
         )?;
 
         Some(Path { vertices, distance })
@@ -110,11 +105,13 @@ fn stall<D: Distance>(
 
 impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
     pub fn new(contraction_hierarchy: &'a ContractionHierarchy<D>) -> Self {
+        let len = contraction_hierarchy.num_vertices();
+
         Self {
             contraction_hierarchy,
             queue: BinaryHeap::new(),
-            up_state: ChSearchState::new(),
-            down_state: ChSearchState::new(),
+            up_state: ChSearchState::new(contraction_hierarchy.up_graph(), len),
+            down_state: ChSearchState::new(contraction_hierarchy.down_graph(), len),
         }
     }
 
@@ -131,9 +128,9 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         // Set up the data structures for the search, just like in a normal bidirectional search.
         self.queue.clear();
         self.queue
-            .push(Entry(Reverse(D::zero()), query.source, Direction::Up));
+            .push((Reverse(D::zero()), query.source, Direction::Up));
         self.queue
-            .push(Entry(Reverse(D::zero()), query.target, Direction::Down));
+            .push((Reverse(D::zero()), query.target, Direction::Down));
 
         self.up_state.clear();
         self.up_state.distance.set(query.source, D::zero());
@@ -143,7 +140,7 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
 
         let mut best_meeting: Option<(D, Vertex)> = None;
 
-        while let Some(Entry(Reverse(dir1_dist_tail), tail, dir1)) = self.queue.pop() {
+        while let Some((Reverse(dir1_dist_tail), tail, dir1)) = self.queue.pop() {
             // Once all distances in the queue are larger than the meeting distance,
             // no shorter path can be found.
             if best_meeting.is_some_and(|(distance, _vertex)| dir1_dist_tail >= distance) {
@@ -151,29 +148,17 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             }
 
             // Set up the variables to use the same code for both directions.
-            let (dir1_state, dir2_state, dir1_graph, dir2_graph) = match dir1 {
-                Direction::Up => (
-                    &mut self.up_state,
-                    &self.down_state,
-                    self.contraction_hierarchy.up_graph(),
-                    self.contraction_hierarchy.down_graph(),
-                ),
-                Direction::Down => (
-                    &mut self.down_state,
-                    &self.up_state,
-                    self.contraction_hierarchy.down_graph(),
-                    self.contraction_hierarchy.up_graph(),
-                ),
+            let (dir1_state, dir2_state) = match dir1 {
+                Direction::Up => (&mut self.up_state, &self.down_state),
+                Direction::Down => (&mut self.down_state, &self.up_state),
             };
 
             // Skip the vertex if it has already been expanded.
             // Skip if dir1_dist_tail is not optimal, as this implies that every new_best_distance
             // would not be optimal.
-            if dir1_state.expanded.contains_and_insert(tail) {
-                continue;
-            }
-
-            if stall(&dir1_state.distance, dir2_graph, tail, dir1_dist_tail) {
+            if dir1_state.expanded.contains_and_insert(tail)
+                || stall(&dir1_state.distance, dir2_state.graph, tail, dir1_dist_tail)
+            {
                 continue;
             }
 
@@ -186,7 +171,7 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             }
 
             // Perform normal edge relaxation.
-            for edge in dir1_graph.outgoing_edges(tail) {
+            for edge in dir1_state.graph.outgoing_edges(tail) {
                 let new_distance = dir1_dist_tail + edge.weight;
                 let current_distance = dir1_state.distance.get(edge.head);
                 if current_distance.is_some_and(|current_distance| new_distance >= current_distance)
@@ -196,8 +181,7 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
 
                 dir1_state.distance.set(edge.head, new_distance);
                 dir1_state.predecessor.set(edge.head, tail);
-                self.queue
-                    .push(Entry(Reverse(new_distance), edge.head, dir1));
+                self.queue.push((Reverse(new_distance), edge.head, dir1));
             }
         }
 

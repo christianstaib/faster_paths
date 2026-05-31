@@ -8,17 +8,11 @@ pub struct HashVertexMap<T> {
     values: FxHashMap<Vertex, T>,
 }
 
-impl<T> Default for HashVertexMap<T> {
-    fn default() -> Self {
+impl<T: Copy> VertexMap<T> for HashVertexMap<T> {
+    fn new(_len: usize, _default: T) -> Self {
         Self {
             values: FxHashMap::default(),
         }
-    }
-}
-
-impl<T: Copy> VertexMap<T> for HashVertexMap<T> {
-    fn new(_len: usize, _default: T) -> Self {
-        Self::default()
     }
 
     fn get(&self, vertex: Vertex) -> Option<T> {

@@ -97,6 +97,7 @@ where
         vertices.reverse();
         Some(Path { vertices, distance })
     }
+
     fn distance(&mut self, query: &Query) -> Option<Self::Distance> {
         self.search(query)
     }
