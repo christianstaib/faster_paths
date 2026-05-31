@@ -1,9 +1,7 @@
 use crate::contraction_hierarchy::contraction_hierarchy::ContractionHierarchy;
-use crate::contraction_hierarchy::edge::ContractionEdge;
 use crate::contraction_hierarchy::shortcut::unpack_and_concat_shortcut_paths;
 use crate::data_structures::{HashSearchState, SearchStateAccess};
-use crate::graph::CsrGraph;
-use crate::graph::GraphLike;
+use crate::graph::{EdgeLike, GraphLike};
 use crate::path::{Path, Query};
 use crate::pathfinder::ShortestPathFinder;
 use crate::types::{Distance, Vertex};
@@ -71,14 +69,14 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
 /// vertex of dir1 to `vertex`. If `dir1_dist_vertex` violates this lower bound,
 /// it cannot be optimal and `vertex` can be stalled in dir1.
 fn stall<D: Distance>(
-    dir1_state: &HashSearchState<D>,
-    dir2_graph: &CsrGraph<ContractionEdge<D>>,
+    dir1_state: &impl SearchStateAccess<D>,
+    dir2_graph: &impl GraphLike<Edge: EdgeLike<Weight = D>>,
     vertex: Vertex,
     dir1_dist_vertex: D,
 ) -> bool {
     for edge in dir2_graph.outgoing_edges(vertex) {
-        if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head)
-            && dir1_dist_meeting_vertex + edge.weight < dir1_dist_vertex
+        if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head())
+            && dir1_dist_meeting_vertex + edge.weight() < dir1_dist_vertex
         {
             return true;
         }

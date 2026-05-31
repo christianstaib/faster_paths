@@ -11,14 +11,7 @@ use crate::{
 ///
 /// The outgoing edges of `tail` must be sorted by their head vertex, because the
 /// lookup is performed using binary search.
-fn find_edge<G>(
-    graph: &G,
-    tail: Vertex,
-    head: Vertex,
-) -> Option<&G::Edge>
-where
-    G: GraphLike,
-{
+fn find_edge<G: GraphLike>(graph: &G, tail: Vertex, head: Vertex) -> Option<&G::Edge> {
     let edges = graph.outgoing_edges(tail);
 
     edges
@@ -68,16 +61,12 @@ pub fn unpack_and_concat_shortcut_paths<D: Distance>(
 ///
 /// Shortcut edges are unpacked iteratively using both graphs. Returns `None` if
 /// an expected edge is not found or the input is empty.
-pub fn unpack_shortcuts<D, G>(
-    dir1_graph: &G,
-    dir2_graph: &G,
+pub fn unpack_shortcuts<D>(
+    dir1_graph: &impl GraphLike<Edge = ContractionEdge<D>>,
+    dir2_graph: &impl GraphLike<Edge = ContractionEdge<D>>,
     dir1_reversed_shortcut_path: &[Vertex],
     max_expansion_steps: usize,
-) -> Option<Vec<Vertex>>
-where
-    D: Distance,
-    G: GraphLike<Edge = ContractionEdge<D>>,
-{
+) -> Option<Vec<Vertex>> {
     enum Dir {
         Dir1,
         Dir2,
