@@ -2,7 +2,6 @@ mod common;
 
 use faster_paths::{
     classical_search::DijkstraPathfinder,
-    data_structures::VecSearchState,
     graph::CsrGraph,
     validation::{validate_distances, validate_paths},
 };
@@ -17,7 +16,7 @@ fn karlsruhe_fixture_matches_dijkstra() {
     let tests = common::karlsruhe_tests::<DistanceType>();
 
     let graph = CsrGraph::from_flat(edges.clone());
-    let mut pathfinder = DijkstraPathfinder::<_, VecSearchState<_>>::new(&graph);
+    let mut pathfinder = DijkstraPathfinder::new(&graph);
 
     validate_distances(&tests, &mut pathfinder, epsilon).unwrap();
 

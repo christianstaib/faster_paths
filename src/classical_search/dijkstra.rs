@@ -1,49 +1,62 @@
-use std::{cmp::Reverse, collections::BinaryHeap};
-
-use num_traits::Zero;
-
 use crate::{
-    data_structures::SearchStateAccess,
+    data_structures::{VecVertexMap, VecVertexSet, VertexMap, VertexSet, reversed_path},
     graph::{EdgeLike, GraphLike},
     path::{Path, Query},
     pathfinder::ShortestPathFinder,
-    types::Vertex,
+    types::{Distance, Vertex},
 };
 
-pub struct DijkstraPathfinder<'a, G, S>
+use std::{cmp::Reverse, collections::BinaryHeap};
+
+/// Struct that contains everything a dijkstra search needs.
+pub struct DijkstraPathfinder<'a, G, DistanceMap, PredecessorMap, ExpandedSet>
 where
     G: GraphLike,
-    S: SearchStateAccess<<G::Edge as EdgeLike>::Weight>,
 {
     graph: &'a G,
     queue: BinaryHeap<(Reverse<<G::Edge as EdgeLike>::Weight>, Vertex)>,
-    search_state: S,
+    distance: DistanceMap,
+    predecessor: PredecessorMap,
+    expanded: ExpandedSet,
 }
 
-impl<'a, G, S> DijkstraPathfinder<'a, G, S>
+impl<'a, G, D> DijkstraPathfinder<'a, G, VecVertexMap<D>, VecVertexMap<Vertex>, VecVertexSet>
 where
-    G: GraphLike,
-    S: SearchStateAccess<<G::Edge as EdgeLike>::Weight>,
+    G: GraphLike<Edge: EdgeLike<Weight = D>>,
+    D: Distance,
 {
     pub fn new(graph: &'a G) -> Self {
+        let len = graph.num_vertices();
         Self {
             graph,
             queue: BinaryHeap::new(),
-            search_state: S::new(graph),
+            distance: VecVertexMap::new(len, D::max_value()),
+            predecessor: VecVertexMap::new(len, Vertex::MAX),
+            expanded: VecVertexSet::new(len),
         }
     }
+}
 
-    fn search(&mut self, query: &Query) -> Option<<G::Edge as EdgeLike>::Weight> {
+impl<'a, G, D, DistanceMap, PredecessorMap, ExpandedSet>
+    DijkstraPathfinder<'a, G, DistanceMap, PredecessorMap, ExpandedSet>
+where
+    G: GraphLike<Edge: EdgeLike<Weight = D>>,
+    D: Distance,
+    DistanceMap: VertexMap<D>,
+    PredecessorMap: VertexMap<Vertex>,
+    ExpandedSet: VertexSet,
+{
+    fn search(&mut self, query: &Query) -> Option<D> {
         self.queue.clear();
-        self.queue
-            .push((Reverse(<G::Edge as EdgeLike>::Weight::zero()), query.source));
+        self.distance.clear();
+        self.predecessor.clear();
+        self.expanded.clear();
 
-        self.search_state.clear();
-        self.search_state
-            .set_distance(query.source, <G::Edge as EdgeLike>::Weight::zero());
+        self.queue.push((Reverse(D::zero()), query.source));
+        self.distance.set(query.source, D::zero());
 
         while let Some((Reverse(dist_tail), tail)) = self.queue.pop() {
-            if self.search_state.test_and_set_expanded(tail) {
+            if self.expanded.contains_and_insert(tail) {
                 continue;
             }
 
@@ -53,13 +66,13 @@ where
 
             for edge in self.graph.outgoing_edges(tail) {
                 let new_distance = dist_tail + edge.weight();
-                let current_distance = self.search_state.get_distance(edge.head());
+                let current_distance = self.distance.get(edge.head());
                 if current_distance.is_some_and(|distance| new_distance >= distance) {
                     continue;
                 }
 
-                self.search_state.set_distance(edge.head(), new_distance);
-                self.search_state.set_predecessor(edge.head(), tail);
+                self.distance.set(edge.head(), new_distance);
+                self.predecessor.set(edge.head(), tail);
                 self.queue.push((Reverse(new_distance), edge.head()));
             }
         }
@@ -68,21 +81,22 @@ where
     }
 }
 
-impl<'a, G, S> ShortestPathFinder for DijkstraPathfinder<'a, G, S>
+impl<'a, G, D, DistanceMap, PredecessorMap, ExpandedSet> ShortestPathFinder
+    for DijkstraPathfinder<'a, G, DistanceMap, PredecessorMap, ExpandedSet>
 where
-    G: GraphLike,
-    S: SearchStateAccess<<G::Edge as EdgeLike>::Weight>,
+    G: GraphLike<Edge: EdgeLike<Weight = D>>,
+    D: Distance,
+    DistanceMap: VertexMap<D>,
+    PredecessorMap: VertexMap<Vertex>,
+    ExpandedSet: VertexSet,
 {
-    type Distance = <G::Edge as EdgeLike>::Weight;
-
+    type Distance = D;
     fn path(&mut self, query: &Query) -> Option<Path<Self::Distance>> {
         let distance = self.search(query)?;
-        let mut vertices = self.search_state.get_reversed_path(query.target)?;
+        let mut vertices = reversed_path(&self.predecessor, query.target);
         vertices.reverse();
-
         Some(Path { vertices, distance })
     }
-
     fn distance(&mut self, query: &Query) -> Option<Self::Distance> {
         self.search(query)
     }

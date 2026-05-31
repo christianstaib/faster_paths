@@ -1,6 +1,6 @@
 use crate::contraction_hierarchy::contraction_hierarchy::ContractionHierarchy;
 use crate::contraction_hierarchy::shortcut::unpack_and_concat_shortcut_paths;
-use crate::data_structures::{HashSearchState, SearchStateAccess};
+use crate::data_structures::{HashVertexMap, HashVertexSet, VertexMap, VertexSet, reversed_path};
 use crate::graph::{EdgeLike, GraphLike};
 use crate::path::{Path, Query};
 use crate::pathfinder::ShortestPathFinder;
@@ -32,8 +32,30 @@ impl<D: Ord> PartialOrd for Entry<D> {
 pub struct ContractionHierarchyPathfinder<'a, D: Distance> {
     contraction_hierarchy: &'a ContractionHierarchy<D>,
     queue: BinaryHeap<Entry<D>>,
-    up_state: HashSearchState<D>,
-    down_state: HashSearchState<D>,
+    up_state: ChSearchState<D>,
+    down_state: ChSearchState<D>,
+}
+
+pub struct ChSearchState<D: Distance> {
+    distance: HashVertexMap<D>,
+    predecessor: HashVertexMap<Vertex>,
+    expanded: HashVertexSet,
+}
+
+impl<D: Distance> ChSearchState<D> {
+    fn new() -> Self {
+        Self {
+            distance: HashVertexMap::default(),
+            predecessor: HashVertexMap::default(),
+            expanded: HashVertexSet::default(),
+        }
+    }
+
+    fn clear(&mut self) {
+        self.distance.clear();
+        self.predecessor.clear();
+        self.expanded.clear();
+    }
 }
 
 impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, D> {
@@ -42,8 +64,9 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
     fn path(&mut self, query: &Query) -> Option<Path<D>> {
         let (distance, meeting_vertex) = self.search(query)?;
 
-        let up_reversed_shortcut_path = self.up_state.get_reversed_path(meeting_vertex)?;
-        let down_reversed_shortcut_path = self.down_state.get_reversed_path(meeting_vertex)?;
+        let up_reversed_shortcut_path = reversed_path(&self.up_state.predecessor, meeting_vertex);
+        let down_reversed_shortcut_path =
+            reversed_path(&self.down_state.predecessor, meeting_vertex);
 
         let vertices = unpack_and_concat_shortcut_paths(
             self.contraction_hierarchy,
@@ -69,13 +92,13 @@ impl<'a, D: Distance> ShortestPathFinder for ContractionHierarchyPathfinder<'a, 
 /// vertex of dir1 to `vertex`. If `dir1_dist_vertex` violates this lower bound,
 /// it cannot be optimal and `vertex` can be stalled in dir1.
 fn stall<D: Distance>(
-    dir1_state: &impl SearchStateAccess<D>,
+    dir1_distance: &impl VertexMap<D>,
     dir2_graph: &impl GraphLike<Edge: EdgeLike<Weight = D>>,
     vertex: Vertex,
     dir1_dist_vertex: D,
 ) -> bool {
     for edge in dir2_graph.outgoing_edges(vertex) {
-        if let Some(dir1_dist_meeting_vertex) = dir1_state.get_distance(edge.head())
+        if let Some(dir1_dist_meeting_vertex) = dir1_distance.get(edge.head())
             && dir1_dist_meeting_vertex + edge.weight() < dir1_dist_vertex
         {
             return true;
@@ -90,8 +113,8 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
         Self {
             contraction_hierarchy,
             queue: BinaryHeap::new(),
-            up_state: HashSearchState::new(),
-            down_state: HashSearchState::new(),
+            up_state: ChSearchState::new(),
+            down_state: ChSearchState::new(),
         }
     }
 
@@ -113,10 +136,10 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             .push(Entry(Reverse(D::zero()), query.target, Direction::Down));
 
         self.up_state.clear();
-        self.up_state.set_distance(query.source, D::zero());
+        self.up_state.distance.set(query.source, D::zero());
 
         self.down_state.clear();
-        self.down_state.set_distance(query.target, D::zero());
+        self.down_state.distance.set(query.target, D::zero());
 
         let mut best_meeting: Option<(D, Vertex)> = None;
 
@@ -146,14 +169,16 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             // Skip the vertex if it has already been expanded.
             // Skip if dir1_dist_tail is not optimal, as this implies that every new_best_distance
             // would not be optimal.
-            if dir1_state.test_and_set_expanded(tail)
-                || stall(dir1_state, dir2_graph, tail, dir1_dist_tail)
-            {
+            if dir1_state.expanded.contains_and_insert(tail) {
+                continue;
+            }
+
+            if stall(&dir1_state.distance, dir2_graph, tail, dir1_dist_tail) {
                 continue;
             }
 
             // Check whether a better meeting distance has been found.
-            if let Some(dir2_dist_tail) = dir2_state.get_distance(tail) {
+            if let Some(dir2_dist_tail) = dir2_state.distance.get(tail) {
                 let new_best_distance = dir1_dist_tail + dir2_dist_tail;
                 if best_meeting.is_none_or(|(distance, _vertex)| new_best_distance < distance) {
                     best_meeting = Some((new_best_distance, tail));
@@ -163,14 +188,14 @@ impl<'a, D: Distance> ContractionHierarchyPathfinder<'a, D> {
             // Perform normal edge relaxation.
             for edge in dir1_graph.outgoing_edges(tail) {
                 let new_distance = dir1_dist_tail + edge.weight;
-                let current_distance = dir1_state.get_distance(edge.head);
+                let current_distance = dir1_state.distance.get(edge.head);
                 if current_distance.is_some_and(|current_distance| new_distance >= current_distance)
                 {
                     continue;
                 }
 
-                dir1_state.set_distance(edge.head, new_distance);
-                dir1_state.set_predecessor(edge.head, tail);
+                dir1_state.distance.set(edge.head, new_distance);
+                dir1_state.predecessor.set(edge.head, tail);
                 self.queue
                     .push(Entry(Reverse(new_distance), edge.head, dir1));
             }
